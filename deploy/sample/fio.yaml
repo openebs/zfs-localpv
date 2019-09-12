@@ -1,0 +1,54 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-zfspv
+allowVolumeExpansion: true
+parameters:
+  blocksize: "4k"
+  compression: "on"
+  dedup: "on"
+  thinprovision: "yes"
+  poolname: "zfspv-pool"
+provisioner: openebs.io/zfs
+volumeBindingMode: WaitForFirstConsumer
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: csi-zfspv
+spec:
+  storageClassName: openebs-zfspv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fio
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - gke-pawan-zfspv-default-pool-1813a371-6nhl
+  restartPolicy: Never
+  containers:
+  - name: perfrunner
+    image: openebs/tests-fio
+    command: ["/bin/bash"]
+    args: ["-c", "while true ;do sleep 50; done"]
+    volumeMounts:
+       - mountPath: /datadir
+         name: fio-vol
+    tty: true
+  volumes:
+  - name: fio-vol
+    persistentVolumeClaim:
+      claimName: csi-zfspv

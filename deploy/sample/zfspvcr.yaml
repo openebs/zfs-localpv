@@ -1,0 +1,19 @@
+apiVersion: v1
+items:
+- apiVersion: openebs.io/v1alpha1
+  kind: ZFSVolume
+  metadata:
+    name: pvc-a6855135-c70e-11e9-8fa2-42010a80012d
+    namespace: openebs
+  spec:
+    blocksize: 4k
+    capacity: "4294967296"
+    compression: "on"
+    dedup: "on"
+    ownerNodeID: gke-pawan-zfspv-default-pool-354050c7-wl8v
+    poolName: zfspv-pool
+    thinprovison: "yes"
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""

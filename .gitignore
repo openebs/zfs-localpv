@@ -1,0 +1,6 @@
+/bin
+buildscripts/zfs-driver/zfs-driver
+cscope*
+tags
+*.swp
+*.swo
