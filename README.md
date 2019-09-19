@@ -152,5 +152,10 @@ zfspv-pool/pvc-f52058b7-da1c-11e9-80e0-42010a800fcd  4.25G  96.4G  5.69M  -
 
 4. for deprovisioning the volume we can delete the application which is using
    the volume and then we can go ahead and delete the pv, as part of deletion of
-   pv this volume will also be deleted from the ZFS pool and data will be free.
+   pv this volume will also be deleted from the ZFS pool and data will be freed.
 
+### Supported System
+
+K8S : 1.14+
+OS : ubuntu 18.04
+ZFS : 0.7, 0.8
