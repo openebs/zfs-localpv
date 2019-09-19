@@ -398,15 +398,15 @@ spec:
               mountPath: /dev
             - name: zfs-bin
               mountPath: /sbin/zfs
-            - name: lib1
+            - name: libzpool
               mountPath: /lib/libzpool.so.2
-            - name: lib2
+            - name: libzfscore
               mountPath: /lib/libzfs_core.so.1
-            - name: lib3
+            - name: libzfs
               mountPath: /lib/libzfs.so.2
-            - name: lib4
+            - name: libuutil
               mountPath: /lib/libuutil.so.1
-            - name: lib5
+            - name: libnvpair
               mountPath: /lib/libnvpair.so.1
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
@@ -421,27 +421,21 @@ spec:
         - name: zfs-bin
           hostPath:
             path: /sbin/zfs
-            type: File
-        - name: lib1
+        - name: libzpool
           hostPath:
             path: /lib/libzpool.so.2.0.0
-            type: File
-        - name: lib2
+        - name: libzfscore
           hostPath:
             path: /lib/libzfs_core.so.1.0.0
-            type: File
-        - name: lib3
+        - name: libzfs
           hostPath:
             path: /lib/libzfs.so.2.0.0
-            type: File
-        - name: lib4
+        - name: libuutil
           hostPath:
             path: /lib/libuutil.so.1.0.1
-            type: File
-        - name: lib5
+        - name: libnvpair
           hostPath:
             path: /lib/libnvpair.so.1.0.1
-            type: File
         - name: registration-dir
           hostPath:
             path: /var/lib/kubelet/plugins_registry/
