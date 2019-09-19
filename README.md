@@ -1,4 +1,6 @@
 # OpenEBS ZFS CSI Driver
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_shield)
+
 
 CSI driver for provisioning Local PVs backed by ZFS and more.
 
@@ -154,3 +156,7 @@ zfspv-pool/pvc-f52058b7-da1c-11e9-80e0-42010a800fcd  4.25G  96.4G  5.69M  -
    the volume and then we can go ahead and delete the pv, as part of deletion of
    pv this volume will also be deleted from the ZFS pool and data will be free.
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_large)
