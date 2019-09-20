@@ -20,6 +20,14 @@ must meet the following prerequisites:
    The OpenEBS ZFS driver components are installed in kube-system namespace
    to allow them to be flagged as system critical components.
 
+### Supported System
+
+K8S : 1.14+
+
+OS : ubuntu 18.04
+
+ZFS : 0.7, 0.8
+
 ### Setup
 
 All the node should have zfsutils-linux installed. We should go to the
@@ -231,12 +239,4 @@ pod "fio" deleted
 $ kubectl delete -f pvc.yaml
 persistentvolumeclaim "csi-zfspv" deleted
 ```
-
-### Supported System
-
-K8S : 1.14+
-
-OS : ubuntu 18.04
-
-ZFS : 0.7, 0.8
 
