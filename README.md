@@ -63,6 +63,9 @@ Once ZFS driver is installed we can provision a volume.
 
 1. create a Storage class
 
+```
+$ cat sc.yaml
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -85,6 +88,9 @@ Here we have to give the provisioner as "openebs.io/zfs" which is the provisione
 
 2. create a PVC
 
+```
+$ cat pvc.yaml
+
 ```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -101,7 +107,23 @@ spec:
 
 Create a PVC using the storage class created with the openebs.io/zfs provisioner.
 
-3. Deploy the application using this PVC
+3. Check the kubernetes resource is created for the corresponding zfs volume
+
+```
+$ kubectl get zv -n openebs
+NAME                                       NODE   SIZE
+pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9          4294967296
+```
+
+Here note that NODE field will be empty as application POD has not yet deployed.
+When application will be deployed, as a part of deploying the application the ZFS
+driver will create the zfs volume of name pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
+in the pool mentioned in the storage class.
+
+4. Deploy the application using this PVC
+
+```
+$ cat fio.yaml
 
 ```yaml
 apiVersion: v1
@@ -117,7 +139,7 @@ spec:
           - key: kubernetes.io/hostname
             operator: In
             values:
-            - gke-user-zfspv-default-pool-fb71317f-rgcm
+            - k8s-virtual-machine
   restartPolicy: Never
   containers:
   - name: perfrunner
@@ -147,15 +169,74 @@ when application is deployed to the node.
 $ zfs list
 NAME                                                  USED  AVAIL  REFER  MOUNTPOINT
 zfspv-pool                                           4.25G  92.1G    96K  /zfspv-pool
-zfspv-pool/pvc-f52058b7-da1c-11e9-80e0-42010a800fcd  4.25G  96.4G  5.69M  -
+zfspv-pool/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9  4.25G  96.4G  5.69M  -
+```
+Also we can check the kubernetes resource for the corresponding zfs volume
+
+```
+$ kubectl get zv -n openebs
+NAME                                       NODE                  SIZE
+pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9   k8s-virtual-machine   4294967296
+
+$ kubectl describe zv pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9 -n openebs
+
+```yaml
+Name:         pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
+Namespace:    openebs
+Labels:       kubernetes.io/nodename=k8s-virtual-machine
+Annotations:  <none>
+API Version:  openebs.io/v1alpha1
+Kind:         ZFSVolume
+Metadata:
+  Creation Timestamp:  2019-09-20T05:33:52Z
+  Finalizers:
+    zfs.openebs.io/finalizer
+  Generation:        2
+  Resource Version:  20029636
+  Self Link:         /apis/openebs.io/v1alpha1/namespaces/openebs/zfsvolumes/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
+  UID:               3b20990a-db68-11e9-bbb6-000c296e38d9
+Spec:
+  Blocksize:      4k
+  Capacity:       4294967296
+  Compression:    off
+  Dedup:          off
+  Owner Node ID:  k8s-virtual-machine
+  Pool Name:      zfspv-pool
+  Thin Provison:  no
+Events:           <none>
 ```
 
-4. for deprovisioning the volume we can delete the application which is using
+5. ZFS Volume Property Change like compression on/off can be done by just simply
+   editing the kubernetes resource for the corresponding zfs volume by using below command :
+
+```
+kubectl edit zv pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9 -n openebs
+```
+
+You can edit the relevant property like make compression on or make dedup on and save it.
+This property will be applied to the corresponding volume and can be verified using
+below command on the node:
+
+```
+zfs get all zfspv-pool/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
+```
+
+6. for deprovisioning the volume we can delete the application which is using
    the volume and then we can go ahead and delete the pv, as part of deletion of
    pv this volume will also be deleted from the ZFS pool and data will be freed.
+
+```
+$ kubectl delete -f fio.yaml
+pod "fio" deleted
+$ kubectl delete -f pvc.yaml
+persistentvolumeclaim "csi-zfspv" deleted
+```
 
 ### Supported System
 
 K8S : 1.14+
+
 OS : ubuntu 18.04
+
 ZFS : 0.7, 0.8
+
