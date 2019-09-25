@@ -73,6 +73,7 @@ func (cs *controller) CreateVolume(
 	bs := req.GetParameters()["blocksize"]
 	compression := req.GetParameters()["compression"]
 	dedup := req.GetParameters()["dedup"]
+	encr := req.GetParameters()["encryption"]
 	pool := req.GetParameters()["poolname"]
 	tp := req.GetParameters()["thinprovision"]
 
@@ -82,6 +83,7 @@ func (cs *controller) CreateVolume(
 		WithBlockSize(bs).
 		WithPoolName(pool).
 		WithDedup(dedup).
+		WithEncryption(encr).
 		WithThinProv(tp).
 		WithCompression(compression).Build()
 

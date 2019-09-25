@@ -91,8 +91,12 @@ type VolumeInfo struct {
 	Compression string `json:"compression"`
 
 	// Dedup specifies the deduplication
-	// should be enabledd on the zvol
+	// should be enabled on the zvol
 	Dedup string `json:"dedup"`
+
+	// Encryption specifies the encryption
+	// should be enabled on the zvol
+	Encryption string `json:"encryption"`
 
 	// Thinprovision specifies if we should
 	// thin provisioned the volume or not

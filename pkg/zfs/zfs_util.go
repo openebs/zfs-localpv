@@ -18,14 +18,18 @@ package zfs
 
 import (
 	"os"
+	"os/exec"
 
 	"github.com/Sirupsen/logrus"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
-	"k8s.io/kubernetes/pkg/util/mount"
 )
 
 const (
-	ZFS_DEVPATH = "/dev/zvol/"
+	ZFS_DEVPATH   = "/dev/zvol/"
+	ZFSVolCmd     = "zfs"
+	ZFSCreateArg  = "create"
+	ZFSDestroyArg = "destroy"
+	ZFSSetArg     = "set"
 )
 
 func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
@@ -34,38 +38,94 @@ func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
 		oldVol.Spec.Capacity != newVol.Spec.Capacity
 }
 
+// builldVolumeCreateArgs returns zvol create command along with attributes as a string array
+func buildVolumeCreateArgs(vol *apis.ZFSVolume) []string {
+	var ZFSVolCmd []string
+
+	zvol := vol.Spec.PoolName + "/" + vol.Name
+
+	ZFSVolCmd = append(ZFSVolCmd, ZFSCreateArg)
+
+	if vol.Spec.ThinProvision == "yes" {
+		ZFSVolCmd = append(ZFSVolCmd, "-s")
+	}
+	if len(vol.Spec.Capacity) != 0 {
+		ZFSVolCmd = append(ZFSVolCmd, "-V", vol.Spec.Capacity)
+	}
+	if len(vol.Spec.BlockSize) != 0 {
+		ZFSVolCmd = append(ZFSVolCmd, "-b", vol.Spec.BlockSize)
+	}
+	if len(vol.Spec.Dedup) != 0 {
+		dedupProperty := "dedup=" + vol.Spec.Dedup
+		ZFSVolCmd = append(ZFSVolCmd, "-o", dedupProperty)
+	}
+	if len(vol.Spec.Compression) != 0 {
+		compressionProperty := "compression=" + vol.Spec.Compression
+		ZFSVolCmd = append(ZFSVolCmd, "-o", compressionProperty)
+	}
+	if len(vol.Spec.Encryption) != 0 {
+		encryptionProperty := "encryption=" + vol.Spec.Encryption
+		ZFSVolCmd = append(ZFSVolCmd, "-o", encryptionProperty)
+	}
+
+	ZFSVolCmd = append(ZFSVolCmd, zvol)
+
+	return ZFSVolCmd
+}
+
+// builldVolumeSetArgs returns zvol set command along with attributes as a string array
+// TODO(pawan) need to find a way to identify which property has changed
+func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
+	var ZFSVolCmd []string
+
+	zvol := vol.Spec.PoolName + "/" + vol.Name
+
+	ZFSVolCmd = append(ZFSVolCmd, ZFSSetArg)
+
+	if len(vol.Spec.Capacity) != 0 {
+		volsize := "volsize=" + vol.Spec.Capacity
+		ZFSVolCmd = append(ZFSVolCmd, volsize)
+	}
+	if len(vol.Spec.Dedup) != 0 {
+		dedupProperty := "dedup=" + vol.Spec.Dedup
+		ZFSVolCmd = append(ZFSVolCmd, dedupProperty)
+	}
+	if len(vol.Spec.Compression) != 0 {
+		compressionProperty := "compression=" + vol.Spec.Compression
+		ZFSVolCmd = append(ZFSVolCmd, compressionProperty)
+	}
+
+	ZFSVolCmd = append(ZFSVolCmd, zvol)
+
+	return ZFSVolCmd
+}
+
+// builldVolumeDestroyArgs returns zvol destroy command along with attributes as a string array
+func buildVolumeDestroyArgs(vol *apis.ZFSVolume) []string {
+	var ZFSVolCmd []string
+
+	zvol := vol.Spec.PoolName + "/" + vol.Name
+
+	ZFSVolCmd = append(ZFSVolCmd, ZFSDestroyArg, "-R", zvol)
+
+	return ZFSVolCmd
+}
+
 // createZvol creates the zvol and returns the corresponding diskPath
 // of the volume which gets created on the node
 func createZvol(vol *apis.ZFSVolume) (string, error) {
-	var out []byte
 	zvol := vol.Spec.PoolName + "/" + vol.Name
 	devicePath := ZFS_DEVPATH + zvol
 
 	if _, err := os.Stat(devicePath); os.IsNotExist(err) {
-		if vol.Spec.ThinProvision == "yes" {
-			out, err = mount.NewOsExec().Run(
-				"zfs", "create",
-				"-s",
-				"-V", vol.Spec.Capacity,
-				"-b", vol.Spec.BlockSize,
-				"-o", "compression="+vol.Spec.Compression,
-				"-o", "dedup="+vol.Spec.Dedup,
-				zvol,
-			)
-		} else {
-			out, err = mount.NewOsExec().Run(
-				"zfs", "create",
-				"-V", vol.Spec.Capacity,
-				"-b", vol.Spec.BlockSize,
-				"-o", "compression="+vol.Spec.Compression,
-				"-o", "dedup="+vol.Spec.Dedup,
-				zvol,
-			)
-		}
+
+		args := buildVolumeCreateArgs(vol)
+		cmd := exec.Command(ZFSVolCmd, args...)
+		out, err := cmd.CombinedOutput()
 
 		if err != nil {
 			logrus.Errorf(
-				"zfs: could not create zvol %v vol %v error: %s", zvol, vol, string(out),
+				"zfs: could not create zvol %v cmd %v error: %s", zvol, args, string(out),
 			)
 			return "", err
 		}
@@ -81,24 +141,18 @@ func createZvol(vol *apis.ZFSVolume) (string, error) {
 
 // SetZvolProp sets the zvol property
 func SetZvolProp(vol *apis.ZFSVolume) error {
-	var out []byte
 	var err error
 	zvol := vol.Spec.PoolName + "/" + vol.Name
 	devicePath := ZFS_DEVPATH + zvol
 
 	if _, err = os.Stat(devicePath); err == nil {
-		// TODO(pawan) need to find a way to identify
-		// which property has changed
-		out, err = mount.NewOsExec().Run(
-			"zfs", "set",
-			"volsize="+vol.Spec.Capacity,
-			"compression="+vol.Spec.Compression,
-			"dedup="+vol.Spec.Dedup,
-			zvol,
-		)
+		args := buildVolumeSetArgs(vol)
+		cmd := exec.Command(ZFSVolCmd, args...)
+		out, err := cmd.CombinedOutput()
+
 		if err != nil {
 			logrus.Errorf(
-				"zfs: could not set property on zvol %v vol %v error: %s", zvol, vol, string(out),
+				"zfs: could not set property on zvol %v cmd %v error: %s", zvol, args, string(out),
 			)
 			return err
 		}
@@ -110,19 +164,17 @@ func SetZvolProp(vol *apis.ZFSVolume) error {
 
 // DestroyZvol deletes the zvol
 func DestroyZvol(vol *apis.ZFSVolume) error {
-	var out []byte
 	zvol := vol.Spec.PoolName + "/" + vol.Name
 	devicePath := ZFS_DEVPATH + zvol
 
 	if _, err := os.Stat(devicePath); err == nil {
-		out, err = mount.NewOsExec().Run(
-			"zfs", "destroy",
-			"-R",
-			zvol,
-		)
+		args := buildVolumeDestroyArgs(vol)
+		cmd := exec.Command(ZFSVolCmd, args...)
+		out, err := cmd.CombinedOutput()
+
 		if err != nil {
 			logrus.Errorf(
-				"zfs: could not destroy zvol %v vol %v error: %s", zvol, vol, string(out),
+				"zfs: could not destroy zvol %v cmd %v error: %s", zvol, args, string(out),
 			)
 			return err
 		}
