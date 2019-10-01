@@ -8,6 +8,9 @@ parameters:
   compression: "on"
   dedup: "on"
   thinprovision: "yes"
+  #encryption: "on"
+  #keyformat: "raw"
+  #keylocation: "file:///home/pawan/key"
   poolname: "zfspv-pool"
 provisioner: openebs.io/zfs
 volumeBindingMode: WaitForFirstConsumer
