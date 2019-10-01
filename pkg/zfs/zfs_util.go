@@ -67,6 +67,14 @@ func buildVolumeCreateArgs(vol *apis.ZFSVolume) []string {
 		encryptionProperty := "encryption=" + vol.Spec.Encryption
 		ZFSVolCmd = append(ZFSVolCmd, "-o", encryptionProperty)
 	}
+	if len(vol.Spec.KeyLocation) != 0 {
+		keyLocation := "keylocation=" + vol.Spec.KeyLocation
+		ZFSVolCmd = append(ZFSVolCmd, "-o", keyLocation)
+	}
+	if len(vol.Spec.KeyFormat) != 0 {
+		keyFormat := "keyformat=" + vol.Spec.KeyFormat
+		ZFSVolCmd = append(ZFSVolCmd, "-o", keyFormat)
+	}
 
 	ZFSVolCmd = append(ZFSVolCmd, zvol)
 

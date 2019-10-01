@@ -106,6 +106,18 @@ func (b *Builder) WithEncryption(encr string) *Builder {
 	return b
 }
 
+// WithKeyLocation sets the encryption key location on ZFSVolume
+func (b *Builder) WithKeyLocation(kl string) *Builder {
+	b.volume.Object.Spec.KeyLocation = kl
+	return b
+}
+
+// WithKeyFormat sets the encryption key format on ZFSVolume
+func (b *Builder) WithKeyFormat(kf string) *Builder {
+	b.volume.Object.Spec.KeyFormat = kf
+	return b
+}
+
 // WithCompression sets compression of ZFSVolume
 func (b *Builder) WithCompression(compression string) *Builder {
 	b.volume.Object.Spec.Compression = compression

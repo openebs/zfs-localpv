@@ -1,0 +1,131 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-zfspv
+allowVolumeExpansion: true
+parameters:
+  blocksize: "4k"
+  compression: "on"
+  dedup: "on"
+  thinprovision: "yes"
+  poolname: "zfspv-pool"
+provisioner: openebs.io/zfs
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: csi-zfspv
+spec:
+  storageClassName: openebs-zfspv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+  name: sqltest
+  namespace: default
+data:
+  sql-test.sh: |
+    #!/bin/bash
+
+    DB_PREFIX="Inventory"
+    DB_SUFFIX=`echo $(mktemp) | cut -d '.' -f 2`
+    DB_NAME="${DB_PREFIX}_${DB_SUFFIX}"
+
+
+    echo -e "\nWaiting for mysql server to start accepting connections.."
+    retries=10;wait_retry=30
+    for i in `seq 1 $retries`; do
+      mysql -uroot -pk8sDem0 -e 'status' > /dev/null 2>&1
+      rc=$?
+      [ $rc -eq 0 ] && break
+      sleep $wait_retry
+    done
+
+    if [ $rc -ne 0 ];
+    then
+      echo -e "\nFailed to connect to db server after trying for $(($retries * $wait_retry))s, exiting\n"
+      exit 1
+    fi
+    mysql -uroot -pk8sDem0 -e "CREATE DATABASE $DB_NAME;"
+    mysql -uroot -pk8sDem0 -e "CREATE TABLE Hardware (id INTEGER, name VARCHAR(20), owner VARCHAR(20),description VARCHAR(20));" $DB_NAME
+    mysql -uroot -pk8sDem0 -e "INSERT INTO Hardware (id, name, owner, description) values (1, "dellserver", "basavaraj", "controller");" $DB_NAME
+    mysql -uroot -pk8sDem0 -e "DROP DATABASE $DB_NAME;"
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: percona
+  labels:
+    name: percona
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: percona
+  template:
+    metadata:
+      labels:
+        name: percona
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - gke-pawan-zfspv-default-pool-26f2b9a9-5fqd
+      containers:
+        - resources:
+          name: percona
+          image: openebs/tests-custom-percona:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--ignore-db-dir"
+            - "lost+found"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: k8sDem0
+          ports:
+            - containerPort: 3306
+              name: percona
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: demo-vol1
+            - mountPath: /sql-test.sh
+              subPath: sql-test.sh
+              name: sqltest-configmap
+          livenessProbe:
+            exec:
+              command: ["bash", "sql-test.sh"]
+            initialDelaySeconds: 30
+            periodSeconds: 1
+            timeoutSeconds: 10
+      volumes:
+        - name: demo-vol1
+          persistentVolumeClaim:
+            claimName: csi-zfspv
+        - name: sqltest-configmap
+          configMap:
+            name: sqltest
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: percona-mysql
+  labels:
+    name: percona-mysql
+spec:
+  ports:
+    - port: 3306
+      targetPort: 3306
+  selector:
+      name: percona

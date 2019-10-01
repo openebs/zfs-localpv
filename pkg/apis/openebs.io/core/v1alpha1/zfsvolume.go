@@ -98,6 +98,14 @@ type VolumeInfo struct {
 	// should be enabled on the zvol
 	Encryption string `json:"encryption"`
 
+	// KeyLocation is the location of key
+	// for the encryption
+	KeyLocation string `json:"keylocation"`
+
+	// KeyFormat specifies format of the
+	// encryption key
+	KeyFormat string `json:"keyformat"`
+
 	// Thinprovision specifies if we should
 	// thin provisioned the volume or not
 	ThinProvision string `json:"thinProvison"`
