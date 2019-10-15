@@ -91,8 +91,20 @@ type VolumeInfo struct {
 	Compression string `json:"compression"`
 
 	// Dedup specifies the deduplication
-	// should be enabledd on the zvol
+	// should be enabled on the zvol
 	Dedup string `json:"dedup"`
+
+	// Encryption specifies the encryption
+	// should be enabled on the zvol
+	Encryption string `json:"encryption"`
+
+	// KeyLocation is the location of key
+	// for the encryption
+	KeyLocation string `json:"keylocation"`
+
+	// KeyFormat specifies format of the
+	// encryption key
+	KeyFormat string `json:"keyformat"`
 
 	// Thinprovision specifies if we should
 	// thin provisioned the volume or not

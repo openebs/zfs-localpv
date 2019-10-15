@@ -54,7 +54,7 @@ func BuildFrom(volume *apis.ZFSVolume) *Builder {
 	}
 }
 
-// WithNamespace sets the namespace of csi volume
+// WithNamespace sets the namespace of  ZFSVolume
 func (b *Builder) WithNamespace(namespace string) *Builder {
 	if namespace == "" {
 		b.errs = append(
@@ -69,7 +69,7 @@ func (b *Builder) WithNamespace(namespace string) *Builder {
 	return b
 }
 
-// WithName sets the name of csi volume
+// WithName sets the name of ZFSVolume
 func (b *Builder) WithName(name string) *Builder {
 	if name == "" {
 		b.errs = append(
@@ -100,42 +100,44 @@ func (b *Builder) WithCapacity(capacity string) *Builder {
 	return b
 }
 
-// WithCompression sets compression of CStorVolumeClaim
+// WithEncryption sets the encryption on ZFSVolume
+func (b *Builder) WithEncryption(encr string) *Builder {
+	b.volume.Object.Spec.Encryption = encr
+	return b
+}
+
+// WithKeyLocation sets the encryption key location on ZFSVolume
+func (b *Builder) WithKeyLocation(kl string) *Builder {
+	b.volume.Object.Spec.KeyLocation = kl
+	return b
+}
+
+// WithKeyFormat sets the encryption key format on ZFSVolume
+func (b *Builder) WithKeyFormat(kf string) *Builder {
+	b.volume.Object.Spec.KeyFormat = kf
+	return b
+}
+
+// WithCompression sets compression of ZFSVolume
 func (b *Builder) WithCompression(compression string) *Builder {
-
-	comp := "off"
-	if compression == "on" {
-		comp = "on"
-	}
-	b.volume.Object.Spec.Compression = comp
+	b.volume.Object.Spec.Compression = compression
 	return b
 }
 
-// WithDedup sets compression of CStorVolumeClaim
+// WithDedup sets dedup property of ZFSVolume
 func (b *Builder) WithDedup(dedup string) *Builder {
-
-	dp := "off"
-	if dedup == "on" {
-		dp = "on"
-	}
-	b.volume.Object.Spec.Dedup = dp
+	b.volume.Object.Spec.Dedup = dedup
 	return b
 }
 
-// WithThinProv sets compression of CStorVolumeClaim
+// WithThinProv sets if ZFSVolume needs to be thin provisioned
 func (b *Builder) WithThinProv(thinprov string) *Builder {
-
-	tp := "no"
-	if thinprov == "yes" {
-		tp = "yes"
-	}
-	b.volume.Object.Spec.ThinProvision = tp
+	b.volume.Object.Spec.ThinProvision = thinprov
 	return b
 }
 
-// WithBlockSize sets blocksize of CStorVolumeClaim
+// WithBlockSize sets blocksize of ZFSVolume
 func (b *Builder) WithBlockSize(blockSize string) *Builder {
-
 	bs := "4k"
 	if len(blockSize) > 0 {
 		bs = blockSize
