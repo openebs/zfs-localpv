@@ -396,6 +396,8 @@ spec:
               mountPath: /plugin
             - name: device-dir
               mountPath: /dev
+            - name: encr-keys
+              mountPath: /home/keys
             - name: zfs-bin
               mountPath: /sbin/zfs
             - name: libzpool
@@ -418,6 +420,10 @@ spec:
           hostPath:
             path: /dev
             type: Directory
+        - name: encr-keys
+          hostPath:
+            path: /home/keys
+            type: DirectoryOrCreate
         - name: zfs-bin
           hostPath:
             path: /sbin/zfs
