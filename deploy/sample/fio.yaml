@@ -14,6 +14,12 @@ parameters:
   poolname: "zfspv-pool"
 provisioner: openebs.io/zfs
 volumeBindingMode: WaitForFirstConsumer
+allowedTopologies:
+- matchLabelExpressions:
+  - key: kubernetes.io/hostname
+    values:
+      - gke-pawan-zfspv-default-pool-f5841c0e-00s4
+      - gke-pawan-zfspv-default-pool-f5841c0e-07w6
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -32,15 +38,6 @@ kind: Pod
 metadata:
   name: fio
 spec:
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: kubernetes.io/hostname
-            operator: In
-            values:
-            - gke-pawan-zfspv-default-pool-1813a371-6nhl
   restartPolicy: Never
   containers:
   - name: perfrunner

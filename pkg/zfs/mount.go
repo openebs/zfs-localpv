@@ -109,12 +109,7 @@ func CreateAndMountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 		return status.Error(codes.Internal, "volume is owned by different node")
 	}
 
-	devicePath, err := createZvol(vol)
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	err = UpdateZvolInfo(vol)
+	devicePath, err := GetDevicePath(vol)
 	if err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
