@@ -31,9 +31,10 @@ const (
 	OpenEBSNamespaceKey string = "OPENEBS_NAMESPACE"
 	// ZFSFinalizer for the ZfsVolume CR
 	ZFSFinalizer string = "zfs.openebs.io/finalizer"
-	// ZFSNodeKey will be used to insert Label
-	// in ZfsVolume CR
+	// ZFSNodeKey will be used to insert Label in ZfsVolume CR
 	ZFSNodeKey string = "kubernetes.io/nodename"
+	// ZFSTopologyKey is supported topology key for the zfs driver
+	ZFSTopologyKey string = "kubernetes.io/hostname"
 )
 
 var (

@@ -78,7 +78,7 @@ func (cs *controller) CreateVolume(
 	kl := req.GetParameters()["keylocation"]
 	pool := req.GetParameters()["poolname"]
 	tp := req.GetParameters()["thinprovision"]
-	OwnerNode := req.AccessibilityRequirements.Preferred[0].Segments[zvol.ZFSNodeKey]
+	OwnerNode := req.AccessibilityRequirements.Preferred[0].Segments[zvol.ZFSTopologyKey]
 
 	volObj, err := builder.NewBuilder().
 		WithName(volName).
