@@ -122,7 +122,6 @@ func buildVolumeDestroyArgs(vol *apis.ZFSVolume) []string {
 // CreateZvol creates the zvol and returns the corresponding diskPath
 // of the volume which gets created on the node
 func CreateZvol(vol *apis.ZFSVolume) error {
-	var out []byte
 	zvol := vol.Spec.PoolName + "/" + vol.Name
 	devicePath := ZFS_DEVPATH + zvol
 

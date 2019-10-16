@@ -111,7 +111,7 @@ func CreateAndMountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 
 	devicePath, err := GetDevicePath(vol)
 	if err != nil {
-		return status.Error(codes.Internal, err.Error())
+		return status.Error(codes.Internal, "not able to get the device path")
 	}
 
 	/*
@@ -133,7 +133,7 @@ func CreateAndMountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	}
 	err = FormatAndMountZvol(devicePath, mount)
 	if err != nil {
-		return status.Error(codes.Internal, err.Error())
+		return status.Error(codes.Internal, "not able to mount the volume")
 	}
 
 	return err

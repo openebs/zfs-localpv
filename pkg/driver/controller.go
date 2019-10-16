@@ -78,6 +78,7 @@ func (cs *controller) CreateVolume(
 	kl := req.GetParameters()["keylocation"]
 	pool := req.GetParameters()["poolname"]
 	tp := req.GetParameters()["thinprovision"]
+	OwnerNode := req.AccessibilityRequirements.Preferred[0].Segments["kubernetes.io/hostname"]
 
 	volObj, err := builder.NewBuilder().
 		WithName(volName).
@@ -89,6 +90,7 @@ func (cs *controller) CreateVolume(
 		WithKeyFormat(kf).
 		WithKeyLocation(kl).
 		WithThinProv(tp).
+		WithOwnerNode(OwnerNode).
 		WithCompression(compression).Build()
 
 	if err != nil {
