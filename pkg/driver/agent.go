@@ -181,8 +181,7 @@ func (ns *node) NodeGetInfo(
 	req *csi.NodeGetInfoRequest,
 ) (*csi.NodeGetInfoResponse, error) {
 
-	topology := map[string]string{"kubernetes.io/hostname": ns.driver.config.NodeID}
-	logrus.Errorf("topology: {%v}", topology)
+	topology := map[string]string{zvol.ZFSNodeKey : ns.driver.config.NodeID}
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.driver.config.NodeID,
 		AccessibleTopology: &csi.Topology{

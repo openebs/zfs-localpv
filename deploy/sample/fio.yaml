@@ -16,7 +16,7 @@ provisioner: openebs.io/zfs
 volumeBindingMode: WaitForFirstConsumer
 allowedTopologies:
 - matchLabelExpressions:
-  - key: kubernetes.io/hostname
+  - key: kubernetes.io/nodename
     values:
       - gke-pawan-zfspv-default-pool-f5841c0e-00s4
       - gke-pawan-zfspv-default-pool-f5841c0e-07w6
