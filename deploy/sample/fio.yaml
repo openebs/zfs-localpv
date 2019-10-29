@@ -12,14 +12,14 @@ parameters:
   #keyformat: "raw"
   #keylocation: "file:///home/pawan/key"
   poolname: "zfspv-pool"
-provisioner: openebs.io/zfs
+provisioner: zfs-localpv
 volumeBindingMode: WaitForFirstConsumer
 allowedTopologies:
 - matchLabelExpressions:
   - key: kubernetes.io/hostname
     values:
-      - gke-pawan-zfspv-default-pool-f5841c0e-00s4
-      - gke-pawan-zfspv-default-pool-f5841c0e-07w6
+      - gke-zfspv-pawan-default-pool-c8929518-cgd4
+      - gke-zfspv-pawan-default-pool-c8929518-dxzc
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1

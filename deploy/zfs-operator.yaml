@@ -107,10 +107,9 @@ spec:
       serviceAccount: openebs-zfs-controller-sa
       containers:
         - name: csi-provisioner
-          image: quay.io/k8scsi/csi-provisioner:v1.3.1
+          image: quay.io/k8scsi/csi-provisioner:v1.2.0
           imagePullPolicy: IfNotPresent
           args:
-            - "--provisioner=openebs.io/zfs"
             - "--csi-address=$(ADDRESS)"
             - "--v=5"
             - "--feature-gates=Topology=true"
@@ -184,7 +183,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments", "csinodes"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list", "watch", "update", "patch"]
 
 ---
 kind: ClusterRoleBinding
