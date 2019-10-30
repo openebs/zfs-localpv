@@ -107,12 +107,13 @@ spec:
       serviceAccount: openebs-zfs-controller-sa
       containers:
         - name: csi-provisioner
-          image: quay.io/k8scsi/csi-provisioner:v1.2.0
+          image: quay.io/k8scsi/csi-provisioner:v1.4.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
             - "--v=5"
             - "--feature-gates=Topology=true"
+            - "--strict-topology"
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
