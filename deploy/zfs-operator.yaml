@@ -86,7 +86,7 @@ roleRef:
 
 ---
 kind: StatefulSet
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 metadata:
   name: openebs-zfs-controller
   namespace: kube-system
@@ -324,7 +324,7 @@ roleRef:
 ---
 
 kind: DaemonSet
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: openebs-zfs-node
   namespace: kube-system
@@ -427,21 +427,27 @@ spec:
         - name: zfs-bin
           hostPath:
             path: /sbin/zfs
+            type: File
         - name: libzpool
           hostPath:
             path: /lib/libzpool.so.2.0.0
+            type: File
         - name: libzfscore
           hostPath:
             path: /lib/libzfs_core.so.1.0.0
+            type: File
         - name: libzfs
           hostPath:
             path: /lib/libzfs.so.2.0.0
+            type: File
         - name: libuutil
           hostPath:
             path: /lib/libuutil.so.1.0.1
+            type: File
         - name: libnvpair
           hostPath:
             path: /lib/libnvpair.so.1.0.1
+            type: File
         - name: registration-dir
           hostPath:
             path: /var/lib/kubelet/plugins_registry/

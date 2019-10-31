@@ -85,6 +85,9 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 			zvol.RemoveZvolFinalizer(zv)
 		}
 	} else {
+		// if finalizer is not set then it means we are creating
+		// the volume. And if it is set then volume has already been
+		// created and this event is for property change only.
 		if zv.Finalizers != nil {
 			err = zvol.SetZvolProp(zv)
 		} else {
