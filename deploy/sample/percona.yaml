@@ -64,7 +64,7 @@ data:
     mysql -uroot -pk8sDem0 -e "INSERT INTO Hardware (id, name, owner, description) values (1, "dellserver", "basavaraj", "controller");" $DB_NAME
     mysql -uroot -pk8sDem0 -e "DROP DATABASE $DB_NAME;"
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: percona
