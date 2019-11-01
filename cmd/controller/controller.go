@@ -85,7 +85,17 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 			zvol.RemoveZvolFinalizer(zv)
 		}
 	} else {
-		err = zvol.SetZvolProp(zv)
+		// if finalizer is not set then it means we are creating
+		// the volume. And if it is set then volume has already been
+		// created and this event is for property change only.
+		if zv.Finalizers != nil {
+			err = zvol.SetZvolProp(zv)
+		} else {
+			err = zvol.CreateZvol(zv)
+			if err == nil {
+				err = zvol.UpdateZvolInfo(zv)
+			}
+		}
 	}
 	return err
 }
@@ -101,11 +111,8 @@ func (c *ZVController) addZV(obj interface{}) {
 	if zvol.NodeID != zv.Spec.OwnerNodeID {
 		return
 	}
-	// TODO(pawan) scheduler will schedule the volume
-	// on a node and populate the OwnerNodeID accordingly.
-	// We need to create the zfs volume in that case.
 	logrus.Infof("Got add event for ZV %s/%s", zv.Spec.PoolName, zv.Name)
-	//c.enqueueZV(zv)
+	c.enqueueZV(zv)
 }
 
 // updateZV is the update event handler for CstorVolumeClaim

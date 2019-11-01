@@ -181,8 +181,12 @@ func (ns *node) NodeGetInfo(
 	req *csi.NodeGetInfoRequest,
 ) (*csi.NodeGetInfoResponse, error) {
 
+	topology := map[string]string{zvol.ZFSTopologyKey: ns.driver.config.NodeID}
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.driver.config.NodeID,
+		AccessibleTopology: &csi.Topology{
+			Segments: topology,
+		},
 	}, nil
 }
 

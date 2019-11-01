@@ -9,7 +9,14 @@ parameters:
   dedup: "on"
   thinprovision: "yes"
   poolname: "zfspv-pool"
-provisioner: openebs.io/zfs
+provisioner: zfs-localpv
+volumeBindingMode: WaitForFirstConsumer
+allowedTopologies:
+- matchLabelExpressions:
+  - key: kubernetes.io/hostname
+    values:
+      - gke-zfspv-pawan-default-pool-c8929518-cgd4
+      - gke-zfspv-pawan-default-pool-c8929518-dxzc
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -57,7 +64,7 @@ data:
     mysql -uroot -pk8sDem0 -e "INSERT INTO Hardware (id, name, owner, description) values (1, "dellserver", "basavaraj", "controller");" $DB_NAME
     mysql -uroot -pk8sDem0 -e "DROP DATABASE $DB_NAME;"
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: percona
@@ -73,15 +80,6 @@ spec:
       labels:
         name: percona
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/hostname
-                operator: In
-                values:
-                - gke-pawan-zfspv-default-pool-26f2b9a9-5fqd
       containers:
         - resources:
           name: percona

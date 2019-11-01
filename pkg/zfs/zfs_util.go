@@ -119,9 +119,9 @@ func buildVolumeDestroyArgs(vol *apis.ZFSVolume) []string {
 	return ZFSVolCmd
 }
 
-// createZvol creates the zvol and returns the corresponding diskPath
+// CreateZvol creates the zvol and returns the corresponding diskPath
 // of the volume which gets created on the node
-func createZvol(vol *apis.ZFSVolume) (string, error) {
+func CreateZvol(vol *apis.ZFSVolume) error {
 	zvol := vol.Spec.PoolName + "/" + vol.Name
 	devicePath := ZFS_DEVPATH + zvol
 
@@ -135,16 +135,16 @@ func createZvol(vol *apis.ZFSVolume) (string, error) {
 			logrus.Errorf(
 				"zfs: could not create zvol %v cmd %v error: %s", zvol, args, string(out),
 			)
-			return "", err
+			return err
 		}
 		logrus.Infof("created zvol %s", zvol)
 	} else if err == nil {
 		logrus.Infof("using existing zvol %v", zvol)
 	} else {
-		return "", err
+		return err
 	}
 
-	return devicePath, nil
+	return nil
 }
 
 // SetZvolProp sets the zvol property
@@ -190,4 +190,15 @@ func DestroyZvol(vol *apis.ZFSVolume) error {
 	}
 
 	return nil
+}
+
+// GetDevicePath returns device path for zvol if it exists
+func GetDevicePath(vol *apis.ZFSVolume) (string, error) {
+	zvol := vol.Spec.PoolName + "/" + vol.Name
+	devicePath := ZFS_DEVPATH + zvol
+
+	if _, err := os.Stat(devicePath); os.IsNotExist(err) {
+		return "", err
+	}
+	return devicePath, nil
 }

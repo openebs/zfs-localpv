@@ -136,6 +136,12 @@ func (b *Builder) WithThinProv(thinprov string) *Builder {
 	return b
 }
 
+// WithOwnerNode sets owner node for the ZFSVolume where the volume should be provisioned
+func (b *Builder) WithOwnerNode(host string) *Builder {
+	b.volume.Object.Spec.OwnerNodeID = host
+	return b
+}
+
 // WithBlockSize sets blocksize of ZFSVolume
 func (b *Builder) WithBlockSize(blockSize string) *Builder {
 	bs := "4k"

@@ -79,6 +79,9 @@ func (cs *controller) CreateVolume(
 	pool := req.GetParameters()["poolname"]
 	tp := req.GetParameters()["thinprovision"]
 
+	// setting first in preferred list as the ownernode of this volume
+	OwnerNode := req.AccessibilityRequirements.Preferred[0].Segments[zvol.ZFSTopologyKey]
+
 	volObj, err := builder.NewBuilder().
 		WithName(volName).
 		WithCapacity(strconv.FormatInt(int64(size), 10)).
@@ -89,6 +92,7 @@ func (cs *controller) CreateVolume(
 		WithKeyFormat(kf).
 		WithKeyLocation(kl).
 		WithThinProv(tp).
+		WithOwnerNode(OwnerNode).
 		WithCompression(compression).Build()
 
 	if err != nil {
@@ -100,9 +104,12 @@ func (cs *controller) CreateVolume(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	topology := map[string]string{zvol.ZFSTopologyKey: OwnerNode}
+
 	return csipayload.NewCreateVolumeResponseBuilder().
 		WithName(volName).
 		WithCapacity(size).
+		WithTopology(topology).
 		Build(), nil
 }
 

@@ -57,6 +57,14 @@ func (b *CreateVolumeResponseBuilder) WithContext(ctx map[string]string) *Create
 	return b
 }
 
+// WithTopology sets the topology for the
+// CreateVolumeResponse instance
+func (b *CreateVolumeResponseBuilder) WithTopology(topology map[string]string) *CreateVolumeResponseBuilder {
+	b.response.Volume.AccessibleTopology = make([]*csi.Topology, 1)
+	b.response.Volume.AccessibleTopology[0] = &csi.Topology{Segments: topology}
+	return b
+}
+
 // Build returns the constructed instance
 // of csi CreateVolumeResponse
 func (b *CreateVolumeResponseBuilder) Build() *csi.CreateVolumeResponse {

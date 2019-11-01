@@ -86,7 +86,7 @@ roleRef:
 
 ---
 kind: StatefulSet
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 metadata:
   name: openebs-zfs-controller
   namespace: kube-system
@@ -107,13 +107,13 @@ spec:
       serviceAccount: openebs-zfs-controller-sa
       containers:
         - name: csi-provisioner
-          image: quay.io/k8scsi/csi-provisioner:v1.0.1
+          image: quay.io/k8scsi/csi-provisioner:v1.4.0
           imagePullPolicy: IfNotPresent
           args:
-            - "--provisioner=openebs.io/zfs"
             - "--csi-address=$(ADDRESS)"
             - "--v=5"
             - "--feature-gates=Topology=true"
+            - "--strict-topology"
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
@@ -121,7 +121,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: csi-attacher
-          image: quay.io/k8scsi/csi-attacher:v1.0.1
+          image: quay.io/k8scsi/csi-attacher:v2.0.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -184,7 +184,7 @@ rules:
     verbs: ["get", "list", "watch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments", "csinodes"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list", "watch", "update", "patch"]
 
 ---
 kind: ClusterRoleBinding
@@ -324,7 +324,7 @@ roleRef:
 ---
 
 kind: DaemonSet
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: openebs-zfs-node
   namespace: kube-system
@@ -343,7 +343,7 @@ spec:
       hostNetwork: true
       containers:
         - name: csi-node-driver-registrar
-          image: quay.io/k8scsi/csi-node-driver-registrar:v1.0.1
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
@@ -427,21 +427,27 @@ spec:
         - name: zfs-bin
           hostPath:
             path: /sbin/zfs
+            type: File
         - name: libzpool
           hostPath:
             path: /lib/libzpool.so.2.0.0
+            type: File
         - name: libzfscore
           hostPath:
             path: /lib/libzfs_core.so.1.0.0
+            type: File
         - name: libzfs
           hostPath:
             path: /lib/libzfs.so.2.0.0
+            type: File
         - name: libuutil
           hostPath:
             path: /lib/libuutil.so.1.0.1
+            type: File
         - name: libnvpair
           hostPath:
             path: /lib/libnvpair.so.1.0.1
+            type: File
         - name: registration-dir
           hostPath:
             path: /var/lib/kubelet/plugins_registry/
