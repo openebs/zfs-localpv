@@ -23,6 +23,10 @@ spec:
     - zvol
     - zv
   additionalPrinterColumns:
+  - JSONPath: .spec.poolName
+    name: ZPool
+    description: ZFS Pool where the volume is created
+    type: string
   - JSONPath: .spec.ownerNodeID
     name: Node
     description: Node where the volume is created

@@ -13,7 +13,6 @@ parameters:
   #keylocation: "file:///home/pawan/key"
   poolname: "zfspv-pool"
 provisioner: zfs-localpv
-volumeBindingMode: WaitForFirstConsumer
 allowedTopologies:
 - matchLabelExpressions:
   - key: kubernetes.io/hostname

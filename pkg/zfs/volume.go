@@ -118,7 +118,6 @@ func UpdateZvolInfo(vol *apis.ZFSVolume) error {
 	}
 
 	newVol, err := builder.BuildFrom(vol).
-		WithNodename(NodeID).
 		WithFinalizer(finalizers).
 		WithLabels(labels).Build()
 
