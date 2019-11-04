@@ -9,7 +9,7 @@ parameters:
   dedup: "on"
   thinprovision: "yes"
   poolname: "zfspv-pool"
-provisioner: zfs-localpv
+provisioner: zfs.csi.openebs.io
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1

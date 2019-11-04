@@ -12,7 +12,7 @@ parameters:
   #keyformat: "raw"
   #keylocation: "file:///home/pawan/key"
   poolname: "zfspv-pool"
-provisioner: zfs-localpv
+provisioner: zfs.csi.openebs.io
 allowedTopologies:
 - matchLabelExpressions:
   - key: kubernetes.io/hostname
