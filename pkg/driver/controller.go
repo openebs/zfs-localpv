@@ -77,8 +77,9 @@ func (cs *controller) CreateVolume(
 	kl := req.GetParameters()["keylocation"]
 	pool := req.GetParameters()["poolname"]
 	tp := req.GetParameters()["thinprovision"]
+	schld := req.GetParameters()["scheduler"]
 
-	selected := scheduler(req.AccessibilityRequirements, pool)
+	selected := scheduler(req.AccessibilityRequirements, schld, pool)
 
 	if len(selected) == 0 {
 		return nil, status.Error(codes.Internal, "scheduler failed")

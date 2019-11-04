@@ -17,6 +17,7 @@ limitations under the License.
 package driver
 
 import (
+	"github.com/Sirupsen/logrus"
 	"math"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -24,6 +25,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	zvol "github.com/openebs/zfs-localpv/pkg/zfs"
+)
+
+// scheduling algorithm constants
+const (
+	// pick the node where less volumes are provisioned for the given pool
+	// this will be the default scheduler when none provided
+	VolumeWeighted = "VolumeWeighted"
 )
 
 // volumeWeightedScheduler goes through all the pools on the nodes mentioned
@@ -66,14 +74,23 @@ func volumeWeightedScheduler(topo *csi.TopologyRequirement, pool string) string 
 
 // scheduler schedules the PV as per topology constraints for
 // the given zfs pool.
-func scheduler(topo *csi.TopologyRequirement, pool string) string {
+func scheduler(topo *csi.TopologyRequirement, schld string, pool string) string {
 
+	if len(topo.Preferred) == 0 {
+		logrus.Errorf("topology information not provided")
+		return ""
+	}
 	// if there is a single node, schedule it on that
 	if len(topo.Preferred) == 1 {
 		return topo.Preferred[0].Segments[zvol.ZFSTopologyKey]
 	}
 
-	selected := volumeWeightedScheduler(topo, pool)
+	switch schld {
+	case VolumeWeighted:
+		return volumeWeightedScheduler(topo, pool)
+	default:
+		return volumeWeightedScheduler(topo, pool)
+	}
 
-	return selected
+	return ""
 }
