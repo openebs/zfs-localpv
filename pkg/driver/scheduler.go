@@ -26,16 +26,11 @@ import (
 	zvol "github.com/openebs/zfs-localpv/pkg/zfs"
 )
 
-// scheduler goes through all the pools on the nodes mentioned
+// volumeWeightedScheduler goes through all the pools on the nodes mentioned
 // in the topology and picks the node which has less volume on
 // the given zfs pool.
-func scheduler(topo *csi.TopologyRequirement, pool string) string {
-	var selected string = ""
-
-	// if there is a single node, schedule it on that
-	if len(topo.Preferred) == 1 {
-		return topo.Preferred[0].Segments[zvol.ZFSTopologyKey]
-	}
+func volumeWeightedScheduler(topo *csi.TopologyRequirement, pool string) string {
+	var selected string
 
 	zvlist, err := builder.NewKubeclient().
 		WithNamespace(zvol.OpenEBSNamespace).
@@ -66,6 +61,19 @@ func scheduler(topo *csi.TopologyRequirement, pool string) string {
 			numVol = volmap[node]
 		}
 	}
+	return selected
+}
+
+// scheduler schedules the PV as per topology constraints for
+// the given zfs pool.
+func scheduler(topo *csi.TopologyRequirement, pool string) string {
+
+	// if there is a single node, schedule it on that
+	if len(topo.Preferred) == 1 {
+		return topo.Preferred[0].Segments[zvol.ZFSTopologyKey]
+	}
+
+	selected := volumeWeightedScheduler(topo, pool)
 
 	return selected
 }
