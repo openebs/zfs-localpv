@@ -9,14 +9,7 @@ parameters:
   dedup: "on"
   thinprovision: "yes"
   poolname: "zfspv-pool"
-provisioner: zfs-localpv
-volumeBindingMode: WaitForFirstConsumer
-allowedTopologies:
-- matchLabelExpressions:
-  - key: kubernetes.io/hostname
-    values:
-      - gke-zfspv-pawan-default-pool-c8929518-cgd4
-      - gke-zfspv-pawan-default-pool-c8929518-dxzc
+provisioner: zfs.csi.openebs.io
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1

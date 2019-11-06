@@ -61,7 +61,6 @@ func (cs *controller) CreateVolume(
 	req *csi.CreateVolumeRequest,
 ) (*csi.CreateVolumeResponse, error) {
 
-	logrus.Infof("received request to create volume {%s} vol{%v}", req.GetName(), req)
 	var err error
 
 	if err = cs.validateVolumeCreateReq(req); err != nil {
@@ -78,9 +77,15 @@ func (cs *controller) CreateVolume(
 	kl := req.GetParameters()["keylocation"]
 	pool := req.GetParameters()["poolname"]
 	tp := req.GetParameters()["thinprovision"]
+	schld := req.GetParameters()["scheduler"]
 
-	// setting first in preferred list as the ownernode of this volume
-	OwnerNode := req.AccessibilityRequirements.Preferred[0].Segments[zvol.ZFSTopologyKey]
+	selected := scheduler(req.AccessibilityRequirements, schld, pool)
+
+	if len(selected) == 0 {
+		return nil, status.Error(codes.Internal, "scheduler failed")
+	}
+
+	logrus.Infof("scheduled the volume %s/%s on node %s", pool, volName, selected)
 
 	volObj, err := builder.NewBuilder().
 		WithName(volName).
@@ -92,7 +97,7 @@ func (cs *controller) CreateVolume(
 		WithKeyFormat(kf).
 		WithKeyLocation(kl).
 		WithThinProv(tp).
-		WithOwnerNode(OwnerNode).
+		WithOwnerNode(selected).
 		WithCompression(compression).Build()
 
 	if err != nil {
@@ -101,10 +106,10 @@ func (cs *controller) CreateVolume(
 
 	err = zvol.ProvisionVolume(size, volObj)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, "not able to provision the volume")
 	}
 
-	topology := map[string]string{zvol.ZFSTopologyKey: OwnerNode}
+	topology := map[string]string{zvol.ZFSTopologyKey: selected}
 
 	return csipayload.NewCreateVolumeResponseBuilder().
 		WithName(volName).
