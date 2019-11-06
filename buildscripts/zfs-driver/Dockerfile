@@ -5,7 +5,7 @@
 
 FROM ubuntu:18.04
 RUN apt-get update; exit 0
-RUN apt-get -y install rsyslog libssl-dev
+RUN apt-get -y install rsyslog libssl-dev xfsprogs
 #RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY zfs-driver /usr/local/bin/
