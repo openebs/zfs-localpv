@@ -71,12 +71,11 @@ Once ZFS driver is installed we can provision a volume.
 
 ### Deployment
 
-1. create a Storage class
+#### 1. Create a Storage class
 
 ```
 $ cat sc.yaml
 
-```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -87,21 +86,46 @@ parameters:
   dedup: "off"
   thinprovision: "no"
   poolname: "zfspv-pool"
-provisioner: openebs.io/zfs
+provisioner: zfs.csi.openebs.io
 ```
 
 The storage class contains the volume paramaters like blocksize, compression, dedup and thinprovision. You can select what are all
-parameters you want. The above yaml shows the default values in case paramenters are not provided or wrong value has been provided.
-The *poolname* is the must argument. There must be a ZPOOL running on the node with the name given in this storage class.
+parameters you want. In case paramenters are not provided, the volume will inherit the properties from the ZFS pool.
+The *poolname* is the must argument. Also there must be a ZPOOL running on *all the nodes* with the name given in the storage class.
 
-Here we have to give the provisioner as "openebs.io/zfs" which is the provisioner name of the ZFS driver.
+If ZFS pool is available on certain nodes only, then make use of topology to tell the list of nodes where we have the ZFS pool available. 
+As shown in the below storage class, we can use allowedTopologies to describe ZFS pool availability on nodes.
 
-2. create a PVC
+```
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-zfspv
+allowVolumeExpansion: true
+parameters:
+  blocksize: "4k"
+  compression: "off"
+  dedup: "off"
+  thinprovision: "yes"
+  poolname: "zfspv-pool"
+provisioner: zfs.csi.openebs.io
+allowedTopologies:
+- matchLabelExpressions:
+  - key: kubernetes.io/hostname
+    values:
+      - zfspv-node1
+      - zfspv-node2
+```
+
+The above storage class tells that ZFS pool "zfspv-pool" is available on nodes zfspv-node1 and zfspv-node2 only. The ZFS driver will create volumes on those nodes only.
+
+Please note that the provisioner name for ZFS driver is "zfs.csi.openebs.io", we have to use this while creating the storage class so that the volume provisioning/deprovisioning request can come to ZFS driver.
+
+#### 2. Create a PVC
 
 ```
 $ cat pvc.yaml
 
-```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -115,41 +139,62 @@ spec:
       storage: 4Gi
 ```
 
-Create a PVC using the storage class created with the openebs.io/zfs provisioner.
+Create a PVC using the storage class created for the ZFS driver.
 
-3. Check the kubernetes resource is created for the corresponding zfs volume
+#### 3. Check the kubernetes resource is created for the corresponding zfs volume
 
 ```
 $ kubectl get zv -n openebs
-NAME                                       NODE   SIZE
-pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9          4294967296
+NAME                                       ZPOOL        NODE          SIZE
+pvc-642803c4-012c-11ea-86d0-42010a800177   zfspv-pool   zfspv-node1   4294967296
 ```
 
-Here note that NODE field will be empty as application POD has not yet deployed.
-When application will be deployed, as a part of deploying the application the ZFS
-driver will create the zfs volume of name pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
-in the pool mentioned in the storage class.
+The ZFS driver will create a ZFS dataset(zvol) on the node zfspv-node1 for the mentioned ZFS pool and the dataset name will same as PV name.
+Go to the node zfspv-node1 and check the volume :-
 
-4. Deploy the application using this PVC
+```
+$ zfs list
+NAME                                                  USED  AVAIL  REFER  MOUNTPOINT
+zfspv-pool                                           4.25G  92.1G    96K  /zfspv-pool
+zfspv-pool/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9  4.25G  96.4G  5.69M  -
+```
+
+#### 4. Scheduler
+ 
+The ZFS driver has a scheduler which will try to distribute the PV across the nodes so that one node should not be loaded with the volumes. Currently the driver has
+VolumeWeighted scheduling algorithm, in which it will try to find a ZFS pool which has less number of volumes provisioned in it from all the nodes where the ZFS pools are available.
+Once it is able to find the node, it will create a PV for that node and also create a ZFSVolume custom resource for the volume with the NODE information. The watcher for this ZFSVolume
+CR will get all the information for this object and creates a ZFS dataset(zvol) with the given ZFS property on the mentioned node.
+
+As the scheduler takes into account the count of ZFS volumes only for scheduling decisions, it does not account available cpu or memory or anything while scheduling, so if you want to use node selector/affinity rules on the application pod or have cpu, memory constraints, you should use kubernetes scheduler for that, you can put volumeBindingMode as WaitForFirstConsumer in the storage class for delayed binding, which will make kubernetes scheduler to schedule the POD first then it will ask the ZFS driver to create the PV, the driver, then, will create the PV on the node where the POD is scheduled.
+
+```
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-zfspv
+allowVolumeExpansion: true
+parameters:
+  blocksize: "4k"
+  compression: "on"
+  dedup: "on"
+  thinprovision: "yes"
+  poolname: "zfspv-pool"
+provisioner: zfs.csi.openebs.io
+volumeBindingMode: WaitForFirstConsumer
+```
+Please note that once PV is created for a node, application using that PV will always come to that node only as PV will be stick to that node. The scheduling algorithm by ZFS driver or kubernetes will come into picture only at the deployment time, once PV is created, the application can not move anywhere as the data is there on the node where PV is.
+
+#### 5. Deploy the application using this PVC
 
 ```
 $ cat fio.yaml
 
-```yaml
 apiVersion: v1
 kind: Pod
 metadata:
   name: fio
 spec:
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: kubernetes.io/hostname
-            operator: In
-            values:
-            - k8s-virtual-machine
   restartPolicy: Never
   containers:
   - name: perfrunner
@@ -166,34 +211,17 @@ spec:
       claimName: csi-zfspv
 ```
 
-Here in alpha version of the ZFS driver we have to make use of node selector or node affinity
-to make the application pod stick to the node as the application pod should not move to the
-other node because the data will be there on one node only.
+After the deployment of the application, we can go to the node and see that the zfs volume is being used
+by the application for reading/writting the data and space is consumed form the ZFS pool.
 
-After the deployment of the application we can go to the node and see that a zfs volume has been
-created in the pool mentioned in the storage class and application is using that volume for writting
-the data. This is in effect working like waitforFirstConsumer so the actual ZFS volume will be create
-when application is deployed to the node.
-
-```
-$ zfs list
-NAME                                                  USED  AVAIL  REFER  MOUNTPOINT
-zfspv-pool                                           4.25G  92.1G    96K  /zfspv-pool
-zfspv-pool/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9  4.25G  96.4G  5.69M  -
-```
 Also we can check the kubernetes resource for the corresponding zfs volume
 
 ```
-$ kubectl get zv -n openebs
-NAME                                       NODE                  SIZE
-pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9   k8s-virtual-machine   4294967296
-
 $ kubectl describe zv pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9 -n openebs
 
-```yaml
 Name:         pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
 Namespace:    openebs
-Labels:       kubernetes.io/nodename=k8s-virtual-machine
+Labels:       kubernetes.io/nodename=zfspv-node1
 Annotations:  <none>
 API Version:  openebs.io/v1alpha1
 Kind:         ZFSVolume
@@ -210,14 +238,17 @@ Spec:
   Capacity:       4294967296
   Compression:    off
   Dedup:          off
-  Owner Node ID:  k8s-virtual-machine
+  Encryption:     
+  Keyformat:      
+  Keylocation: 
+  Owner Node ID:  zfspv-node1
   Pool Name:      zfspv-pool
   Thin Provison:  no
 Events:           <none>
 ```
 
-5. ZFS Volume Property Change like compression on/off can be done by just simply
-   editing the kubernetes resource for the corresponding zfs volume by using below command :
+#### 6. ZFS Property Change
+ZFS Volume Property can be changed like compression on/off can be done by just simply editing the kubernetes resource for the corresponding zfs volume by using below command :
 
 ```
 kubectl edit zv pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9 -n openebs
@@ -231,9 +262,8 @@ below command on the node:
 zfs get all zfspv-pool/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
 ```
 
-6. for deprovisioning the volume we can delete the application which is using
-   the volume and then we can go ahead and delete the pv, as part of deletion of
-   pv this volume will also be deleted from the ZFS pool and data will be freed.
+#### 7. Deprovisioning
+for deprovisioning the volume we can delete the application which is using the volume and then we can go ahead and delete the pv, as part of deletion of pv this volume will also be deleted from the ZFS pool and data will be freed.
 
 ```
 $ kubectl delete -f fio.yaml
