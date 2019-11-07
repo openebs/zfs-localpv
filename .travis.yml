@@ -1,6 +1,5 @@
 sudo: required
 dist: xenial
-#group: edge
 env:
 services:
   - docker
@@ -24,18 +23,3 @@ notifications:
   email:
     recipients:
     - pawan@openebs.io
-deploy:
-  provider: releases
-  api_key:
-    secure: na/NPsgDHGGRaWxRSCo5gH3TPrEutNvhEK3q2k99bbW2INe0FZ+FIPeuL9rqV8eCQi8SWJGHNFjFyMRR798RRSn8bdiK0pxJXzYvphUEH2Azzoqr65TaJHpHNTkv1WTK9OtgahT71MbmIx777U6Vd6ylyJyWja+LPhY/z66XOYQmuXR2ds7FRBlAcWg8C0KIFTLYlms5C9RKwLS2jP5C8tlJBQXMDEk7ejR1mKn3R6KQyyHICGKPGhNE+d7iMs0qhhuGIhcDwXl1olChAAITOGyWEmjc2GeUbFALo8OXdQx9qBO7saw75IzyYV/itBjE0RpuM90jKuFzKGiotSyw7Fs0KgrjHC7keuaNMqBWgKl6qoAj2a5VVEBtx8k941hRLs/VpjQ+K8wJJpjlSR8vh906b8e+HL8BKJEifF09fKBTLd0AWy9I3x6TolmRqiamvIHEkup1fZqblhhe2ZLvwuuyfl3t1FTkkon5BASgSqFdBAhR3eAD/LOtrghjaRX7wCZCzKDEaS9QLeu9UbC+bmnaOo60Gaeyp/DN5FLc4cV/vZozroesu+UEtQIrC6VDlFNYfY0V1ETKpfEQ4I8yByDHx/KjMWDyUGd8e5tm0qsD1lW1yVekh5CjQRHpzShkmKvFieeVfqVy/aGB4GrTeWSxcKiN8W0ekcgCRYut6y0=
-  file_glob: true
-  file:
-    - bin/zfs-driver/zfs-driver-linux_*.zip
-  skip_cleanup: true
-  overwrite: true
-  on:
-    repo: openebs/zfs-localpv
-    tags: true
-branches:
-  except:
-    - /^*-v[0-9]/
