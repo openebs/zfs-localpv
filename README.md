@@ -243,7 +243,7 @@ Spec:
   Keylocation: 
   Owner Node ID:  zfspv-node1
   Pool Name:      zfspv-pool
-  Thin Provison:  no
+  Thin Provision:  no
 Events:           <none>
 ```
 

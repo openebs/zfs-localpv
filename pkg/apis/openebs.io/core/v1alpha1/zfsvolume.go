@@ -108,5 +108,5 @@ type VolumeInfo struct {
 
 	// Thinprovision specifies if we should
 	// thin provisioned the volume or not
-	ThinProvision string `json:"thinProvison"`
+	ThinProvision string `json:"thinProvision"`
 }
