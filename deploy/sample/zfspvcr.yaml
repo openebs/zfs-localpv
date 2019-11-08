@@ -13,5 +13,5 @@ spec:
   keylocation: ""
   ownerNodeID: zfspv-node1
   poolName: zfspv-pool
-  thinProvison: "off"
+  thinProvision: "off"
 
