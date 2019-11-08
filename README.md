@@ -106,7 +106,7 @@ parameters:
   blocksize: "4k"
   compression: "off"
   dedup: "off"
-  thinprovision: "yes"
+  thinprovision: "no"
   poolname: "zfspv-pool"
 provisioner: zfs.csi.openebs.io
 allowedTopologies:
@@ -146,7 +146,7 @@ Create a PVC using the storage class created for the ZFS driver.
 ```
 $ kubectl get zv -n openebs
 NAME                                       ZPOOL        NODE          SIZE
-pvc-642803c4-012c-11ea-86d0-42010a800177   zfspv-pool   zfspv-node1   4294967296
+pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9   zfspv-pool   zfspv-node1   4294967296
 ```
 
 The ZFS driver will create a ZFS dataset(zvol) on the node zfspv-node1 for the mentioned ZFS pool and the dataset name will same as PV name.
@@ -178,7 +178,7 @@ parameters:
   blocksize: "4k"
   compression: "on"
   dedup: "on"
-  thinprovision: "yes"
+  thinprovision: "no"
   poolname: "zfspv-pool"
 provisioner: zfs.csi.openebs.io
 volumeBindingMode: WaitForFirstConsumer
