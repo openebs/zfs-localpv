@@ -143,12 +143,14 @@ func (b *Builder) WithOwnerNode(host string) *Builder {
 }
 
 // WithBlockSize sets blocksize of ZFSVolume
-func (b *Builder) WithBlockSize(blockSize string) *Builder {
-	bs := "4k"
-	if len(blockSize) > 0 {
-		bs = blockSize
-	}
+func (b *Builder) WithBlockSize(bs string) *Builder {
 	b.volume.Object.Spec.BlockSize = bs
+	return b
+}
+
+// WithVolumeType sets if ZFSVolume needs to be thin provisioned
+func (b *Builder) WithVolumeType(vtype string) *Builder {
+	b.volume.Object.Spec.VolumeType = vtype
 	return b
 }
 

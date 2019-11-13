@@ -3,7 +3,6 @@ package zfs
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
@@ -72,7 +71,7 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 }
 
 // GetMounts gets mountpoints for the specified volume
-func GetMounts(devicepath string) ([]string, error) {
+func GetMounts(dev string) ([]string, error) {
 
 	var (
 		currentMounts []string
@@ -80,10 +79,6 @@ func GetMounts(devicepath string) ([]string, error) {
 		mountList     []mount.MountPoint
 	)
 
-	dev, err := filepath.EvalSymlinks(devicepath)
-	if err != nil {
-		return nil, err
-	}
 	mounter := mount.New("")
 	// Get list of mounted paths present with the node
 	if mountList, err = mounter.List(); err != nil {
@@ -93,13 +88,13 @@ func GetMounts(devicepath string) ([]string, error) {
 		if mntInfo.Device == dev {
 			currentMounts = append(currentMounts, mntInfo.Path)
 		}
+		logrus.Infof("Getmounts device %v mountpath %v", mntInfo.Device, mntInfo.Path)
 	}
 	return currentMounts, nil
 }
 
-// CreateAndMountZvol creates the zfs Volume
-// and mounts the disk to the specified path
-func CreateAndMountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+// MountZvol mounts the disk to the specified path
+func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	if len(mount.MountPath) == 0 {
 		return status.Error(codes.InvalidArgument, "mount path missing in request")
 	}
@@ -109,7 +104,7 @@ func CreateAndMountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 		return status.Error(codes.Internal, "volume is owned by different node")
 	}
 
-	devicePath, err := GetDevicePath(vol)
+	devicePath, err := GetVolumeDevice(vol)
 	if err != nil {
 		return status.Error(codes.Internal, "not able to get the device path")
 	}
@@ -137,4 +132,30 @@ func CreateAndMountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	}
 
 	return err
+}
+
+// MountDataset mounts the zfs dataset to the specified path
+func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+	if len(mount.MountPath) == 0 {
+		return status.Error(codes.InvalidArgument, "mount path missing in request")
+	}
+
+	if len(vol.Spec.OwnerNodeID) > 0 &&
+		vol.Spec.OwnerNodeID != NodeID {
+		return status.Error(codes.Internal, "volume is owned by different node")
+	}
+
+	err := SetDatasetMountProp(vol, mount.MountPath)
+
+	return err
+}
+
+// MountVolume mounts the disk to the specified path
+func MountVolume(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+	switch vol.Spec.VolumeType {
+	case VOLTYPE_DATASET:
+		return MountDataset(vol, mount)
+	default:
+		return MountZvol(vol, mount)
+	}
 }

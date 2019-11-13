@@ -25,7 +25,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/builder"
 	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
-	zvol "github.com/openebs/zfs-localpv/pkg/zfs"
+	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -78,6 +78,15 @@ func (cs *controller) CreateVolume(
 	pool := req.GetParameters()["poolname"]
 	tp := req.GetParameters()["thinprovision"]
 	schld := req.GetParameters()["scheduler"]
+	fstype := req.GetParameters()["fsType"]
+	vtype := zfs.VOLTYPE_ZVOL
+
+	// if fstype is provided as zfs then a zfs dataset will be created
+	// if nothing is provided, then by default dataset will be created
+	if fstype == "zfs" ||
+		fstype == "" {
+		vtype = zfs.VOLTYPE_DATASET
+	}
 
 	selected := scheduler(req.AccessibilityRequirements, schld, pool)
 
@@ -98,18 +107,19 @@ func (cs *controller) CreateVolume(
 		WithKeyLocation(kl).
 		WithThinProv(tp).
 		WithOwnerNode(selected).
+		WithVolumeType(vtype).
 		WithCompression(compression).Build()
 
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	err = zvol.ProvisionVolume(size, volObj)
+	err = zfs.ProvisionVolume(size, volObj)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "not able to provision the volume")
 	}
 
-	topology := map[string]string{zvol.ZFSTopologyKey: selected}
+	topology := map[string]string{zfs.ZFSTopologyKey: selected}
 
 	return csipayload.NewCreateVolumeResponseBuilder().
 		WithName(volName).
@@ -136,13 +146,13 @@ func (cs *controller) DeleteVolume(
 	volumeID := req.GetVolumeId()
 
 	// verify if the volume has already been deleted
-	vol, err := zvol.GetVolume(volumeID)
+	vol, err := zfs.GetVolume(volumeID)
 	if vol != nil && vol.DeletionTimestamp != nil {
 		goto deleteResponse
 	}
 
 	// Delete the corresponding ZV CR
-	err = zvol.DeleteVolume(volumeID)
+	err = zfs.DeleteVolume(volumeID)
 	if err != nil {
 		return nil, errors.Wrapf(
 			err,

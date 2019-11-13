@@ -22,7 +22,7 @@ import (
 	ctrl "github.com/openebs/zfs-localpv/cmd/controller"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/builder"
-	zvol "github.com/openebs/zfs-localpv/pkg/zfs"
+	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -65,7 +65,7 @@ func GetVolAndMountInfo(
 
 	getOptions := metav1.GetOptions{}
 	vol, err := builder.NewKubeclient().
-		WithNamespace(zvol.OpenEBSNamespace).
+		WithNamespace(zfs.OpenEBSNamespace).
 		Get(req.GetVolumeId(), getOptions)
 
 	if err != nil {
@@ -97,7 +97,7 @@ func (ns *node) NodePublishVolume(
 		goto PublishVolumeResponse
 	}
 	// Create the zfs volume and attempt mount operation on the requested path
-	if err = zvol.CreateAndMountZvol(vol, mountInfo); err != nil {
+	if err = zfs.MountVolume(vol, mountInfo); err != nil {
 		goto PublishVolumeResponse
 	}
 
@@ -132,16 +132,15 @@ func (ns *node) NodeUnpublishVolume(
 
 	getOptions := metav1.GetOptions{}
 	vol, err = builder.NewKubeclient().
-		WithNamespace(zvol.OpenEBSNamespace).
+		WithNamespace(zfs.OpenEBSNamespace).
 		Get(volumeID, getOptions)
 
 	if err != nil {
 		return nil, err
 	}
 
-	zfsvolume := vol.Spec.PoolName + "/" + vol.Name
-	devpath := zvol.ZFS_DEVPATH + zfsvolume
-	currentMounts, err = zvol.GetMounts(devpath)
+	devpath, _ := zfs.GetVolumeDevice(vol)
+	currentMounts, err = zfs.GetMounts(devpath)
 	if err != nil {
 		return nil, err
 	} else if len(currentMounts) == 0 {
@@ -158,11 +157,11 @@ func (ns *node) NodeUnpublishVolume(
 		return nil, status.Error(codes.Internal, "device not mounted at rightpath")
 	}
 
-	if vol, err = zvol.GetZFSVolume(volumeID); (err != nil) || (vol == nil) {
+	if vol, err = zfs.GetZFSVolume(volumeID); (err != nil) || (vol == nil) {
 		goto NodeUnpublishResponse
 	}
 
-	if err = zvol.UmountVolume(vol, req.GetTargetPath()); err != nil {
+	if err = zfs.UmountVolume(vol, req.GetTargetPath()); err != nil {
 		goto NodeUnpublishResponse
 	}
 
@@ -181,7 +180,7 @@ func (ns *node) NodeGetInfo(
 	req *csi.NodeGetInfoRequest,
 ) (*csi.NodeGetInfoResponse, error) {
 
-	topology := map[string]string{zvol.ZFSTopologyKey: ns.driver.config.NodeID}
+	topology := map[string]string{zfs.ZFSTopologyKey: ns.driver.config.NodeID}
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.driver.config.NodeID,
 		AccessibleTopology: &csi.Topology{

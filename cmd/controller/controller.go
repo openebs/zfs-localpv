@@ -80,7 +80,7 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 	var err error
 	// ZFS Volume should be deleted. Check if deletion timestamp is set
 	if c.isDeletionCandidate(zv) {
-		err = zvol.DestroyZvol(zv)
+		err = zvol.DestroyVolume(zv)
 		if err == nil {
 			zvol.RemoveZvolFinalizer(zv)
 		}
@@ -91,7 +91,7 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 		if zv.Finalizers != nil {
 			err = zvol.SetZvolProp(zv)
 		} else {
-			err = zvol.CreateZvol(zv)
+			err = zvol.CreateVolume(zv)
 			if err == nil {
 				err = zvol.UpdateZvolInfo(zv)
 			}

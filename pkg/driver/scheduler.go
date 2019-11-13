@@ -76,7 +76,8 @@ func volumeWeightedScheduler(topo *csi.TopologyRequirement, pool string) string 
 // the given zfs pool.
 func scheduler(topo *csi.TopologyRequirement, schld string, pool string) string {
 
-	if len(topo.Preferred) == 0 {
+	if topo == nil ||
+		len(topo.Preferred) == 0 {
 		logrus.Errorf("topology information not provided")
 		return ""
 	}
