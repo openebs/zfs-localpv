@@ -161,12 +161,16 @@ zfspv-pool/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9  4.25G  96.4G  5.69M  -
 
 #### 4. Scheduler
  
-The ZFS driver has a scheduler which will try to distribute the PV across the nodes so that one node should not be loaded with the volumes. Currently the driver has
+The ZFS driver has a scheduler which will try to distribute the PV across the nodes so that one node should not be loaded with all the volumes. Currently the driver has
 VolumeWeighted scheduling algorithm, in which it will try to find a ZFS pool which has less number of volumes provisioned in it from all the nodes where the ZFS pools are available.
 Once it is able to find the node, it will create a PV for that node and also create a ZFSVolume custom resource for the volume with the NODE information. The watcher for this ZFSVolume
 CR will get all the information for this object and creates a ZFS dataset(zvol) with the given ZFS property on the mentioned node.
 
-As the scheduler takes into account the count of ZFS volumes only for scheduling decisions, it does not account available cpu or memory or anything while scheduling, so if you want to use node selector/affinity rules on the application pod or have cpu, memory constraints, you should use kubernetes scheduler for that, you can put volumeBindingMode as WaitForFirstConsumer in the storage class for delayed binding, which will make kubernetes scheduler to schedule the POD first then it will ask the ZFS driver to create the PV, the driver, then, will create the PV on the node where the POD is scheduled.
+The scheduling algorithm currently only accounts for the number of ZFS volumes and does not account for other factors like available cpu or memory while making scheduling decisions.
+So if you want to use node selector/affinity rules on the application pod, or have cpu/memory constraints, kubernetes scheduler should be used.
+To make use of kubernetes scheduler, you can set the `volumeBindingMode` as `WaitForFirstConsumer` in the storage class.
+This will cause a delayed binding, i.e kubernetes scheduler will schedule the application pod first and then it will ask the ZFS driver to create the PV. 
+The driver will then create the PV on the node where the pod is scheduled.
 
 ```
 apiVersion: storage.k8s.io/v1
@@ -183,7 +187,9 @@ parameters:
 provisioner: zfs.csi.openebs.io
 volumeBindingMode: WaitForFirstConsumer
 ```
-Please note that once PV is created for a node, application using that PV will always come to that node only as PV will be stick to that node. The scheduling algorithm by ZFS driver or kubernetes will come into picture only at the deployment time, once PV is created, the application can not move anywhere as the data is there on the node where PV is.
+Please note that once a PV is created for a node, application using that PV will always get scheduled to that particular node only, as PV will be sticky to that node.
+The scheduling algorithm by ZFS driver or kubernetes will come into picture only during the deployment time. Once the PV is created, 
+the application can not move anywhere as the data is there on the node where the PV is.
 
 #### 5. Deploy the application using this PVC
 
