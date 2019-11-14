@@ -17,7 +17,6 @@ limitations under the License.
 package zfs
 
 import (
-	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -31,6 +30,7 @@ const (
 	ZFSCreateArg  = "create"
 	ZFSDestroyArg = "destroy"
 	ZFSSetArg     = "set"
+	ZFSListArg    = "list"
 )
 
 // constants to define volume type
@@ -128,7 +128,8 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 		ZFSVolArg = append(ZFSVolArg, "-o", keyFormat)
 	}
 
-	ZFSVolArg = append(ZFSVolArg, volume)
+	// set the mount path to none, by default zfs mounts it to the default dataset path
+	ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=none", volume)
 
 	return ZFSVolArg
 }
@@ -167,16 +168,23 @@ func buildVolumeDestroyArgs(vol *apis.ZFSVolume) []string {
 	return ZFSVolArg
 }
 
+func getVolume(volume string) error {
+	var ZFSVolArg []string
+
+	ZFSVolArg = append(ZFSVolArg, ZFSListArg, volume)
+
+	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
+	out, err := cmd.CombinedOutput()
+	logrus.Infof("getVolume out %v", out)
+	return err
+}
+
 // CreateVolume creates the zvol/dataset as per
 // info provided in ZFSVolume object
 func CreateVolume(vol *apis.ZFSVolume) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	if vol.Spec.VolumeType == VOLTYPE_ZVOL {
-		volume = ZFS_DEVPATH + volume
-	}
-
-	if _, err := os.Stat(volume); os.IsNotExist(err) {
+	if err := getVolume(volume); err != nil {
 		var args []string
 		if vol.Spec.VolumeType == VOLTYPE_DATASET {
 			args = buildDatasetCreateArgs(vol)
@@ -251,6 +259,10 @@ func SetZvolProp(vol *apis.ZFSVolume) error {
 func DestroyVolume(vol *apis.ZFSVolume) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
+	if err := getVolume(volume); err != nil {
+		return nil
+	}
+
 	args := buildVolumeDestroyArgs(vol)
 	cmd := exec.Command(ZFSVolCmd, args...)
 	out, err := cmd.CombinedOutput()
@@ -267,7 +279,7 @@ func DestroyVolume(vol *apis.ZFSVolume) error {
 }
 
 // GetVolumeDevPath returns devpath for the given volume
-func GetVolumeDevice(vol *apis.ZFSVolume) (string, error) {
+func GetVolumeDevPath(vol *apis.ZFSVolume) (string, error) {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 	if vol.Spec.VolumeType == VOLTYPE_DATASET {
 		return volume, nil

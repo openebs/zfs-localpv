@@ -130,16 +130,11 @@ func (ns *node) NodeUnpublishVolume(
 	targetPath := req.GetTargetPath()
 	volumeID := req.GetVolumeId()
 
-	getOptions := metav1.GetOptions{}
-	vol, err = builder.NewKubeclient().
-		WithNamespace(zfs.OpenEBSNamespace).
-		Get(volumeID, getOptions)
-
-	if err != nil {
+	if vol, err = zfs.GetZFSVolume(volumeID); err != nil {
 		return nil, err
 	}
 
-	devpath, _ := zfs.GetVolumeDevice(vol)
+	devpath, _ := zfs.GetVolumeDevPath(vol)
 	currentMounts, err = zfs.GetMounts(devpath)
 	if err != nil {
 		return nil, err
@@ -155,10 +150,6 @@ func (ns *node) NodeUnpublishVolume(
 			volumeID, targetPath, currentMounts,
 		)
 		return nil, status.Error(codes.Internal, "device not mounted at rightpath")
-	}
-
-	if vol, err = zfs.GetZFSVolume(volumeID); (err != nil) || (vol == nil) {
-		goto NodeUnpublishResponse
 	}
 
 	if err = zfs.UmountVolume(vol, req.GetTargetPath()); err != nil {

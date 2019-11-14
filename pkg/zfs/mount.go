@@ -88,14 +88,12 @@ func GetMounts(dev string) ([]string, error) {
 		if mntInfo.Device == dev {
 			currentMounts = append(currentMounts, mntInfo.Path)
 		}
-		logrus.Infof("Getmounts device %v mountpath %v", mntInfo.Device, mntInfo.Path)
 	}
 	return currentMounts, nil
 }
 
-// MountZvol mounts the disk to the specified path
-func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
-	if len(mount.MountPath) == 0 {
+func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
+	if len(mountpath) == 0 {
 		return status.Error(codes.InvalidArgument, "mount path missing in request")
 	}
 
@@ -104,9 +102,11 @@ func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 		return status.Error(codes.Internal, "volume is owned by different node")
 	}
 
-	devicePath, err := GetVolumeDevice(vol)
+	devicePath, err := GetVolumeDevPath(vol)
 	if err != nil {
-		return status.Error(codes.Internal, "not able to get the device path")
+		logrus.Errorf("can not get device for volume:%s dev %s err: %v",
+			vol.Name, devicePath, err.Error())
+		return err
 	}
 
 	/*
@@ -118,6 +118,8 @@ func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	 */
 	currentMounts, err := GetMounts(devicePath)
 	if err != nil {
+		logrus.Errorf("can not get mounts for volume:%s dev %s err: %v",
+			vol.Name, devicePath, err.Error())
 		return err
 	} else if len(currentMounts) >= 1 {
 		logrus.Errorf(
@@ -126,9 +128,21 @@ func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 		)
 		return status.Error(codes.Internal, "device already mounted")
 	}
+	return nil
+}
+
+// MountZvol mounts the disk to the specified path
+func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+	err := verifyMountRequest(vol, mount.MountPath)
+	if err != nil {
+		return status.Error(codes.Internal, "zvol can not be mounted")
+	}
+
+	devicePath := ZFS_DEVPATH + vol.Spec.PoolName + "/" + vol.Name
+
 	err = FormatAndMountZvol(devicePath, mount)
 	if err != nil {
-		return status.Error(codes.Internal, "not able to mount the volume")
+		return status.Error(codes.Internal, "not able to format and mount the volume")
 	}
 
 	return err
@@ -136,16 +150,12 @@ func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 
 // MountDataset mounts the zfs dataset to the specified path
 func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
-	if len(mount.MountPath) == 0 {
-		return status.Error(codes.InvalidArgument, "mount path missing in request")
+	err := verifyMountRequest(vol, mount.MountPath)
+	if err != nil {
+		return status.Error(codes.Internal, "dataset can not be mounted")
 	}
 
-	if len(vol.Spec.OwnerNodeID) > 0 &&
-		vol.Spec.OwnerNodeID != NodeID {
-		return status.Error(codes.Internal, "volume is owned by different node")
-	}
-
-	err := SetDatasetMountProp(vol, mount.MountPath)
+	err = SetDatasetMountProp(vol, mount.MountPath)
 
 	return err
 }

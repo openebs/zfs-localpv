@@ -110,7 +110,7 @@ type VolumeInfo struct {
 	// thin provisioned the volume or not
 	ThinProvision string `json:"thinProvision"`
 
-	//VolumeType specifies where the volume is
+	// VolumeType specifies whether the volume is
 	// zvol or a dataset
 	VolumeType string `json:"volumeType"`
 }
