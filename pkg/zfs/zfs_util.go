@@ -36,7 +36,6 @@ const (
 	ZFSCreateArg  = "create"
 	ZFSDestroyArg = "destroy"
 	ZFSSetArg     = "set"
-	ZFSMountArg   = "mount"
 	ZFSListArg    = "list"
 )
 
@@ -198,8 +197,7 @@ func getVolume(volume string) error {
 	ZFSVolArg = append(ZFSVolArg, ZFSListArg, volume)
 
 	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
-	out, err := cmd.CombinedOutput()
-	logrus.Infof("getVolume out %v", out)
+	_, err := cmd.CombinedOutput()
 	return err
 }
 
@@ -227,8 +225,6 @@ func CreateVolume(vol *apis.ZFSVolume) error {
 		logrus.Infof("created volume %s", volume)
 	} else if err == nil {
 		logrus.Infof("using existing volume %v", volume)
-	} else {
-		return err
 	}
 
 	return nil
@@ -250,31 +246,18 @@ func SetDatasetMountProp(volume string, mountpath string) error {
 	return err
 }
 
-// MountZFSVolume mounts the volume
-func MountZFSVolume(volume string) error {
-	var ZFSVolArg []string
-
-	ZFSVolArg = append(ZFSVolArg, ZFSMountArg, volume)
-	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		logrus.Errorf("zfs: could not mount the dataset %v cmd %v error: %s",
-			volume, ZFSVolArg, string(out))
-	}
-	return err
-}
-
 // MountZFSDataset mounts the dataset to the given mountpoint
 func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	err := SetDatasetMountProp(volume, mountpath)
+	return SetDatasetMountProp(volume, mountpath)
+}
 
-	if err != nil {
-		return err
-	}
+// UmountZFSDataset umounts the dataset
+func UmountZFSDataset(vol *apis.ZFSVolume) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	return MountZFSVolume(volume)
+	return SetDatasetMountProp(volume, "none")
 }
 
 // SetZvolProp sets the volume property

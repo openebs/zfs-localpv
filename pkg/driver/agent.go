@@ -157,6 +157,9 @@ func (ns *node) NodeUnpublishVolume(
 	}
 
 NodeUnpublishResponse:
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 	logrus.Infof("hostpath: volume %s path: %s has been unmounted.",
 		volumeID, targetPath)
 

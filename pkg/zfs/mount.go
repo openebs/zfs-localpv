@@ -51,12 +51,24 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 		return nil
 	}
 
-	if err = mounter.Unmount(targetPath); err != nil {
-		logrus.Errorf(
-			"zfspv umount volume: failed to unmount: %s\nError: %v",
-			targetPath, err,
-		)
+	if vol.Spec.VolumeType == VOLTYPE_ZVOL {
+		if err = mounter.Unmount(targetPath); err != nil {
+			logrus.Errorf(
+				"zfspv failed to unmount zvol: path %s Error: %v",
+				targetPath, err,
+			)
+			return err
+		}
+	} else if vol.Spec.VolumeType == VOLTYPE_DATASET {
+		if err = UmountZFSDataset(vol); err != nil {
+			logrus.Errorf(
+				"zfspv failed to umount dataset: path %s Error: %v",
+				targetPath, err,
+			)
+		}
 		return err
+	} else {
+		return status.Error(codes.Unimplemented, "umount failed, volume type not supported")
 	}
 
 	if err := os.RemoveAll(targetPath); err != nil {
@@ -165,7 +177,7 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 
 	logrus.Infof("dataset %v mounted %v", volume, mount.MountPath)
 
-	return err
+	return nil
 }
 
 // MountVolume mounts the disk to the specified path
