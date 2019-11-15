@@ -46,6 +46,12 @@ const (
 )
 
 func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
+	if oldVol.Spec.VolumeType == VOLTYPE_DATASET &&
+		newVol.Spec.VolumeType == VOLTYPE_DATASET &&
+		oldVol.Spec.RecordSize != newVol.Spec.RecordSize {
+		return true
+	}
+
 	return oldVol.Spec.Compression != newVol.Spec.Compression ||
 		oldVol.Spec.Dedup != newVol.Spec.Dedup
 }
@@ -165,6 +171,12 @@ func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
 	ZFSVolArg = append(ZFSVolArg, ZFSSetArg)
+
+	if vol.Spec.VolumeType == VOLTYPE_DATASET &&
+		len(vol.Spec.RecordSize) != 0 {
+		recordsizeProperty := "recordsize=" + vol.Spec.RecordSize
+		ZFSVolArg = append(ZFSVolArg, recordsizeProperty)
+	}
 
 	if len(vol.Spec.Dedup) != 0 {
 		dedupProperty := "dedup=" + vol.Spec.Dedup

@@ -96,7 +96,7 @@ func (ns *node) NodePublishVolume(
 	if err != nil {
 		goto PublishVolumeResponse
 	}
-	// Create the zfs volume and attempt mount operation on the requested path
+	// attempt mount operation on the requested path
 	if err = zfs.MountVolume(vol, mountInfo); err != nil {
 		goto PublishVolumeResponse
 	}
