@@ -24,12 +24,19 @@ import (
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
 )
 
+// zfs related constants
 const (
-	ZFS_DEVPATH   = "/dev/zvol/"
+	ZFS_DEVPATH = "/dev/zvol/"
+	ZFS_FSTYPE  = "zfs"
+)
+
+// zfs command related constants
+const (
 	ZFSVolCmd     = "zfs"
 	ZFSCreateArg  = "create"
 	ZFSDestroyArg = "destroy"
 	ZFSSetArg     = "set"
+	ZFSMountArg   = "mount"
 	ZFSListArg    = "list"
 )
 
@@ -42,6 +49,23 @@ const (
 func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
 	return oldVol.Spec.Compression != newVol.Spec.Compression ||
 		oldVol.Spec.Dedup != newVol.Spec.Dedup
+}
+
+// GetVolumeType returns the volume type
+// whether it is a zvol or dataset
+func GetVolumeType(fstype string) string {
+	/*
+	 * if fstype is provided as zfs or it is empty then a zfs dataset will be created
+	 * otherwise a zvol will be created
+	 */
+	switch fstype {
+	case ZFS_FSTYPE:
+		return VOLTYPE_DATASET
+	case "":
+		return VOLTYPE_DATASET
+	default:
+		return VOLTYPE_ZVOL
+	}
 }
 
 // builldZvolCreateArgs returns zfs create command for zvol along with attributes as a string array
@@ -58,8 +82,8 @@ func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
 	if len(vol.Spec.Capacity) != 0 {
 		ZFSVolArg = append(ZFSVolArg, "-V", vol.Spec.Capacity)
 	}
-	if len(vol.Spec.BlockSize) != 0 {
-		ZFSVolArg = append(ZFSVolArg, "-b", vol.Spec.BlockSize)
+	if len(vol.Spec.RecordSize) != 0 {
+		ZFSVolArg = append(ZFSVolArg, "-b", vol.Spec.RecordSize)
 	}
 	if len(vol.Spec.Dedup) != 0 {
 		dedupProperty := "dedup=" + vol.Spec.Dedup
@@ -99,8 +123,8 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 		quotaProperty := "quota=" + vol.Spec.Capacity
 		ZFSVolArg = append(ZFSVolArg, "-o", quotaProperty)
 	}
-	if len(vol.Spec.BlockSize) != 0 {
-		recordsizeProperty := "recordsize=" + vol.Spec.BlockSize
+	if len(vol.Spec.RecordSize) != 0 {
+		recordsizeProperty := "recordsize=" + vol.Spec.RecordSize
 		ZFSVolArg = append(ZFSVolArg, "-o", recordsizeProperty)
 	}
 	if vol.Spec.ThinProvision == "no" {
@@ -210,24 +234,47 @@ func CreateVolume(vol *apis.ZFSVolume) error {
 	return nil
 }
 
-// MountDataset mounts the dataset to the given mountpoint
-func SetDatasetMountProp(vol *apis.ZFSVolume, mountpath string) error {
+// SetDatasetMountProp sets mountpoint for the volume
+func SetDatasetMountProp(volume string, mountpath string) error {
 	var ZFSVolArg []string
 
-	volume := vol.Spec.PoolName + "/" + vol.Name
-
-	ZFSVolArg = append(ZFSVolArg, ZFSSetArg)
-
 	mountProperty := "mountpoint=" + mountpath
-	ZFSVolArg = append(ZFSVolArg, mountProperty)
+	ZFSVolArg = append(ZFSVolArg, ZFSSetArg, mountProperty, volume)
 
-	ZFSVolArg = append(ZFSVolArg, volume)
 	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		logrus.Errorf("zfs: could not set mount property on volume %v cmd %v error: %s", volume, ZFSVolArg, string(out))
+		logrus.Errorf("zfs: could not set mountpoint on dataset %v cmd %v error: %s",
+			volume, ZFSVolArg, string(out))
 	}
 	return err
+}
+
+// MountZFSVolume mounts the volume
+func MountZFSVolume(volume string) error {
+	var ZFSVolArg []string
+
+	ZFSVolArg = append(ZFSVolArg, ZFSMountArg, volume)
+	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		logrus.Errorf("zfs: could not mount the dataset %v cmd %v error: %s",
+			volume, ZFSVolArg, string(out))
+	}
+	return err
+}
+
+// MountZFSDataset mounts the dataset to the given mountpoint
+func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	err := SetDatasetMountProp(volume, mountpath)
+
+	if err != nil {
+		return err
+	}
+
+	return MountZFSVolume(volume)
 }
 
 // SetZvolProp sets the volume property

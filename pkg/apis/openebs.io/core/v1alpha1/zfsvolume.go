@@ -82,9 +82,10 @@ type VolumeInfo struct {
 	// Capacity of the volume
 	Capacity string `json:"capacity"`
 
-	// BlockSize specifies the blocksize
-	// which we should use to create the zvol
-	BlockSize string `json:"blocksize"`
+	// RecordSize specifies the record size
+	// for the zfs dataset, if we are creating
+	// a zvol then it specifies blocksize for that zvol
+	RecordSize string `json:"recordsize"`
 
 	// Compression specifies if the it should
 	// enabled on the zvol

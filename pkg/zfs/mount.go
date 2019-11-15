@@ -24,7 +24,6 @@ func FormatAndMountZvol(devicePath string, mountInfo *apis.MountInfo) error {
 		return err
 	}
 
-	logrus.Infof("created zvol %v and mounted %v fs %v", devicePath, mountInfo.MountPath, mountInfo.FSType)
 	return nil
 }
 
@@ -133,29 +132,38 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 
 // MountZvol mounts the disk to the specified path
 func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
 	err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
 		return status.Error(codes.Internal, "zvol can not be mounted")
 	}
 
-	devicePath := ZFS_DEVPATH + vol.Spec.PoolName + "/" + vol.Name
+	devicePath := ZFS_DEVPATH + volume
 
 	err = FormatAndMountZvol(devicePath, mount)
 	if err != nil {
-		return status.Error(codes.Internal, "not able to format and mount the volume")
+		return status.Error(codes.Internal, "not able to format and mount the zvol")
 	}
+
+	logrus.Infof("zvol %v mounted %v fs %v", volume, mount.MountPath, mount.FSType)
 
 	return err
 }
 
 // MountDataset mounts the zfs dataset to the specified path
 func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
 	err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
 		return status.Error(codes.Internal, "dataset can not be mounted")
 	}
 
-	err = SetDatasetMountProp(vol, mount.MountPath)
+	err = MountZFSDataset(vol, mount.MountPath)
+	if err != nil {
+		return status.Error(codes.Internal, "not able to mount the dataset")
+	}
+
+	logrus.Infof("dataset %v mounted %v", volume, mount.MountPath)
 
 	return err
 }

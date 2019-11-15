@@ -142,9 +142,9 @@ func (b *Builder) WithOwnerNode(host string) *Builder {
 	return b
 }
 
-// WithBlockSize sets blocksize of ZFSVolume
-func (b *Builder) WithBlockSize(bs string) *Builder {
-	b.volume.Object.Spec.BlockSize = bs
+// WithRecordSize sets the recordsize of ZFSVolume
+func (b *Builder) WithRecordSize(rs string) *Builder {
+	b.volume.Object.Spec.RecordSize = rs
 	return b
 }
 

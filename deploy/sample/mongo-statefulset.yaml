@@ -7,7 +7,7 @@ kind: StorageClass
 metadata:
   name: mongo-pv-az
 parameters:
-  blocksize: "4k"
+  recordsize: "4k"
   poolname: "zfspv-pool"
   fsType: "xfs"
 provisioner: zfs.csi.openebs.io

@@ -69,7 +69,7 @@ func (cs *controller) CreateVolume(
 
 	volName := req.GetName()
 	size := req.GetCapacityRange().RequiredBytes
-	bs := req.GetParameters()["blocksize"]
+	rs := req.GetParameters()["recordsize"]
 	compression := req.GetParameters()["compression"]
 	dedup := req.GetParameters()["dedup"]
 	encr := req.GetParameters()["encryption"]
@@ -79,14 +79,8 @@ func (cs *controller) CreateVolume(
 	tp := req.GetParameters()["thinprovision"]
 	schld := req.GetParameters()["scheduler"]
 	fstype := req.GetParameters()["fsType"]
-	vtype := zfs.VOLTYPE_ZVOL
 
-	// if fstype is provided as zfs then a zfs dataset will be created
-	// if nothing is provided, then by default dataset will be created
-	if fstype == "zfs" ||
-		fstype == "" {
-		vtype = zfs.VOLTYPE_DATASET
-	}
+	vtype := zfs.GetVolumeType(fstype)
 
 	selected := scheduler(req.AccessibilityRequirements, schld, pool)
 
@@ -99,7 +93,7 @@ func (cs *controller) CreateVolume(
 	volObj, err := builder.NewBuilder().
 		WithName(volName).
 		WithCapacity(strconv.FormatInt(int64(size), 10)).
-		WithBlockSize(bs).
+		WithRecordSize(rs).
 		WithPoolName(pool).
 		WithDedup(dedup).
 		WithEncryption(encr).
