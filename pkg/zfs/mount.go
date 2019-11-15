@@ -51,15 +51,7 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 		return nil
 	}
 
-	if vol.Spec.VolumeType == VOLTYPE_ZVOL {
-		if err = mounter.Unmount(targetPath); err != nil {
-			logrus.Errorf(
-				"zfspv failed to unmount zvol: path %s Error: %v",
-				targetPath, err,
-			)
-			return err
-		}
-	} else if vol.Spec.VolumeType == VOLTYPE_DATASET {
+	if vol.Spec.VolumeType == VOLTYPE_DATASET {
 		if err = UmountZFSDataset(vol); err != nil {
 			logrus.Errorf(
 				"zfspv failed to umount dataset: path %s Error: %v",
@@ -68,7 +60,13 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 		}
 		return err
 	} else {
-		return status.Error(codes.Unimplemented, "umount failed, volume type not supported")
+		if err = mounter.Unmount(targetPath); err != nil {
+			logrus.Errorf(
+				"zfspv failed to unmount zvol: path %s Error: %v",
+				targetPath, err,
+			)
+			return err
+		}
 	}
 
 	if err := os.RemoveAll(targetPath); err != nil {
@@ -134,7 +132,7 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 		return err
 	} else if len(currentMounts) >= 1 {
 		logrus.Errorf(
-			"can not mount, more than one mounts for volume:%s dev %s mounts: %v",
+			"can not mount, volume:%s already mounted dev %s mounts: %v",
 			vol.Name, devicePath, currentMounts,
 		)
 		return status.Error(codes.Internal, "device already mounted")
