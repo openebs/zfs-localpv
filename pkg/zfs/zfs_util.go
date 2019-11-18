@@ -282,6 +282,20 @@ func SetZvolProp(vol *apis.ZFSVolume) error {
 		//nothing to set, just return
 		return nil
 	}
+	/* Case: Restart =>
+	 * In this case we get the add event but here we don't know which
+	 * property has changed when we were down, so firing the zfs set
+	 * command with the all property present on the ZFSVolume.
+
+	 * Case: Property Change =>
+	 * TODO(pawan) When we get the update event, we make sure at least
+	 * one property has changed before adding it to the event queue for
+	 * handling. At this stage, since we haven't stored the
+	 * ZFSVolume object as it will be too heavy, we are firing the set
+	 * command with the all property preset in the ZFSVolume object since
+	 * it is guaranteed that at least one property has changed.
+	 */
+
 	args := buildVolumeSetArgs(vol)
 	cmd := exec.Command(ZFSVolCmd, args...)
 	out, err := cmd.CombinedOutput()
