@@ -57,8 +57,8 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 				"zfspv failed to umount dataset: path %s Error: %v",
 				targetPath, err,
 			)
+			return err
 		}
-		return err
 	} else {
 		if err = mounter.Unmount(targetPath); err != nil {
 			logrus.Errorf(

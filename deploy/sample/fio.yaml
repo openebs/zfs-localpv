@@ -11,6 +11,7 @@ parameters:
   #encryption: "on"
   #keyformat: "raw"
   #keylocation: "file:///home/pawan/key"
+  fstype: "zfs"
   poolname: "zfspv-pool"
 provisioner: zfs.csi.openebs.io
 allowedTopologies:

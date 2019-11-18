@@ -27,7 +27,7 @@ import (
 // zfs related constants
 const (
 	ZFS_DEVPATH = "/dev/zvol/"
-	ZFS_FSTYPE  = "zfs"
+	FSTYPE_ZFS  = "zfs"
 )
 
 // zfs command related constants
@@ -60,13 +60,11 @@ func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
 // whether it is a zvol or dataset
 func GetVolumeType(fstype string) string {
 	/*
-	 * if fstype is provided as zfs or it is empty then a zfs dataset will be created
+	 * if fstype is provided as zfs then a zfs dataset will be created
 	 * otherwise a zvol will be created
 	 */
 	switch fstype {
-	case ZFS_FSTYPE:
-		return VOLTYPE_DATASET
-	case "":
+	case FSTYPE_ZFS:
 		return VOLTYPE_DATASET
 	default:
 		return VOLTYPE_ZVOL
@@ -278,7 +276,9 @@ func SetZvolProp(vol *apis.ZFSVolume) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
 	if len(vol.Spec.Compression) == 0 &&
-		len(vol.Spec.Dedup) == 0 {
+		len(vol.Spec.Dedup) == 0 &&
+		(vol.Spec.VolumeType != VOLTYPE_DATASET ||
+			len(vol.Spec.RecordSize) == 0) {
 		//nothing to set, just return
 		return nil
 	}

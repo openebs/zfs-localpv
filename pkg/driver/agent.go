@@ -120,6 +120,7 @@ func (ns *node) NodeUnpublishVolume(
 	var (
 		err           error
 		vol           *apis.ZFSVolume
+		devpath       string
 		currentMounts []string
 	)
 
@@ -134,12 +135,15 @@ func (ns *node) NodeUnpublishVolume(
 		return nil, err
 	}
 
-	devpath, _ := zfs.GetVolumeDevPath(vol)
+	if devpath, err = zfs.GetVolumeDevPath(vol); err != nil {
+		goto NodeUnpublishResponse
+	}
+
 	currentMounts, err = zfs.GetMounts(devpath)
 	if err != nil {
 		return nil, err
 	} else if len(currentMounts) == 0 {
-		goto NodeUnpublishResponse
+		return nil, status.Error(codes.Internal, "umount request for not mounted volume")
 	} else if len(currentMounts) == 1 {
 		if currentMounts[0] != targetPath {
 			return nil, status.Error(codes.Internal, "device not mounted at right path")

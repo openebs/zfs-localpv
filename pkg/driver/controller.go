@@ -78,7 +78,7 @@ func (cs *controller) CreateVolume(
 	pool := req.GetParameters()["poolname"]
 	tp := req.GetParameters()["thinprovision"]
 	schld := req.GetParameters()["scheduler"]
-	fstype := req.GetParameters()["fsType"]
+	fstype := req.GetParameters()["fstype"]
 
 	vtype := zfs.GetVolumeType(fstype)
 

@@ -9,7 +9,7 @@ metadata:
 parameters:
   recordsize: "4k"
   poolname: "zfspv-pool"
-  fsType: "xfs"
+  fstype: "xfs"
 provisioner: zfs.csi.openebs.io
 ---
 # Headless service for stable DNS entries of StatefulSet members.
