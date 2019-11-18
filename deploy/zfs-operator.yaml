@@ -20,7 +20,7 @@ spec:
     singular: zfsvolume
     kind: ZFSVolume
     shortNames:
-    - zvol
+    - zfsvol
     - zv
   additionalPrinterColumns:
   - JSONPath: .spec.poolName
