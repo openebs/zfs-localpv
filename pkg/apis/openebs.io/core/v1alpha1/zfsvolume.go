@@ -85,33 +85,37 @@ type VolumeInfo struct {
 	// RecordSize specifies the record size
 	// for the zfs dataset, if we are creating
 	// a zvol then it specifies blocksize for that zvol
-	RecordSize string `json:"recordsize"`
+	RecordSize string `json:"recordsize,omitempty"`
 
 	// Compression specifies if the it should
 	// enabled on the zvol
-	Compression string `json:"compression"`
+	Compression string `json:"compression,omitempty"`
 
 	// Dedup specifies the deduplication
 	// should be enabled on the zvol
-	Dedup string `json:"dedup"`
+	Dedup string `json:"dedup,omitempty"`
 
 	// Encryption specifies the encryption
 	// should be enabled on the zvol
-	Encryption string `json:"encryption"`
+	Encryption string `json:"encryption,omitempty"`
 
 	// KeyLocation is the location of key
 	// for the encryption
-	KeyLocation string `json:"keylocation"`
+	KeyLocation string `json:"keylocation,omitempty"`
 
 	// KeyFormat specifies format of the
 	// encryption key
-	KeyFormat string `json:"keyformat"`
+	KeyFormat string `json:"keyformat,omitempty"`
 
 	// Thinprovision specifies if we should
 	// thin provisioned the volume or not
-	ThinProvision string `json:"thinProvision"`
+	ThinProvision string `json:"thinProvision,omitempty"`
 
 	// VolumeType specifies whether the volume is
 	// zvol or a dataset
 	VolumeType string `json:"volumeType"`
+
+	// FsType specifies filesystem type for the
+	// zfs volume/dataset
+	FsType string `json:"fsType,omitempty"`
 }

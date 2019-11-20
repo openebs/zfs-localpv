@@ -35,6 +35,10 @@ spec:
     name: Size
     description: Size of the volume
     type: string
+  - JSONPath: .spec.fsType
+    name: Filesystem
+    description: filesystem created on the volume
+    type: string
 
 ---
 ##############################################

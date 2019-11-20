@@ -102,6 +102,7 @@ func (cs *controller) CreateVolume(
 		WithThinProv(tp).
 		WithOwnerNode(selected).
 		WithVolumeType(vtype).
+		WithFsType(fstype).
 		WithCompression(compression).Build()
 
 	if err != nil {
