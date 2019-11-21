@@ -4,13 +4,14 @@ metadata:
   name: openebs-zfspv
 allowVolumeExpansion: true
 parameters:
-  blocksize: "4k"
+  recordsize: "4k"
   compression: "on"
   dedup: "on"
   thinprovision: "yes"
   #encryption: "on"
   #keyformat: "raw"
   #keylocation: "file:///home/pawan/key"
+  fstype: "zfs"
   poolname: "zfspv-pool"
 provisioner: zfs.csi.openebs.io
 allowedTopologies:
@@ -32,22 +33,33 @@ spec:
     requests:
       storage: 4Gi
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: fio
+  labels:
+    name: fio
 spec:
-  restartPolicy: Never
-  containers:
-  - name: perfrunner
-    image: openebs/tests-fio
-    command: ["/bin/bash"]
-    args: ["-c", "while true ;do sleep 50; done"]
-    volumeMounts:
-       - mountPath: /datadir
-         name: fio-vol
-    tty: true
-  volumes:
-  - name: fio-vol
-    persistentVolumeClaim:
-      claimName: csi-zfspv
+  replicas: 1
+  selector:
+    matchLabels:
+      name: fio
+  template:
+    metadata:
+      labels:
+        name: fio
+    spec:
+      containers:
+        - resources:
+          name: perfrunner
+          image: openebs/tests-fio
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash"]
+          args: ["-c", "while true ;do sleep 50; done"]
+          volumeMounts:
+            - mountPath: /datadir
+              name: fio-vol
+      volumes:
+        - name: fio-vol
+          persistentVolumeClaim:
+            claimName: csi-zfspv

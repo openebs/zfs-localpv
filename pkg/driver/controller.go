@@ -25,7 +25,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/builder"
 	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
-	zvol "github.com/openebs/zfs-localpv/pkg/zfs"
+	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -69,7 +69,8 @@ func (cs *controller) CreateVolume(
 
 	volName := req.GetName()
 	size := req.GetCapacityRange().RequiredBytes
-	bs := req.GetParameters()["blocksize"]
+	rs := req.GetParameters()["recordsize"]
+	bs := req.GetParameters()["volblocksize"]
 	compression := req.GetParameters()["compression"]
 	dedup := req.GetParameters()["dedup"]
 	encr := req.GetParameters()["encryption"]
@@ -78,6 +79,9 @@ func (cs *controller) CreateVolume(
 	pool := req.GetParameters()["poolname"]
 	tp := req.GetParameters()["thinprovision"]
 	schld := req.GetParameters()["scheduler"]
+	fstype := req.GetParameters()["fstype"]
+
+	vtype := zfs.GetVolumeType(fstype)
 
 	selected := scheduler(req.AccessibilityRequirements, schld, pool)
 
@@ -90,7 +94,8 @@ func (cs *controller) CreateVolume(
 	volObj, err := builder.NewBuilder().
 		WithName(volName).
 		WithCapacity(strconv.FormatInt(int64(size), 10)).
-		WithBlockSize(bs).
+		WithRecordSize(rs).
+		WithVolBlockSize(bs).
 		WithPoolName(pool).
 		WithDedup(dedup).
 		WithEncryption(encr).
@@ -98,18 +103,20 @@ func (cs *controller) CreateVolume(
 		WithKeyLocation(kl).
 		WithThinProv(tp).
 		WithOwnerNode(selected).
+		WithVolumeType(vtype).
+		WithFsType(fstype).
 		WithCompression(compression).Build()
 
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	err = zvol.ProvisionVolume(size, volObj)
+	err = zfs.ProvisionVolume(size, volObj)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "not able to provision the volume")
 	}
 
-	topology := map[string]string{zvol.ZFSTopologyKey: selected}
+	topology := map[string]string{zfs.ZFSTopologyKey: selected}
 
 	return csipayload.NewCreateVolumeResponseBuilder().
 		WithName(volName).
@@ -136,13 +143,13 @@ func (cs *controller) DeleteVolume(
 	volumeID := req.GetVolumeId()
 
 	// verify if the volume has already been deleted
-	vol, err := zvol.GetVolume(volumeID)
+	vol, err := zfs.GetVolume(volumeID)
 	if vol != nil && vol.DeletionTimestamp != nil {
 		goto deleteResponse
 	}
 
 	// Delete the corresponding ZV CR
-	err = zvol.DeleteVolume(volumeID)
+	err = zfs.DeleteVolume(volumeID)
 	if err != nil {
 		return nil, errors.Wrapf(
 			err,

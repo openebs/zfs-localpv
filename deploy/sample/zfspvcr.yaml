@@ -4,7 +4,6 @@ metadata:
   name: pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
   namespace: openebs
 spec:
-  blocksize: 4k
   capacity: "4294967296"
   compression: "off"
   dedup: "off"
@@ -13,5 +12,6 @@ spec:
   keylocation: ""
   ownerNodeID: zfspv-node1
   poolName: zfspv-pool
+  recordsize: 8k
   thinProvision: "off"
-
+  volumeType: DATASET

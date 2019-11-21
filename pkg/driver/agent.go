@@ -22,7 +22,7 @@ import (
 	ctrl "github.com/openebs/zfs-localpv/cmd/controller"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/builder"
-	zvol "github.com/openebs/zfs-localpv/pkg/zfs"
+	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -65,7 +65,7 @@ func GetVolAndMountInfo(
 
 	getOptions := metav1.GetOptions{}
 	vol, err := builder.NewKubeclient().
-		WithNamespace(zvol.OpenEBSNamespace).
+		WithNamespace(zfs.OpenEBSNamespace).
 		Get(req.GetVolumeId(), getOptions)
 
 	if err != nil {
@@ -96,8 +96,8 @@ func (ns *node) NodePublishVolume(
 	if err != nil {
 		goto PublishVolumeResponse
 	}
-	// Create the zfs volume and attempt mount operation on the requested path
-	if err = zvol.CreateAndMountZvol(vol, mountInfo); err != nil {
+	// attempt mount operation on the requested path
+	if err = zfs.MountVolume(vol, mountInfo); err != nil {
 		goto PublishVolumeResponse
 	}
 
@@ -120,6 +120,7 @@ func (ns *node) NodeUnpublishVolume(
 	var (
 		err           error
 		vol           *apis.ZFSVolume
+		devpath       string
 		currentMounts []string
 	)
 
@@ -130,22 +131,19 @@ func (ns *node) NodeUnpublishVolume(
 	targetPath := req.GetTargetPath()
 	volumeID := req.GetVolumeId()
 
-	getOptions := metav1.GetOptions{}
-	vol, err = builder.NewKubeclient().
-		WithNamespace(zvol.OpenEBSNamespace).
-		Get(volumeID, getOptions)
-
-	if err != nil {
+	if vol, err = zfs.GetZFSVolume(volumeID); err != nil {
 		return nil, err
 	}
 
-	zfsvolume := vol.Spec.PoolName + "/" + vol.Name
-	devpath := zvol.ZFS_DEVPATH + zfsvolume
-	currentMounts, err = zvol.GetMounts(devpath)
+	if devpath, err = zfs.GetVolumeDevPath(vol); err != nil {
+		goto NodeUnpublishResponse
+	}
+
+	currentMounts, err = zfs.GetMounts(devpath)
 	if err != nil {
 		return nil, err
 	} else if len(currentMounts) == 0 {
-		goto NodeUnpublishResponse
+		return nil, status.Error(codes.Internal, "umount request for not mounted volume")
 	} else if len(currentMounts) == 1 {
 		if currentMounts[0] != targetPath {
 			return nil, status.Error(codes.Internal, "device not mounted at right path")
@@ -158,15 +156,14 @@ func (ns *node) NodeUnpublishVolume(
 		return nil, status.Error(codes.Internal, "device not mounted at rightpath")
 	}
 
-	if vol, err = zvol.GetZFSVolume(volumeID); (err != nil) || (vol == nil) {
-		goto NodeUnpublishResponse
-	}
-
-	if err = zvol.UmountVolume(vol, req.GetTargetPath()); err != nil {
+	if err = zfs.UmountVolume(vol, req.GetTargetPath()); err != nil {
 		goto NodeUnpublishResponse
 	}
 
 NodeUnpublishResponse:
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 	logrus.Infof("hostpath: volume %s path: %s has been unmounted.",
 		volumeID, targetPath)
 
@@ -181,7 +178,7 @@ func (ns *node) NodeGetInfo(
 	req *csi.NodeGetInfoRequest,
 ) (*csi.NodeGetInfoResponse, error) {
 
-	topology := map[string]string{zvol.ZFSTopologyKey: ns.driver.config.NodeID}
+	topology := map[string]string{zfs.ZFSTopologyKey: ns.driver.config.NodeID}
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.driver.config.NodeID,
 		AccessibleTopology: &csi.Topology{

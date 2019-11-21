@@ -17,188 +17,337 @@ limitations under the License.
 package zfs
 
 import (
-	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
 )
 
+// zfs related constants
 const (
-	ZFS_DEVPATH   = "/dev/zvol/"
+	ZFS_DEVPATH = "/dev/zvol/"
+	FSTYPE_ZFS  = "zfs"
+)
+
+// zfs command related constants
+const (
 	ZFSVolCmd     = "zfs"
 	ZFSCreateArg  = "create"
 	ZFSDestroyArg = "destroy"
 	ZFSSetArg     = "set"
+	ZFSListArg    = "list"
+)
+
+// constants to define volume type
+const (
+	VOLTYPE_DATASET = "DATASET"
+	VOLTYPE_ZVOL    = "ZVOL"
 )
 
 func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
+	if oldVol.Spec.VolumeType == VOLTYPE_DATASET &&
+		newVol.Spec.VolumeType == VOLTYPE_DATASET &&
+		oldVol.Spec.RecordSize != newVol.Spec.RecordSize {
+		return true
+	}
+
 	return oldVol.Spec.Compression != newVol.Spec.Compression ||
-		oldVol.Spec.Dedup != newVol.Spec.Dedup ||
-		oldVol.Spec.Capacity != newVol.Spec.Capacity
+		oldVol.Spec.Dedup != newVol.Spec.Dedup
 }
 
-// builldVolumeCreateArgs returns zvol create command along with attributes as a string array
-func buildVolumeCreateArgs(vol *apis.ZFSVolume) []string {
-	var ZFSVolCmd []string
+// GetVolumeType returns the volume type
+// whether it is a zvol or dataset
+func GetVolumeType(fstype string) string {
+	/*
+	 * if fstype is provided as zfs then a zfs dataset will be created
+	 * otherwise a zvol will be created
+	 */
+	switch fstype {
+	case FSTYPE_ZFS:
+		return VOLTYPE_DATASET
+	default:
+		return VOLTYPE_ZVOL
+	}
+}
 
-	zvol := vol.Spec.PoolName + "/" + vol.Name
+// builldZvolCreateArgs returns zfs create command for zvol along with attributes as a string array
+func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
+	var ZFSVolArg []string
 
-	ZFSVolCmd = append(ZFSVolCmd, ZFSCreateArg)
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	ZFSVolArg = append(ZFSVolArg, ZFSCreateArg)
 
 	if vol.Spec.ThinProvision == "yes" {
-		ZFSVolCmd = append(ZFSVolCmd, "-s")
+		ZFSVolArg = append(ZFSVolArg, "-s")
 	}
 	if len(vol.Spec.Capacity) != 0 {
-		ZFSVolCmd = append(ZFSVolCmd, "-V", vol.Spec.Capacity)
+		ZFSVolArg = append(ZFSVolArg, "-V", vol.Spec.Capacity)
 	}
-	if len(vol.Spec.BlockSize) != 0 {
-		ZFSVolCmd = append(ZFSVolCmd, "-b", vol.Spec.BlockSize)
+	if len(vol.Spec.VolBlockSize) != 0 {
+		ZFSVolArg = append(ZFSVolArg, "-b", vol.Spec.VolBlockSize)
 	}
 	if len(vol.Spec.Dedup) != 0 {
 		dedupProperty := "dedup=" + vol.Spec.Dedup
-		ZFSVolCmd = append(ZFSVolCmd, "-o", dedupProperty)
+		ZFSVolArg = append(ZFSVolArg, "-o", dedupProperty)
 	}
 	if len(vol.Spec.Compression) != 0 {
 		compressionProperty := "compression=" + vol.Spec.Compression
-		ZFSVolCmd = append(ZFSVolCmd, "-o", compressionProperty)
+		ZFSVolArg = append(ZFSVolArg, "-o", compressionProperty)
 	}
 	if len(vol.Spec.Encryption) != 0 {
 		encryptionProperty := "encryption=" + vol.Spec.Encryption
-		ZFSVolCmd = append(ZFSVolCmd, "-o", encryptionProperty)
+		ZFSVolArg = append(ZFSVolArg, "-o", encryptionProperty)
 	}
 	if len(vol.Spec.KeyLocation) != 0 {
 		keyLocation := "keylocation=" + vol.Spec.KeyLocation
-		ZFSVolCmd = append(ZFSVolCmd, "-o", keyLocation)
+		ZFSVolArg = append(ZFSVolArg, "-o", keyLocation)
 	}
 	if len(vol.Spec.KeyFormat) != 0 {
 		keyFormat := "keyformat=" + vol.Spec.KeyFormat
-		ZFSVolCmd = append(ZFSVolCmd, "-o", keyFormat)
+		ZFSVolArg = append(ZFSVolArg, "-o", keyFormat)
 	}
 
-	ZFSVolCmd = append(ZFSVolCmd, zvol)
+	ZFSVolArg = append(ZFSVolArg, volume)
 
-	return ZFSVolCmd
+	return ZFSVolArg
 }
 
-// builldVolumeSetArgs returns zvol set command along with attributes as a string array
-// TODO(pawan) need to find a way to identify which property has changed
-func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
-	var ZFSVolCmd []string
+// builldDatasetCreateArgs returns zfs create command for dataset along with attributes as a string array
+func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
+	var ZFSVolArg []string
 
-	zvol := vol.Spec.PoolName + "/" + vol.Name
+	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	ZFSVolCmd = append(ZFSVolCmd, ZFSSetArg)
+	ZFSVolArg = append(ZFSVolArg, ZFSCreateArg)
 
 	if len(vol.Spec.Capacity) != 0 {
-		volsize := "volsize=" + vol.Spec.Capacity
-		ZFSVolCmd = append(ZFSVolCmd, volsize)
+		quotaProperty := "quota=" + vol.Spec.Capacity
+		ZFSVolArg = append(ZFSVolArg, "-o", quotaProperty)
+	}
+	if len(vol.Spec.RecordSize) != 0 {
+		recordsizeProperty := "recordsize=" + vol.Spec.RecordSize
+		ZFSVolArg = append(ZFSVolArg, "-o", recordsizeProperty)
+	}
+	if vol.Spec.ThinProvision == "no" {
+		reservationProperty := "reservation=" + vol.Spec.Capacity
+		ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty)
 	}
 	if len(vol.Spec.Dedup) != 0 {
 		dedupProperty := "dedup=" + vol.Spec.Dedup
-		ZFSVolCmd = append(ZFSVolCmd, dedupProperty)
+		ZFSVolArg = append(ZFSVolArg, "-o", dedupProperty)
 	}
 	if len(vol.Spec.Compression) != 0 {
 		compressionProperty := "compression=" + vol.Spec.Compression
-		ZFSVolCmd = append(ZFSVolCmd, compressionProperty)
+		ZFSVolArg = append(ZFSVolArg, "-o", compressionProperty)
+	}
+	if len(vol.Spec.Encryption) != 0 {
+		encryptionProperty := "encryption=" + vol.Spec.Encryption
+		ZFSVolArg = append(ZFSVolArg, "-o", encryptionProperty)
+	}
+	if len(vol.Spec.KeyLocation) != 0 {
+		keyLocation := "keylocation=" + vol.Spec.KeyLocation
+		ZFSVolArg = append(ZFSVolArg, "-o", keyLocation)
+	}
+	if len(vol.Spec.KeyFormat) != 0 {
+		keyFormat := "keyformat=" + vol.Spec.KeyFormat
+		ZFSVolArg = append(ZFSVolArg, "-o", keyFormat)
 	}
 
-	ZFSVolCmd = append(ZFSVolCmd, zvol)
+	// set the mount path to none, by default zfs mounts it to the default dataset path
+	ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=none", volume)
 
-	return ZFSVolCmd
+	return ZFSVolArg
 }
 
-// builldVolumeDestroyArgs returns zvol destroy command along with attributes as a string array
+// builldVolumeSetArgs returns volume set command along with attributes as a string array
+// TODO(pawan) need to find a way to identify which property has changed
+func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
+	var ZFSVolArg []string
+
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	ZFSVolArg = append(ZFSVolArg, ZFSSetArg)
+
+	if vol.Spec.VolumeType == VOLTYPE_DATASET &&
+		len(vol.Spec.RecordSize) != 0 {
+		recordsizeProperty := "recordsize=" + vol.Spec.RecordSize
+		ZFSVolArg = append(ZFSVolArg, recordsizeProperty)
+	}
+
+	if len(vol.Spec.Dedup) != 0 {
+		dedupProperty := "dedup=" + vol.Spec.Dedup
+		ZFSVolArg = append(ZFSVolArg, dedupProperty)
+	}
+	if len(vol.Spec.Compression) != 0 {
+		compressionProperty := "compression=" + vol.Spec.Compression
+		ZFSVolArg = append(ZFSVolArg, compressionProperty)
+	}
+
+	ZFSVolArg = append(ZFSVolArg, volume)
+
+	return ZFSVolArg
+}
+
+// builldVolumeDestroyArgs returns volume destroy command along with attributes as a string array
 func buildVolumeDestroyArgs(vol *apis.ZFSVolume) []string {
-	var ZFSVolCmd []string
+	var ZFSVolArg []string
 
-	zvol := vol.Spec.PoolName + "/" + vol.Name
+	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	ZFSVolCmd = append(ZFSVolCmd, ZFSDestroyArg, "-R", zvol)
+	ZFSVolArg = append(ZFSVolArg, ZFSDestroyArg, "-R", volume)
 
-	return ZFSVolCmd
+	return ZFSVolArg
 }
 
-// CreateZvol creates the zvol and returns the corresponding diskPath
-// of the volume which gets created on the node
-func CreateZvol(vol *apis.ZFSVolume) error {
-	zvol := vol.Spec.PoolName + "/" + vol.Name
-	devicePath := ZFS_DEVPATH + zvol
+func getVolume(volume string) error {
+	var ZFSVolArg []string
 
-	if _, err := os.Stat(devicePath); os.IsNotExist(err) {
+	ZFSVolArg = append(ZFSVolArg, ZFSListArg, volume)
 
-		args := buildVolumeCreateArgs(vol)
+	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
+	_, err := cmd.CombinedOutput()
+	return err
+}
+
+// CreateVolume creates the zvol/dataset as per
+// info provided in ZFSVolume object
+func CreateVolume(vol *apis.ZFSVolume) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	if err := getVolume(volume); err != nil {
+		var args []string
+		if vol.Spec.VolumeType == VOLTYPE_DATASET {
+			args = buildDatasetCreateArgs(vol)
+		} else {
+			args = buildZvolCreateArgs(vol)
+		}
 		cmd := exec.Command(ZFSVolCmd, args...)
 		out, err := cmd.CombinedOutput()
 
 		if err != nil {
 			logrus.Errorf(
-				"zfs: could not create zvol %v cmd %v error: %s", zvol, args, string(out),
+				"zfs: could not create volume %v cmd %v error: %s", volume, args, string(out),
 			)
 			return err
 		}
-		logrus.Infof("created zvol %s", zvol)
+		logrus.Infof("created volume %s", volume)
 	} else if err == nil {
-		logrus.Infof("using existing zvol %v", zvol)
-	} else {
-		return err
+		logrus.Infof("using existing volume %v", volume)
 	}
 
 	return nil
 }
 
-// SetZvolProp sets the zvol property
+// SetDatasetMountProp sets mountpoint for the volume
+func SetDatasetMountProp(volume string, mountpath string) error {
+	var ZFSVolArg []string
+
+	mountProperty := "mountpoint=" + mountpath
+	ZFSVolArg = append(ZFSVolArg, ZFSSetArg, mountProperty, volume)
+
+	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		logrus.Errorf("zfs: could not set mountpoint on dataset %v cmd %v error: %s",
+			volume, ZFSVolArg, string(out))
+	}
+	return err
+}
+
+// MountZFSDataset mounts the dataset to the given mountpoint
+func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	return SetDatasetMountProp(volume, mountpath)
+}
+
+// UmountZFSDataset umounts the dataset
+func UmountZFSDataset(vol *apis.ZFSVolume) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	return SetDatasetMountProp(volume, "none")
+}
+
+// SetZvolProp sets the volume property
 func SetZvolProp(vol *apis.ZFSVolume) error {
 	var err error
-	zvol := vol.Spec.PoolName + "/" + vol.Name
-	devicePath := ZFS_DEVPATH + zvol
+	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	if _, err = os.Stat(devicePath); err == nil {
-		args := buildVolumeSetArgs(vol)
-		cmd := exec.Command(ZFSVolCmd, args...)
-		out, err := cmd.CombinedOutput()
-
-		if err != nil {
-			logrus.Errorf(
-				"zfs: could not set property on zvol %v cmd %v error: %s", zvol, args, string(out),
-			)
-			return err
-		}
-		logrus.Infof("property set on zvol %s", zvol)
+	if len(vol.Spec.Compression) == 0 &&
+		len(vol.Spec.Dedup) == 0 &&
+		(vol.Spec.VolumeType != VOLTYPE_DATASET ||
+			len(vol.Spec.RecordSize) == 0) {
+		//nothing to set, just return
+		return nil
 	}
+	/* Case: Restart =>
+	 * In this case we get the add event but here we don't know which
+	 * property has changed when we were down, so firing the zfs set
+	 * command with the all property present on the ZFSVolume.
+
+	 * Case: Property Change =>
+	 * TODO(pawan) When we get the update event, we make sure at least
+	 * one property has changed before adding it to the event queue for
+	 * handling. At this stage, since we haven't stored the
+	 * ZFSVolume object as it will be too heavy, we are firing the set
+	 * command with the all property preset in the ZFSVolume object since
+	 * it is guaranteed that at least one property has changed.
+	 */
+
+	args := buildVolumeSetArgs(vol)
+	cmd := exec.Command(ZFSVolCmd, args...)
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		logrus.Errorf(
+			"zfs: could not set property on volume %v cmd %v error: %s", volume, args, string(out),
+		)
+		return err
+	}
+	logrus.Infof("property set on volume %s", volume)
 
 	return err
 }
 
-// DestroyZvol deletes the zvol
-func DestroyZvol(vol *apis.ZFSVolume) error {
-	zvol := vol.Spec.PoolName + "/" + vol.Name
-	devicePath := ZFS_DEVPATH + zvol
+// DestroyVolume deletes the zfs volume
+func DestroyVolume(vol *apis.ZFSVolume) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	if _, err := os.Stat(devicePath); err == nil {
-		args := buildVolumeDestroyArgs(vol)
-		cmd := exec.Command(ZFSVolCmd, args...)
-		out, err := cmd.CombinedOutput()
-
-		if err != nil {
-			logrus.Errorf(
-				"zfs: could not destroy zvol %v cmd %v error: %s", zvol, args, string(out),
-			)
-			return err
-		}
-		logrus.Infof("destroyed zvol %s", zvol)
+	if err := getVolume(volume); err != nil {
+		return nil
 	}
+
+	args := buildVolumeDestroyArgs(vol)
+	cmd := exec.Command(ZFSVolCmd, args...)
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		logrus.Errorf(
+			"zfs: could not destroy volume %v cmd %v error: %s", volume, args, string(out),
+		)
+		return err
+	}
+	logrus.Infof("destroyed volume %s", volume)
 
 	return nil
 }
 
-// GetDevicePath returns device path for zvol if it exists
-func GetDevicePath(vol *apis.ZFSVolume) (string, error) {
-	zvol := vol.Spec.PoolName + "/" + vol.Name
-	devicePath := ZFS_DEVPATH + zvol
+// GetVolumeDevPath returns devpath for the given volume
+func GetVolumeDevPath(vol *apis.ZFSVolume) (string, error) {
+	volume := vol.Spec.PoolName + "/" + vol.Name
+	if vol.Spec.VolumeType == VOLTYPE_DATASET {
+		return volume, nil
+	}
 
-	if _, err := os.Stat(devicePath); os.IsNotExist(err) {
+	devicePath := ZFS_DEVPATH + volume
+
+	// evaluate the symlink to get the dev path for zvol
+	dev, err := filepath.EvalSymlinks(devicePath)
+	if err != nil {
 		return "", err
 	}
-	return devicePath, nil
+
+	return dev, nil
 }

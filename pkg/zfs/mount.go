@@ -3,7 +3,6 @@ package zfs
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
@@ -25,7 +24,6 @@ func FormatAndMountZvol(devicePath string, mountInfo *apis.MountInfo) error {
 		return err
 	}
 
-	logrus.Infof("created zvol %v and mounted %v fs %v", devicePath, mountInfo.MountPath, mountInfo.FSType)
 	return nil
 }
 
@@ -53,12 +51,22 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 		return nil
 	}
 
-	if err = mounter.Unmount(targetPath); err != nil {
-		logrus.Errorf(
-			"zfspv umount volume: failed to unmount: %s\nError: %v",
-			targetPath, err,
-		)
-		return err
+	if vol.Spec.VolumeType == VOLTYPE_DATASET {
+		if err = UmountZFSDataset(vol); err != nil {
+			logrus.Errorf(
+				"zfspv failed to umount dataset: path %s Error: %v",
+				targetPath, err,
+			)
+			return err
+		}
+	} else {
+		if err = mounter.Unmount(targetPath); err != nil {
+			logrus.Errorf(
+				"zfspv failed to unmount zvol: path %s Error: %v",
+				targetPath, err,
+			)
+			return err
+		}
 	}
 
 	if err := os.RemoveAll(targetPath); err != nil {
@@ -72,7 +80,7 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 }
 
 // GetMounts gets mountpoints for the specified volume
-func GetMounts(devicepath string) ([]string, error) {
+func GetMounts(dev string) ([]string, error) {
 
 	var (
 		currentMounts []string
@@ -80,10 +88,6 @@ func GetMounts(devicepath string) ([]string, error) {
 		mountList     []mount.MountPoint
 	)
 
-	dev, err := filepath.EvalSymlinks(devicepath)
-	if err != nil {
-		return nil, err
-	}
 	mounter := mount.New("")
 	// Get list of mounted paths present with the node
 	if mountList, err = mounter.List(); err != nil {
@@ -97,10 +101,8 @@ func GetMounts(devicepath string) ([]string, error) {
 	return currentMounts, nil
 }
 
-// CreateAndMountZvol creates the zfs Volume
-// and mounts the disk to the specified path
-func CreateAndMountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
-	if len(mount.MountPath) == 0 {
+func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
+	if len(mountpath) == 0 {
 		return status.Error(codes.InvalidArgument, "mount path missing in request")
 	}
 
@@ -109,9 +111,11 @@ func CreateAndMountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 		return status.Error(codes.Internal, "volume is owned by different node")
 	}
 
-	devicePath, err := GetDevicePath(vol)
+	devicePath, err := GetVolumeDevPath(vol)
 	if err != nil {
-		return status.Error(codes.Internal, "not able to get the device path")
+		logrus.Errorf("can not get device for volume:%s dev %s err: %v",
+			vol.Name, devicePath, err.Error())
+		return err
 	}
 
 	/*
@@ -123,18 +127,63 @@ func CreateAndMountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	 */
 	currentMounts, err := GetMounts(devicePath)
 	if err != nil {
+		logrus.Errorf("can not get mounts for volume:%s dev %s err: %v",
+			vol.Name, devicePath, err.Error())
 		return err
 	} else if len(currentMounts) >= 1 {
 		logrus.Errorf(
-			"can not mount, more than one mounts for volume:%s dev %s mounts: %v",
+			"can not mount, volume:%s already mounted dev %s mounts: %v",
 			vol.Name, devicePath, currentMounts,
 		)
 		return status.Error(codes.Internal, "device already mounted")
 	}
-	err = FormatAndMountZvol(devicePath, mount)
+	return nil
+}
+
+// MountZvol mounts the disk to the specified path
+func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
+	err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
-		return status.Error(codes.Internal, "not able to mount the volume")
+		return status.Error(codes.Internal, "zvol can not be mounted")
 	}
 
+	devicePath := ZFS_DEVPATH + volume
+
+	err = FormatAndMountZvol(devicePath, mount)
+	if err != nil {
+		return status.Error(codes.Internal, "not able to format and mount the zvol")
+	}
+
+	logrus.Infof("zvol %v mounted %v fs %v", volume, mount.MountPath, mount.FSType)
+
 	return err
+}
+
+// MountDataset mounts the zfs dataset to the specified path
+func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
+	err := verifyMountRequest(vol, mount.MountPath)
+	if err != nil {
+		return status.Error(codes.Internal, "dataset can not be mounted")
+	}
+
+	err = MountZFSDataset(vol, mount.MountPath)
+	if err != nil {
+		return status.Error(codes.Internal, "not able to mount the dataset")
+	}
+
+	logrus.Infof("dataset %v mounted %v", volume, mount.MountPath)
+
+	return nil
+}
+
+// MountVolume mounts the disk to the specified path
+func MountVolume(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+	switch vol.Spec.VolumeType {
+	case VOLTYPE_DATASET:
+		return MountDataset(vol, mount)
+	default:
+		return MountZvol(vol, mount)
+	}
 }

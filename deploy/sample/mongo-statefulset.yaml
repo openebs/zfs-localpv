@@ -7,9 +7,9 @@ kind: StorageClass
 metadata:
   name: mongo-pv-az
 parameters:
-  blocksize: "4k"
+  volblocksize: "4k"
   poolname: "zfspv-pool"
-  fsType: "xfs"
+  fstype: "xfs"
 provisioner: zfs.csi.openebs.io
 ---
 # Headless service for stable DNS entries of StatefulSet members.
