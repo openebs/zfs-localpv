@@ -4,7 +4,7 @@ metadata:
   name: openebs-zfspv
 allowVolumeExpansion: true
 parameters:
-  recordsize: "4k"
+  volblocksize: "4k"
   compression: "on"
   dedup: "on"
   thinprovision: "yes"
