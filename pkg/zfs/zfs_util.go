@@ -85,8 +85,8 @@ func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
 	if len(vol.Spec.Capacity) != 0 {
 		ZFSVolArg = append(ZFSVolArg, "-V", vol.Spec.Capacity)
 	}
-	if len(vol.Spec.RecordSize) != 0 {
-		ZFSVolArg = append(ZFSVolArg, "-b", vol.Spec.RecordSize)
+	if len(vol.Spec.VolBlockSize) != 0 {
+		ZFSVolArg = append(ZFSVolArg, "-b", vol.Spec.VolBlockSize)
 	}
 	if len(vol.Spec.Dedup) != 0 {
 		dedupProperty := "dedup=" + vol.Spec.Dedup

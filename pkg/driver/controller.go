@@ -70,6 +70,7 @@ func (cs *controller) CreateVolume(
 	volName := req.GetName()
 	size := req.GetCapacityRange().RequiredBytes
 	rs := req.GetParameters()["recordsize"]
+	bs := req.GetParameters()["volblocksize"]
 	compression := req.GetParameters()["compression"]
 	dedup := req.GetParameters()["dedup"]
 	encr := req.GetParameters()["encryption"]
@@ -94,6 +95,7 @@ func (cs *controller) CreateVolume(
 		WithName(volName).
 		WithCapacity(strconv.FormatInt(int64(size), 10)).
 		WithRecordSize(rs).
+		WithVolBlockSize(bs).
 		WithPoolName(pool).
 		WithDedup(dedup).
 		WithEncryption(encr).

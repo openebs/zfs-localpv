@@ -148,6 +148,12 @@ func (b *Builder) WithRecordSize(rs string) *Builder {
 	return b
 }
 
+// WithVolBlockSize sets the volblocksize of ZFSVolume
+func (b *Builder) WithVolBlockSize(bs string) *Builder {
+	b.volume.Object.Spec.VolBlockSize = bs
+	return b
+}
+
 // WithVolumeType sets if ZFSVolume needs to be thin provisioned
 func (b *Builder) WithVolumeType(vtype string) *Builder {
 	b.volume.Object.Spec.VolumeType = vtype
