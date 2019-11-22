@@ -7,7 +7,7 @@ CSI driver for provisioning Local PVs backed by ZFS and more.
 ## Project Status
 
 This project is under active development and considered to be in Alpha state.
-The current implementation only supports provisioning and de-provisioning of ZFS Volumes.
+The current implementation only supports provisioning and de-provisioning of ZFS Volumes. Also, few properties like compression, dedup and recordsize can be provided while provisioning the volumes and can also be changed after provisioning is done.
 
 ## Usage
 
@@ -37,6 +37,8 @@ each node of the cluster and install zfs utils
 ```
 $ apt-get install zfsutils-linux
 ```
+
+Go to each node and create the ZFS Pool, which will be used for provisioning the volumes. You can create the Pool of your choice, it can be striped, mirrored or raidz pool.
 
 ### Installation
 
@@ -81,17 +83,69 @@ kind: StorageClass
 metadata:
   name: openebs-zfspv
 parameters:
-  blocksize: "4k"
+  recordsize: "4k"
   compression: "off"
   dedup: "off"
-  thinprovision: "no"
+  fstype: "zfs"
   poolname: "zfspv-pool"
 provisioner: zfs.csi.openebs.io
 ```
 
-The storage class contains the volume paramaters like blocksize, compression, dedup and thinprovision. You can select what are all
-parameters you want. In case paramenters are not provided, the volume will inherit the properties from the ZFS pool.
-The *poolname* is the must argument. Also there must be a ZPOOL running on *all the nodes* with the name given in the storage class.
+The storage class contains the volume parameters like recordsize, compression, dedup and fstype. You can select what are all
+parameters you want. In case, zfs properties paramenters are not provided, the volume will inherit the properties from the ZFS Pool.
+Also currently supported fs types are ext2/3/4, xfs and zfs only. The *poolname* is the must argument.
+Also there must be a ZPOOL running on *all the nodes* with the name given in the storage class.
+
+##### ext2/3/4 or xfs as FsType
+
+If we provide fstype as ext2/3/4 or xfs, the driver will create a ZVOL, which is a blockdevice carved out of ZFS Pool.
+This blockdevice will again formatted as corresponding filesystem(ext2/3/4 or xfs). In this way applications will get desired filesystem.
+Here, in this case there will be a filesystem layer on top of ZFS filesystem, and applications may not get the optimal performance.
+The sample storage class for ext4 fstype is provided below :-
+
+```
+$ cat sc.yaml
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-zfspv
+parameters:
+  volblockdsize: "4k"
+  compression: "off"
+  dedup: "off"
+  fstype: "ext4"
+  poolname: "zfspv-pool"
+provisioner: zfs.csi.openebs.io
+```
+
+Here please note that we are providing `volblocksize` instead of `recordsize` since we will create a ZVOL, for which we can choose the blocksize with which we want to create the block device.
+
+##### zfs as FsType
+
+In case if we provide "zfs" as the fstype, the zfs driver will create ZFS DATASET in the ZFS Pool, which is the zfs filesystem.
+Here, there will not be any extra layer between application and storage, and applications can get the optimal performance.
+The sample storage class for zfs fstype is provided below :-
+
+```
+$ cat sc.yaml
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-zfspv
+parameters:
+  recordsize: "4k"
+  compression: "off"
+  dedup: "off"
+  fstype: "zfs"
+  poolname: "zfspv-pool"
+provisioner: zfs.csi.openebs.io
+```
+
+Here please note that we are providing `recordsize` which will be used to create the ZFS datasets, which specifies the maximum block size for files in the zfs file system.
+
+##### ZPOOL Availability
 
 If ZFS pool is available on certain nodes only, then make use of topology to tell the list of nodes where we have the ZFS pool available. 
 As shown in the below storage class, we can use allowedTopologies to describe ZFS pool availability on nodes.
@@ -103,10 +157,10 @@ metadata:
   name: openebs-zfspv
 allowVolumeExpansion: true
 parameters:
-  blocksize: "4k"
+  recordsize: "4k"
   compression: "off"
   dedup: "off"
-  thinprovision: "no"
+  fstype: "zfs"
   poolname: "zfspv-pool"
 provisioner: zfs.csi.openebs.io
 allowedTopologies:
@@ -145,8 +199,9 @@ Create a PVC using the storage class created for the ZFS driver.
 
 ```
 $ kubectl get zv -n openebs
-NAME                                       ZPOOL        NODE          SIZE
-pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9   zfspv-pool   zfspv-node1   4294967296
+NAME                                       ZPOOL        NODE          SIZE         VOLBLOCKSIZE   RECORDSIZE   FILESYSTEM
+pvc-34133838-0d0d-11ea-96e3-42010a800114   zfspv-pool   zfspv-node1   4294967296                  4k           zfs
+
 ```
 
 The ZFS driver will create a ZFS dataset(zvol) on the node zfspv-node1 for the mentioned ZFS pool and the dataset name will same as PV name.
@@ -155,8 +210,9 @@ Go to the node zfspv-node1 and check the volume :-
 ```
 $ zfs list
 NAME                                                  USED  AVAIL  REFER  MOUNTPOINT
-zfspv-pool                                           4.25G  92.1G    96K  /zfspv-pool
-zfspv-pool/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9  4.25G  96.4G  5.69M  -
+zfspv-pool                                            444K   362G    96K  /zfspv-pool
+zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114    96K  4.00G    96K  none
+
 ```
 
 #### 4. Scheduler
@@ -179,10 +235,10 @@ metadata:
   name: openebs-zfspv
 allowVolumeExpansion: true
 parameters:
-  blocksize: "4k"
-  compression: "on"
-  dedup: "on"
-  thinprovision: "no"
+  recordsize: "4k"
+  compression: "off"
+  dedup: "off"
+  fstype: "zfs"
   poolname: "zfspv-pool"
 provisioner: zfs.csi.openebs.io
 volumeBindingMode: WaitForFirstConsumer
@@ -223,33 +279,30 @@ by the application for reading/writting the data and space is consumed form the 
 Also we can check the kubernetes resource for the corresponding zfs volume
 
 ```
-$ kubectl describe zv pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9 -n openebs
-
-Name:         pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
+$ kubectl describe zv pvc-34133838-0d0d-11ea-96e3-42010a800114 -n openebs
+Name:         pvc-34133838-0d0d-11ea-96e3-42010a800114
 Namespace:    openebs
 Labels:       kubernetes.io/nodename=zfspv-node1
 Annotations:  <none>
 API Version:  openebs.io/v1alpha1
 Kind:         ZFSVolume
 Metadata:
-  Creation Timestamp:  2019-09-20T05:33:52Z
+  Creation Timestamp:  2019-11-22T09:49:29Z
   Finalizers:
     zfs.openebs.io/finalizer
-  Generation:        2
-  Resource Version:  20029636
-  Self Link:         /apis/openebs.io/v1alpha1/namespaces/openebs/zfsvolumes/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
-  UID:               3b20990a-db68-11e9-bbb6-000c296e38d9
+  Generation:        1
+  Resource Version:  2881
+  Self Link:         /apis/openebs.io/v1alpha1/namespaces/openebs/zfsvolumes/pvc-34133838-0d0d-11ea-96e3-42010a800114
+  UID:               60bc4df2-0d0d-11ea-96e3-42010a800114
 Spec:
-  Blocksize:      4k
   Capacity:       4294967296
   Compression:    off
   Dedup:          off
-  Encryption:     
-  Keyformat:      
-  Keylocation: 
+  Fs Type:        zfs
   Owner Node ID:  zfspv-node1
   Pool Name:      zfspv-pool
-  Thin Provision:  no
+  Recordsize:     4k
+  Volume Type:    DATASET
 Events:           <none>
 ```
 
@@ -257,7 +310,7 @@ Events:           <none>
 ZFS Volume Property can be changed like compression on/off can be done by just simply editing the kubernetes resource for the corresponding zfs volume by using below command :
 
 ```
-kubectl edit zv pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9 -n openebs
+kubectl edit zv pvc-34133838-0d0d-11ea-96e3-42010a800114 -n openebs
 ```
 
 You can edit the relevant property like make compression on or make dedup on and save it.
@@ -265,7 +318,7 @@ This property will be applied to the corresponding volume and can be verified us
 below command on the node:
 
 ```
-zfs get all zfspv-pool/pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
+zfs get all zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114
 ```
 
 #### 7. Deprovisioning
