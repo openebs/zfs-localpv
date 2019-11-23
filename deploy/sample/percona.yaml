@@ -1,7 +1,7 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: openebs-zfspv
+  name: zfspv-percona
 allowVolumeExpansion: true
 parameters:
   volblocksize: "4k"
@@ -14,9 +14,9 @@ provisioner: zfs.csi.openebs.io
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: csi-zfspv
+  name: zfspv-percona
 spec:
-  storageClassName: openebs-zfspv
+  storageClassName: zfspv-percona
   accessModes:
     - ReadWriteOnce
   resources:
@@ -102,7 +102,7 @@ spec:
       volumes:
         - name: demo-vol1
           persistentVolumeClaim:
-            claimName: csi-zfspv
+            claimName: zfspv-percona
         - name: sqltest-configmap
           configMap:
             name: sqltest
