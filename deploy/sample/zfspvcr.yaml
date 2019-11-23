@@ -1,13 +1,14 @@
 apiVersion: openebs.io/v1alpha1
 kind: ZFSVolume
 metadata:
-  name: pvc-37b07ad6-db68-11e9-bbb6-000c296e38d9
+  name: pvc-34133838-0d0d-11ea-96e3-42010a800114
   namespace: openebs
 spec:
   capacity: "4294967296"
   compression: "off"
   dedup: "off"
   encryption: ""
+  fsType: "zfs"
   keyformat: ""
   keylocation: ""
   ownerNodeID: zfspv-node1

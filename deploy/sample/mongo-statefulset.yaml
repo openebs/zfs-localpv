@@ -5,7 +5,7 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: mongo-pv-az
+  name: zfspv-mongo
 parameters:
   volblocksize: "4k"
   poolname: "zfspv-pool"
@@ -32,6 +32,9 @@ kind: StatefulSet
 metadata:
  name: mongo
 spec:
+ selector:
+  matchLabels:
+   role: mongo
  serviceName: "mongo"
  replicas: 3
  template:
@@ -63,7 +66,7 @@ spec:
  - metadata:
      name: mongo-persistent-storage
    spec:
-     storageClassName: mongo-pv-az
+     storageClassName: zfspv-mongo
      accessModes:
        - ReadWriteOnce
      resources:
