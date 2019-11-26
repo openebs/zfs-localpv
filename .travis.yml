@@ -1,6 +1,13 @@
 sudo: required
 dist: xenial
 env:
+  global:
+  - CHANGE_MINIKUBE_NONE_USER=true
+  - MINIKUBE_WANTUPDATENOTIFICATION=false
+  - MINIKUBE_WANTREPORTERRORPROMPT=false
+  - MINIKUBE_HOME=$HOME
+  - CHANGE_MINIKUBE_NONE_USER=true
+  - KUBECONFIG=$HOME/.kube/config
 services:
   - docker
 language: go
@@ -10,12 +17,31 @@ go:
 addons:
   apt:
     update: true
-
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y zfsutils-linux
+  - truncate -s 100G /tmp/disk.img
+  - sudo zpool create -f zfspv-pool /tmp/disk.img
 install:
   - make bootstrap
   - make format
+  - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.16.0/bin/linux/amd64/kubectl
+    && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+  - curl -Lo minikube https://storage.googleapis.com/minikube/releases/v1.4.0/minikube-linux-amd64
+    && chmod +x minikube && sudo mv minikube /usr/local/bin/
+  - mkdir -p $HOME/.kube $HOME/.minikube
+  - touch $KUBECONFIG
+  - sudo minikube start --vm-driver=none --kubernetes-version=v1.16.0
+  - sudo chown -R $USER $HOME/.minikube
+  - sudo chown -R $USER $HOME/.kube
+  - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}';
+    until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do
+    sleep 1; done
+  - kubectl cluster-info
+before_script:
+  - "./buildscripts/travis-build.sh"
 script:
-  - ./buildscripts/travis-build.sh
+  - make ci
 after_success:
   - make deploy-images
   - bash <(curl -s https://codecov.io/bash)
