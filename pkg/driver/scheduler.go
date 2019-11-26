@@ -24,7 +24,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/builder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	zvol "github.com/openebs/zfs-localpv/pkg/zfs"
+	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 )
 
 // scheduling algorithm constants
@@ -41,7 +41,7 @@ func volumeWeightedScheduler(topo *csi.TopologyRequirement, pool string) string 
 	var selected string
 
 	zvlist, err := builder.NewKubeclient().
-		WithNamespace(zvol.OpenEBSNamespace).
+		WithNamespace(zfs.OpenEBSNamespace).
 		List(metav1.ListOptions{})
 
 	if err != nil {
@@ -63,7 +63,7 @@ func volumeWeightedScheduler(topo *csi.TopologyRequirement, pool string) string 
 	// schedule it on the node which has less
 	// number of volume for the given pool
 	for _, prf := range topo.Preferred {
-		node := prf.Segments[zvol.ZFSTopologyKey]
+		node := prf.Segments[zfs.ZFSTopologyKey]
 		if volmap[node] < numVol {
 			selected = node
 			numVol = volmap[node]
@@ -83,7 +83,7 @@ func scheduler(topo *csi.TopologyRequirement, schld string, pool string) string 
 	}
 	// if there is a single node, schedule it on that
 	if len(topo.Preferred) == 1 {
-		return topo.Preferred[0].Segments[zvol.ZFSTopologyKey]
+		return topo.Preferred[0].Segments[zfs.ZFSTopologyKey]
 	}
 
 	switch schld {

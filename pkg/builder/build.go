@@ -200,7 +200,7 @@ func (b *Builder) WithLabels(labels map[string]string) *Builder {
 	if len(labels) == 0 {
 		b.errs = append(
 			b.errs,
-			errors.New("failed to build cstorvolume object: missing labels"),
+			errors.New("failed to build zfs volume object: missing labels"),
 		)
 		return b
 	}
