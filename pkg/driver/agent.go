@@ -19,9 +19,9 @@ package driver
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	ctrl "github.com/openebs/zfs-localpv/cmd/controller"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/builder"
+	"github.com/openebs/zfs-localpv/pkg/mgmt"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -42,9 +42,9 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 	var ControllerMutex = sync.RWMutex{}
 	// start the zfsvolume watcher
 	go func() {
-		err := ctrl.Start(&ControllerMutex)
+		err := mgmt.Start(&ControllerMutex)
 		if err != nil {
-			logrus.Errorf("Failed to start cstorvolume claim controller: %s", err.Error())
+			logrus.Fatalf("Failed to start ZFS volume management controller: %s", err.Error())
 		}
 	}()
 

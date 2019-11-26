@@ -10,7 +10,7 @@ import (
 	config "github.com/openebs/zfs-localpv/pkg/config"
 	"github.com/openebs/zfs-localpv/pkg/driver"
 	"github.com/openebs/zfs-localpv/pkg/version"
-	zvol "github.com/openebs/zfs-localpv/pkg/zfs"
+	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func main() {
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 
 	cmd.PersistentFlags().StringVar(
-		&config.NodeID, "nodeid", zvol.NodeID, "NodeID to identify the node running this driver",
+		&config.NodeID, "nodeid", zfs.NodeID, "NodeID to identify the node running this driver",
 	)
 
 	cmd.PersistentFlags().StringVar(

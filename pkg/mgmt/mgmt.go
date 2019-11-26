@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package mgmt
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ import (
 	"github.com/Sirupsen/logrus"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
-	zvol "github.com/openebs/zfs-localpv/pkg/zfs"
+	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -80,27 +80,27 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 	var err error
 	// ZFS Volume should be deleted. Check if deletion timestamp is set
 	if c.isDeletionCandidate(zv) {
-		err = zvol.DestroyVolume(zv)
+		err = zfs.DestroyVolume(zv)
 		if err == nil {
-			zvol.RemoveZvolFinalizer(zv)
+			zfs.RemoveZvolFinalizer(zv)
 		}
 	} else {
 		// if finalizer is not set then it means we are creating
 		// the volume. And if it is set then volume has already been
 		// created and this event is for property change only.
 		if zv.Finalizers != nil {
-			err = zvol.SetZvolProp(zv)
+			err = zfs.SetZvolProp(zv)
 		} else {
-			err = zvol.CreateVolume(zv)
+			err = zfs.CreateVolume(zv)
 			if err == nil {
-				err = zvol.UpdateZvolInfo(zv)
+				err = zfs.UpdateZvolInfo(zv)
 			}
 		}
 	}
 	return err
 }
 
-// addZV is the add event handler for CstorVolumeClaim
+// addZV is the add event handler for ZFSVolume
 func (c *ZVController) addZV(obj interface{}) {
 	zv, ok := obj.(*apis.ZFSVolume)
 	if !ok {
@@ -108,14 +108,14 @@ func (c *ZVController) addZV(obj interface{}) {
 		return
 	}
 
-	if zvol.NodeID != zv.Spec.OwnerNodeID {
+	if zfs.NodeID != zv.Spec.OwnerNodeID {
 		return
 	}
 	logrus.Infof("Got add event for ZV %s/%s", zv.Spec.PoolName, zv.Name)
 	c.enqueueZV(zv)
 }
 
-// updateZV is the update event handler for CstorVolumeClaim
+// updateZV is the update event handler for ZFSVolume
 func (c *ZVController) updateZV(oldObj, newObj interface{}) {
 
 	newZV, ok := newObj.(*apis.ZFSVolume)
@@ -124,19 +124,19 @@ func (c *ZVController) updateZV(oldObj, newObj interface{}) {
 		return
 	}
 
-	if zvol.NodeID != newZV.Spec.OwnerNodeID {
+	if zfs.NodeID != newZV.Spec.OwnerNodeID {
 		return
 	}
 
 	oldZV, ok := oldObj.(*apis.ZFSVolume)
-	if zvol.PropertyChanged(oldZV, newZV) ||
+	if zfs.PropertyChanged(oldZV, newZV) ||
 		c.isDeletionCandidate(newZV) {
 		logrus.Infof("Got update event for ZV %s/%s", newZV.Spec.PoolName, newZV.Name)
 		c.enqueueZV(newZV)
 	}
 }
 
-// deleteZV is the delete event handler for CstorVolumeClaim
+// deleteZV is the delete event handler for ZFSVolume
 func (c *ZVController) deleteZV(obj interface{}) {
 	zv, ok := obj.(*apis.ZFSVolume)
 	if !ok {
@@ -147,12 +147,12 @@ func (c *ZVController) deleteZV(obj interface{}) {
 		}
 		zv, ok = tombstone.Obj.(*apis.ZFSVolume)
 		if !ok {
-			runtime.HandleError(fmt.Errorf("Tombstone contained object that is not a cstorvolumeclaim %#v", obj))
+			runtime.HandleError(fmt.Errorf("Tombstone contained object that is not a zfsvolume %#v", obj))
 			return
 		}
 	}
 
-	if zvol.NodeID != zv.Spec.OwnerNodeID {
+	if zfs.NodeID != zv.Spec.OwnerNodeID {
 		return
 	}
 
