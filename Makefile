@@ -36,10 +36,11 @@ CSI_DRIVER=zfs-driver
 BUILD_DATE = $(shell date +'%Y%m%d%H%M%S')
 
 .PHONY: all
-all: test zfs-driver-image
+all: zfs-driver-image
 
 .PHONY: clean
 clean:
+	@echo "--> Cleaning Directory" ;
 	go clean -testcache
 	rm -rf bin
 	rm -rf ${GOPATH}/bin/${CSI_DRIVER}
@@ -132,9 +133,9 @@ informer:
 		--go-header-file ./buildscripts/custom-boilerplate.go.txt
 
 .PHONY: zfs-driver
-zfs-driver:
+zfs-driver: format
 	@echo "--------------------------------"
-	@echo "+ Building ${CSI_DRIVER}        "
+	@echo "--> Building ${CSI_DRIVER}        "
 	@echo "--------------------------------"
 	@PNAME=${CSI_DRIVER} CTLNAME=${CSI_DRIVER} sh -c "'$(PWD)/buildscripts/build.sh'"
 
@@ -147,6 +148,10 @@ zfs-driver-image: zfs-driver
 	cd buildscripts/${CSI_DRIVER} && sudo docker build -t openebs/${CSI_DRIVER}:${IMAGE_TAG} --build-arg BUILD_DATE=${BUILD_DATE} . && sudo docker tag openebs/${CSI_DRIVER}:${IMAGE_TAG} quay.io/openebs/${CSI_DRIVER}:${IMAGE_TAG}
 	@rm buildscripts/${CSI_DRIVER}/${CSI_DRIVER}
 
+.PHONY: ci
+ci:
+	@echo "--> Running ci test";
+	$(PWD)/ci/ci-test.sh
 # Push images
 deploy-images:
 	@DIMAGE="openebs/zfs-driver" ./buildscripts/push

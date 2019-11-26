@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"strings"
+	"sync"
 
 	env "github.com/openebs/zfs-localpv/pkg/common/env"
 	"github.com/pkg/errors"
@@ -138,6 +139,21 @@ func New(opts ...OptionFunc) *Client {
 	}
 	withDefaults(c)
 	return c
+}
+
+var (
+	instance *Client
+	once     sync.Once
+)
+
+// Instance returns a singleton instance of
+// this client
+func Instance(opts ...OptionFunc) *Client {
+	once.Do(func() {
+		instance = New(opts...)
+	})
+
+	return instance
 }
 
 func withDefaults(c *Client) {
