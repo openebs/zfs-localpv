@@ -31,6 +31,7 @@ func datasetCreationTest() {
 	By("creating and verifying PVC bound status", createAndVerifyPVC)
 	By("Creating and deploying app pod", createDeployVerifyApp)
 	By("verifying ZFSVolume object", VerifyZFSVolume)
+	By("verifying ZFSVolume property change", VerifyZFSVolumePropEdit)
 	By("Deleting application deployment", deleteAppDeployment)
 	By("Deleting pvc", deletePVC)
 	By("Deleting storage class", deleteStorageClass)
@@ -49,6 +50,7 @@ func zvolCreationTest() {
 	 */
 	//By("Creating and deploying app pod", createDeployVerifyApp)
 	By("verifying ZFSVolume object", VerifyZFSVolume)
+	By("verifying ZFSVolume property change", VerifyZFSVolumePropEdit)
 	//By("Deleting application deployment", deleteAppDeployment)
 	By("Deleting pvc", deletePVC)
 	By("Deleting storage class", deleteStorageClass)

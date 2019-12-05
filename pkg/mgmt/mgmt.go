@@ -89,7 +89,7 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 		// the volume. And if it is set then volume has already been
 		// created and this event is for property change only.
 		if zv.Finalizers != nil {
-			err = zfs.SetZvolProp(zv)
+			err = zfs.SetVolumeProp(zv)
 		} else {
 			err = zfs.CreateVolume(zv)
 			if err == nil {

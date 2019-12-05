@@ -36,6 +36,7 @@ const (
 	ZFSCreateArg  = "create"
 	ZFSDestroyArg = "destroy"
 	ZFSSetArg     = "set"
+	ZFSGetArg     = "get"
 	ZFSListArg    = "list"
 )
 
@@ -270,8 +271,26 @@ func UmountZFSDataset(vol *apis.ZFSVolume) error {
 	return SetDatasetMountProp(volume, "none")
 }
 
-// SetZvolProp sets the volume property
-func SetZvolProp(vol *apis.ZFSVolume) error {
+// GetVolumeProperty gets zfs properties for the volume
+func GetVolumeProperty(vol *apis.ZFSVolume, prop string) (string, error) {
+	var ZFSVolArg []string
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	ZFSVolArg = append(ZFSVolArg, ZFSGetArg, "-pH", "-o", "value", prop, volume)
+
+	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		logrus.Errorf("zfs: could not get %s on dataset %v cmd %v error: %s",
+			prop, volume, ZFSVolArg, string(out))
+		return "", err
+	}
+	val := out[:len(out)-1]
+	return string(val), nil
+}
+
+// SetVolumeProp sets the volume property
+func SetVolumeProp(vol *apis.ZFSVolume) error {
 	var err error
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
