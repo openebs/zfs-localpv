@@ -17,6 +17,7 @@ limitations under the License.
 package tests
 
 import (
+	"github.com/Sirupsen/logrus"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openebs/zfs-localpv/pkg/builder"
@@ -40,31 +41,35 @@ const (
 )
 
 var (
-	ZFSClient        *builder.Kubeclient
-	SCClient         *sc.Kubeclient
-	PVCClient        *pvc.Kubeclient
-	DeployClient     *deploy.Kubeclient
-	PodClient        *pod.KubeClient
-	openebsNamespace = "openebs"
-	nsName           = "zfspv-provision"
-	scName           = "zfspv-sc"
-	ZFSProvisioner   = "zfs.csi.openebs.io"
-	pvcName          = "zfspv-pvc"
-	appName          = "busybox-zfspv"
+	ZFSClient      *builder.Kubeclient
+	SCClient       *sc.Kubeclient
+	PVCClient      *pvc.Kubeclient
+	DeployClient   *deploy.Kubeclient
+	PodClient      *pod.KubeClient
+	nsName         = "zfspv-provision"
+	scName         = "zfspv-sc"
+	ZFSProvisioner = "zfs.csi.openebs.io"
+	pvcName        = "zfspv-pvc"
+	appName        = "busybox-zfspv"
 
-	nsObj          *corev1.Namespace
-	scObj          *storagev1.StorageClass
-	deployObj      *appsv1.Deployment
-	pvcObj         *corev1.PersistentVolumeClaim
-	appPod         *corev1.PodList
-	accessModes    = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
-	capacity       = "5368709120" // 5Gi
-	KubeConfigPath string
+	nsObj            *corev1.Namespace
+	scObj            *storagev1.StorageClass
+	deployObj        *appsv1.Deployment
+	pvcObj           *corev1.PersistentVolumeClaim
+	appPod           *corev1.PodList
+	accessModes      = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
+	capacity         = "5368709120" // 5Gi
+	KubeConfigPath   string
+	OpenEBSNamespace string
 )
 
 func init() {
 	KubeConfigPath = os.Getenv("KUBECONFIG")
 
+	OpenEBSNamespace = os.Getenv("OPENEBS_NAMESPACE")
+	if OpenEBSNamespace == "" {
+		logrus.Fatalf("OPENEBS_NAMESPACE environment variable not set")
+	}
 	SCClient = sc.NewKubeClient(sc.WithKubeConfigPath(KubeConfigPath))
 	PVCClient = pvc.NewKubeClient(pvc.WithKubeConfigPath(KubeConfigPath))
 	DeployClient = deploy.NewKubeClient(deploy.WithKubeConfigPath(KubeConfigPath))

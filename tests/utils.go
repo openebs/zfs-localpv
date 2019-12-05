@@ -21,6 +21,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
 	"github.com/openebs/zfs-localpv/tests/container"
 	"github.com/openebs/zfs-localpv/tests/deploy"
@@ -42,7 +43,7 @@ func IsPVCBoundEventually(pvcName string) bool {
 		Expect(err).ShouldNot(HaveOccurred())
 		return pvc.NewForAPIObject(volume).IsBound()
 	},
-		120, 10).
+		60, 5).
 		Should(BeTrue())
 }
 
@@ -56,7 +57,19 @@ func IsPodRunningEventually(namespace, podName string) bool {
 		return pod.NewForAPIObject(p).
 			IsRunning()
 	},
-		150, 10).
+		60, 5).
+		Should(BeTrue())
+}
+
+// IsPropUpdatedEventually checks if the property is updated or not eventually
+func IsPropUpdatedEventually(vol *apis.ZFSVolume, prop string, val string) bool {
+	return Eventually(func() bool {
+
+		newVal, err := zfs.GetVolumeProperty(vol, prop)
+		Expect(err).ShouldNot(HaveOccurred())
+		return (newVal == val)
+	},
+		60, 5).
 		Should(BeTrue())
 }
 
@@ -119,7 +132,7 @@ func createZfsStorageClass() {
 
 func VerifyZFSVolume() {
 	By("fetching zfs volume")
-	vol, err := ZFSClient.WithNamespace(openebsNamespace).
+	vol, err := ZFSClient.WithNamespace(OpenEBSNamespace).
 		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
 	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", pvcObj.Spec.VolumeName)
 
@@ -142,6 +155,104 @@ func VerifyZFSVolume() {
 	Expect(vol.Finalizers[0]).To(Equal(zfs.ZFSFinalizer), "while checking finializer to be set {%s}", pvcObj.Spec.VolumeName)
 }
 
+func VerifyZFSVolumePropEdit() {
+	By("verifying compression property update")
+
+	By("fetching zfs volume for setting compression=on")
+	vol, err := ZFSClient.WithNamespace(OpenEBSNamespace).
+		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+
+	val := "on"
+	vol.Spec.Compression = val
+	_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
+	Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+
+	status := IsPropUpdatedEventually(vol, "compression", val)
+	Expect(status).To(Equal(true), "while updating compression=on {%s}", vol.Name)
+
+	By("fetching zfs volume for setting compression=off")
+	vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
+		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+
+	val = "off"
+	vol.Spec.Compression = val
+	_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
+	Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+
+	status = IsPropUpdatedEventually(vol, "compression", val)
+	Expect(status).To(Equal(true), "while updating compression=off {%s}", vol.Name)
+
+	By("verifying dedup property update")
+
+	By("fetching zfs volume for setting dedup=on")
+	vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
+		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+
+	val = "on"
+	vol.Spec.Dedup = val
+	_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
+	Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+
+	status = IsPropUpdatedEventually(vol, "dedup", val)
+	Expect(status).To(Equal(true), "while updating dedup=on {%s}", vol.Name)
+
+	By("fetching zfs volume for setting dedup=off")
+	vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
+		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+
+	val = "off"
+	vol.Spec.Dedup = val
+	_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
+	Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+
+	status = IsPropUpdatedEventually(vol, "dedup", val)
+	Expect(status).To(Equal(true), "while updating dedup=off {%s}", vol.Name)
+
+	if vol.Spec.VolumeType == zfs.VOLTYPE_DATASET {
+		By("verifying recordsize property update")
+
+		By("fetching zfs volume for setting the recordsize")
+		vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
+			Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+		Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+
+		val = "4096" // 4k
+		vol.Spec.RecordSize = val
+		vol.Spec.VolBlockSize = "8192"
+		_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
+		Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+
+		status = IsPropUpdatedEventually(vol, "recordsize", val)
+		Expect(status).To(Equal(true), "while updating redordsize {%s}", vol.Name)
+	} else {
+
+		Expect(vol.Spec.VolumeType).To(Equal(zfs.VOLTYPE_ZVOL), "voltype should be zvol {%s}", vol.Name)
+
+		By("verifying blocksize property update")
+
+		By("fetching zfs volume for setting the blocksize")
+		vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
+			Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+		Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+
+		val, err = zfs.GetVolumeProperty(vol, "volblocksize")
+		Expect(err).ShouldNot(HaveOccurred())
+
+		nval := "8192" // 8k
+		vol.Spec.VolBlockSize = nval
+		vol.Spec.RecordSize = "16384"
+		_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
+		Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+
+		status = IsPropUpdatedEventually(vol, "volblocksize", val)
+		Expect(status).To(Equal(true), "while updating volblocksize {%s}", vol.Name)
+	}
+}
+
 func deleteStorageClass() {
 	err := SCClient.Delete(scObj.Name, &metav1.DeleteOptions{})
 	Expect(err).To(BeNil(),
@@ -156,7 +267,7 @@ func createAndVerifyPVC() {
 	By("building a pvc")
 	pvcObj, err = pvc.NewBuilder().
 		WithName(pvcName).
-		WithNamespace(openebsNamespace).
+		WithNamespace(OpenEBSNamespace).
 		WithStorageClass(scObj.Name).
 		WithAccessModes(accessModes).
 		WithCapacity(capacity).Build()
@@ -164,16 +275,16 @@ func createAndVerifyPVC() {
 		HaveOccurred(),
 		"while building pvc {%s} in namespace {%s}",
 		pvcName,
-		openebsNamespace,
+		OpenEBSNamespace,
 	)
 
 	By("creating above pvc")
-	pvcObj, err = PVCClient.WithNamespace(openebsNamespace).Create(pvcObj)
+	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Create(pvcObj)
 	Expect(err).To(
 		BeNil(),
 		"while creating pvc {%s} in namespace {%s}",
 		pvcName,
-		openebsNamespace,
+		OpenEBSNamespace,
 	)
 
 	By("verifying pvc status as bound")
@@ -182,12 +293,12 @@ func createAndVerifyPVC() {
 	Expect(status).To(Equal(true),
 		"while checking status equal to bound")
 
-	pvcObj, err = PVCClient.WithNamespace(openebsNamespace).Get(pvcObj.Name, metav1.GetOptions{})
+	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Get(pvcObj.Name, metav1.GetOptions{})
 	Expect(err).To(
 		BeNil(),
 		"while retrieving pvc {%s} in namespace {%s}",
 		pvcName,
-		openebsNamespace,
+		OpenEBSNamespace,
 	)
 }
 
@@ -202,7 +313,7 @@ func createAndDeployAppPod() {
 	By("building a busybox app pod deployment using above zfs volume")
 	deployObj, err = deploy.NewBuilder().
 		WithName(appName).
-		WithNamespace(openebsNamespace).
+		WithNamespace(OpenEBSNamespace).
 		WithLabelsNew(
 			map[string]string{
 				"app": "busybox",
@@ -251,41 +362,41 @@ func createAndDeployAppPod() {
 
 	Expect(err).ShouldNot(HaveOccurred(), "while building app deployement {%s}", appName)
 
-	deployObj, err = DeployClient.WithNamespace(openebsNamespace).Create(deployObj)
+	deployObj, err = DeployClient.WithNamespace(OpenEBSNamespace).Create(deployObj)
 	Expect(err).ShouldNot(
 		HaveOccurred(),
 		"while creating pod {%s} in namespace {%s}",
 		appName,
-		openebsNamespace,
+		OpenEBSNamespace,
 	)
 }
 
 func verifyAppPodRunning() {
 	var err error
-	appPod, err = PodClient.WithNamespace(openebsNamespace).
+	appPod, err = PodClient.WithNamespace(OpenEBSNamespace).
 		List(metav1.ListOptions{
 			LabelSelector: "app=busybox",
 		},
 		)
 	Expect(err).ShouldNot(HaveOccurred(), "while verifying application pod")
 
-	status := IsPodRunningEventually(openebsNamespace, appPod.Items[0].Name)
+	status := IsPodRunningEventually(OpenEBSNamespace, appPod.Items[0].Name)
 	Expect(status).To(Equal(true), "while checking status of pod {%s}", appPod.Items[0].Name)
 }
 
 func deleteAppDeployment() {
-	err := DeployClient.WithNamespace(openebsNamespace).
+	err := DeployClient.WithNamespace(OpenEBSNamespace).
 		Delete(deployObj.Name, &metav1.DeleteOptions{})
 	Expect(err).ShouldNot(HaveOccurred(), "while deleting application pod")
 }
 
 func deletePVC() {
-	err := PVCClient.WithNamespace(openebsNamespace).Delete(pvcName, &metav1.DeleteOptions{})
+	err := PVCClient.WithNamespace(OpenEBSNamespace).Delete(pvcName, &metav1.DeleteOptions{})
 	Expect(err).To(
 		BeNil(),
 		"while deleting pvc {%s} in namespace {%s}",
 		pvcName,
-		openebsNamespace,
+		OpenEBSNamespace,
 	)
 	By("verifying deleted pvc")
 	status := IsPVCDeletedEventually(pvcName)

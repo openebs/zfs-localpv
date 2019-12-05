@@ -63,6 +63,8 @@ sudo zpool status
 
 sudo zfs list -t all
 
+sudo zfs get all
+
 echo "******************** ZFS Controller logs***************************** "
 dumpControllerLogs 1000
 
