@@ -15,7 +15,7 @@ v0.2 / 2019-12-09
   [@pawanpraka1](https://github.com/pawanpraka1))
   * fix scheduling algorithm doc ([#16](https://github.com/openebs/zfs-localpv/pull/16),
   [@akhilerm](https://github.com/akhilerm))
-  * adding support for applications to create "zfs" flesystem ([#15](https://github.com/openebs/zfs-localpv/pull/15),
+  * adding support for applications to create "zfs" filesystem ([#15](https://github.com/openebs/zfs-localpv/pull/15),
   [@pawanpraka1](https://github.com/pawanpraka1))
   * fixed a typo for thinprovision json name. ([#14](https://github.com/openebs/zfs-localpv/pull/14),
   [@pawanpraka1](https://github.com/pawanpraka1))
