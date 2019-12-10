@@ -331,7 +331,9 @@ $ kubectl delete -f pvc.yaml
 persistentvolumeclaim "csi-zfspv" deleted
 ```
 
+## Roadmap
 
+See [roadmap](https://github.com/orgs/openebs/projects/10).
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_large)
