@@ -9,6 +9,10 @@ CSI driver for provisioning Local PVs backed by ZFS and more.
 This project is under active development and considered to be in Alpha state.
 The current implementation only supports provisioning and de-provisioning of ZFS Volumes. Also, few properties like compression, dedup and recordsize can be provided while provisioning the volumes and can also be changed after provisioning is done.
 
+## Roadmap
+
+See [roadmap](https://github.com/orgs/openebs/projects/10).
+
 ## Usage
 
 ### Prerequisites
@@ -330,10 +334,6 @@ pod "fio" deleted
 $ kubectl delete -f pvc.yaml
 persistentvolumeclaim "csi-zfspv" deleted
 ```
-
-## Roadmap
-
-See [roadmap](https://github.com/orgs/openebs/projects/10).
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_large)
