@@ -22,8 +22,9 @@ import (
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/builder"
 	"github.com/openebs/zfs-localpv/pkg/mgmt"
-	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	"github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -201,7 +202,7 @@ func (ns *node) NodeGetCapabilities(
 			{
 				Type: &csi.NodeServiceCapability_Rpc{
 					Rpc: &csi.NodeServiceCapability_RPC{
-						Type: csi.NodeServiceCapability_RPC_UNKNOWN,
+						Type: csi.NodeServiceCapability_RPC_GET_VOLUME_STATS,
 					},
 				},
 			},
@@ -252,19 +253,46 @@ func (ns *node) NodeExpandVolume(
 	req *csi.NodeExpandVolumeRequest,
 ) (*csi.NodeExpandVolumeResponse, error) {
 
-	return nil, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // NodeGetVolumeStats returns statistics for the
 // given volume
-//
-// This implements csi.NodeServer
 func (ns *node) NodeGetVolumeStats(
 	ctx context.Context,
-	in *csi.NodeGetVolumeStatsRequest,
+	req *csi.NodeGetVolumeStatsRequest,
 ) (*csi.NodeGetVolumeStatsResponse, error) {
 
-	return nil, status.Error(codes.Unimplemented, "")
+	volID := req.GetVolumeId()
+	path := req.GetVolumePath()
+
+	if len(volID) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "volume id is not provided")
+	}
+	if len(path) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "path is not provided")
+	}
+
+	var sfs unix.Statfs_t
+	if err := unix.Statfs(path, &sfs); err != nil {
+		return nil, status.Errorf(codes.Internal, "statfs on %s was failed: %v", path, err)
+	}
+
+	var usage []*csi.VolumeUsage
+	usage = append(usage, &csi.VolumeUsage{
+		Unit:      csi.VolumeUsage_BYTES,
+		Total:     int64(sfs.Blocks) * sfs.Bsize,
+		Used:      int64(sfs.Blocks-sfs.Bfree) * sfs.Bsize,
+		Available: int64(sfs.Bavail) * sfs.Bsize,
+	})
+	usage = append(usage, &csi.VolumeUsage{
+		Unit:      csi.VolumeUsage_INODES,
+		Total:     int64(sfs.Files),
+		Used:      int64(sfs.Files - sfs.Ffree),
+		Available: int64(sfs.Ffree),
+	})
+
+	return &csi.NodeGetVolumeStatsResponse{Usage: usage}, nil
 }
 
 func (ns *node) validateNodePublishReq(
