@@ -273,9 +273,13 @@ func (ns *node) NodeGetVolumeStats(
 		return nil, status.Error(codes.InvalidArgument, "path is not provided")
 	}
 
+	if zfs.IsMountPath(path) == false {
+		return nil, status.Error(codes.InvalidArgument, "path is not a mount path")
+	}
+
 	var sfs unix.Statfs_t
 	if err := unix.Statfs(path, &sfs); err != nil {
-		return nil, status.Errorf(codes.Internal, "statfs on %s was failed: %v", path, err)
+		return nil, status.Errorf(codes.Internal, "statfs on %s failed: %v", path, err)
 	}
 
 	var usage []*csi.VolumeUsage

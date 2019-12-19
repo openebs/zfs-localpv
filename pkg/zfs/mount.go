@@ -101,6 +101,27 @@ func GetMounts(dev string) ([]string, error) {
 	return currentMounts, nil
 }
 
+// IsMountPath returns true if path is a mount path
+func IsMountPath(path string) bool {
+
+	var (
+		err       error
+		mountList []mount.MountPoint
+	)
+
+	mounter := mount.New("")
+	// Get list of mounted paths present with the node
+	if mountList, err = mounter.List(); err != nil {
+		return false
+	}
+	for _, mntInfo := range mountList {
+		if mntInfo.Path == path {
+			return true
+		}
+	}
+	return false
+}
+
 func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 	if len(mountpath) == 0 {
 		return status.Error(codes.InvalidArgument, "mount path missing in request")
