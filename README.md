@@ -1,5 +1,8 @@
 # OpenEBS ZFS CSI Driver
+[![Build Status](https://travis-ci.org/openebs/zfs-localpv.svg?branch=master)](https://travis-ci.org/openebs/zfs-localpv)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_shield)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3523/badge)](https://bestpractices.coreinfrastructure.org/en/projects/3523)
+[![Slack](https://img.shields.io/badge/chat!!!-slack-ff1493.svg?style=flat-square)](https://openebsslacksignup.herokuapp.com/)
 
 
 CSI driver for provisioning Local PVs backed by ZFS and more.
