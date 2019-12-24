@@ -1,0 +1,367 @@
+# The following file is intended for deployments that are not already
+# configured with prometheus. This is a minified version of the config
+# from the files present under ./openebs-monitoring/
+#
+# Prometheus tunables
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openebs-prometheus-tunables
+  namespace: openebs
+data:
+  storage-retention: 24h
+---
+# Create Maya Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openebs-maya-operator
+  namespace: openebs
+---
+# Define Role that allows operations on K8s pods/deployments
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: openebs-maya-operator
+rules:
+- apiGroups: ["*"]
+  resources: ["nodes", "nodes/proxy"]
+  verbs: ["*"]
+- apiGroups: ["*"]
+  resources: ["namespaces", "services", "pods", "pods/exec", "deployments", "deployments/finalizers", "replicationcontrollers", "replicasets", "events", "endpoints", "configmaps", "secrets", "jobs", "cronjobs"]
+  verbs: ["*"]
+- apiGroups: ["*"]
+  resources: ["statefulsets", "daemonsets"]
+  verbs: ["*"]
+- apiGroups: ["*"]
+  resources: ["resourcequotas", "limitranges"]
+  verbs: ["list", "watch"]
+- apiGroups: ["*"]
+  resources: ["ingresses", "horizontalpodautoscalers", "verticalpodautoscalers", "poddisruptionbudgets", "certificatesigningrequests"]
+  verbs: ["list", "watch"]
+- apiGroups: ["*"]
+  resources: ["storageclasses", "persistentvolumeclaims", "persistentvolumes"]
+  verbs: ["*"]
+- apiGroups: ["volumesnapshot.external-storage.k8s.io"]
+  resources: ["volumesnapshots", "volumesnapshotdatas"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: [ "get", "list", "create", "update", "delete", "patch"]
+- apiGroups: ["*"]
+  resources: [ "storagepoolclaims", "storagepoolclaims/finalizers", "storagepools"]
+  verbs: ["*" ]
+- apiGroups: ["*"]
+  resources: [ "castemplates", "runtasks"]
+  verbs: ["*" ]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["get", "watch", "list", "delete", "update", "create"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["validatingwebhookconfigurations", "mutatingwebhookconfigurations"]
+  verbs: ["get", "create", "list", "delete", "update", "patch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+- apiGroups: ["*"]
+  resources: [ "upgradetasks"]
+  verbs: ["*" ]
+---
+# Bind the Service Account with the Role Privileges.
+# TODO: Check if default account also needs to be there
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: openebs-maya-operator
+subjects:
+- kind: ServiceAccount
+  name: openebs-maya-operator
+  namespace: openebs
+roleRef:
+  kind: ClusterRole
+  name: openebs-maya-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+# Define the openebs prometheus jobs
+kind: ConfigMap
+metadata:
+  name: openebs-prometheus-config
+  namespace: openebs
+apiVersion: v1
+data:
+  prometheus.yml: |-
+    global:
+      external_labels:
+        slave: slave1
+      scrape_interval: 5s
+      evaluation_interval: 5s
+    rule_files:
+      - "/etc/prometheus-rules/*.rules"
+    alerting:
+      alertmanagers:
+        - scheme: http
+          path_prefix: /
+          static_configs:
+            - targets: ['alertmanager:9093']
+    scrape_configs:
+    - job_name: 'node'
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      kubernetes_sd_configs:
+      - role: node
+      relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openebs-prometheus-rules
+  labels:
+    name: openebs-prometheus-rules
+  namespace: openebs
+data:
+  alert.rules: |-
+    groups:
+      - name: ZFSPV
+        rules:
+        - alert: ZFSPV Volume full
+          expr: (kubelet_volume_stats_used_bytes * 100) / kubelet_volume_stats_capacity_bytes > 90
+          for: 1m
+          labels:
+            team: devops
+          annotations:
+            summary: "PVC '{{ $labels.persistentvolumeclaim }}' is 90% full"
+            description: "PVc '{{ $labels.openebs_pv }}' has used 90% of space"
+---
+# prometheus-deployment
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: openebs-prometheus
+  namespace: openebs
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: openebs-prometheus-server
+    spec:
+      serviceAccountName: openebs-maya-operator
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.11.0
+          args:
+            - "--config.file=/etc/prometheus/conf/prometheus.yml"
+            # Metrics are stored in an emptyDir volume which
+            # exists as long as the Pod is running on that Node.
+            # The data in an emptyDir volume is safe across container crashes.
+            - "--storage.tsdb.path=/prometheus"
+            # How long to retain samples in the local storage.
+            - "--storage.tsdb.retention=$(STORAGE_RETENTION)"
+          ports:
+            - containerPort: 9090
+          env:
+            # environment vars are stored in prometheus-env configmap.
+            - name: STORAGE_RETENTION
+              valueFrom:
+                configMapKeyRef:
+                  name: openebs-prometheus-tunables
+                  key: storage-retention
+          resources:
+            requests:
+              # A memory request of 250M means it will try to ensure minimum
+              # 250MB RAM .
+              memory: "128M"
+              # A cpu request of 128m means it will try to ensure minimum
+              # .125 CPU; where 1 CPU means :
+              # 1 *Hyperthread* on a bare-metal Intel processor with Hyperthreading
+              cpu: "128m"
+            limits:
+              memory: "700M"
+              cpu: "500m"
+
+          volumeMounts:
+            # prometheus config file stored in the given mountpath
+            - name: prometheus-server-volume
+              mountPath: /etc/prometheus/conf
+            # metrics collected by prometheus will be stored at the given mountpath.
+            - name: prometheus-storage-volume
+              mountPath: /prometheus
+            - name: prometheus-rules-volume
+              mountPath: /etc/prometheus-rules
+      volumes:
+        # Prometheus Config file will be stored in this volume
+        - name: prometheus-server-volume
+          configMap:
+            name: openebs-prometheus-config
+        # Alert rules will be storesin this volume
+        - name: prometheus-rules-volume
+          configMap:
+            name: openebs-prometheus-rules
+        # All the time series stored in this volume in form of .db file.
+        - name: prometheus-storage-volume
+          # containers in the Pod can all read and write the same files here.
+          emptyDir: {}
+---
+# prometheus-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: openebs-prometheus-service
+  namespace: openebs
+spec:
+  selector:
+    name: openebs-prometheus-server
+  type: NodePort
+  ports:
+    - port: 80 # this Service's port (cluster-internal IP clusterIP)
+      targetPort: 9090 # pods expose this port
+      nodePort: 32514
+      # Note that this Service will be visible as both NodeIP:nodePort and clusterIp:Port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openebs-grafana
+  namespace: openebs
+spec:
+  type: NodePort
+  ports:
+  - port: 3000
+    targetPort: 3000
+    nodePort: 32515
+  selector:
+    app: openebs-grafana
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: openebs-grafana
+  name: openebs-grafana
+  namespace: openebs
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        app: openebs-grafana
+    spec:
+      containers:
+      - image: grafana/grafana:6.3.0
+        name: grafana
+        ports:
+        - containerPort: 3000
+        env:
+          - name: GF_AUTH_BASIC_ENABLED
+            value: "true"
+          - name: GF_AUTH_ANONYMOUS_ENABLED
+            value: "false"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          timeoutSeconds: 1
+---
+# node-exporter will be launch as daemonset.
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: openebs
+spec:
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+      name: node-exporter
+    spec:
+      containers:
+      #- image: prom/node-exporter:v0.18.1
+      - image: quay.io/prometheus/node-exporter:v0.18.1
+        args:
+          - --path.procfs=/host/proc
+          - --path.sysfs=/host/sys
+          - --path.rootfs=/host/root
+          - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib|run|boot|home/kubernetes/.+)($|/)
+          - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$
+        name: node-exporter
+        ports:
+        - containerPort: 9100
+          hostPort: 9100
+          name: scrape
+        resources:
+            requests:
+              # A memory request of 250M means it will try to ensure minimum
+              # 250MB RAM .
+              memory: "128M"
+              # A cpu request of 128m means it will try to ensure minimum
+              # .125 CPU; where 1 CPU means :
+              # 1 *Hyperthread* on a bare-metal Intel processor with Hyperthreading
+              cpu: "128m"
+            limits:
+              memory: "700M"
+              cpu: "500m"
+        volumeMounts:
+        # All the application data stored in data-disk
+        - name: proc
+          mountPath: /host/proc
+          readOnly: false
+        # Root disk is where OS(Node) is installed
+        - name: sys
+          mountPath: /host/sys
+          readOnly: false
+        - name: root
+          mountPath: /host/root
+          mountPropagation: HostToContainer
+          readOnly: true
+      # The Kubernetes scheduler’s default behavior works well for most cases
+      # -- for example, it ensures that pods are only placed on nodes that have
+      # sufficient free resources, it ties to spread pods from the same set
+      # (ReplicaSet, StatefulSet, etc.) across nodes, it tries to balance out
+      # the resource utilization of nodes, etc.
+      #
+      # But sometimes you want to control how your pods are scheduled. For example,
+      # perhaps you want to ensure that certain pods only schedule on nodes with
+      # specialized hardware, or you want to co-locate services that communicate
+      # frequently, or you want to dedicate a set of nodes to a particular set of
+      # users. Ultimately, you know much more about how your applications should be
+      # scheduled and deployed than Kubernetes ever will.
+      #
+      # “taints and tolerations,” allows you to mark (“taint”) a node so that no
+      # pods can schedule onto it unless a pod explicitly “tolerates” the taint.
+      # toleration  is particularly useful for situations where most pods in
+      # the cluster should avoid scheduling onto the node. In our case we want
+      # node-exporter to run on master node also i.e, we want to collect metrics
+      # from master node. That's why tolerations added.
+      # if removed master's node metrics can't be scrapped by prometheus.
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      volumes:
+        # A hostPath volume mounts a file or directory from the host node’s
+        # filesystem.For example, some uses for a hostPath are:
+        # running a container that needs access to Docker internals; use a hostPath
+        # of /var/lib/docker
+        # running cAdvisor in a container; use a hostPath of /dev/cgroups
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: root
+          hostPath:
+            path: /
+      hostNetwork: true
+      hostPID: true
