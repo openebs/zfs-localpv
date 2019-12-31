@@ -82,6 +82,9 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
   - apiGroups: ["*"]
     resources: ["zfsvolumes"]
     verbs: ["*"]
@@ -112,7 +115,7 @@ spec:
       app: openebs-zfs-controller
       role: openebs-zfs
   serviceName: "openebs-zfs"
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -130,6 +133,8 @@ spec:
             - "--v=5"
             - "--feature-gates=Topology=true"
             - "--strict-topology"
+            - "--enable-leader-election"
+            - "--leader-election-type=leases"
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
@@ -142,6 +147,7 @@ spec:
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
@@ -201,7 +207,9 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments", "csinodes"]
     verbs: ["get", "list", "watch", "update", "patch"]
-
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
