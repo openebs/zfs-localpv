@@ -67,4 +67,24 @@ The above storage class tells that ZFS pool "zfspv-pool" is available on nodes z
 Please note that the provisioner name for ZFS driver is "zfs.csi.openebs.io", we have to use this while creating the storage class so that the volume provisioning/deprovisioning request can come to ZFS driver.
 
 
+### 3. How to install the provisioner in HA
 
+To have HA for the provisioner(controller), we can update the replica count to 2(or more as per need) and deploy the yaml. Once yaml is deployed, you can see 2(or more) controller pod running. At a time only one will be active and once it is down, the other will take over. They will use lease mechanism to decide who is active/master. Please note that it has anti affinity rules, so on one node only one pod will be running, that means, if you are using 2 replicas on a single node cluster, the other pod will be in pending state because of the anti-affinity rule. So, before changing the replica count, please make sure you have sufficient nodes.
+
+here is the yaml snippet to do that :-
+
+```yaml
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: openebs-zfs-controller
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: openebs-zfs-controller
+      role: openebs-zfs
+  serviceName: "openebs-zfs"
+  replicas: 2
+---
+```
