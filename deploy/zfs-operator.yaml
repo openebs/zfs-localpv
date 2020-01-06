@@ -115,13 +115,23 @@ spec:
       app: openebs-zfs-controller
       role: openebs-zfs
   serviceName: "openebs-zfs"
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
         app: openebs-zfs-controller
         role: openebs-zfs
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - openebs-zfs-controller
+            topologyKey: "kubernetes.io/hostname"
       priorityClassName: system-cluster-critical
       serviceAccount: openebs-zfs-controller-sa
       containers:
