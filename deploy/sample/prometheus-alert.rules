@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: prometheus-operator
+    chart: prometheus-operator-8.5.4
+    heritage: Tiller
+    release: prometheus-operator
+  name: prometheus-operator-zfs-alertmanager.rules
+  namespace: default
+spec:
+  groups:
+  - name: zfsalertmanager.rules
+    rules:
+    - alert: ZFSVolumeUsageCritical
+      annotations:
+        message: The PersistentVolume claimed by {{ $labels.persistentvolumeclaim
+          }} in Namespace {{ $labels.namespace }} is only {{ printf "%0.2f" $value
+          }}% free.
+        runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepersistentvolumeusagecritical
+      expr: |
+        100 * kubelet_volume_stats_available_bytes{job="kubelet"}
+          /
+        kubelet_volume_stats_capacity_bytes{job="kubelet"}
+          < 10
+      for: 1m
+      labels:
+        severity: critical
