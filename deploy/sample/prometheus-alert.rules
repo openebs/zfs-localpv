@@ -17,7 +17,6 @@ spec:
         message: The PersistentVolume claimed by {{ $labels.persistentvolumeclaim
           }} in Namespace {{ $labels.namespace }} is only {{ printf "%0.2f" $value
           }}% free.
-        runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubepersistentvolumeusagecritical
       expr: |
         100 * kubelet_volume_stats_available_bytes{job="kubelet"}
           /
