@@ -1,6 +1,10 @@
+### Prerequisite
+
+We need to have k8s version 1.15+ to access the CSI volume metrics.
+
 ### Setup helm
 
-This step uses helm the kubernetes package manager. If you not setup the helm then do the below the configuration, otherwise move to next step.
+This step uses helm the kubernetes package manager. If you have not setup the helm then do the below configuration, otherwise move to the next step.
 
 ```
 $ helm version
@@ -26,7 +30,7 @@ deployment.extensions/tiller-deploy patched
 
 ### Install Prometheus Operator
 
-Once the helm is ready and related titler pods is up and running , use the Prometheus chart from the helm repository
+Once the helm is ready and related tiller pods is up and running , use the Prometheus chart from the helm repository
 
 ```
 $ helm install stable/prometheus-operator --name prometheus-operator
@@ -237,7 +241,7 @@ The Prometheus Operator has been installed. Check its status by running:
   to create & configure Alertmanager and Prometheus instances using the Operator.
 ```
 
-Lookup all the required pods are up and running
+Check all the required pods are up and running
 
 ```
 $ kubectl get pods -l "release=prometheus-operator"
@@ -280,7 +284,7 @@ prometheus-operator-prometheus                             4m21s
 prometheus-operator-prometheus-operator                    4m21s
 ```
 
-You can edit any of the default rule or setup the new rule to get the alerts. Here is the sample alert rule if available storage space is less than 10% then start throwing the alert :-
+You can edit any of the default rules or setup the new rule to get the alerts. Here is the sample rule to start firing the alerts if available storage space is less than 10% :-
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -394,3 +398,207 @@ gke-zfspv-pawan-default-pool-3e407350-xvzp   Ready    <none>   103m   v1.15.4-gk
 ```
 
 In this case we can access the alert manager via url http://34.94.3.140:30093/
+
+### ZFS metrics exposed by Prometheus
+
+We can create the rule for ZFS metrics also. Here is the list of ZFS metrics exposed by prometheus :-
+
+```
+node_zfs_abd_linear_cnt
+node_zfs_abd_linear_data_size
+node_zfs_abd_scatter_chunk_waste
+node_zfs_abd_scatter_cnt
+node_zfs_abd_scatter_data_size
+node_zfs_abd_scatter_order_0
+node_zfs_abd_scatter_order_1
+node_zfs_abd_scatter_order_10
+node_zfs_abd_scatter_order_2
+node_zfs_abd_scatter_order_3
+node_zfs_abd_scatter_order_4
+node_zfs_abd_scatter_order_5
+node_zfs_abd_scatter_order_6
+node_zfs_abd_scatter_order_7
+node_zfs_abd_scatter_order_8
+node_zfs_abd_scatter_order_9
+node_zfs_abd_scatter_page_alloc_retry
+node_zfs_abd_scatter_page_multi_chunk
+node_zfs_abd_scatter_page_multi_zone
+node_zfs_abd_scatter_sg_table_retry
+node_zfs_abd_struct_size
+node_zfs_arc_access_skip
+node_zfs_arc_anon_evictable_data
+node_zfs_arc_anon_evictable_metadata
+node_zfs_arc_anon_size
+node_zfs_arc_arc_dnode_limit
+node_zfs_arc_arc_loaned_bytes
+node_zfs_arc_arc_meta_limit
+node_zfs_arc_arc_meta_max
+node_zfs_arc_arc_meta_min
+node_zfs_arc_arc_meta_used
+node_zfs_arc_arc_need_free
+node_zfs_arc_arc_no_grow
+node_zfs_arc_arc_prune
+node_zfs_arc_arc_sys_free
+node_zfs_arc_arc_tempreserve
+node_zfs_arc_bonus_size
+node_zfs_arc_c
+node_zfs_arc_c_max
+node_zfs_arc_c_min
+node_zfs_arc_compressed_size
+node_zfs_arc_data_size
+node_zfs_arc_dbuf_size
+node_zfs_arc_deleted
+node_zfs_arc_demand_data_hits
+node_zfs_arc_demand_data_misses
+node_zfs_arc_demand_hit_predictive_prefetch
+node_zfs_arc_demand_metadata_hits
+node_zfs_arc_demand_metadata_misses
+node_zfs_arc_dnode_size
+node_zfs_arc_evict_l2_cached
+node_zfs_arc_evict_l2_eligible
+node_zfs_arc_evict_l2_ineligible
+node_zfs_arc_evict_l2_skip
+node_zfs_arc_evict_not_enough
+node_zfs_arc_evict_skip
+node_zfs_arc_hash_chain_max
+node_zfs_arc_hash_chains
+node_zfs_arc_hash_collisions
+node_zfs_arc_hash_elements
+node_zfs_arc_hash_elements_max
+node_zfs_arc_hdr_size
+node_zfs_arc_hits
+node_zfs_arc_l2_abort_lowmem
+node_zfs_arc_l2_asize
+node_zfs_arc_l2_cksum_bad
+node_zfs_arc_l2_evict_l1cached
+node_zfs_arc_l2_evict_lock_retry
+node_zfs_arc_l2_evict_reading
+node_zfs_arc_l2_feeds
+node_zfs_arc_l2_free_on_write
+node_zfs_arc_l2_hdr_size
+node_zfs_arc_l2_hits
+node_zfs_arc_l2_io_error
+node_zfs_arc_l2_misses
+node_zfs_arc_l2_read_bytes
+node_zfs_arc_l2_rw_clash
+node_zfs_arc_l2_size
+node_zfs_arc_l2_write_bytes
+node_zfs_arc_l2_writes_done
+node_zfs_arc_l2_writes_error
+node_zfs_arc_l2_writes_lock_retry
+node_zfs_arc_l2_writes_sent
+node_zfs_arc_memory_all_bytes
+node_zfs_arc_memory_direct_count
+node_zfs_arc_memory_free_bytes
+node_zfs_arc_memory_indirect_count
+node_zfs_arc_memory_throttle_count
+node_zfs_arc_metadata_size
+node_zfs_arc_mfu_evictable_data
+node_zfs_arc_mfu_evictable_metadata
+node_zfs_arc_mfu_ghost_evictable_data
+node_zfs_arc_mfu_ghost_evictable_metadata
+node_zfs_arc_mfu_ghost_hits
+node_zfs_arc_mfu_ghost_size
+node_zfs_arc_mfu_hits
+node_zfs_arc_mfu_size
+node_zfs_arc_misses
+node_zfs_arc_mru_evictable_data
+node_zfs_arc_mru_evictable_metadata
+node_zfs_arc_mru_ghost_evictable_data
+node_zfs_arc_mru_ghost_evictable_metadata
+node_zfs_arc_mru_ghost_hits
+node_zfs_arc_mru_ghost_size
+node_zfs_arc_mru_hits
+node_zfs_arc_mru_size
+node_zfs_arc_mutex_miss
+node_zfs_arc_overhead_size
+node_zfs_arc_p
+node_zfs_arc_prefetch_data_hits
+node_zfs_arc_prefetch_data_misses
+node_zfs_arc_prefetch_metadata_hits
+node_zfs_arc_prefetch_metadata_misses
+node_zfs_arc_size
+node_zfs_arc_sync_wait_for_async
+node_zfs_arc_uncompressed_size
+node_zfs_dmu_tx_dmu_tx_assigned
+node_zfs_dmu_tx_dmu_tx_delay
+node_zfs_dmu_tx_dmu_tx_dirty_delay
+node_zfs_dmu_tx_dmu_tx_dirty_over_max
+node_zfs_dmu_tx_dmu_tx_dirty_throttle
+node_zfs_dmu_tx_dmu_tx_error
+node_zfs_dmu_tx_dmu_tx_group
+node_zfs_dmu_tx_dmu_tx_memory_reclaim
+node_zfs_dmu_tx_dmu_tx_memory_reserve
+node_zfs_dmu_tx_dmu_tx_quota
+node_zfs_dmu_tx_dmu_tx_suspended
+node_zfs_dnode_dnode_alloc_next_block
+node_zfs_dnode_dnode_alloc_next_chunk
+node_zfs_dnode_dnode_alloc_race
+node_zfs_dnode_dnode_allocate
+node_zfs_dnode_dnode_buf_evict
+node_zfs_dnode_dnode_free_interior_lock_retry
+node_zfs_dnode_dnode_hold_alloc_hits
+node_zfs_dnode_dnode_hold_alloc_interior
+node_zfs_dnode_dnode_hold_alloc_lock_misses
+node_zfs_dnode_dnode_hold_alloc_lock_retry
+node_zfs_dnode_dnode_hold_alloc_misses
+node_zfs_dnode_dnode_hold_alloc_type_none
+node_zfs_dnode_dnode_hold_dbuf_hold
+node_zfs_dnode_dnode_hold_dbuf_read
+node_zfs_dnode_dnode_hold_free_hits
+node_zfs_dnode_dnode_hold_free_lock_misses
+node_zfs_dnode_dnode_hold_free_lock_retry
+node_zfs_dnode_dnode_hold_free_misses
+node_zfs_dnode_dnode_hold_free_overflow
+node_zfs_dnode_dnode_hold_free_refcount
+node_zfs_dnode_dnode_hold_free_txg
+node_zfs_dnode_dnode_move_active
+node_zfs_dnode_dnode_move_handle
+node_zfs_dnode_dnode_move_invalid
+node_zfs_dnode_dnode_move_recheck1
+node_zfs_dnode_dnode_move_recheck2
+node_zfs_dnode_dnode_move_rwlock
+node_zfs_dnode_dnode_move_special
+node_zfs_dnode_dnode_reallocate
+node_zfs_fm_erpt_dropped
+node_zfs_fm_erpt_set_failed
+node_zfs_fm_fmri_set_failed
+node_zfs_fm_payload_set_failed
+node_zfs_vdev_cache_delegations
+node_zfs_vdev_cache_hits
+node_zfs_vdev_cache_misses
+node_zfs_xuio_onloan_read_buf
+node_zfs_xuio_onloan_write_buf
+node_zfs_xuio_read_buf_copied
+node_zfs_xuio_read_buf_nocopy
+node_zfs_xuio_write_buf_copied
+node_zfs_xuio_write_buf_nocopy
+node_zfs_zfetch_hits
+node_zfs_zfetch_max_streams
+node_zfs_zfetch_misses
+node_zfs_zil_zil_commit_count
+node_zfs_zil_zil_commit_writer_count
+node_zfs_zil_zil_itx_copied_bytes
+node_zfs_zil_zil_itx_copied_count
+node_zfs_zil_zil_itx_count
+node_zfs_zil_zil_itx_indirect_bytes
+node_zfs_zil_zil_itx_indirect_count
+node_zfs_zil_zil_itx_metaslab_normal_bytes
+node_zfs_zil_zil_itx_metaslab_normal_count
+node_zfs_zil_zil_itx_metaslab_slog_bytes
+node_zfs_zil_zil_itx_metaslab_slog_count
+node_zfs_zil_zil_itx_needcopy_bytes
+node_zfs_zil_zil_itx_needcopy_count
+node_zfs_zpool_nread
+node_zfs_zpool_nwritten
+node_zfs_zpool_rcnt
+node_zfs_zpool_reads
+node_zfs_zpool_rlentime
+node_zfs_zpool_rtime
+node_zfs_zpool_rupdate
+node_zfs_zpool_wcnt
+node_zfs_zpool_wlentime
+node_zfs_zpool_writes
+node_zfs_zpool_wtime
+node_zfs_zpool_wupdate
+```
