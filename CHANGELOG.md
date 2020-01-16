@@ -1,3 +1,23 @@
+v0.3 / 2020-01-15
+=======================
+
+  * feat(alert): adding sample prometheus rules for ZFSPV ([#32](https://github.com/openebs/zfs-localpv/pull/32),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * feat(HA): adding support to have controller in HA  ([#31](https://github.com/openebs/zfs-localpv/pull/31),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(doc): adding contributing and faq doc ([#29](https://github.com/openebs/zfs-localpv/pull/29),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * feat(stats): adding volume usage stats ([#27](https://github.com/openebs/zfs-localpv/pull/27),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(doc): making zfs-localpv repository CNCF compatible ([#26](https://github.com/openebs/zfs-localpv/pull/26),
+  [#28](https://github.com/openebs/zfs-localpv/pull/28), [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(doc): adding roadmap in the README ([#25](https://github.com/openebs/zfs-localpv/pull/25),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * test(zfspv): adding test cases to verify zfs property update ([#24](https://github.com/openebs/zfs-localpv/pull/24),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(doc): adding changelog in the repo ([#23](https://github.com/openebs/zfs-localpv/pull/23),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+
 v0.2 / 2019-12-09
 =======================
 
