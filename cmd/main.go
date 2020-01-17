@@ -70,7 +70,7 @@ func run(config *config.Config) {
 		config.Version = version.Current()
 	}
 
-	logrus.Infof("%s - %s", version.Current(), version.GetGitCommit())
+	logrus.Infof("ZFS Driver Version :- %s - commit :- %s", version.Current(), version.GetGitCommit())
 	logrus.Infof(
 		"DriverName: %s Plugin: %s EndPoint: %s NodeID: %s",
 		config.DriverName,
