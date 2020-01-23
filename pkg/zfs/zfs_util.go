@@ -32,12 +32,13 @@ const (
 
 // zfs command related constants
 const (
-	ZFSVolCmd     = "zfs"
-	ZFSCreateArg  = "create"
-	ZFSDestroyArg = "destroy"
-	ZFSSetArg     = "set"
-	ZFSGetArg     = "get"
-	ZFSListArg    = "list"
+	ZFSVolCmd      = "zfs"
+	ZFSCreateArg   = "create"
+	ZFSDestroyArg  = "destroy"
+	ZFSSetArg      = "set"
+	ZFSGetArg      = "get"
+	ZFSListArg     = "list"
+	ZFSSnapshotArg = "snapshot"
 )
 
 // constants to define volume type
@@ -113,6 +114,32 @@ func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
 	ZFSVolArg = append(ZFSVolArg, volume)
 
 	return ZFSVolArg
+}
+
+// buildZFSSnapCreateArgs returns zfs create command for zfs snapshot
+// zfs snapshot <poolname>/<volname>@<snapname>
+func buildZFSSnapCreateArgs(snap *apis.ZFSSnapshot) []string {
+	var ZFSSnapArg []string
+
+	volname := snap.Labels[ZFSVolKey]
+	snapDataset := snap.Spec.PoolName + "/" + volname + "@" + snap.Name
+
+	ZFSSnapArg = append(ZFSSnapArg, ZFSSnapshotArg, snapDataset)
+
+	return ZFSSnapArg
+}
+
+// builldZFSSnapDestroyArgs returns zfs destroy command for zfs snapshot
+// zfs destroy <poolname>/<volname>@<snapname>
+func buildZFSSnapDestroyArgs(snap *apis.ZFSSnapshot) []string {
+	var ZFSSnapArg []string
+
+	volname := snap.Labels[ZFSVolKey]
+	snapDataset := snap.Spec.PoolName + "/" + volname + "@" + snap.Name
+
+	ZFSSnapArg = append(ZFSSnapArg, ZFSDestroyArg, snapDataset)
+
+	return ZFSSnapArg
 }
 
 // builldDatasetCreateArgs returns zfs create command for dataset along with attributes as a string array
@@ -350,6 +377,51 @@ func DestroyVolume(vol *apis.ZFSVolume) error {
 	}
 	logrus.Infof("destroyed volume %s", volume)
 
+	return nil
+}
+
+// CreateSnapshot creates the zfs volume snapshot
+func CreateSnapshot(snap *apis.ZFSSnapshot) error {
+
+	volume := snap.Labels[ZFSVolKey]
+	snapDataset := snap.Spec.PoolName + "/" + volume + "@" + snap.Name
+
+	if err := getVolume(snapDataset); err == nil {
+		logrus.Infof("snapshot already there %s", snapDataset)
+		// snapshot already there just return
+		return nil
+	}
+
+	args := buildZFSSnapCreateArgs(snap)
+	cmd := exec.Command(ZFSVolCmd, args...)
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		logrus.Errorf(
+			"zfs: could not create snapshot %v@%v cmd %v error: %s", volume, snap.Name, args, string(out),
+		)
+		return err
+	}
+	logrus.Infof("created snapshot %s@%s", volume, snap.Name)
+	return nil
+}
+
+// DestroySnapshot deletes the zfs volume snapshot
+func DestroySnapshot(snap *apis.ZFSSnapshot) error {
+
+	volume := snap.Labels[ZFSVolKey]
+
+	args := buildZFSSnapDestroyArgs(snap)
+	cmd := exec.Command(ZFSVolCmd, args...)
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		logrus.Errorf(
+			"zfs: could not destroy snapshot %v@%v cmd %v error: %s", volume, snap.Name, args, string(out),
+		)
+		return err
+	}
+	logrus.Infof("deleted snapshot %s@%s", volume, snap.Name)
 	return nil
 }
 

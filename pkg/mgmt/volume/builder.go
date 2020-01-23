@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package mgmt
+package volume
 
 import (
 	"github.com/Sirupsen/logrus"

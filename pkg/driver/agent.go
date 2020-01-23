@@ -20,14 +20,16 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
-	"github.com/openebs/zfs-localpv/pkg/builder"
-	"github.com/openebs/zfs-localpv/pkg/mgmt"
+	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
+	"github.com/openebs/zfs-localpv/pkg/mgmt/snapshot"
+	"github.com/openebs/zfs-localpv/pkg/mgmt/volume"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 	"sync"
 )
 
@@ -41,11 +43,23 @@ type node struct {
 // of CSI NodeServer
 func NewNode(d *CSIDriver) csi.NodeServer {
 	var ControllerMutex = sync.RWMutex{}
+
+	// set up signals so we handle the first shutdown signal gracefully
+	stopCh := signals.SetupSignalHandler()
+
 	// start the zfsvolume watcher
 	go func() {
-		err := mgmt.Start(&ControllerMutex)
+		err := volume.Start(&ControllerMutex, stopCh)
 		if err != nil {
 			logrus.Fatalf("Failed to start ZFS volume management controller: %s", err.Error())
+		}
+	}()
+
+	// start the snapshot watcher
+	go func() {
+		err := snapshot.Start(&ControllerMutex, stopCh)
+		if err != nil {
+			logrus.Fatalf("Failed to start ZFS volume snapshot management controller: %s", err.Error())
 		}
 	}()
 
@@ -65,7 +79,7 @@ func GetVolAndMountInfo(
 	mountinfo.MountOptions = append(mountinfo.MountOptions, req.GetVolumeCapability().GetMount().GetMountFlags()...)
 
 	getOptions := metav1.GetOptions{}
-	vol, err := builder.NewKubeclient().
+	vol, err := volbuilder.NewKubeclient().
 		WithNamespace(zfs.OpenEBSNamespace).
 		Get(req.GetVolumeId(), getOptions)
 

@@ -20,7 +20,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/openebs/zfs-localpv/pkg/builder"
+	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	"github.com/openebs/zfs-localpv/tests/deploy"
 	"github.com/openebs/zfs-localpv/tests/pod"
 	"github.com/openebs/zfs-localpv/tests/pvc"
@@ -41,7 +41,7 @@ const (
 )
 
 var (
-	ZFSClient      *builder.Kubeclient
+	ZFSClient      *volbuilder.Kubeclient
 	SCClient       *sc.Kubeclient
 	PVCClient      *pvc.Kubeclient
 	DeployClient   *deploy.Kubeclient
@@ -74,7 +74,7 @@ func init() {
 	PVCClient = pvc.NewKubeClient(pvc.WithKubeConfigPath(KubeConfigPath))
 	DeployClient = deploy.NewKubeClient(deploy.WithKubeConfigPath(KubeConfigPath))
 	PodClient = pod.NewKubeClient(pod.WithKubeConfigPath(KubeConfigPath))
-	ZFSClient = builder.NewKubeclient(builder.WithKubeConfigPath(KubeConfigPath))
+	ZFSClient = volbuilder.NewKubeclient(volbuilder.WithKubeConfigPath(KubeConfigPath))
 }
 
 func TestSource(t *testing.T) {

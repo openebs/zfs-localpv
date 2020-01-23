@@ -21,7 +21,7 @@ import (
 	"math"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/openebs/zfs-localpv/pkg/builder"
+	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
@@ -40,7 +40,7 @@ const (
 func volumeWeightedScheduler(topo *csi.TopologyRequirement, pool string) string {
 	var selected string
 
-	zvlist, err := builder.NewKubeclient().
+	zvlist, err := volbuilder.NewKubeclient().
 		WithNamespace(zfs.OpenEBSNamespace).
 		List(metav1.ListOptions{})
 

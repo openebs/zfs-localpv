@@ -19,10 +19,13 @@ package driver
 import (
 	"fmt"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/openebs/zfs-localpv/pkg/builder"
+	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
+	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
@@ -91,7 +94,7 @@ func (cs *controller) CreateVolume(
 
 	logrus.Infof("scheduled the volume %s/%s on node %s", pool, volName, selected)
 
-	volObj, err := builder.NewBuilder().
+	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
 		WithCapacity(strconv.FormatInt(int64(size), 10)).
 		WithRecordSize(rs).
@@ -111,7 +114,7 @@ func (cs *controller) CreateVolume(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	err = zfs.ProvisionVolume(size, volObj)
+	err = zfs.ProvisionVolume(volObj)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "not able to provision the volume")
 	}
@@ -208,7 +211,65 @@ func (cs *controller) CreateSnapshot(
 	req *csi.CreateSnapshotRequest,
 ) (*csi.CreateSnapshotResponse, error) {
 
-	return nil, status.Error(codes.Unimplemented, "")
+	logrus.Infof("CreateSnapshot volume %s@%s", req.SourceVolumeId, req.Name)
+
+	snapTimeStamp := time.Now().Unix()
+	state, err := zfs.GetZFSSnapshotStatus(req.Name)
+
+	if err == nil {
+		return csipayload.NewCreateSnapshotResponseBuilder().
+			WithSourceVolumeID(req.SourceVolumeId).
+			WithSnapshotID(req.SourceVolumeId+"@"+req.Name).
+			WithCreationTime(snapTimeStamp, 0).
+			WithReadyToUse(state == zfs.ZFSStatusReady).
+			Build(), nil
+	}
+
+	vol, err := zfs.GetZFSVolume(req.SourceVolumeId)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"CreateSnapshot not able to get volume %s: %s, {%s}",
+			req.SourceVolumeId, req.Name,
+			err.Error(),
+		)
+	}
+
+	labels := map[string]string{zfs.ZFSVolKey: vol.Name}
+
+	snapObj, err := snapbuilder.NewBuilder().
+		WithName(req.Name).
+		WithLabels(labels).Build()
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to create snapshotobject for %s: %s, {%s}",
+			req.SourceVolumeId, req.Name,
+			err.Error(),
+		)
+	}
+
+	snapObj.Spec = vol.Spec
+	snapObj.Status.State = zfs.ZFSStatusPending
+
+	if err := zfs.ProvisionSnapshot(snapObj); err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to handle CreateSnapshotRequest for %s: %s, {%s}",
+			req.SourceVolumeId, req.Name,
+			err.Error(),
+		)
+	}
+
+	state, _ = zfs.GetZFSSnapshotStatus(req.Name)
+
+	return csipayload.NewCreateSnapshotResponseBuilder().
+		WithSourceVolumeID(req.SourceVolumeId).
+		WithSnapshotID(req.SourceVolumeId+"@"+req.Name).
+		WithCreationTime(snapTimeStamp, 0).
+		WithReadyToUse(state == zfs.ZFSStatusReady).
+		Build(), nil
 }
 
 // DeleteSnapshot deletes given snapshot
@@ -219,7 +280,28 @@ func (cs *controller) DeleteSnapshot(
 	req *csi.DeleteSnapshotRequest,
 ) (*csi.DeleteSnapshotResponse, error) {
 
-	return nil, status.Error(codes.Unimplemented, "")
+	logrus.Infof("DeleteSnapshot request for %s", req.SnapshotId)
+
+	// snapshodID is formed as <volname>@<snapname>
+	// parsing them here
+	snapshotID := strings.Split(req.SnapshotId, "@")
+	if len(snapshotID) != 2 {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to handle DeleteSnapshot for %s, {%s}",
+			req.SnapshotId,
+			"failed to get the snapshot name, Manual intervention required",
+		)
+	}
+	if err := zfs.DeleteSnapshot(snapshotID[1]); err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to handle DeleteSnapshot for %s, {%s}",
+			req.SnapshotId,
+			err.Error(),
+		)
+	}
+	return &csi.DeleteSnapshotResponse{}, nil
 }
 
 // ListSnapshots lists all snapshots for the
@@ -346,6 +428,7 @@ func newControllerCapabilities() []*csi.ControllerServiceCapability {
 	var capabilities []*csi.ControllerServiceCapability
 	for _, cap := range []csi.ControllerServiceCapability_RPC_Type{
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
+		csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
 	} {
 		capabilities = append(capabilities, fromType(cap))
 	}
