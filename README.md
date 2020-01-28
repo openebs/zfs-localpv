@@ -118,7 +118,7 @@ kind: StorageClass
 metadata:
   name: openebs-zfspv
 parameters:
-  volblockdsize: "4k"
+  volblocksize: "4k"
   compression: "off"
   dedup: "off"
   fstype: "ext4"
@@ -281,7 +281,7 @@ spec:
 ```
 
 After the deployment of the application, we can go to the node and see that the zfs volume is being used
-by the application for reading/writting the data and space is consumed form the ZFS pool.
+by the application for reading/writting the data and space is consumed from the ZFS pool.
 
 Also we can check the kubernetes resource for the corresponding zfs volume
 
