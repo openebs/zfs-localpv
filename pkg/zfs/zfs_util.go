@@ -197,7 +197,7 @@ func buildVolumeDestroyArgs(vol *apis.ZFSVolume) []string {
 
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	ZFSVolArg = append(ZFSVolArg, ZFSDestroyArg, "-R", volume)
+	ZFSVolArg = append(ZFSVolArg, ZFSDestroyArg, volume)
 
 	return ZFSVolArg
 }
