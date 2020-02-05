@@ -34,6 +34,7 @@ const (
 const (
 	ZFSVolCmd      = "zfs"
 	ZFSCreateArg   = "create"
+	ZFSCloneArg    = "clone"
 	ZFSDestroyArg  = "destroy"
 	ZFSSetArg      = "set"
 	ZFSGetArg      = "get"
@@ -113,6 +114,23 @@ func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
 
 	ZFSVolArg = append(ZFSVolArg, volume)
 
+	return ZFSVolArg
+}
+
+// builldCloneCreateArgs returns zfs clone commands for zfs volume/dataset along with attributes as a string array
+func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
+	var ZFSVolArg []string
+
+	volume := vol.Spec.PoolName + "/" + vol.Name
+	snapshot := vol.Spec.PoolName + "/" + vol.Spec.SnapName
+
+	ZFSVolArg = append(ZFSVolArg, ZFSCloneArg)
+
+	if vol.Spec.VolumeType == VOLTYPE_DATASET {
+		ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=none")
+	}
+
+	ZFSVolArg = append(ZFSVolArg, snapshot, volume)
 	return ZFSVolArg
 }
 
@@ -268,6 +286,31 @@ func CreateVolume(vol *apis.ZFSVolume) error {
 	return nil
 }
 
+// CreateClone creates clone for the zvol/dataset as per
+// info provided in ZFSVolume object
+func CreateClone(vol *apis.ZFSVolume) error {
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	if err := getVolume(volume); err != nil {
+		var args []string
+		args = buildCloneCreateArgs(vol)
+		cmd := exec.Command(ZFSVolCmd, args...)
+		out, err := cmd.CombinedOutput()
+
+		if err != nil {
+			logrus.Errorf(
+				"zfs: could not clone volume %v cmd %v error: %s", volume, args, string(out),
+			)
+			return err
+		}
+		logrus.Infof("created clone %s", volume)
+	} else if err == nil {
+		logrus.Infof("using existing clone volume %v", volume)
+	}
+
+	return nil
+}
+
 // SetDatasetMountProp sets mountpoint for the volume
 func SetDatasetMountProp(volume string, mountpath string) error {
 	var ZFSVolArg []string
@@ -362,6 +405,9 @@ func DestroyVolume(vol *apis.ZFSVolume) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
 	if err := getVolume(volume); err != nil {
+		logrus.Errorf(
+			"destroy: volume %v is not present, error: %s", volume, err.Error(),
+		)
 		return nil
 	}
 
@@ -410,6 +456,14 @@ func CreateSnapshot(snap *apis.ZFSSnapshot) error {
 func DestroySnapshot(snap *apis.ZFSSnapshot) error {
 
 	volume := snap.Labels[ZFSVolKey]
+	snapDataset := snap.Spec.PoolName + "/" + volume + "@" + snap.Name
+
+	if err := getVolume(snapDataset); err != nil {
+		logrus.Errorf(
+			"destroy: snapshot %v is not present, error: %s", volume, err.Error(),
+		)
+		return nil
+	}
 
 	args := buildZFSSnapDestroyArgs(snap)
 	cmd := exec.Command(ZFSVolCmd, args...)

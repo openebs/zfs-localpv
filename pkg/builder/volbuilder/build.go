@@ -166,6 +166,12 @@ func (b *Builder) WithFsType(fstype string) *Builder {
 	return b
 }
 
+// WithSnapshot sets Snapshot name for creating clone volume
+func (b *Builder) WithSnapshot(snap string) *Builder {
+	b.volume.Object.Spec.SnapName = snap
+	return b
+}
+
 func (b *Builder) WithPoolName(pool string) *Builder {
 	if pool == "" {
 		b.errs = append(

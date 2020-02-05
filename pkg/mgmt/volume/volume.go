@@ -90,7 +90,11 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 		if zv.Finalizers != nil {
 			err = zfs.SetVolumeProp(zv)
 		} else {
-			err = zfs.CreateVolume(zv)
+			if len(zv.Spec.SnapName) > 0 {
+				err = zfs.CreateClone(zv)
+			} else {
+				err = zfs.CreateVolume(zv)
+			}
 			if err == nil {
 				err = zfs.UpdateZvolInfo(zv)
 			}

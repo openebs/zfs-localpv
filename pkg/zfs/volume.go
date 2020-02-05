@@ -167,6 +167,14 @@ func RemoveZvolFinalizer(vol *apis.ZFSVolume) error {
 	return err
 }
 
+// GetZFSSnapshot fetches the given ZFSSnapshot
+func GetZFSSnapshot(snapID string) (*apis.ZFSSnapshot, error) {
+	getOptions := metav1.GetOptions{}
+	snap, err := snapbuilder.NewKubeclient().
+		WithNamespace(OpenEBSNamespace).Get(snapID, getOptions)
+	return snap, err
+}
+
 // GetZFSSnapshotStatus returns ZFSSnapshot status
 func GetZFSSnapshotStatus(snapID string) (string, error) {
 	getOptions := metav1.GetOptions{}
