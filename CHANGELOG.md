@@ -1,3 +1,19 @@
+v0.4 / 2020-02-13
+=======================
+
+  * feat(zfspv): adding snapshot and clone support for ZFSPV ([#39](https://github.com/openebs/zfs-localpv/pull/32),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(zfspv): do not destroy the dataset with -R option ([#40](https://github.com/openebs/zfs-localpv/pull/40),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(doc): Resolving the typo error in README doc ([#38](https://github.com/openebs/zfs-localpv/pull/38),
+  [@w3aman](https://github.com/w3aman))
+  * chore(metrics): adding list of zfs metrics exposed by prometheus ([#36](https://github.com/openebs/zfs-localpv/pull/36),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * refactor(version): bumping the version to 0.4 ([#37](https://github.com/openebs/zfs-localpv/pull/37),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(doc): adding v0.3 changelog in the repo ([#35](https://github.com/openebs/zfs-localpv/pull/35),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+
 v0.3 / 2020-01-15
 =======================
 
