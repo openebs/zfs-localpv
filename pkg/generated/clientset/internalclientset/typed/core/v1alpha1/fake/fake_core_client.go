@@ -28,6 +28,10 @@ type FakeOpenebsV1alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeOpenebsV1alpha1) ZFSSnapshots(namespace string) v1alpha1.ZFSSnapshotInterface {
+	return &FakeZFSSnapshots{c, namespace}
+}
+
 func (c *FakeOpenebsV1alpha1) ZFSVolumes(namespace string) v1alpha1.ZFSVolumeInterface {
 	return &FakeZFSVolumes{c, namespace}
 }

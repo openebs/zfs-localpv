@@ -19,10 +19,13 @@ package driver
 import (
 	"fmt"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/openebs/zfs-localpv/pkg/builder"
+	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
+	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
@@ -55,18 +58,7 @@ var SupportedVolumeCapabilityAccessModes = []*csi.VolumeCapability_AccessMode{
 	},
 }
 
-// CreateVolume provisions a volume
-func (cs *controller) CreateVolume(
-	ctx context.Context,
-	req *csi.CreateVolumeRequest,
-) (*csi.CreateVolumeResponse, error) {
-
-	var err error
-
-	if err = cs.validateVolumeCreateReq(req); err != nil {
-		return nil, err
-	}
-
+func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	volName := req.GetName()
 	size := req.GetCapacityRange().RequiredBytes
 	rs := req.GetParameters()["recordsize"]
@@ -86,12 +78,12 @@ func (cs *controller) CreateVolume(
 	selected := scheduler(req.AccessibilityRequirements, schld, pool)
 
 	if len(selected) == 0 {
-		return nil, status.Error(codes.Internal, "scheduler failed")
+		return "", status.Error(codes.Internal, "scheduler failed")
 	}
 
 	logrus.Infof("scheduled the volume %s/%s on node %s", pool, volName, selected)
 
-	volObj, err := builder.NewBuilder().
+	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
 		WithCapacity(strconv.FormatInt(int64(size), 10)).
 		WithRecordSize(rs).
@@ -108,12 +100,94 @@ func (cs *controller) CreateVolume(
 		WithCompression(compression).Build()
 
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return "", status.Error(codes.Internal, err.Error())
 	}
 
-	err = zfs.ProvisionVolume(size, volObj)
+	err = zfs.ProvisionVolume(volObj)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "not able to provision the volume")
+		return "", status.Error(codes.Internal,
+			"not able to provision the volume")
+	}
+
+	return selected, nil
+}
+
+func CreateZFSClone(req *csi.CreateVolumeRequest, snapshot string) (string, error) {
+
+	volName := req.GetName()
+	pool := req.GetParameters()["poolname"]
+	size := req.GetCapacityRange().RequiredBytes
+	volsize := strconv.FormatInt(int64(size), 10)
+
+	snapshotID := strings.Split(snapshot, "@")
+	if len(snapshotID) != 2 {
+		return "", status.Errorf(
+			codes.Internal,
+			"snap name is not valid %s, {%s}",
+			snapshot,
+			"invalid snapshot name",
+		)
+	}
+
+	snap, err := zfs.GetZFSSnapshot(snapshotID[1])
+	if err != nil {
+		return "", status.Error(codes.Internal, err.Error())
+	}
+
+	if snap.Spec.PoolName != pool {
+		return "", status.Errorf(codes.Internal,
+			"clone to a different pool src pool %s dst pool %s",
+			snap.Spec.PoolName, pool)
+	}
+
+	if snap.Spec.Capacity != volsize {
+		return "", status.Error(codes.Internal, "resize not supported")
+	}
+
+	selected := snap.Spec.OwnerNodeID
+
+	volObj, err := volbuilder.NewBuilder().
+		WithName(volName).Build()
+
+	volObj.Spec = snap.Spec
+	volObj.Spec.SnapName = snapshot
+
+	err = zfs.ProvisionVolume(volObj)
+	if err != nil {
+		return "", status.Error(codes.Internal,
+			"not able to provision the volume")
+	}
+
+	return selected, nil
+}
+
+// CreateVolume provisions a volume
+func (cs *controller) CreateVolume(
+	ctx context.Context,
+	req *csi.CreateVolumeRequest,
+) (*csi.CreateVolumeResponse, error) {
+
+	var err error
+	var selected string
+
+	volName := req.GetName()
+	size := req.GetCapacityRange().RequiredBytes
+
+	if err = cs.validateVolumeCreateReq(req); err != nil {
+		return nil, err
+	}
+
+	contentSource := req.GetVolumeContentSource()
+	if contentSource != nil && contentSource.GetSnapshot() != nil {
+		snapshotID := contentSource.GetSnapshot().GetSnapshotId()
+
+		selected, err = CreateZFSClone(req, snapshotID)
+	} else {
+		selected, err = CreateZFSVolume(req)
+	}
+
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	topology := map[string]string{zfs.ZFSTopologyKey: selected}
@@ -122,6 +196,7 @@ func (cs *controller) CreateVolume(
 		WithName(volName).
 		WithCapacity(size).
 		WithTopology(topology).
+		WithContentSource(contentSource).
 		Build(), nil
 }
 
@@ -208,7 +283,65 @@ func (cs *controller) CreateSnapshot(
 	req *csi.CreateSnapshotRequest,
 ) (*csi.CreateSnapshotResponse, error) {
 
-	return nil, status.Error(codes.Unimplemented, "")
+	logrus.Infof("CreateSnapshot volume %s@%s", req.SourceVolumeId, req.Name)
+
+	snapTimeStamp := time.Now().Unix()
+	state, err := zfs.GetZFSSnapshotStatus(req.Name)
+
+	if err == nil {
+		return csipayload.NewCreateSnapshotResponseBuilder().
+			WithSourceVolumeID(req.SourceVolumeId).
+			WithSnapshotID(req.SourceVolumeId+"@"+req.Name).
+			WithCreationTime(snapTimeStamp, 0).
+			WithReadyToUse(state == zfs.ZFSStatusReady).
+			Build(), nil
+	}
+
+	vol, err := zfs.GetZFSVolume(req.SourceVolumeId)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"CreateSnapshot not able to get volume %s: %s, {%s}",
+			req.SourceVolumeId, req.Name,
+			err.Error(),
+		)
+	}
+
+	labels := map[string]string{zfs.ZFSVolKey: vol.Name}
+
+	snapObj, err := snapbuilder.NewBuilder().
+		WithName(req.Name).
+		WithLabels(labels).Build()
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to create snapshotobject for %s: %s, {%s}",
+			req.SourceVolumeId, req.Name,
+			err.Error(),
+		)
+	}
+
+	snapObj.Spec = vol.Spec
+	snapObj.Status.State = zfs.ZFSStatusPending
+
+	if err := zfs.ProvisionSnapshot(snapObj); err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to handle CreateSnapshotRequest for %s: %s, {%s}",
+			req.SourceVolumeId, req.Name,
+			err.Error(),
+		)
+	}
+
+	state, _ = zfs.GetZFSSnapshotStatus(req.Name)
+
+	return csipayload.NewCreateSnapshotResponseBuilder().
+		WithSourceVolumeID(req.SourceVolumeId).
+		WithSnapshotID(req.SourceVolumeId+"@"+req.Name).
+		WithCreationTime(snapTimeStamp, 0).
+		WithReadyToUse(state == zfs.ZFSStatusReady).
+		Build(), nil
 }
 
 // DeleteSnapshot deletes given snapshot
@@ -219,7 +352,28 @@ func (cs *controller) DeleteSnapshot(
 	req *csi.DeleteSnapshotRequest,
 ) (*csi.DeleteSnapshotResponse, error) {
 
-	return nil, status.Error(codes.Unimplemented, "")
+	logrus.Infof("DeleteSnapshot request for %s", req.SnapshotId)
+
+	// snapshodID is formed as <volname>@<snapname>
+	// parsing them here
+	snapshotID := strings.Split(req.SnapshotId, "@")
+	if len(snapshotID) != 2 {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to handle DeleteSnapshot for %s, {%s}",
+			req.SnapshotId,
+			"failed to get the snapshot name, Manual intervention required",
+		)
+	}
+	if err := zfs.DeleteSnapshot(snapshotID[1]); err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to handle DeleteSnapshot for %s, {%s}",
+			req.SnapshotId,
+			err.Error(),
+		)
+	}
+	return &csi.DeleteSnapshotResponse{}, nil
 }
 
 // ListSnapshots lists all snapshots for the
@@ -346,6 +500,8 @@ func newControllerCapabilities() []*csi.ControllerServiceCapability {
 	var capabilities []*csi.ControllerServiceCapability
 	for _, cap := range []csi.ControllerServiceCapability_RPC_Type{
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
+		csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
+		csi.ControllerServiceCapability_RPC_CLONE_VOLUME,
 	} {
 		capabilities = append(capabilities, fromType(cap))
 	}

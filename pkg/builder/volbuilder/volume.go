@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package builder
+package volbuilder
 
 import (
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
@@ -21,11 +21,12 @@ import (
 // ZFSVolume is a wrapper over
 // ZFSVolume API instance
 type ZFSVolume struct {
+	// ZFSVolume object
 	Object *apis.ZFSVolume
 }
 
 // From returns a new instance of
-// csi volume
+// zfs volume
 func From(vol *apis.ZFSVolume) *ZFSVolume {
 	return &ZFSVolume{
 		Object: vol,
@@ -41,23 +42,24 @@ type Predicate func(*ZFSVolume) bool
 type predicateList []Predicate
 
 // ZFSVolumeList holds the list
-// of csi volume instances
+// of zfs volume instances
 type ZFSVolumeList struct {
+	// List conatils list of volumes
 	List apis.ZFSVolumeList
 }
 
 // Len returns the number of items present
 // in the ZFSVolumeList
-func (p *ZFSVolumeList) Len() int {
-	return len(p.List.Items)
+func (volList *ZFSVolumeList) Len() int {
+	return len(volList.List.Items)
 }
 
 // all returns true if all the predicates
 // succeed against the provided ZFSVolume
 // instance
-func (l predicateList) all(p *ZFSVolume) bool {
+func (l predicateList) all(vol *ZFSVolume) bool {
 	for _, pred := range l {
-		if !pred(p) {
+		if !pred(vol) {
 			return false
 		}
 	}
@@ -67,9 +69,9 @@ func (l predicateList) all(p *ZFSVolume) bool {
 // HasLabels returns true if provided labels
 // are present in the provided ZFSVolume instance
 func HasLabels(keyValuePair map[string]string) Predicate {
-	return func(p *ZFSVolume) bool {
+	return func(vol *ZFSVolume) bool {
 		for key, value := range keyValuePair {
-			if !p.HasLabel(key, value) {
+			if !vol.HasLabel(key, value) {
 				return false
 			}
 		}
@@ -79,8 +81,8 @@ func HasLabels(keyValuePair map[string]string) Predicate {
 
 // HasLabel returns true if provided label
 // is present in the provided ZFSVolume instance
-func (p *ZFSVolume) HasLabel(key, value string) bool {
-	val, ok := p.Object.GetLabels()[key]
+func (vol *ZFSVolume) HasLabel(key, value string) bool {
+	val, ok := vol.Object.GetLabels()[key]
 	if ok {
 		return val == value
 	}
@@ -90,26 +92,26 @@ func (p *ZFSVolume) HasLabel(key, value string) bool {
 // HasLabel returns true if provided label
 // is present in the provided ZFSVolume instance
 func HasLabel(key, value string) Predicate {
-	return func(p *ZFSVolume) bool {
-		return p.HasLabel(key, value)
+	return func(vol *ZFSVolume) bool {
+		return vol.HasLabel(key, value)
 	}
 }
 
-// IsNil returns true if the csi volume instance
+// IsNil returns true if the zfs volume instance
 // is nil
-func (p *ZFSVolume) IsNil() bool {
-	return p.Object == nil
+func (vol *ZFSVolume) IsNil() bool {
+	return vol.Object == nil
 }
 
-// IsNil is predicate to filter out nil csi volume
+// IsNil is predicate to filter out nil zfs volume
 // instances
 func IsNil() Predicate {
-	return func(p *ZFSVolume) bool {
-		return p.IsNil()
+	return func(vol *ZFSVolume) bool {
+		return vol.IsNil()
 	}
 }
 
-// GetAPIObject returns csi volume's API instance
-func (p *ZFSVolume) GetAPIObject() *apis.ZFSVolume {
-	return p.Object
+// GetAPIObject returns zfs volume's API instance
+func (vol *ZFSVolume) GetAPIObject() *apis.ZFSVolume {
+	return vol.Object
 }

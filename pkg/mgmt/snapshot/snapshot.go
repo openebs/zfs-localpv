@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The OpenEBS Authors
+Copyright 2020 The OpenEBS Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package mgmt
+package snapshot
 
 import (
 	"fmt"
@@ -30,15 +30,14 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-// isDeletionCandidate checks if a zfs volume is a deletion candidate.
-func (c *ZVController) isDeletionCandidate(zv *apis.ZFSVolume) bool {
-	return zv.ObjectMeta.DeletionTimestamp != nil
+// isDeletionCandidate checks if a zfs snapshot is a deletion candidate.
+func (c *SnapController) isDeletionCandidate(snap *apis.ZFSSnapshot) bool {
+	return snap.ObjectMeta.DeletionTimestamp != nil
 }
 
 // syncHandler compares the actual state with the desired, and attempts to
-// converge the two. It then updates the Status block of the spcPoolUpdated resource
-// with the current status of the resource.
-func (c *ZVController) syncHandler(key string) error {
+// converge the two.
+func (c *SnapController) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -46,24 +45,24 @@ func (c *ZVController) syncHandler(key string) error {
 		return nil
 	}
 
-	// Get the zv resource with this namespace/name
-	zv, err := c.zvLister.ZFSVolumes(namespace).Get(name)
+	// Get the snap resource with this namespace/name
+	snap, err := c.snapLister.ZFSSnapshots(namespace).Get(name)
 	if k8serror.IsNotFound(err) {
-		runtime.HandleError(fmt.Errorf("zfsvolume '%s' has been deleted", key))
+		runtime.HandleError(fmt.Errorf("zfs snapshot '%s' has been deleted", key))
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	zvCopy := zv.DeepCopy()
-	err = c.syncZV(zvCopy)
+	snapCopy := snap.DeepCopy()
+	err = c.syncSnap(snapCopy)
 	return err
 }
 
-// enqueueZV takes a ZFSVolume resource and converts it into a namespace/name
+// enqueueSnap takes a ZFSSnapshot resource and converts it into a namespace/name
 // string which is then put onto the work queue. This method should *not* be
-// passed resources of any type other than ZFSVolume.
-func (c *ZVController) enqueueZV(obj interface{}) {
+// passed resources of any type other than ZFSSnapshot.
+func (c *SnapController) enqueueSnap(obj interface{}) {
 	var key string
 	var err error
 	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
@@ -71,121 +70,116 @@ func (c *ZVController) enqueueZV(obj interface{}) {
 		return
 	}
 	c.workqueue.Add(key)
-
 }
 
-// synZV is the function which tries to converge to a desired state for the
-// ZFSVolume
-func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
+// synSnap is the function which tries to converge to a desired state for the
+// ZFSSnapshot
+func (c *SnapController) syncSnap(snap *apis.ZFSSnapshot) error {
 	var err error
-	// ZFS Volume should be deleted. Check if deletion timestamp is set
-	if c.isDeletionCandidate(zv) {
-		err = zfs.DestroyVolume(zv)
+	// ZFSSnapshot should be deleted. Check if deletion timestamp is set
+	if c.isDeletionCandidate(snap) {
+		err = zfs.DestroySnapshot(snap)
 		if err == nil {
-			zfs.RemoveZvolFinalizer(zv)
+			zfs.RemoveSnapFinalizer(snap)
 		}
 	} else {
 		// if finalizer is not set then it means we are creating
-		// the volume. And if it is set then volume has already been
-		// created and this event is for property change only.
-		if zv.Finalizers != nil {
-			err = zfs.SetVolumeProp(zv)
-		} else {
-			err = zfs.CreateVolume(zv)
+		// the zfs snapshot.
+		if snap.Finalizers == nil {
+			err = zfs.CreateSnapshot(snap)
 			if err == nil {
-				err = zfs.UpdateZvolInfo(zv)
+				err = zfs.UpdateSnapInfo(snap)
 			}
 		}
 	}
 	return err
 }
 
-// addZV is the add event handler for ZFSVolume
-func (c *ZVController) addZV(obj interface{}) {
-	zv, ok := obj.(*apis.ZFSVolume)
+// addSnap is the add event handler for ZFSSnapshot
+func (c *SnapController) addSnap(obj interface{}) {
+	snap, ok := obj.(*apis.ZFSSnapshot)
 	if !ok {
-		runtime.HandleError(fmt.Errorf("Couldn't get zv object %#v", obj))
+		runtime.HandleError(fmt.Errorf("Couldn't get snap object %#v", obj))
 		return
 	}
 
-	if zfs.NodeID != zv.Spec.OwnerNodeID {
+	if zfs.NodeID != snap.Spec.OwnerNodeID {
 		return
 	}
-	logrus.Infof("Got add event for ZV %s/%s", zv.Spec.PoolName, zv.Name)
-	c.enqueueZV(zv)
+	logrus.Infof("Got add event for Snap %s/%s", snap.Spec.PoolName, snap.Name)
+	c.enqueueSnap(snap)
 }
 
-// updateZV is the update event handler for ZFSVolume
-func (c *ZVController) updateZV(oldObj, newObj interface{}) {
+// updateSnap is the update event handler for ZFSSnapshot
+func (c *SnapController) updateSnap(oldObj, newObj interface{}) {
 
-	newZV, ok := newObj.(*apis.ZFSVolume)
+	newSnap, ok := newObj.(*apis.ZFSSnapshot)
 	if !ok {
-		runtime.HandleError(fmt.Errorf("Couldn't get zv object %#v", newZV))
+		runtime.HandleError(fmt.Errorf("Couldn't get snap object %#v", newSnap))
 		return
 	}
 
-	if zfs.NodeID != newZV.Spec.OwnerNodeID {
+	if zfs.NodeID != newSnap.Spec.OwnerNodeID {
 		return
 	}
 
-	oldZV, ok := oldObj.(*apis.ZFSVolume)
-	if zfs.PropertyChanged(oldZV, newZV) ||
-		c.isDeletionCandidate(newZV) {
-		logrus.Infof("Got update event for ZV %s/%s", newZV.Spec.PoolName, newZV.Name)
-		c.enqueueZV(newZV)
+	// update on Snapshot CR does not make sense unless it is a deletion candidate
+	if c.isDeletionCandidate(newSnap) {
+		logrus.Infof("Got update event for Snap %s/%s@%s", newSnap.Spec.PoolName, newSnap.Labels[zfs.ZFSVolKey], newSnap.Name)
+		c.enqueueSnap(newSnap)
 	}
 }
 
-// deleteZV is the delete event handler for ZFSVolume
-func (c *ZVController) deleteZV(obj interface{}) {
-	zv, ok := obj.(*apis.ZFSVolume)
+// deleteSnap is the delete event handler for ZFSSnapshot
+func (c *SnapController) deleteSnap(obj interface{}) {
+	snap, ok := obj.(*apis.ZFSSnapshot)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
 		if !ok {
 			runtime.HandleError(fmt.Errorf("Couldn't get object from tombstone %#v", obj))
 			return
 		}
-		zv, ok = tombstone.Obj.(*apis.ZFSVolume)
+		snap, ok = tombstone.Obj.(*apis.ZFSSnapshot)
 		if !ok {
-			runtime.HandleError(fmt.Errorf("Tombstone contained object that is not a zfsvolume %#v", obj))
+			runtime.HandleError(fmt.Errorf("Tombstone contained object that is not a zfssnap %#v", obj))
 			return
 		}
 	}
 
-	if zfs.NodeID != zv.Spec.OwnerNodeID {
+	if zfs.NodeID != snap.Spec.OwnerNodeID {
 		return
 	}
 
-	logrus.Infof("Got delete event for ZV %s/%s", zv.Spec.PoolName, zv.Name)
-	c.enqueueZV(zv)
+	logrus.Infof("Got delete event for Snap %s/%s@%s", snap.Spec.PoolName, snap.Labels[zfs.ZFSVolKey], snap.Name)
+	c.enqueueSnap(snap)
 }
 
 // Run will set up the event handlers for types we are interested in, as well
 // as syncing informer caches and starting workers. It will block until stopCh
 // is closed, at which point it will shutdown the workqueue and wait for
 // workers to finish processing their current work items.
-func (c *ZVController) Run(threadiness int, stopCh <-chan struct{}) error {
+func (c *SnapController) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer runtime.HandleCrash()
 	defer c.workqueue.ShutDown()
 
 	// Start the informer factories to begin populating the informer caches
-	logrus.Info("Starting ZV controller")
+	logrus.Info("Starting Snap controller")
 
 	// Wait for the k8s caches to be synced before starting workers
 	logrus.Info("Waiting for informer caches to sync")
-	if ok := cache.WaitForCacheSync(stopCh, c.zvSynced); !ok {
+	if ok := cache.WaitForCacheSync(stopCh, c.snapSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
-	logrus.Info("Starting ZV workers")
-	// Launch worker to process ZV resources
+	logrus.Info("Starting Snap workers")
+	// Launch worker to process Snap resources
 	// Threadiness will decide the number of workers you want to launch to process work items from queue
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
 
-	logrus.Info("Started ZV workers")
+	logrus.Info("Started Snap workers")
 	<-stopCh
-	logrus.Info("Shutting down ZV workers")
+	logrus.Info("Shutting down Snap workers")
 
 	return nil
 }
@@ -193,14 +187,14 @@ func (c *ZVController) Run(threadiness int, stopCh <-chan struct{}) error {
 // runWorker is a long-running function that will continually call the
 // processNextWorkItem function in order to read and process a message on the
 // workqueue.
-func (c *ZVController) runWorker() {
+func (c *SnapController) runWorker() {
 	for c.processNextWorkItem() {
 	}
 }
 
 // processNextWorkItem will read a single work item off the workqueue and
 // attempt to process it, by calling the syncHandler.
-func (c *ZVController) processNextWorkItem() bool {
+func (c *SnapController) processNextWorkItem() bool {
 	obj, shutdown := c.workqueue.Get()
 
 	if shutdown {
@@ -232,7 +226,7 @@ func (c *ZVController) processNextWorkItem() bool {
 			return nil
 		}
 		// Run the syncHandler, passing it the namespace/name string of the
-		// ZV resource to be synced.
+		// Snap resource to be synced.
 		if err := c.syncHandler(key); err != nil {
 			// Put the item back on the workqueue to handle any transient errors.
 			c.workqueue.AddRateLimited(key)

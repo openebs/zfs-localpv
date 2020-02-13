@@ -58,7 +58,7 @@ type MountInfo struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +resource:path=csivolumes
+// +resource:path=zfsvolumes
 
 // ZFSVolumeList is a list of ZFSVolume resources
 type ZFSVolumeList struct {
@@ -78,6 +78,10 @@ type VolumeInfo struct {
 	// poolName specifies the name of the
 	// pool where this volume should be created
 	PoolName string `json:"poolName"`
+
+	// SnapName specifies the name of the
+	// snapshot where this volume should be cloned
+	SnapName string `json:"snapname,omitempty"`
 
 	// Capacity of the volume
 	Capacity string `json:"capacity"`

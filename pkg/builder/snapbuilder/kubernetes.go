@@ -1,4 +1,4 @@
-// Copyright © 2019 The OpenEBS Authors
+// Copyright © 2020 The OpenEBS Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package builder
+package snapbuilder
 
 import (
 	"encoding/json"
@@ -36,32 +36,32 @@ type getClientsetForPathFn func(kubeConfigPath string) (
 )
 
 // createFn is a typed function that abstracts
-// creating csi volume instance
+// creating zfssnap volume instance
 type createFn func(
 	cs *clientset.Clientset,
-	upgradeResultObj *apis.ZFSVolume,
+	upgradeResultObj *apis.ZFSSnapshot,
 	namespace string,
-) (*apis.ZFSVolume, error)
+) (*apis.ZFSSnapshot, error)
 
 // getFn is a typed function that abstracts
-// fetching a csi volume instance
+// fetching a zfssnap volume instance
 type getFn func(
 	cli *clientset.Clientset,
 	name,
 	namespace string,
 	opts metav1.GetOptions,
-) (*apis.ZFSVolume, error)
+) (*apis.ZFSSnapshot, error)
 
 // listFn is a typed function that abstracts
-// listing of csi volume instances
+// listing of zfssnap volume instances
 type listFn func(
 	cli *clientset.Clientset,
 	namespace string,
 	opts metav1.ListOptions,
-) (*apis.ZFSVolumeList, error)
+) (*apis.ZFSSnapshotList, error)
 
 // delFn is a typed function that abstracts
-// deleting a csi volume instance
+// deleting a zfssnap volume instance
 type delFn func(
 	cli *clientset.Clientset,
 	name,
@@ -70,17 +70,17 @@ type delFn func(
 ) error
 
 // updateFn is a typed function that abstracts
-// updating csi volume instance
+// updating zfssnap volume instance
 type updateFn func(
 	cs *clientset.Clientset,
-	vol *apis.ZFSVolume,
+	vol *apis.ZFSSnapshot,
 	namespace string,
-) (*apis.ZFSVolume, error)
+) (*apis.ZFSSnapshot, error)
 
 // Kubeclient enables kubernetes API operations
-// on csi volume instance
+// on zfssnap volume instance
 type Kubeclient struct {
-	// clientset refers to csi volume's
+	// clientset refers to zfssnap volume's
 	// clientset that will be responsible to
 	// make kubernetes API calls
 	clientset *clientset.Clientset
@@ -134,31 +134,31 @@ func defaultGetClientsetForPath(
 }
 
 // defaultGet is the default implementation to get
-// a csi volume instance in kubernetes cluster
+// a zfssnap volume instance in kubernetes cluster
 func defaultGet(
 	cli *clientset.Clientset,
 	name, namespace string,
 	opts metav1.GetOptions,
-) (*apis.ZFSVolume, error) {
+) (*apis.ZFSSnapshot, error) {
 	return cli.OpenebsV1alpha1().
-		ZFSVolumes(namespace).
+		ZFSSnapshots(namespace).
 		Get(name, opts)
 }
 
 // defaultList is the default implementation to list
-// csi volume instances in kubernetes cluster
+// zfssnap volume instances in kubernetes cluster
 func defaultList(
 	cli *clientset.Clientset,
 	namespace string,
 	opts metav1.ListOptions,
-) (*apis.ZFSVolumeList, error) {
+) (*apis.ZFSSnapshotList, error) {
 	return cli.OpenebsV1alpha1().
-		ZFSVolumes(namespace).
+		ZFSSnapshots(namespace).
 		List(opts)
 }
 
 // defaultCreate is the default implementation to delete
-// a csi volume instance in kubernetes cluster
+// a zfssnap volume instance in kubernetes cluster
 func defaultDel(
 	cli *clientset.Clientset,
 	name, namespace string,
@@ -167,32 +167,32 @@ func defaultDel(
 	deletePropagation := metav1.DeletePropagationForeground
 	opts.PropagationPolicy = &deletePropagation
 	err := cli.OpenebsV1alpha1().
-		ZFSVolumes(namespace).
+		ZFSSnapshots(namespace).
 		Delete(name, opts)
 	return err
 }
 
 // defaultCreate is the default implementation to create
-// a csi volume instance in kubernetes cluster
+// a zfssnap volume instance in kubernetes cluster
 func defaultCreate(
 	cli *clientset.Clientset,
-	vol *apis.ZFSVolume,
+	vol *apis.ZFSSnapshot,
 	namespace string,
-) (*apis.ZFSVolume, error) {
+) (*apis.ZFSSnapshot, error) {
 	return cli.OpenebsV1alpha1().
-		ZFSVolumes(namespace).
+		ZFSSnapshots(namespace).
 		Create(vol)
 }
 
 // defaultUpdate is the default implementation to update
-// a csi volume instance in kubernetes cluster
+// a zfssnap volume instance in kubernetes cluster
 func defaultUpdate(
 	cli *clientset.Clientset,
-	vol *apis.ZFSVolume,
+	vol *apis.ZFSSnapshot,
 	namespace string,
-) (*apis.ZFSVolume, error) {
+) (*apis.ZFSSnapshot, error) {
 	return cli.OpenebsV1alpha1().
-		ZFSVolumes(namespace).
+		ZFSSnapshots(namespace).
 		Update(vol)
 }
 
@@ -254,7 +254,7 @@ func WithKubeConfigPath(path string) KubeclientBuildOption {
 }
 
 // NewKubeclient returns a new instance of
-// kubeclient meant for csi volume operations
+// kubeclient meant for zfssnap volume operations
 func NewKubeclient(opts ...KubeclientBuildOption) *Kubeclient {
 	k := &Kubeclient{}
 	for _, o := range opts {
@@ -296,9 +296,9 @@ func (k *Kubeclient) getClientOrCached() (*clientset.Clientset, error) {
 	return k.clientset, nil
 }
 
-// Create creates a csi volume instance
+// Create creates a zfssnap volume instance
 // in kubernetes cluster
-func (k *Kubeclient) Create(vol *apis.ZFSVolume) (*apis.ZFSVolume, error) {
+func (k *Kubeclient) Create(vol *apis.ZFSSnapshot) (*apis.ZFSSnapshot, error) {
 	if vol == nil {
 		return nil,
 			errors.New(
@@ -309,7 +309,7 @@ func (k *Kubeclient) Create(vol *apis.ZFSVolume) (*apis.ZFSVolume, error) {
 	if err != nil {
 		return nil, errors.Wrapf(
 			err,
-			"failed to create csi volume {%s} in namespace {%s}",
+			"failed to create zfssnap volume {%s} in namespace {%s}",
 			vol.Name,
 			k.namespace,
 		)
@@ -318,15 +318,15 @@ func (k *Kubeclient) Create(vol *apis.ZFSVolume) (*apis.ZFSVolume, error) {
 	return k.create(cs, vol, k.namespace)
 }
 
-// Get returns csi volume object for given name
+// Get returns zfssnap volume object for given name
 func (k *Kubeclient) Get(
 	name string,
 	opts metav1.GetOptions,
-) (*apis.ZFSVolume, error) {
+) (*apis.ZFSSnapshot, error) {
 	if name == "" {
 		return nil,
 			errors.New(
-				"failed to get csi volume: missing csi volume name",
+				"failed to get zfssnap volume: missing zfssnap volume name",
 			)
 	}
 
@@ -334,7 +334,7 @@ func (k *Kubeclient) Get(
 	if err != nil {
 		return nil, errors.Wrapf(
 			err,
-			"failed to get csi volume {%s} in namespace {%s}",
+			"failed to get zfssnap volume {%s} in namespace {%s}",
 			name,
 			k.namespace,
 		)
@@ -343,7 +343,7 @@ func (k *Kubeclient) Get(
 	return k.get(cli, name, k.namespace, opts)
 }
 
-// GetRaw returns csi volume instance
+// GetRaw returns zfssnap volume instance
 // in bytes
 func (k *Kubeclient) GetRaw(
 	name string,
@@ -351,14 +351,14 @@ func (k *Kubeclient) GetRaw(
 ) ([]byte, error) {
 	if name == "" {
 		return nil, errors.New(
-			"failed to get raw csi volume: missing vol name",
+			"failed to get raw zfssnap volume: missing vol name",
 		)
 	}
 	csiv, err := k.Get(name, opts)
 	if err != nil {
 		return nil, errors.Wrapf(
 			err,
-			"failed to get csi volume {%s} in namespace {%s}",
+			"failed to get zfssnap volume {%s} in namespace {%s}",
 			name,
 			k.namespace,
 		)
@@ -367,14 +367,14 @@ func (k *Kubeclient) GetRaw(
 	return json.Marshal(csiv)
 }
 
-// List returns a list of csi volume
+// List returns a list of zfssnap volume
 // instances present in kubernetes cluster
-func (k *Kubeclient) List(opts metav1.ListOptions) (*apis.ZFSVolumeList, error) {
+func (k *Kubeclient) List(opts metav1.ListOptions) (*apis.ZFSSnapshotList, error) {
 	cli, err := k.getClientOrCached()
 	if err != nil {
 		return nil, errors.Wrapf(
 			err,
-			"failed to list csi volumes in namespace {%s}",
+			"failed to list zfssnap volumes in namespace {%s}",
 			k.namespace,
 		)
 	}
@@ -382,7 +382,7 @@ func (k *Kubeclient) List(opts metav1.ListOptions) (*apis.ZFSVolumeList, error) 
 	return k.list(cli, k.namespace, opts)
 }
 
-// Delete deletes the csi volume from
+// Delete deletes the zfssnap volume from
 // kubernetes
 func (k *Kubeclient) Delete(name string) error {
 	if name == "" {
@@ -403,9 +403,9 @@ func (k *Kubeclient) Delete(name string) error {
 	return k.del(cli, name, k.namespace, &metav1.DeleteOptions{})
 }
 
-// Update updates this csi volume instance
+// Update updates this zfssnap volume instance
 // against kubernetes cluster
-func (k *Kubeclient) Update(vol *apis.ZFSVolume) (*apis.ZFSVolume, error) {
+func (k *Kubeclient) Update(vol *apis.ZFSSnapshot) (*apis.ZFSSnapshot, error) {
 	if vol == nil {
 		return nil,
 			errors.New(

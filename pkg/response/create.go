@@ -57,6 +57,13 @@ func (b *CreateVolumeResponseBuilder) WithContext(ctx map[string]string) *Create
 	return b
 }
 
+// WithContentSource sets the contentSource against the
+// CreateVolumeResponse instance
+func (b *CreateVolumeResponseBuilder) WithContentSource(cnt *csi.VolumeContentSource) *CreateVolumeResponseBuilder {
+	b.response.Volume.ContentSource = cnt
+	return b
+}
+
 // WithTopology sets the topology for the
 // CreateVolumeResponse instance
 func (b *CreateVolumeResponseBuilder) WithTopology(topology map[string]string) *CreateVolumeResponseBuilder {

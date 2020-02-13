@@ -19,7 +19,8 @@ import (
 	"os"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
-	"github.com/openebs/zfs-localpv/pkg/builder"
+	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
+	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -31,10 +32,16 @@ const (
 	OpenEBSNamespaceKey string = "OPENEBS_NAMESPACE"
 	// ZFSFinalizer for the ZfsVolume CR
 	ZFSFinalizer string = "zfs.openebs.io/finalizer"
+	// ZFSVolKey for the ZfsSnapshot CR to store Persistence Volume name
+	ZFSVolKey string = "openebs.io/persistent-volume"
 	// ZFSNodeKey will be used to insert Label in ZfsVolume CR
 	ZFSNodeKey string = "kubernetes.io/nodename"
 	// ZFSTopologyKey is supported topology key for the zfs driver
 	ZFSTopologyKey string = "kubernetes.io/hostname"
+	// ZFSStatusPending shows object has not handled yet
+	ZFSStatusPending string = "Pending"
+	// ZFSStatusReady shows object has been processed
+	ZFSStatusReady string = "Ready"
 )
 
 var (
@@ -60,11 +67,10 @@ func init() {
 // ProvisionVolume creates a ZFSVolume(zv) CR,
 // watcher for zvc is present in CSI agent
 func ProvisionVolume(
-	size int64,
 	vol *apis.ZFSVolume,
 ) error {
 
-	_, err := builder.NewKubeclient().WithNamespace(OpenEBSNamespace).Create(vol)
+	_, err := volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Create(vol)
 	if err == nil {
 		logrus.Infof("provisioned volume %s", vol.Name)
 	}
@@ -72,16 +78,40 @@ func ProvisionVolume(
 	return err
 }
 
+// ProvisionSnapshot creates a ZFSSnapshot CR,
+// watcher for zvc is present in CSI agent
+func ProvisionSnapshot(
+	snap *apis.ZFSSnapshot,
+) error {
+
+	_, err := snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Create(snap)
+	if err == nil {
+		logrus.Infof("provisioned snapshot %s", snap.Name)
+	}
+
+	return err
+}
+
+// DeleteSnapshot deletes the corresponding ZFSSnapshot CR
+func DeleteSnapshot(snapname string) (err error) {
+	err = snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(snapname)
+	if err == nil {
+		logrus.Infof("deprovisioned snapshot %s", snapname)
+	}
+
+	return
+}
+
 // GetVolume the corresponding ZFSVolume CR
 func GetVolume(volumeID string) (*apis.ZFSVolume, error) {
-	return builder.NewKubeclient().
+	return volbuilder.NewKubeclient().
 		WithNamespace(OpenEBSNamespace).
 		Get(volumeID, metav1.GetOptions{})
 }
 
 // DeleteVolume deletes the corresponding ZFSVol CR
 func DeleteVolume(volumeID string) (err error) {
-	err = builder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(volumeID)
+	err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(volumeID)
 	if err == nil {
 		logrus.Infof("deprovisioned volume %s", volumeID)
 	}
@@ -95,15 +125,15 @@ func GetVolList(volumeID string) (*apis.ZFSVolumeList, error) {
 		LabelSelector: ZFSNodeKey + "=" + NodeID,
 	}
 
-	return builder.NewKubeclient().
+	return volbuilder.NewKubeclient().
 		WithNamespace(OpenEBSNamespace).List(listOptions)
 
 }
 
-// GetZFSVolume fetches the current Published csi Volume
+// GetZFSVolume fetches the given ZFSVolume
 func GetZFSVolume(volumeID string) (*apis.ZFSVolume, error) {
 	getOptions := metav1.GetOptions{}
-	vol, err := builder.NewKubeclient().
+	vol, err := volbuilder.NewKubeclient().
 		WithNamespace(OpenEBSNamespace).Get(volumeID, getOptions)
 	return vol, err
 }
@@ -117,7 +147,7 @@ func UpdateZvolInfo(vol *apis.ZFSVolume) error {
 		return nil
 	}
 
-	newVol, err := builder.BuildFrom(vol).
+	newVol, err := volbuilder.BuildFrom(vol).
 		WithFinalizer(finalizers).
 		WithLabels(labels).Build()
 
@@ -125,7 +155,7 @@ func UpdateZvolInfo(vol *apis.ZFSVolume) error {
 		return err
 	}
 
-	_, err = builder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(newVol)
+	_, err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(newVol)
 	return err
 }
 
@@ -133,6 +163,61 @@ func UpdateZvolInfo(vol *apis.ZFSVolume) error {
 func RemoveZvolFinalizer(vol *apis.ZFSVolume) error {
 	vol.Finalizers = nil
 
-	_, err := builder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(vol)
+	_, err := volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(vol)
+	return err
+}
+
+// GetZFSSnapshot fetches the given ZFSSnapshot
+func GetZFSSnapshot(snapID string) (*apis.ZFSSnapshot, error) {
+	getOptions := metav1.GetOptions{}
+	snap, err := snapbuilder.NewKubeclient().
+		WithNamespace(OpenEBSNamespace).Get(snapID, getOptions)
+	return snap, err
+}
+
+// GetZFSSnapshotStatus returns ZFSSnapshot status
+func GetZFSSnapshotStatus(snapID string) (string, error) {
+	getOptions := metav1.GetOptions{}
+	snap, err := snapbuilder.NewKubeclient().
+		WithNamespace(OpenEBSNamespace).Get(snapID, getOptions)
+
+	if err != nil {
+		logrus.Errorf("Get snapshot failed %s err: %s", snap.Name, err.Error())
+		return "", err
+	}
+
+	return snap.Status.State, nil
+}
+
+// UpdateSnapInfo updates ZFSSnapshot CR with node id and finalizer
+func UpdateSnapInfo(snap *apis.ZFSSnapshot) error {
+	finalizers := []string{ZFSFinalizer}
+	labels := map[string]string{ZFSNodeKey: NodeID}
+
+	if snap.Finalizers != nil {
+		return nil
+	}
+
+	newSnap, err := snapbuilder.BuildFrom(snap).
+		WithFinalizer(finalizers).
+		WithLabels(labels).Build()
+
+	// set the status to ready
+	newSnap.Status.State = ZFSStatusReady
+
+	if err != nil {
+		logrus.Errorf("Update snapshot failed %s err: %s", snap.Name, err.Error())
+		return err
+	}
+
+	_, err = snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(newSnap)
+	return err
+}
+
+// RemoveSnapFinalizer adds finalizer to ZFSSnapshot CR
+func RemoveSnapFinalizer(snap *apis.ZFSSnapshot) error {
+	snap.Finalizers = nil
+
+	_, err := snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(snap)
 	return err
 }

@@ -18,6 +18,14 @@ limitations under the License.
 
 package v1alpha1
 
+// ZFSSnapshotListerExpansion allows custom methods to be added to
+// ZFSSnapshotLister.
+type ZFSSnapshotListerExpansion interface{}
+
+// ZFSSnapshotNamespaceListerExpansion allows custom methods to be added to
+// ZFSSnapshotNamespaceLister.
+type ZFSSnapshotNamespaceListerExpansion interface{}
+
 // ZFSVolumeListerExpansion allows custom methods to be added to
 // ZFSVolumeLister.
 type ZFSVolumeListerExpansion interface{}

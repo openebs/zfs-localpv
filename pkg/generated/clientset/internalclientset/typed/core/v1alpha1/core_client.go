@@ -27,12 +27,17 @@ import (
 
 type OpenebsV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	ZFSSnapshotsGetter
 	ZFSVolumesGetter
 }
 
 // OpenebsV1alpha1Client is used to interact with features provided by the openebs.io group.
 type OpenebsV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *OpenebsV1alpha1Client) ZFSSnapshots(namespace string) ZFSSnapshotInterface {
+	return newZFSSnapshots(c, namespace)
 }
 
 func (c *OpenebsV1alpha1Client) ZFSVolumes(namespace string) ZFSVolumeInterface {

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package builder
+package volbuilder
 
 import (
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
@@ -60,7 +60,7 @@ func (b *Builder) WithNamespace(namespace string) *Builder {
 		b.errs = append(
 			b.errs,
 			errors.New(
-				"failed to build csi volume object: missing namespace",
+				"failed to build zfs volume object: missing namespace",
 			),
 		)
 		return b
@@ -75,7 +75,7 @@ func (b *Builder) WithName(name string) *Builder {
 		b.errs = append(
 			b.errs,
 			errors.New(
-				"failed to build csi volume object: missing name",
+				"failed to build zfs volume object: missing name",
 			),
 		)
 		return b
@@ -84,14 +84,14 @@ func (b *Builder) WithName(name string) *Builder {
 	return b
 }
 
-// WithCapacity sets the Capacity of csi volume by converting string
+// WithCapacity sets the Capacity of zfs volume by converting string
 // capacity into Quantity
 func (b *Builder) WithCapacity(capacity string) *Builder {
 	if capacity == "" {
 		b.errs = append(
 			b.errs,
 			errors.New(
-				"failed to build csi volume object: missing capacity",
+				"failed to build zfs volume object: missing capacity",
 			),
 		)
 		return b
@@ -166,12 +166,18 @@ func (b *Builder) WithFsType(fstype string) *Builder {
 	return b
 }
 
+// WithSnapshot sets Snapshot name for creating clone volume
+func (b *Builder) WithSnapshot(snap string) *Builder {
+	b.volume.Object.Spec.SnapName = snap
+	return b
+}
+
 func (b *Builder) WithPoolName(pool string) *Builder {
 	if pool == "" {
 		b.errs = append(
 			b.errs,
 			errors.New(
-				"failed to build csi volume object: missing pool name",
+				"failed to build zfs volume object: missing pool name",
 			),
 		)
 		return b
@@ -185,7 +191,7 @@ func (b *Builder) WithNodename(name string) *Builder {
 		b.errs = append(
 			b.errs,
 			errors.New(
-				"failed to build csi volume object: missing node name",
+				"failed to build zfs volume object: missing node name",
 			),
 		)
 		return b
@@ -198,10 +204,6 @@ func (b *Builder) WithNodename(name string) *Builder {
 // with the ones that are provided here
 func (b *Builder) WithLabels(labels map[string]string) *Builder {
 	if len(labels) == 0 {
-		b.errs = append(
-			b.errs,
-			errors.New("failed to build zfs volume object: missing labels"),
-		)
 		return b
 	}
 
@@ -220,7 +222,7 @@ func (b *Builder) WithFinalizer(finalizer []string) *Builder {
 	return b
 }
 
-// Build returns csi volume API object
+// Build returns ZFSVolume API object
 func (b *Builder) Build() (*apis.ZFSVolume, error) {
 	if len(b.errs) > 0 {
 		return nil, errors.Errorf("%+v", b.errs)
