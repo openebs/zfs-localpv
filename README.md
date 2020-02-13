@@ -328,7 +328,185 @@ below command on the node:
 zfs get all zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114
 ```
 
-#### 7. Deprovisioning
+#### 7. Snapshot
+
+We can create a snapshot of a volume which can be used further for creating a clone and for taking a backup. To create a snapshot, we have to first create a snapshotclass just like a storage class.
+
+```yaml
+kind: VolumeSnapshotClass
+apiVersion: snapshot.storage.k8s.io/v1beta1
+metadata:
+  name: zfspv-snapclass
+  annotations:
+    snapshot.storage.kubernetes.io/is-default-class: "true"
+driver: zfs.csi.openebs.io
+deletionPolicy: Delete
+```
+
+Then create the snapshot using the above snapshotclass :
+
+```yaml
+apiVersion: snapshot.storage.k8s.io/v1beta1
+kind: VolumeSnapshot
+metadata:
+  name: zfspv-snap
+spec:
+  volumeSnapshotClassName: zfspv-snapclass
+  source:
+    persistentVolumeClaimName: csi-zfspv
+```
+Plese note that, you have to create the snapshot in the same namespace where the pvc is created. Check the created snapshot resource, make sure readyToUse field is true, before using this snapshot for any purpose.
+
+```
+$ kubectl get volumesnapshot.snapshot
+NAME         AGE
+zfspv-snap   2m8s
+
+$ kubectl get volumesnapshot.snapshot zfspv-snap -o yaml
+apiVersion: snapshot.storage.k8s.io/v1beta1
+kind: VolumeSnapshot
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"snapshot.storage.k8s.io/v1beta1","kind":"VolumeSnapshot","metadata":{"annotations":{},"name":"zfspv-snap","namespace":"default"},"spec":{"source":{"persistentVolumeClaimName":"csi-zfspv"},"volumeSnapshotClassName":"zfspv-snapclass"}}
+  creationTimestamp: "2020-02-25T08:25:51Z"
+  finalizers:
+  - snapshot.storage.kubernetes.io/volumesnapshot-as-source-protection
+  - snapshot.storage.kubernetes.io/volumesnapshot-bound-protection
+  generation: 1
+  name: zfspv-snap
+  namespace: default
+  resourceVersion: "447494"
+  selfLink: /apis/snapshot.storage.k8s.io/v1beta1/namespaces/default/volumesnapshots/zfspv-snap
+  uid: 3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
+spec:
+  source:
+    persistentVolumeClaimName: csi-zfspv
+  volumeSnapshotClassName: zfspv-snapclass
+status:
+  boundVolumeSnapshotContentName: snapcontent-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
+  creationTime: "2020-02-25T08:25:51Z"
+  readyToUse: true
+  restoreSize: "0"
+```
+
+Check the OpenEBS resource for the created snapshot. Check, status should be Ready.
+
+```
+$ kubectl get zfssnap -n openebs
+NAME                                            AGE
+snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd   3m32s
+
+$ kubectl get zfssnap snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd -n openebs -oyaml
+apiVersion: openebs.io/v1alpha1
+kind: ZFSSnapshot
+metadata:
+  creationTimestamp: "2020-02-25T08:25:51Z"
+  finalizers:
+  - zfs.openebs.io/finalizer
+  generation: 2
+  labels:
+    kubernetes.io/nodename: zfspv-node1
+    openebs.io/persistent-volume: pvc-34133838-0d0d-11ea-96e3-42010a800114
+  name: snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
+  namespace: openebs
+  resourceVersion: "447328"
+  selfLink: /apis/openebs.io/v1alpha1/namespaces/openebs/zfssnapshots/snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
+  uid: 6142492c-3785-498f-aa4a-569ec6c0e2b8
+spec:
+  capacity: "4294967296"
+  fsType: zfs
+  ownerNodeID: zfspv-node1
+  poolName: zfspv-pool
+  volumeType: DATASET
+status:
+  state: Ready
+```
+
+we can go to the node and confirm that snapshot has been created :-
+
+```
+$ zfs list -t all
+NAME                                                                                                USED  AVAIL  REFER  MOUNTPOINT
+zfspv-pool                                                                                          468K  96.4G    96K  /zfspv-pool
+zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114                                                  96K  4.00G    96K  none
+zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114@snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd     0B      -    96K  -
+```
+
+#### 8. Clone
+
+We can create a clone volume from a snapshot and use that volume for some application. We can create a pvc yaml and mention the snapshot name in the datasource. Please note that for kubernetes version less than 1.17, `VolumeSnapshotDataSource` feature gate needs to be enabled at kubelet and kube-apiserver
+
+```yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: zfspv-clone
+spec:
+  storageClassName: openebs-zfspv
+  dataSource:
+    name: zfspv-snap
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+```
+The above yaml says that create a volume from the snapshot zfspv-snap. Applying the above yaml will create a clone volume on the same node where the original volume is present. The newly created clone PV will also be there on the same node where the original PV is there.
+
+Note that the clone PVC should also be of the same size as that of the original volume as right now resize is not supported. Also note that the poolname should also be same, as across the ZPOOL clone is not supported. So, if you are using a separate storageclass for the clone PVC, please make sure it refers to the same ZPOOL.
+
+```
+$ kubectl get pvc
+NAME          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS    AGE
+csi-zfspv     Bound    pvc-34133838-0d0d-11ea-96e3-42010a800114   4Gi        RWO            openebs-zfspv   3h42m
+zfspv-clone   Bound    pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd   4Gi        RWO            openebs-zfspv   78s
+```
+
+We can see in the above output that zfspv-clone claim has been created and it is bound also. Also, we can check the zfs list on node and verify that clone volume is created.
+
+```
+$ zfs list -t all
+NAME                                                                                                USED  AVAIL  REFER  MOUNTPOINT
+zfspv-pool                                                                                          444K  96.4G    96K  /zfspv-pool
+zfspv-pool/pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd                                                   0B     4G    96K  none
+zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114                                                  96K  4.00G    96K  none
+zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114@snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd     0B      -    96K  -
+```
+
+The clone volume will have properties same as snapshot properties which are the properties when that snapshot has been created. The ZFSVolume object for the clone volume will be something like below :-
+
+```
+$ kubectl describe zv pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd -n openebs
+Name:         pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd
+Namespace:    openebs
+Labels:       kubernetes.io/nodename=zfspv-node1
+Annotations:  <none>
+API Version:  openebs.io/v1alpha1
+Kind:         ZFSVolume
+Metadata:
+  Creation Timestamp:  2019-11-22T09:49:29Z
+  Finalizers:
+    zfs.openebs.io/finalizer
+  Generation:        1
+  Resource Version:  2881
+  Self Link:         /apis/openebs.io/v1alpha1/namespaces/openebs/zfsvolumes/pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd
+  UID:               60bc4df2-0d0d-11ea-96e3-42010a800114
+Spec:
+  Capacity:       4294967296
+  Fs Type:        zfs
+  Owner Node ID:  zfspv-node1
+  Pool Name:      zfspv-pool
+  Snap Name:      pvc-34133838-0d0d-11ea-96e3-42010a800114@snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
+  Volume Type:    DATASET
+Events:           <none>
+
+Here you can note that this resource has Snapname field which tells that this volume is created from that snapshot.
+
+```
+#### 9. Deprovisioning
 for deprovisioning the volume we can delete the application which is using the volume and then we can go ahead and delete the pv, as part of deletion of pv this volume will also be deleted from the ZFS pool and data will be freed.
 
 ```
