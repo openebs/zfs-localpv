@@ -34,6 +34,14 @@
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:e95ef557dc3120984bb66b385ae01b4bb8ff56bcde28e7b0d1beed0cccc4d69f"
+  name = "github.com/docker/go-units"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "519db1ee28dcc9fd2474ae59fca29a810482bfb1"
+  version = "v0.4.0"
+
+[[projects]]
   branch = "master"
   digest = "1:ecdc8e0fe3bc7d549af1c9c36acf3820523b707d6c071b6d0c3860882c6f7b42"
   name = "github.com/docker/spdystream"
@@ -156,6 +164,14 @@
   pruneopts = "UT"
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:289a0aeeff2a467506d6faacb71c783a8610e53639e8f065e1997a569e622d6b"
+  name = "github.com/jpillora/go-ogle-analytics"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "14b04e0594ef6a9fd943363b135656f0ec8c9d0e"
 
 [[projects]]
   digest = "1:709cd2a2c29cc9b89732f6c24846bbb9d6270f28ef5ef2128cc73bd0d6d7bff9"
@@ -867,22 +883,30 @@
   input-imports = [
     "github.com/Sirupsen/logrus",
     "github.com/container-storage-interface/spec/lib/go/csi",
+    "github.com/docker/go-units",
     "github.com/ghodss/yaml",
+    "github.com/golang/protobuf/ptypes/timestamp",
+    "github.com/jpillora/go-ogle-analytics",
     "github.com/kubernetes-csi/csi-lib-utils/protosanitizer",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "github.com/pkg/errors",
     "github.com/spf13/cobra",
     "golang.org/x/net/context",
+    "golang.org/x/sys/unix",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
     "google.golang.org/grpc/status",
     "k8s.io/api/apps/v1",
+    "k8s.io/api/apps/v1beta1",
+    "k8s.io/api/batch/v1",
     "k8s.io/api/core/v1",
+    "k8s.io/api/extensions/v1beta1",
     "k8s.io/api/storage/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/api/resource",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/labels",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
@@ -890,6 +914,7 @@
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/runtime",
     "k8s.io/apimachinery/pkg/util/wait",
+    "k8s.io/apimachinery/pkg/version",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/fake",
@@ -897,7 +922,11 @@
     "k8s.io/client-go/informers",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/scheme",
+    "k8s.io/client-go/kubernetes/typed/apps/v1",
+    "k8s.io/client-go/kubernetes/typed/apps/v1beta1",
     "k8s.io/client-go/kubernetes/typed/core/v1",
+    "k8s.io/client-go/kubernetes/typed/extensions/v1beta1",
+    "k8s.io/client-go/kubernetes/typed/storage/v1",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/testing",
@@ -912,6 +941,7 @@
     "k8s.io/code-generator/cmd/defaulter-gen",
     "k8s.io/code-generator/cmd/informer-gen",
     "k8s.io/code-generator/cmd/lister-gen",
+    "k8s.io/klog",
     "k8s.io/kubernetes/pkg/util/mount",
     "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
   ]
