@@ -30,6 +30,8 @@ const (
 	//
 	// This environment variable is set via kubernetes downward API
 	OpenEBSNamespaceKey string = "OPENEBS_NAMESPACE"
+	// This environment variable is set via env
+	GoogleAnalyticsKey string = "OPENEBS_IO_ENABLE_ANALYTICS"
 	// ZFSFinalizer for the ZfsVolume CR
 	ZFSFinalizer string = "zfs.openebs.io/finalizer"
 	// ZFSVolKey for the ZfsSnapshot CR to store Persistence Volume name
@@ -50,6 +52,9 @@ var (
 
 	// NodeID is the NodeID of the node on which the pod is present
 	NodeID string
+
+	// should send google analytics or not
+	GoogleAnalyticsEnabled string
 )
 
 func init() {
@@ -62,6 +67,8 @@ func init() {
 	if NodeID == "" && os.Getenv("OPENEBS_NODE_DRIVER") != "" {
 		logrus.Fatalf("NodeID environment variable not set")
 	}
+
+	GoogleAnalyticsEnabled = os.Getenv(GoogleAnalyticsKey)
 }
 
 // ProvisionVolume creates a ZFSVolume(zv) CR,

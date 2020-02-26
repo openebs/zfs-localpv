@@ -22,6 +22,14 @@ import (
 	"strings"
 )
 
+const (
+	// KubeConfig is the ENV variable to fetch kubernetes kubeconfig
+	KubeConfig = "OPENEBS_IO_KUBE_CONFIG"
+
+	// KubeMaster is the ENV variable to fetch kubernetes master's address
+	KubeMaster = "OPENEBS_IO_K8S_MASTER"
+)
+
 // EnvironmentSetter abstracts setting of environment variable
 type EnvironmentSetter func(envKey string, value string) (err error)
 

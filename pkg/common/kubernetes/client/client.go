@@ -28,16 +28,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const (
-	// K8sMasterIPEnvironmentKey is the environment variable key used to
-	// determine the kubernetes master IP address
-	K8sMasterIPEnvironmentKey string = "OPENEBS_IO_K8S_MASTER"
-
-	// KubeConfigEnvironmentKey is the environment variable key used to
-	// determine the kubernetes config
-	KubeConfigEnvironmentKey string = "OPENEBS_IO_KUBE_CONFIG"
-)
-
 // getInClusterConfigFunc abstracts the logic to get
 // kubernetes incluster config
 //
@@ -213,8 +203,8 @@ func (c *Client) Config() (config *rest.Config, err error) {
 	}
 
 	// ENV holds second priority
-	if strings.TrimSpace(c.getKubeMasterIP(K8sMasterIPEnvironmentKey)) != "" ||
-		strings.TrimSpace(c.getKubeConfigPath(KubeConfigEnvironmentKey)) != "" {
+	if strings.TrimSpace(c.getKubeMasterIP(env.KubeMaster)) != "" ||
+		strings.TrimSpace(c.getKubeConfigPath(env.KubeConfig)) != "" {
 		return c.getConfigFromENV()
 	}
 
@@ -235,14 +225,14 @@ func (c *Client) GetConfigForPathOrDirect() (config *rest.Config, err error) {
 }
 
 func (c *Client) getConfigFromENV() (config *rest.Config, err error) {
-	k8sMaster := c.getKubeMasterIP(K8sMasterIPEnvironmentKey)
-	kubeConfig := c.getKubeConfigPath(KubeConfigEnvironmentKey)
+	k8sMaster := c.getKubeMasterIP(env.KubeMaster)
+	kubeConfig := c.getKubeConfigPath(env.KubeConfig)
 	if strings.TrimSpace(k8sMaster) == "" &&
 		strings.TrimSpace(kubeConfig) == "" {
 		return nil, errors.Errorf(
 			"failed to get kubernetes config: missing ENV: atleast one should be set: {%s} or {%s}",
-			K8sMasterIPEnvironmentKey,
-			KubeConfigEnvironmentKey,
+			env.KubeMaster,
+			env.KubeConfig,
 		)
 	}
 	return c.buildConfigFromFlags(k8sMaster, kubeConfig)

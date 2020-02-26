@@ -28,6 +28,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
+	analytics "github.com/openebs/zfs-localpv/pkg/usage"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -56,6 +57,19 @@ var SupportedVolumeCapabilityAccessModes = []*csi.VolumeCapability_AccessMode{
 	&csi.VolumeCapability_AccessMode{
 		Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER,
 	},
+}
+
+// sendEventOrIgnore sends anonymous local-pv provision/delete events
+func sendEventOrIgnore(pvName, capacity, stgType, method string) {
+	if zfs.GoogleAnalyticsEnabled == "true" {
+		analytics.New().Build().ApplicationBuilder().
+			SetVolumeType(stgType, method).
+			SetDocumentTitle(pvName).
+			SetLabel(analytics.EventLabelCapacity).
+			SetReplicaCount(analytics.LocalPVReplicaCount, method).
+			SetCategory(method).
+			SetVolumeCapacity(capacity).Send()
+	}
 }
 
 func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
@@ -190,6 +204,8 @@ func (cs *controller) CreateVolume(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	sendEventOrIgnore(volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
+
 	topology := map[string]string{zfs.ZFSTopologyKey: selected}
 
 	return csipayload.NewCreateVolumeResponseBuilder().
@@ -232,6 +248,9 @@ func (cs *controller) DeleteVolume(
 			volumeID,
 		)
 	}
+
+	sendEventOrIgnore(volumeID, vol.Spec.Capacity, "zfs-localpv", analytics.VolumeDeprovision)
+
 deleteResponse:
 	return csipayload.NewDeleteVolumeResponseBuilder().Build(), nil
 }
