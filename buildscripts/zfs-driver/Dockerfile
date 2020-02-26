@@ -4,9 +4,9 @@
 #
 
 FROM ubuntu:18.04
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN apt-get update; exit 0
-RUN apt-get -y install rsyslog libssl-dev xfsprogs
-#RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get -y install rsyslog libssl-dev xfsprogs ca-certificates
 
 COPY zfs-driver /usr/local/bin/
 COPY entrypoint.sh /usr/local/bin/

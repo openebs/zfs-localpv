@@ -513,6 +513,9 @@ rules:
     resources: ["secrets"]
     verbs: ["get", "list"]
   - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["*"]
+  - apiGroups: [""]
     resources: ["persistentvolumes", "services"]
     verbs: ["get", "list", "watch", "create", "delete"]
   - apiGroups: [""]
@@ -647,6 +650,10 @@ spec:
               value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
             - name: OPENEBS_NAMESPACE
               value: openebs
+            - name: OPENEBS_IO_INSTALLER_TYPE
+              value: "zfs-operator"
+            - name: OPENEBS_IO_ENABLE_ANALYTICS
+              value: "true"
           args :
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_CONTROLLER_DRIVER)"
