@@ -1,7 +1,7 @@
 # E2e test cases for ZFS-LocalPV
 
 * ### Automated test cases into e2e-pipelines
-https://gitlab.openebs.ci/openebs/e2e-nativek8s/pipelines/
+   https://gitlab.openebs.ci/openebs/e2e-nativek8s/pipelines/
 
 1. Validation of ZFS-LocalPV provisioner.
 2. Provision and Deprovision of ZFS-volume with Percona-mysql application (Both ext4 and zfs file system).
@@ -18,5 +18,5 @@ https://gitlab.openebs.ci/openebs/e2e-nativek8s/pipelines/
 
 * ### Test cases planned for future
 
-1. Validation of volume resize support for zfs-LocalPV.
+1. Validation of volume resize support for ZFS-LocalPV.
 2. Add manually tested cases into the pipelines.
