@@ -517,10 +517,13 @@ rules:
     verbs: ["*"]
   - apiGroups: [""]
     resources: ["persistentvolumes", "services"]
-    verbs: ["get", "list", "watch", "create", "delete"]
+    verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["update", "patch"]
   - apiGroups: ["storage.k8s.io"]
     resources: ["storageclasses", "csinodes"]
     verbs: ["get", "list", "watch"]
@@ -580,6 +583,19 @@ spec:
       priorityClassName: system-cluster-critical
       serviceAccount: openebs-zfs-controller-sa
       containers:
+        - name: csi-resizer
+          image: quay.io/k8scsi/csi-resizer:v0.4.0
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: csi-snapshotter
           image: quay.io/k8scsi/csi-snapshotter:v2.0.1
           imagePullPolicy: IfNotPresent
