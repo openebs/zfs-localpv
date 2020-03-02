@@ -220,6 +220,13 @@ func (ns *node) NodeGetCapabilities(
 					},
 				},
 			},
+			{
+				Type: &csi.NodeServiceCapability_Rpc{
+					Rpc: &csi.NodeServiceCapability_RPC{
+						Type: csi.NodeServiceCapability_RPC_EXPAND_VOLUME,
+					},
+				},
+			},
 		},
 	}, nil
 }
@@ -267,7 +274,29 @@ func (ns *node) NodeExpandVolume(
 	req *csi.NodeExpandVolumeRequest,
 ) (*csi.NodeExpandVolumeResponse, error) {
 
-	return nil, status.Error(codes.Unimplemented, "")
+	volumeID := req.GetVolumeId()
+	vol, err := zfs.GetZFSVolume(volumeID)
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to handle NodeExpandVolume Request for %s, {%s}",
+			req.VolumeId,
+			err.Error(),
+		)
+	}
+	if err = zfs.ResizeZFSVolume(vol, req.GetVolumePath()); err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to handle NodeExpandVolume Request for %s, {%s}",
+			req.VolumeId,
+			err.Error(),
+		)
+	}
+
+	return &csi.NodeExpandVolumeResponse{
+		CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
+	}, nil
 }
 
 // NodeGetVolumeStats returns statistics for the

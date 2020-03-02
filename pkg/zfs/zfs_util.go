@@ -236,6 +236,27 @@ func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 	return ZFSVolArg
 }
 
+// builldVolumeResizeArgs returns volume set  for resizing the zfs volume
+func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
+	var ZFSVolArg []string
+
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	ZFSVolArg = append(ZFSVolArg, ZFSSetArg)
+
+	if vol.Spec.VolumeType == VOLTYPE_DATASET {
+		quotaProperty := "quota=" + vol.Spec.Capacity
+		ZFSVolArg = append(ZFSVolArg, quotaProperty)
+	} else {
+		volsizeProperty := "volsize=" + vol.Spec.Capacity
+		ZFSVolArg = append(ZFSVolArg, volsizeProperty)
+	}
+
+	ZFSVolArg = append(ZFSVolArg, volume)
+
+	return ZFSVolArg
+}
+
 // builldVolumeDestroyArgs returns volume destroy command along with attributes as a string array
 func buildVolumeDestroyArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
@@ -495,4 +516,22 @@ func GetVolumeDevPath(vol *apis.ZFSVolume) (string, error) {
 	}
 
 	return dev, nil
+}
+
+func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string) error {
+
+	volume := vol.Spec.PoolName + "/" + vol.Name
+	args := buildVolumeResizeArgs(vol)
+	cmd := exec.Command(ZFSVolCmd, args...)
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		logrus.Errorf(
+			"zfs: could not resize the volume %v cmd %v error: %s", volume, args, string(out),
+		)
+		return err
+	}
+
+	err = handleVolResize(vol, mountpath)
+	return err
 }

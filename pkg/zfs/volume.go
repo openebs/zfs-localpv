@@ -17,6 +17,7 @@ package zfs
 import (
 	"github.com/Sirupsen/logrus"
 	"os"
+	"strconv"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
@@ -82,6 +83,15 @@ func ProvisionVolume(
 		logrus.Infof("provisioned volume %s", vol.Name)
 	}
 
+	return err
+}
+
+// ResizeVolume resizes the zfs volume
+func ResizeVolume(vol *apis.ZFSVolume, newSize int64) error {
+
+	vol.Spec.Capacity = strconv.FormatInt(int64(newSize), 10)
+
+	_, err := volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(vol)
 	return err
 }
 
