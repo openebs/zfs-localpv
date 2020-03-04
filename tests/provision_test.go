@@ -31,6 +31,7 @@ func datasetCreationTest() {
 	By("creating and verifying PVC bound status", createAndVerifyPVC)
 	By("Creating and deploying app pod", createDeployVerifyApp)
 	By("verifying ZFSVolume object", VerifyZFSVolume)
+	By("Resizing the PVC", resizeAndVerifyPVC)
 	By("verifying ZFSVolume property change", VerifyZFSVolumePropEdit)
 	By("Deleting application deployment", deleteAppDeployment)
 	By("Deleting pvc", deletePVC)

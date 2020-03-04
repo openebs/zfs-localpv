@@ -59,6 +59,7 @@ var (
 	appPod           *corev1.PodList
 	accessModes      = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	capacity         = "5368709120" // 5Gi
+	NewCapacity      = "8589934592" // 8Gi, for testing resize
 	KubeConfigPath   string
 	OpenEBSNamespace string
 )

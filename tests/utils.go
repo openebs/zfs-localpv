@@ -33,6 +33,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // IsPVCBoundEventually checks if the pvc is bound or not eventually
@@ -42,6 +44,23 @@ func IsPVCBoundEventually(pvcName string) bool {
 			Get(pvcName, metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred())
 		return pvc.NewForAPIObject(volume).IsBound()
+	},
+		60, 5).
+		Should(BeTrue())
+}
+
+// IsPVCResizedEventually checks if the pvc is bound or not eventually
+func IsPVCResizedEventually(pvcName string, newCapacity string) bool {
+	newStorage, err := resource.ParseQuantity(NewCapacity)
+	if err != nil {
+		return false
+	}
+	return Eventually(func() bool {
+		volume, err := PVCClient.
+			Get(pvcName, metav1.GetOptions{})
+		Expect(err).ShouldNot(HaveOccurred())
+		pvcStorage := volume.Spec.Resources.Requests[corev1.ResourceName(corev1.ResourceStorage)]
+		return pvcStorage == newStorage
 	},
 		60, 5).
 		Should(BeTrue())
@@ -122,6 +141,7 @@ func createZfsStorageClass() {
 	scObj, err = sc.NewBuilder().
 		WithGenerateName(scName).
 		WithParametersNew(parameters).
+		WithVolumeExpansion(true).
 		WithProvisioner(ZFSProvisioner).Build()
 	Expect(err).ShouldNot(HaveOccurred(),
 		"while building zfs storageclass obj with prefix {%s}", scName)
@@ -302,6 +322,42 @@ func createAndVerifyPVC() {
 	)
 }
 
+func resizeAndVerifyPVC() {
+	var (
+		err     error
+		pvcName = "zfspv-pvc"
+	)
+	By("updating the pvc with new size")
+	pvcObj, err = pvc.BuildFrom(pvcObj).
+		WithCapacity(NewCapacity).Build()
+	Expect(err).To(
+		BeNil(),
+		"while building pvc {%s} in namespace {%s}",
+		pvcName,
+		OpenEBSNamespace,
+	)
+	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Update(pvcObj)
+	Expect(err).To(
+		BeNil(),
+		"while updating pvc {%s} in namespace {%s}",
+		pvcName,
+		OpenEBSNamespace,
+	)
+
+	By("verifying pvc size to be updated")
+
+	status := IsPVCResizedEventually(pvcName, NewCapacity)
+	Expect(status).To(Equal(true),
+		"while checking pvc resize")
+
+	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Get(pvcObj.Name, metav1.GetOptions{})
+	Expect(err).To(
+		BeNil(),
+		"while retrieving pvc {%s} in namespace {%s}",
+		pvcName,
+		OpenEBSNamespace,
+	)
+}
 func createDeployVerifyApp() {
 	By("creating and deploying app pod", createAndDeployAppPod)
 	time.Sleep(30 * time.Second)
