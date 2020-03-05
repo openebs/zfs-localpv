@@ -506,7 +506,12 @@ Events:           <none>
 Here you can note that this resource has Snapname field which tells that this volume is created from that snapshot.
 
 ```
-#### 9. Deprovisioning
+
+#### 9. Volume Resize
+
+check [resize doc](docs/resize.md).
+
+#### 10. Deprovisioning
 for deprovisioning the volume we can delete the application which is using the volume and then we can go ahead and delete the pv, as part of deletion of pv this volume will also be deleted from the ZFS pool and data will be freed.
 
 ```
