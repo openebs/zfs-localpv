@@ -1,3 +1,21 @@
+v0.5-RC1 / 2020-03-06
+=======================
+
+  * chore(doc): adding resize details in README ([#53](https://github.com/openebs/zfs-localpv/pull/53),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * feat(resize): adding BDD test for Online volume expansion ([#52](https://github.com/openebs/zfs-localpv/pull/52),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * feat(resize): adding Online volume expansion support for ZFSPV ([#51](https://github.com/openebs/zfs-localpv/pull/51),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * feat(analytics): adding google analytics for ZFSPV ([#49](https://github.com/openebs/zfs-localpv/pull/49),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(doc): updating readme with snapshot and clone details ([#48](https://github.com/openebs/zfs-localpv/pull/48),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(doc):  Adding the list of e2e test cases ([#50](https://github.com/openebs/zfs-localpv/pull/50),
+  [@w3aman](https://github.com/w3aman))
+  * fix(operator): update provisioner image to support snapshot datasource ([#46](https://github.com/openebs/zfs-localpv/pull/46),
+  [@prateekpandey14](https://github.com/prateekpandey14))
+
 v0.4 / 2020-02-13
 =======================
 
