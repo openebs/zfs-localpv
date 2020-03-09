@@ -21,6 +21,7 @@ import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
+	k8sapi "github.com/openebs/zfs-localpv/pkg/client/k8s/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/snapshot"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/volume"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
@@ -171,7 +172,16 @@ func (ns *node) NodeGetInfo(
 	req *csi.NodeGetInfoRequest,
 ) (*csi.NodeGetInfoResponse, error) {
 
-	topology := map[string]string{zfs.ZFSTopologyKey: ns.driver.config.NodeID}
+	node, err := k8sapi.GetNode(ns.driver.config.NodeID)
+	if err != nil {
+		logrus.Errorf("failed to get the node %s", ns.driver.config.NodeID)
+		return nil, err
+	}
+
+	// support all the keys that node has
+	topology := node.Labels
+	topology[zfs.ZFSTopologyKey] = ns.driver.config.NodeID
+
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.driver.config.NodeID,
 		AccessibleTopology: &csi.Topology{
