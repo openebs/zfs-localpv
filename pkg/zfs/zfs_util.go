@@ -127,9 +127,41 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 	ZFSVolArg = append(ZFSVolArg, ZFSCloneArg)
 
 	if vol.Spec.VolumeType == VOLTYPE_DATASET {
+		if len(vol.Spec.Capacity) != 0 {
+			quotaProperty := "quota=" + vol.Spec.Capacity
+			ZFSVolArg = append(ZFSVolArg, "-o", quotaProperty)
+		}
+		if len(vol.Spec.RecordSize) != 0 {
+			recordsizeProperty := "recordsize=" + vol.Spec.RecordSize
+			ZFSVolArg = append(ZFSVolArg, "-o", recordsizeProperty)
+		}
+		if vol.Spec.ThinProvision == "no" {
+			reservationProperty := "reservation=" + vol.Spec.Capacity
+			ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty)
+		}
 		ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=none")
 	}
 
+	if len(vol.Spec.Dedup) != 0 {
+		dedupProperty := "dedup=" + vol.Spec.Dedup
+		ZFSVolArg = append(ZFSVolArg, "-o", dedupProperty)
+	}
+	if len(vol.Spec.Compression) != 0 {
+		compressionProperty := "compression=" + vol.Spec.Compression
+		ZFSVolArg = append(ZFSVolArg, "-o", compressionProperty)
+	}
+	if len(vol.Spec.Encryption) != 0 {
+		encryptionProperty := "encryption=" + vol.Spec.Encryption
+		ZFSVolArg = append(ZFSVolArg, "-o", encryptionProperty)
+	}
+	if len(vol.Spec.KeyLocation) != 0 {
+		keyLocation := "keylocation=" + vol.Spec.KeyLocation
+		ZFSVolArg = append(ZFSVolArg, "-o", keyLocation)
+	}
+	if len(vol.Spec.KeyFormat) != 0 {
+		keyFormat := "keyformat=" + vol.Spec.KeyFormat
+		ZFSVolArg = append(ZFSVolArg, "-o", keyFormat)
+	}
 	ZFSVolArg = append(ZFSVolArg, snapshot, volume)
 	return ZFSVolArg
 }
