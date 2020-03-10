@@ -155,7 +155,7 @@ func CreateZFSClone(req *csi.CreateVolumeRequest, snapshot string) (string, erro
 	}
 
 	if snap.Spec.Capacity != volsize {
-		return "", status.Error(codes.Internal, "resize not supported")
+		return "", status.Error(codes.Internal, "clone volume size is not matching")
 	}
 
 	selected := snap.Spec.OwnerNodeID
