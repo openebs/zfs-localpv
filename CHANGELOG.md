@@ -1,3 +1,9 @@
+v0.5-RC2 / 2020-03-12
+=======================
+
+  * fix(clone): setting properties on the clone volume ([#57](https://github.com/openebs/zfs-localpv/pull/57),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+
 v0.5-RC1 / 2020-03-06
 =======================
 
