@@ -638,7 +638,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: openebs-zfs-plugin
-          image: quay.io/openebs/zfs-driver:ci
+          image: quay.io/openebs/zfs-driver:v0.4
           imagePullPolicy: IfNotPresent
           env:
             - name: OPENEBS_CONTROLLER_DRIVER
@@ -875,7 +875,7 @@ spec:
             capabilities:
               add: ["CAP_MKNOD", "CAP_SYS_ADMIN", "SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: quay.io/openebs/zfs-driver:ci
+          image: quay.io/openebs/zfs-driver:v0.4
           imagePullPolicy: IfNotPresent
           args:
             - "--nodeid=$(OPENEBS_NODE_ID)"
