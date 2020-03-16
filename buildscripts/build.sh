@@ -24,8 +24,25 @@ if [[ -n "$TRAVIS_TAG" ]] && [[ $TRAVIS_TAG != *"RC"* ]]; then
     echo "released" > BUILDMETA
 fi
 
+CURRENT_BRANCH=""
+if [ -z ${TRAVIS_BRANCH} ];
+then
+  CURRENT_BRANCH=$(git branch | grep \* | cut -d ' ' -f2)
+else
+  CURRENT_BRANCH=${TRAVIS_BRANCH}
+fi
+
 # Get the version details
-VERSION="$(cat $GOPATH/src/github.com/openebs/zfs-localpv/VERSION)"
+if [ -n "$TRAVIS_TAG" ]; then
+	VERSION="$(git describe --tags `git rev-list --tags --max-count=1`)"
+else
+	BUILDDATE=`date +%m-%d-%Y`
+	SHORT_COMMIT="$(git rev-parse --short HEAD)"
+	VERSION="$CURRENT_BRANCH-$SHORT_COMMIT:$BUILDDATE"
+fi
+
+echo -e "\nbuilding the ZFS Driver version :- $VERSION\n"
+
 VERSION_META="$(cat $GOPATH/src/github.com/openebs/zfs-localpv/BUILDMETA)"
 
 # Determine the arch/os combos we're building for

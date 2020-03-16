@@ -1,6 +1,8 @@
 # list only csi source code directories
 PACKAGES = $(shell go list ./... | grep -v 'vendor\|pkg/generated')
 
+UNIT_TEST_PACKAGES = $(shell go list ./... | grep -v 'vendor\|pkg/generated\|tests')
+
 # Lint our code. Reference: https://golang.org/cmd/vet/
 VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods \
          -nilfunc -printf -rangeloops -shift -structtags -unsafeptr
@@ -36,7 +38,7 @@ CSI_DRIVER=zfs-driver
 BUILD_DATE = $(shell date +'%Y%m%d%H%M%S')
 
 .PHONY: all
-all: zfs-driver-image
+all: test zfs-driver-image
 
 .PHONY: clean
 clean:
@@ -54,7 +56,7 @@ format:
 .PHONY: test
 test: format
 	@echo "--> Running go test" ;
-	@go test $(PACKAGES)
+	@go test $(UNIT_TEST_PACKAGES)
 
 # Bootstrap downloads tools required
 # during build
