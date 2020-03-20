@@ -151,7 +151,7 @@ type VolumeInfo struct {
 
 	// Thinprovision specifies if we should
 	// thin provisioned the volume or not
-	// +kubebuilder:validation:Enum=Yes;no
+	// +kubebuilder:validation:Enum=yes;no
 	ThinProvision string `json:"thinProvision,omitempty"`
 
 	// volumeType determines whether the volume is of type "DATASET" or "ZVOL".

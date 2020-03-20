@@ -107,7 +107,7 @@ spec:
               description: Thinprovision specifies if we should thin provisioned the
                 volume or not
               enum:
-              - "Yes"
+              - "yes"
               - "no"
               type: string
             volblocksize:

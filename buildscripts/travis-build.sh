@@ -29,6 +29,12 @@ rc=$?; if [[ $rc != 0 ]]; then echo "make kubegen failed"; exit $rc; fi
 checkGitDiff "make kubegen"
 printf "\n"
 
+echo "Running : make manifests"
+make manifests
+rc=$?; if [[ $rc != 0 ]]; then echo "make manifests failed"; exit $rc; fi
+checkGitDiff "make manifests"
+printf "\n"
+
 ./buildscripts/test-cov.sh
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 
