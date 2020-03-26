@@ -362,14 +362,7 @@ func CreateClone(vol *apis.ZFSVolume) error {
 	}
 
 	if vol.Spec.FsType == "xfs" {
-		// for mounting the cloned volume for xfs, a new UUID has to be generated
-		device := ZFS_DEVPATH + volume
-		cmd := exec.Command("xfs_admin", "-U", "generate", device)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			logrus.Errorf("zfspv: Clone XFS uuid generate failed error: %s", string(out))
-			return err
-		}
+		return xfs_generate_uuid(volume)
 	}
 	return nil
 }
