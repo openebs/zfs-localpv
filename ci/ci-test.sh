@@ -75,7 +75,7 @@ echo "get all the pods"
 kubectl get pods -owide --all-namespaces
 
 echo "get pvc and pv details"
-kubectl get pvc,pv --all-namespaces
+kubectl get pvc,pv -oyaml --all-namespaces
 
 echo "get sc details"
 kubectl get sc --all-namespaces -oyaml
