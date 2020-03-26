@@ -51,7 +51,7 @@ func IsPVCBoundEventually(pvcName string) bool {
 
 // IsPVCResizedEventually checks if the pvc is bound or not eventually
 func IsPVCResizedEventually(pvcName string, newCapacity string) bool {
-	newStorage, err := resource.ParseQuantity(NewCapacity)
+	newStorage, err := resource.ParseQuantity(newCapacity)
 	if err != nil {
 		return false
 	}
@@ -59,10 +59,10 @@ func IsPVCResizedEventually(pvcName string, newCapacity string) bool {
 		volume, err := PVCClient.
 			Get(pvcName, metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred())
-		pvcStorage := volume.Spec.Resources.Requests[corev1.ResourceName(corev1.ResourceStorage)]
+		pvcStorage := volume.Status.Capacity[corev1.ResourceName(corev1.ResourceStorage)]
 		return pvcStorage == newStorage
 	},
-		60, 5).
+		120, 5).
 		Should(BeTrue())
 }
 
