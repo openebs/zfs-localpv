@@ -362,31 +362,7 @@ func CreateClone(vol *apis.ZFSVolume) error {
 	}
 
 	if vol.Spec.FsType == "xfs" {
-		device := ZFS_DEVPATH + volume
-
-		/*
-		 * We have to generate a new UUID for the cloned volumes with xfs filesystem
-		 * otherwise system won't let anyone mount it if UUID is same. Here, since cloned
-		 * volume refers to the same block because of the way ZFS clone works, it will
-		 * also have the same UUID.
-		 * There might be something there in the xfs log, we have to clear them
-		 * so that filesystem is clean and we can generate the UUID for it.
-		 */
-		cmd := exec.Command("xfs_repair", "-L", device)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			logrus.Errorf("zfspv: Clone XFS uuid xfs_repair failed error: %s", string(out))
-			return err
-		}
-
-		// for mounting the cloned volume for xfs, a new UUID has to be generated
-		cmd = exec.Command("xfs_admin", "-U", "generate", device)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			logrus.Errorf("zfspv: Clone XFS uuid generate failed error: %s", string(out))
-			return err
-		}
-		logrus.Infof("generated UUID for the cloned xfs volume %s \n %v", volume, string(out))
+		return xfs_generate_uuid(volume)
 	}
 	return nil
 }
