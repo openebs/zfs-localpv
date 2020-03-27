@@ -1,0 +1,68 @@
+##############################################
+###########                       ############
+###########   ZFSVolume CRD       ############
+###########                       ############
+##############################################
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: volumes.zfs.openebs.io
+spec:
+  group: zfs.openebs.io
+  version: v1alpha1
+  scope: Namespaced
+  names:
+    plural: volumes
+    singular: volume
+    kind: Volume
+    shortNames:
+    - zfsvol
+    - zv
+  additionalPrinterColumns:
+  - JSONPath: .spec.poolName
+    name: ZPool
+    description: ZFS Pool where the volume is created
+    type: string
+  - JSONPath: .spec.ownerNodeID
+    name: Node
+    description: Node where the volume is created
+    type: string
+  - JSONPath: .spec.capacity
+    name: Size
+    description: Size of the volume
+    type: string
+  - JSONPath: .spec.volblocksize
+    name: volblocksize
+    description: volblocksize for the created zvol
+    type: string
+  - JSONPath: .spec.recordsize
+    name: recordsize
+    description: recordsize for the created zfs dataset
+    type: string
+  - JSONPath: .spec.fsType
+    name: Filesystem
+    description: filesystem created on the volume
+    type: string
+---
+##############################################
+###########                       ############
+###########   Snapshot CRD        ############
+###########                       ############
+##############################################
+
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: snapshots.zfs.openebs.io
+spec:
+  group: zfs.openebs.io
+  version: v1alpha1
+  scope: Namespaced
+  names:
+    plural: snapshots
+    singular: snapshot
+    kind: Snapshot
+    shortNames:
+    - zfssnapshot
+    - zfssnap
+---
