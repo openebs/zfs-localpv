@@ -18,7 +18,7 @@ package zfs
 
 import (
 	"github.com/Sirupsen/logrus"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"os/exec"
 )

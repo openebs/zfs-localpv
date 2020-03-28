@@ -21,7 +21,7 @@ package v1alpha1
 import (
 	time "time"
 
-	corev1alpha1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
+	corev1alpha1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	internalclientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	internalinterfaces "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/internalinterfaces"
 	v1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/lister/core/v1alpha1"

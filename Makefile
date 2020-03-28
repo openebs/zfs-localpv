@@ -73,7 +73,7 @@ SRC_PKG := github.com/openebs/zfs-localpv/pkg
 # code generation for custom resources
 .PHONY: kubegen
 kubegen: kubegendelete deepcopy-install clientset-install lister-install informer-install
-	@GEN_SRC=openebs.io/core/v1alpha1 make deepcopy clientset lister informer
+	@GEN_SRC=openebs.io/zfs/v1alpha1 make deepcopy clientset lister informer
 
 # deletes generated code by codegen
 .PHONY: kubegendelete

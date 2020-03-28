@@ -19,7 +19,7 @@ package driver
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/snapshot"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/volume"

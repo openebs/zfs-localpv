@@ -22,7 +22,7 @@ import (
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/scheme"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
-	listers "github.com/openebs/zfs-localpv/pkg/generated/lister/core/v1alpha1"
+	listers "github.com/openebs/zfs-localpv/pkg/generated/lister/zfs/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"

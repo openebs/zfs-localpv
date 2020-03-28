@@ -17,7 +17,7 @@ limitations under the License.
 package volbuilder
 
 import (
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 )
 
 // ListBuilder enables building an instance of

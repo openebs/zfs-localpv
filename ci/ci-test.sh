@@ -81,7 +81,7 @@ echo "get sc details"
 kubectl get sc --all-namespaces -oyaml
 
 echo "get zfs volume details"
-kubectl get zfsvolumes.openebs.io -n openebs -oyaml
+kubectl get zfsvolumes.zfs.openebs.io -n openebs -oyaml
 
 exit 1
 fi
