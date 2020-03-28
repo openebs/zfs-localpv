@@ -20,8 +20,8 @@ package fake
 
 import (
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
-	openebsv1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/core/v1alpha1"
-	fakeopenebsv1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/core/v1alpha1/fake"
+	openebsv1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1alpha1"
+	fakeopenebsv1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

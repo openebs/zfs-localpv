@@ -21,10 +21,10 @@ package v1alpha1
 import (
 	time "time"
 
-	corev1alpha1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	zfsv1alpha1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	internalclientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	internalinterfaces "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/internalinterfaces"
-	v1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/lister/core/v1alpha1"
+	v1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/lister/zfs/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -70,7 +70,7 @@ func NewFilteredZFSSnapshotInformer(client internalclientset.Interface, namespac
 				return client.OpenebsV1alpha1().ZFSSnapshots(namespace).Watch(options)
 			},
 		},
-		&corev1alpha1.ZFSSnapshot{},
+		&zfsv1alpha1.ZFSSnapshot{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,7 +81,7 @@ func (f *zFSSnapshotInformer) defaultInformer(client internalclientset.Interface
 }
 
 func (f *zFSSnapshotInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&corev1alpha1.ZFSSnapshot{}, f.defaultInformer)
+	return f.factory.InformerFor(&zfsv1alpha1.ZFSSnapshot{}, f.defaultInformer)
 }
 
 func (f *zFSSnapshotInformer) Lister() v1alpha1.ZFSSnapshotLister {
