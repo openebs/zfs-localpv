@@ -6,15 +6,15 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: volumes.zfs.openebs.io
+  name: zfsvolumes.zfs.openebs.io
 spec:
   group: zfs.openebs.io
   version: v1alpha1
   scope: Namespaced
   names:
-    plural: volumes
-    singular: volume
-    kind: Volume
+    plural: zfsvolumes
+    singular: zfsvolume
+    kind: ZFSVolume
     shortNames:
     - zfsvol
     - zv
@@ -53,15 +53,15 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: snapshots.zfs.openebs.io
+  name: zfssnapshots.zfs.openebs.io
 spec:
   group: zfs.openebs.io
   version: v1alpha1
   scope: Namespaced
   names:
-    plural: snapshots
-    singular: snapshot
-    kind: Snapshot
+    plural: zfssnapshots
+    singular: zfssnapshot
+    kind: ZFSSnapshot
     shortNames:
     - zfssnapshot
     - zfssnap
