@@ -3,7 +3,7 @@
 # volume-mgmt  releases.
 #
 
-FROM ubuntu:18.04
+FROM ubuntu:19.10
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN apt-get update; exit 0
 RUN apt-get -y install rsyslog libssl-dev xfsprogs ca-certificates
