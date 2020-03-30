@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	openebsv1alpha1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
+	openebsv1alpha1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

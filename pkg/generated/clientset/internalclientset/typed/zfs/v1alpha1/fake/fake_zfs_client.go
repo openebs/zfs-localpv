@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/core/v1alpha1"
+	v1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1alpha1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

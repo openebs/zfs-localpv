@@ -17,7 +17,7 @@ package snapbuilder
 import (
 	"encoding/json"
 
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	client "github.com/openebs/zfs-localpv/pkg/common/kubernetes/client"
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	"github.com/pkg/errors"

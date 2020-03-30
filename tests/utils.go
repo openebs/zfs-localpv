@@ -21,7 +21,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/core/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
 	"github.com/openebs/zfs-localpv/tests/container"
 	"github.com/openebs/zfs-localpv/tests/deploy"

@@ -24,8 +24,8 @@ import (
 	time "time"
 
 	internalclientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
-	core "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/core"
 	internalinterfaces "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/internalinterfaces"
+	zfs "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/zfs"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -172,9 +172,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Openebs() core.Interface
+	Openebs() zfs.Interface
 }
 
-func (f *sharedInformerFactory) Openebs() core.Interface {
-	return core.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Openebs() zfs.Interface {
+	return zfs.New(f, f.namespace, f.tweakListOptions)
 }

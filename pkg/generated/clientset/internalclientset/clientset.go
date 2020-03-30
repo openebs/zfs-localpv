@@ -19,7 +19,7 @@ limitations under the License.
 package internalclientset
 
 import (
-	openebsv1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/core/v1alpha1"
+	openebsv1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

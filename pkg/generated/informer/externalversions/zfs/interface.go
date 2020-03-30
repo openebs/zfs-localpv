@@ -19,8 +19,8 @@ limitations under the License.
 package openebs
 
 import (
-	v1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/core/v1alpha1"
 	internalinterfaces "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/internalinterfaces"
+	v1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/zfs/v1alpha1"
 )
 
 // Interface provides access to each of this group's versions.
