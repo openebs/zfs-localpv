@@ -25,6 +25,8 @@ import (
 // +resource:path=zfssnapshot
 
 // ZFSSnapshot represents a ZFS Snapshot of the zfsvolume
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Namespaced,shortName=zfssnap
 type ZFSSnapshot struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
