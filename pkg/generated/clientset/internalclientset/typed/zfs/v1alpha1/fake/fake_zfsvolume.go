@@ -30,13 +30,13 @@ import (
 
 // FakeZFSVolumes implements ZFSVolumeInterface
 type FakeZFSVolumes struct {
-	Fake *FakeOpenebsV1alpha1
+	Fake *FakeZfsV1alpha1
 	ns   string
 }
 
-var zfsvolumesResource = schema.GroupVersionResource{Group: "openebs.io", Version: "v1alpha1", Resource: "zfsvolumes"}
+var zfsvolumesResource = schema.GroupVersionResource{Group: "zfs.openebs.io", Version: "v1alpha1", Resource: "zfsvolumes"}
 
-var zfsvolumesKind = schema.GroupVersionKind{Group: "openebs.io", Version: "v1alpha1", Kind: "ZFSVolume"}
+var zfsvolumesKind = schema.GroupVersionKind{Group: "zfs.openebs.io", Version: "v1alpha1", Kind: "ZFSVolume"}
 
 // Get takes name of the zFSVolume, and returns the corresponding zFSVolume object, and an error if there is any.
 func (c *FakeZFSVolumes) Get(name string, options v1.GetOptions) (result *v1alpha1.ZFSVolume, err error) {

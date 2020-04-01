@@ -30,13 +30,13 @@ import (
 
 // FakeZFSSnapshots implements ZFSSnapshotInterface
 type FakeZFSSnapshots struct {
-	Fake *FakeOpenebsV1alpha1
+	Fake *FakeZfsV1alpha1
 	ns   string
 }
 
-var zfssnapshotsResource = schema.GroupVersionResource{Group: "openebs.io", Version: "v1alpha1", Resource: "zfssnapshots"}
+var zfssnapshotsResource = schema.GroupVersionResource{Group: "zfs.openebs.io", Version: "v1alpha1", Resource: "zfssnapshots"}
 
-var zfssnapshotsKind = schema.GroupVersionKind{Group: "openebs.io", Version: "v1alpha1", Kind: "ZFSSnapshot"}
+var zfssnapshotsKind = schema.GroupVersionKind{Group: "zfs.openebs.io", Version: "v1alpha1", Kind: "ZFSSnapshot"}
 
 // Get takes name of the zFSSnapshot, and returns the corresponding zFSSnapshot object, and an error if there is any.
 func (c *FakeZFSSnapshots) Get(name string, options v1.GetOptions) (result *v1alpha1.ZFSSnapshot, err error) {

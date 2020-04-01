@@ -55,7 +55,7 @@ type zFSVolumes struct {
 }
 
 // newZFSVolumes returns a ZFSVolumes
-func newZFSVolumes(c *OpenebsV1alpha1Client, namespace string) *zFSVolumes {
+func newZFSVolumes(c *ZfsV1alpha1Client, namespace string) *zFSVolumes {
 	return &zFSVolumes{
 		client: c.RESTClient(),
 		ns:     namespace,

@@ -24,21 +24,21 @@ import (
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeOpenebsV1alpha1 struct {
+type FakeZfsV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeOpenebsV1alpha1) ZFSSnapshots(namespace string) v1alpha1.ZFSSnapshotInterface {
+func (c *FakeZfsV1alpha1) ZFSSnapshots(namespace string) v1alpha1.ZFSSnapshotInterface {
 	return &FakeZFSSnapshots{c, namespace}
 }
 
-func (c *FakeOpenebsV1alpha1) ZFSVolumes(namespace string) v1alpha1.ZFSVolumeInterface {
+func (c *FakeZfsV1alpha1) ZFSVolumes(namespace string) v1alpha1.ZFSVolumeInterface {
 	return &FakeZFSVolumes{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeOpenebsV1alpha1) RESTClient() rest.Interface {
+func (c *FakeZfsV1alpha1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

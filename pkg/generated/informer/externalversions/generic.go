@@ -52,11 +52,11 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=openebs.io, Version=v1alpha1
+	// Group=zfs.openebs.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("zfssnapshots"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Openebs().V1alpha1().ZFSSnapshots().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Zfs().V1alpha1().ZFSSnapshots().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("zfsvolumes"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Openebs().V1alpha1().ZFSVolumes().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Zfs().V1alpha1().ZFSVolumes().Informer()}, nil
 
 	}
 

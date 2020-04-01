@@ -155,8 +155,8 @@ type VolumeInfo struct {
 	ThinProvision string `json:"thinProvision,omitempty"`
 
 	// volumeType determines whether the volume is of type "DATASET" or "ZVOL".
-	// if fsttype provided in the storageclass as "zfs", then it will create a
-	// volume of type "DATASET". If "ext4", "ext3", "ext2" or "xfs" in mentioned as fstype
+	// if fsttype provided in the storageclass is "zfs", then it will create a
+	// volume of type "DATASET". If "ext4", "ext3", "ext2" or "xfs" is mentioned as fstype
 	// in the storageclass, it will create a volume of type "ZVOL" so that it can be
 	// further formatted with the fstype provided in the storageclass.
 	// +kubebuilder:validation:Required
