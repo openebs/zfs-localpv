@@ -47,6 +47,7 @@ spec:
     plural: zfsvolumes
     shortNames:
     - zfsvol
+    - zv
     singular: zfsvolume
   preserveUnknownFields: false
   scope: Namespaced

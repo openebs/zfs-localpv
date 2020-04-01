@@ -39,7 +39,7 @@ fi
 
 SCRIPT_ROOT=$(unset CDPATH && cd $(dirname "${BASH_SOURCE[0]}")/.. && pwd)
 
-$CONTROLLER_GEN crd:trivialVersions=true,preserveUnknownFields=false paths=${SCRIPT_ROOT}/pkg/apis/openebs.io/zfs/v1alpha1 output:crd:artifacts:config=deploy/crds
+$CONTROLLER_GEN crd:trivialVersions=true,preserveUnknownFields=false paths=${SCRIPT_ROOT}/pkg/apis/openebs.io/zfs/v1alpha1 output:crd:artifacts:config=deploy/yamls
 
 # To use your own boilerplate text use:
 #   --go-header-file ${SCRIPT_ROOT}/hack/custom-boilerplate.go.txt

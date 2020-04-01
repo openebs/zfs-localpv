@@ -26,7 +26,7 @@ import (
 
 // ZFSVolume represents a ZFS based volume
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:scope=Namespaced,shortName=zfsvol
+// +kubebuilder:resource:scope=Namespaced,shortName=zfsvol;zv
 // +kubebuilder:printcolumn:name="ZPool",type=string,JSONPath=`.spec.poolName`,description="ZFS Pool where the volume is created"
 // +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.ownerNodeID`,description="Node where the volume is created"
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.spec.capacity`,description="Size of the volume"
