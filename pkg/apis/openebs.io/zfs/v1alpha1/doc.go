@@ -17,5 +17,5 @@ limitations under the License.
 // +k8s:deepcopy-gen=package,register
 
 // Package v1alpha1 is the API version
-// +groupName=openebs.io
+// +groupName=zfs.openebs.io
 package v1alpha1

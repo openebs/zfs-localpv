@@ -134,6 +134,10 @@ informer:
 		--output-package $(SRC_PKG)/generated/informer \
 		--go-header-file ./buildscripts/custom-boilerplate.go.txt
 
+manifests:
+	@echo "+ Generating zfs localPV crds"
+	$(PWD)/buildscripts/update-crd.sh
+
 .PHONY: zfs-driver
 zfs-driver: format
 	@echo "--------------------------------"

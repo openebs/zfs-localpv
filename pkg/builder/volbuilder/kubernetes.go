@@ -140,7 +140,7 @@ func defaultGet(
 	name, namespace string,
 	opts metav1.GetOptions,
 ) (*apis.ZFSVolume, error) {
-	return cli.OpenebsV1alpha1().
+	return cli.ZfsV1alpha1().
 		ZFSVolumes(namespace).
 		Get(name, opts)
 }
@@ -152,7 +152,7 @@ func defaultList(
 	namespace string,
 	opts metav1.ListOptions,
 ) (*apis.ZFSVolumeList, error) {
-	return cli.OpenebsV1alpha1().
+	return cli.ZfsV1alpha1().
 		ZFSVolumes(namespace).
 		List(opts)
 }
@@ -166,7 +166,7 @@ func defaultDel(
 ) error {
 	deletePropagation := metav1.DeletePropagationForeground
 	opts.PropagationPolicy = &deletePropagation
-	err := cli.OpenebsV1alpha1().
+	err := cli.ZfsV1alpha1().
 		ZFSVolumes(namespace).
 		Delete(name, opts)
 	return err
@@ -179,7 +179,7 @@ func defaultCreate(
 	vol *apis.ZFSVolume,
 	namespace string,
 ) (*apis.ZFSVolume, error) {
-	return cli.OpenebsV1alpha1().
+	return cli.ZfsV1alpha1().
 		ZFSVolumes(namespace).
 		Create(vol)
 }
@@ -191,7 +191,7 @@ func defaultUpdate(
 	vol *apis.ZFSVolume,
 	namespace string,
 ) (*apis.ZFSVolume, error) {
-	return cli.OpenebsV1alpha1().
+	return cli.ZfsV1alpha1().
 		ZFSVolumes(namespace).
 		Update(vol)
 }

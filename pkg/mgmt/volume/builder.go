@@ -85,14 +85,14 @@ func (cb *ZVControllerBuilder) withOpenEBSClient(cs clientset.Interface) *ZVCont
 
 // withZVLister fills zv lister to controller object.
 func (cb *ZVControllerBuilder) withZVLister(sl informers.SharedInformerFactory) *ZVControllerBuilder {
-	zvInformer := sl.Openebs().V1alpha1().ZFSVolumes()
+	zvInformer := sl.Zfs().V1alpha1().ZFSVolumes()
 	cb.ZVController.zvLister = zvInformer.Lister()
 	return cb
 }
 
 // withZVSynced adds object sync information in cache to controller object.
 func (cb *ZVControllerBuilder) withZVSynced(sl informers.SharedInformerFactory) *ZVControllerBuilder {
-	zvInformer := sl.Openebs().V1alpha1().ZFSVolumes()
+	zvInformer := sl.Zfs().V1alpha1().ZFSVolumes()
 	cb.ZVController.zvSynced = zvInformer.Informer().HasSynced
 	return cb
 }
@@ -116,7 +116,7 @@ func (cb *ZVControllerBuilder) withRecorder(ks kubernetes.Interface) *ZVControll
 
 // withEventHandler adds event handlers controller object.
 func (cb *ZVControllerBuilder) withEventHandler(cvcInformerFactory informers.SharedInformerFactory) *ZVControllerBuilder {
-	cvcInformer := cvcInformerFactory.Openebs().V1alpha1().ZFSVolumes()
+	cvcInformer := cvcInformerFactory.Zfs().V1alpha1().ZFSVolumes()
 	// Set up an event handler for when ZV resources change
 	cvcInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    cb.ZVController.addZV,

@@ -172,9 +172,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Openebs() zfs.Interface
+	Zfs() zfs.Interface
 }
 
-func (f *sharedInformerFactory) Openebs() zfs.Interface {
+func (f *sharedInformerFactory) Zfs() zfs.Interface {
 	return zfs.New(f, f.namespace, f.tweakListOptions)
 }

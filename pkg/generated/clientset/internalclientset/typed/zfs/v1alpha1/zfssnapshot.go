@@ -56,7 +56,7 @@ type zFSSnapshots struct {
 }
 
 // newZFSSnapshots returns a ZFSSnapshots
-func newZFSSnapshots(c *OpenebsV1alpha1Client, namespace string) *zFSSnapshots {
+func newZFSSnapshots(c *ZfsV1alpha1Client, namespace string) *zFSSnapshots {
 	return &zFSSnapshots{
 		client: c.RESTClient(),
 		ns:     namespace,

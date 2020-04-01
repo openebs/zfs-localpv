@@ -61,13 +61,13 @@ func NewFilteredZFSSnapshotInformer(client internalclientset.Interface, namespac
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.OpenebsV1alpha1().ZFSSnapshots(namespace).List(options)
+				return client.ZfsV1alpha1().ZFSSnapshots(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.OpenebsV1alpha1().ZFSSnapshots(namespace).Watch(options)
+				return client.ZfsV1alpha1().ZFSSnapshots(namespace).Watch(options)
 			},
 		},
 		&zfsv1alpha1.ZFSSnapshot{},

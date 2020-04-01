@@ -85,14 +85,14 @@ func (cb *SnapControllerBuilder) withOpenEBSClient(cs clientset.Interface) *Snap
 
 // withSnapLister fills snap lister to controller object.
 func (cb *SnapControllerBuilder) withSnapLister(sl informers.SharedInformerFactory) *SnapControllerBuilder {
-	snapInformer := sl.Openebs().V1alpha1().ZFSSnapshots()
+	snapInformer := sl.Zfs().V1alpha1().ZFSSnapshots()
 	cb.SnapController.snapLister = snapInformer.Lister()
 	return cb
 }
 
 // withSnapSynced adds object sync information in cache to controller object.
 func (cb *SnapControllerBuilder) withSnapSynced(sl informers.SharedInformerFactory) *SnapControllerBuilder {
-	snapInformer := sl.Openebs().V1alpha1().ZFSSnapshots()
+	snapInformer := sl.Zfs().V1alpha1().ZFSSnapshots()
 	cb.SnapController.snapSynced = snapInformer.Informer().HasSynced
 	return cb
 }
@@ -116,7 +116,7 @@ func (cb *SnapControllerBuilder) withRecorder(ks kubernetes.Interface) *SnapCont
 
 // withEventHandler adds event handlers controller object.
 func (cb *SnapControllerBuilder) withEventHandler(cvcInformerFactory informers.SharedInformerFactory) *SnapControllerBuilder {
-	cvcInformer := cvcInformerFactory.Openebs().V1alpha1().ZFSSnapshots()
+	cvcInformer := cvcInformerFactory.Zfs().V1alpha1().ZFSSnapshots()
 	// Set up an event handler for when Snap resources change
 	cvcInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    cb.SnapController.addSnap,

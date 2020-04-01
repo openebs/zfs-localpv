@@ -61,13 +61,13 @@ func NewFilteredZFSVolumeInformer(client internalclientset.Interface, namespace 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.OpenebsV1alpha1().ZFSVolumes(namespace).List(options)
+				return client.ZfsV1alpha1().ZFSVolumes(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.OpenebsV1alpha1().ZFSVolumes(namespace).Watch(options)
+				return client.ZfsV1alpha1().ZFSVolumes(namespace).Watch(options)
 			},
 		},
 		&zfsv1alpha1.ZFSVolume{},
