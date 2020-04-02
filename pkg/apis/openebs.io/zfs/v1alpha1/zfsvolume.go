@@ -149,8 +149,9 @@ type VolumeInfo struct {
 	// KeyFormat specifies format of the encryption key
 	KeyFormat string `json:"keyformat,omitempty"`
 
-	// Thinprovision specifies if we should
-	// thin provisioned the volume or not
+	// ThinProvision describes whether we have reserved the space for the source volume or not.
+	// if it is set to "yes", the volsize amount of space will be reserved from the ZPOOL and also
+	// we must have the volsize amount of space available in the ZPOOL otherwise volume creation will fail.
 	// +kubebuilder:validation:Enum=yes;no
 	ThinProvision string `json:"thinProvision,omitempty"`
 

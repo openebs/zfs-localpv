@@ -140,7 +140,7 @@ informer:
 
 manifests:
 	@echo "+ Generating zfs localPV crds"
-	$(PWD)/buildscripts/update-crd.sh
+	$(PWD)/buildscripts/generate-manifests.sh
 
 .PHONY: zfs-driver
 zfs-driver: format
