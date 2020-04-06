@@ -133,10 +133,8 @@ func (ns *node) NodeUnpublishVolume(
 ) (*csi.NodeUnpublishVolumeResponse, error) {
 
 	var (
-		err           error
-		vol           *apis.ZFSVolume
-		devpath       string
-		currentMounts []string
+		err error
+		vol *apis.ZFSVolume
 	)
 
 	if err = ns.validateNodeUnpublishReq(req); err != nil {
@@ -147,37 +145,17 @@ func (ns *node) NodeUnpublishVolume(
 	volumeID := req.GetVolumeId()
 
 	if vol, err = zfs.GetZFSVolume(volumeID); err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal,
+			"not able to get the ZFSVolume %s err : %s",
+			volumeID, err.Error())
 	}
 
-	if devpath, err = zfs.GetVolumeDevPath(vol); err != nil {
-		goto NodeUnpublishResponse
-	}
+	err = zfs.UmountVolume(vol, targetPath)
 
-	currentMounts, err = zfs.GetMounts(devpath)
 	if err != nil {
-		return nil, err
-	} else if len(currentMounts) == 0 {
-		return nil, status.Error(codes.Internal, "umount request for not mounted volume")
-	} else if len(currentMounts) == 1 {
-		if currentMounts[0] != targetPath {
-			return nil, status.Error(codes.Internal, "device not mounted at right path")
-		}
-	} else {
-		logrus.Errorf(
-			"can not unmount, more than one mounts for volume:%s path %s mounts: %v",
-			volumeID, targetPath, currentMounts,
-		)
-		return nil, status.Error(codes.Internal, "device not mounted at rightpath")
-	}
-
-	if err = zfs.UmountVolume(vol, req.GetTargetPath()); err != nil {
-		goto NodeUnpublishResponse
-	}
-
-NodeUnpublishResponse:
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal,
+			"unable to umount the volume %s err : %s",
+			volumeID, err.Error())
 	}
 	logrus.Infof("hostpath: volume %s path: %s has been unmounted.",
 		volumeID, targetPath)
