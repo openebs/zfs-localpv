@@ -119,8 +119,8 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 
 	err = zfs.ProvisionVolume(volObj)
 	if err != nil {
-		return "", status.Error(codes.Internal,
-			"not able to provision the volume")
+		return "", status.Errorf(codes.Internal,
+			"not able to provision the volume %s", err.Error())
 	}
 
 	return selected, nil
@@ -168,8 +168,8 @@ func CreateZFSClone(req *csi.CreateVolumeRequest, snapshot string) (string, erro
 
 	err = zfs.ProvisionVolume(volObj)
 	if err != nil {
-		return "", status.Error(codes.Internal,
-			"not able to provision the volume")
+		return "", status.Errorf(codes.Internal,
+			"not able to provision the clone volume %s", err.Error())
 	}
 
 	return selected, nil

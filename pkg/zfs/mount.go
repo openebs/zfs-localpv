@@ -32,13 +32,22 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 ) error {
 	mounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
 
-	_, _, err := mount.GetDeviceNameFromMount(mounter, targetPath)
+	dev, ref, err := mount.GetDeviceNameFromMount(mounter, targetPath)
 	if err != nil {
 		logrus.Errorf(
 			"zfspv umount volume: failed to get device from mnt: %s\nError: %v",
 			targetPath, err,
 		)
 		return err
+	}
+
+	// device has already been un-mounted, return successful
+	if len(dev) == 0 || ref == 0 {
+		logrus.Warningf(
+			"Warning: Unmount skipped because volume %s not mounted: %v",
+			vol.Name, targetPath,
+		)
+		return nil
 	}
 
 	if pathExists, pathErr := mount.PathExists(targetPath); pathErr != nil {

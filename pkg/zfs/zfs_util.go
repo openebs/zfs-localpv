@@ -387,7 +387,36 @@ func SetDatasetMountProp(volume string, mountpath string) error {
 func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	return SetDatasetMountProp(volume, mountpath)
+	// set the mountpoint to the path where this volume should be mounted
+	err := SetDatasetMountProp(volume, mountpath)
+	if err != nil {
+		return err
+	}
+
+	/*
+	 * see if we should attempt to mount the dataset.
+	 * Setting the mountpoint is sufficient to mount the zfs dataset,
+	 * but if dataset has been unmounted, then setting the mountpoint
+	 * is not sufficient, we have to mount the dataset explicitly
+	 */
+	mounted, err := GetVolumeProperty(vol, "mounted")
+	if err != nil {
+		return err
+	}
+
+	if mounted == "no" {
+		var MountVolArg []string
+		MountVolArg = append(MountVolArg, "mount", volume)
+		cmd := exec.Command(ZFSVolCmd, MountVolArg...)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			logrus.Errorf("zfs: could not mount the dataset %v cmd %v error: %s",
+				volume, MountVolArg, string(out))
+			return err
+		}
+	}
+
+	return nil
 }
 
 // UmountZFSDataset umounts the dataset
