@@ -1,3 +1,25 @@
+v0.6-RC1 / 2020-04-07
+=======================
+
+  * feat(crd-gen): automate the CRDs generation with validations for APIs ([#75](https://github.com/openebs/zfs-localpv/pull/75),
+  [@prateekpandey14](https://github.com/prateekpandey14))
+  * feat(crd): scripts to help migrating to new CRDs ([#73](https://github.com/openebs/zfs-localpv/pull/73),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * refactor(crd): move CR from openebs.io to zfs.openebs.io ([#70](https://github.com/openebs/zfs-localpv/pull/70),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * feat(zfspv): Upgrade the base ubuntu package ([#68](https://github.com/openebs/zfs-localpv/pull/68),
+  [@stevefan1999-personal](https://github.com/stevefan1999-personal))
+  * fix(test): fixing resize flaky test case ([#71](https://github.com/openebs/zfs-localpv/pull/71),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(xfs): clearing the xfs log before generating UUID ([#64](https://github.com/openebs/zfs-localpv/pull/64),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(readme): adding e2e project link in README ([#65](https://github.com/openebs/zfs-localpv/pull/65),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(xfs): fixing xfs duplicate uuid for cloned volumes ([#63](https://github.com/openebs/zfs-localpv/pull/63),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * feat(version): Makefile and version enhancement ([#62](https://github.com/openebs/zfs-localpv/pull/62),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+
 v0.5 / 2020-03-14
 =======================
 
