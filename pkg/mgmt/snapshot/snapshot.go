@@ -77,14 +77,20 @@ func (c *SnapController) syncSnap(snap *apis.ZFSSnapshot) error {
 	var err error
 	// ZFSSnapshot should be deleted. Check if deletion timestamp is set
 	if c.isDeletionCandidate(snap) {
-		err = zfs.DestroySnapshot(snap)
-		if err == nil {
-			zfs.RemoveSnapFinalizer(snap)
+		userFin := zfs.GetUserFinalizers(snap.Finalizers)
+		if len(userFin) == 0 {
+			// destroy only if other finalizers have been removed
+			err = zfs.DestroySnapshot(snap)
+			if err == nil {
+				err = zfs.RemoveSnapFinalizer(snap)
+			}
+		} else {
+			return fmt.Errorf("snapshot: can not destroy, waiting for finalizers to be removed %v", userFin)
 		}
 	} else {
-		// if finalizer is not set then it means we are creating
+		// if status is not Ready then it means we are creating
 		// the zfs snapshot.
-		if snap.Finalizers == nil {
+		if snap.Status.State != zfs.ZFSStatusReady {
 			err = zfs.CreateSnapshot(snap)
 			if err == nil {
 				err = zfs.UpdateSnapInfo(snap)

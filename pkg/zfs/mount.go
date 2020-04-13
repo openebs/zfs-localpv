@@ -134,7 +134,7 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) (bool, error) {
 		vol.Spec.OwnerNodeID != NodeID {
 		return false, status.Error(codes.Internal, "verifyMount: volume is owned by different node")
 	}
-	if vol.Finalizers == nil {
+	if !IsVolumeReady(vol) {
 		return false, status.Error(codes.Internal, "verifyMount: volume is not ready to be mounted")
 	}
 

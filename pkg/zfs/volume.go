@@ -233,10 +233,6 @@ func UpdateZvolInfo(vol *apis.ZFSVolume, status string) error {
 	finalizers := []string{}
 	labels := map[string]string{ZFSNodeKey: NodeID}
 
-	if vol.Finalizers != nil {
-		return nil
-	}
-
 	switch status {
 	case ZFSStatusReady:
 		finalizers = append(finalizers, ZFSFinalizer)
@@ -255,8 +251,8 @@ func UpdateZvolInfo(vol *apis.ZFSVolume, status string) error {
 	return err
 }
 
-// RemoveZvolFinalizer adds finalizer to ZFSVolume CR
-func RemoveZvolFinalizer(vol *apis.ZFSVolume) error {
+// RemoveVolumeFinalizer removes finalizer from ZFSVolume CR
+func RemoveVolumeFinalizer(vol *apis.ZFSVolume) error {
 	vol.Finalizers = nil
 
 	_, err := volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(vol)
@@ -290,10 +286,6 @@ func UpdateSnapInfo(snap *apis.ZFSSnapshot) error {
 	finalizers := []string{ZFSFinalizer}
 	labels := map[string]string{ZFSNodeKey: NodeID}
 
-	if snap.Finalizers != nil {
-		return nil
-	}
-
 	newSnap, err := snapbuilder.BuildFrom(snap).
 		WithFinalizer(finalizers).
 		WithLabels(labels).Build()
@@ -310,7 +302,7 @@ func UpdateSnapInfo(snap *apis.ZFSSnapshot) error {
 	return err
 }
 
-// RemoveSnapFinalizer adds finalizer to ZFSSnapshot CR
+// RemoveSnapFinalizer removes finalizer from ZFSSnapshot CR
 func RemoveSnapFinalizer(snap *apis.ZFSSnapshot) error {
 	snap.Finalizers = nil
 
@@ -357,4 +349,35 @@ func UpdateRestoreInfo(rstr *apis.ZFSRestore, status apis.ZFSRestoreStatus) erro
 
 	_, err = restorebuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(newRstr)
 	return err
+}
+
+// GetUserFinalizers returns all the finalizers present on the ZFSVolume object
+// execpt the one owned by ZFS node daemonset. We also need to ignore the foregroundDeletion
+// finalizer as this will be present becasue of the foreground cascading deletion
+func GetUserFinalizers(finalizers []string) []string {
+	var userFin []string
+	for _, fin := range finalizers {
+		if fin != ZFSFinalizer &&
+			fin != "foregroundDeletion" {
+			userFin = append(userFin, fin)
+		}
+	}
+	return userFin
+}
+
+// IsVolumeReady returns true if volume is Ready
+func IsVolumeReady(vol *apis.ZFSVolume) bool {
+
+	if vol.Status.State == ZFSStatusReady {
+		return true
+	}
+
+	// For older volumes, there was no Status field
+	// so checking the node finalizer to make sure volume is Ready
+	for _, fin := range vol.Finalizers {
+		if fin == ZFSFinalizer {
+			return true
+		}
+	}
+	return false
 }
