@@ -37,6 +37,8 @@ const (
 	ZFSFinalizer string = "zfs.openebs.io/finalizer"
 	// ZFSVolKey for the ZfsSnapshot CR to store Persistence Volume name
 	ZFSVolKey string = "openebs.io/persistent-volume"
+	// PoolNameKey is key for ZFS pool name
+	PoolNameKey string = "openebs.io/poolname"
 	// ZFSNodeKey will be used to insert Label in ZfsVolume CR
 	ZFSNodeKey string = "kubernetes.io/nodename"
 	// ZFSTopologyKey is supported topology key for the zfs driver
