@@ -1,4 +1,11 @@
-v0.6-RC1 / 2020-04-07
+v0.6-RC2 / 2020-04-11
+=======================
+
+  * feat(zfspv): handling unmounted volume ([#78](https://github.com/openebs/zfs-localpv/pull/78),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+
+
+v0.6-RC1 / 2020-04-08
 =======================
 
   * feat(crd-gen): automate the CRDs generation with validations for APIs ([#75](https://github.com/openebs/zfs-localpv/pull/75),
