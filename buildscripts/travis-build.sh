@@ -17,7 +17,7 @@ set -e
 DST_REPO="$GOPATH/src/github.com/openebs/zfs-localpv"
 
 function checkGitDiff() {
-	if [[ `git diff --shortstat | wc -l` != 0 ]]; then echo "Some files got changed after $1";printf "\n";git diff --stat;printf "\n"; exit 1; fi
+	if [[ `git diff --shortstat | wc -l` != 0 ]]; then echo "Some files got changed after $1";printf "\n";git diff;printf "\n"; exit 1; fi
 }
 
 #make golint-travis
@@ -27,6 +27,12 @@ echo "Running : make kubegen"
 make kubegen
 rc=$?; if [[ $rc != 0 ]]; then echo "make kubegen failed"; exit $rc; fi
 checkGitDiff "make kubegen"
+printf "\n"
+
+echo "Running : make manifests"
+make manifests
+rc=$?; if [[ $rc != 0 ]]; then echo "make manifests failed"; exit $rc; fi
+checkGitDiff "make manifests"
 printf "\n"
 
 ./buildscripts/test-cov.sh
