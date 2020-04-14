@@ -61,11 +61,15 @@ test: format
 # Bootstrap downloads tools required
 # during build
 .PHONY: bootstrap
-bootstrap:
+bootstrap: controller-gen
 	@for tool in  $(EXTERNAL_TOOLS) ; do \
 		echo "+ Installing $$tool" ; \
 		go get -u $$tool; \
 	done
+
+.PHONY: controller-gen
+controller-gen:
+	TMP_DIR=$(shell mktemp -d) && cd $$TMP_DIR && go mod init tmp && go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.8 && rm -rf $$TMP_DIR;
 
 # SRC_PKG is the path of code files
 SRC_PKG := github.com/openebs/zfs-localpv/pkg
@@ -136,7 +140,7 @@ informer:
 
 manifests:
 	@echo "+ Generating zfs localPV crds"
-	$(PWD)/buildscripts/update-crd.sh
+	$(PWD)/buildscripts/generate-manifests.sh
 
 .PHONY: zfs-driver
 zfs-driver: format

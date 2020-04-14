@@ -78,46 +78,60 @@ type ZFSVolumeList struct {
 	Items []ZFSVolume `json:"items"`
 }
 
-// VolumeInfo contains the volume related info
-// for all types of volumes in ZFSVolume
+// VolumeInfo defines ZFS volume parameters for all modes in which
+// ZFS volumes can be created like - ZFS volume with filesystem,
+// ZFS Volume exposed as zfs or ZFS volume exposed as raw block device.
+// Some of the parameters can be only set during creation time
+// (as specified in the details of the parameter), and a few are editable.
+// In case of Cloned volumes, the parameters are assigned the same values
+// as the source volume.
 type VolumeInfo struct {
 
-	// OwnerNodeID is the Node ID which
-	// is the owner of this Volume
-
+	// OwnerNodeID is the Node ID where the ZPOOL is running which is where
+	// the volume has been provisioned.
+	// OwnerNodeID can not be edited after the volume has been provisioned.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:Required
 	OwnerNodeID string `json:"ownerNodeID"`
 
-	// poolName specifies the name of the
-	// pool where this volume should be created
+	// poolName specifies the name of the pool where the volume has been created.
+	// PoolName can not be edited after the volume has been provisioned.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	PoolName string `json:"poolName"`
 
-	// SnapName specifies the name of the
-	// snapshot where this volume should be cloned
+	// SnapName specifies the name of the snapshot where the volume has been cloned from.
+	// Snapname can not be edited after the volume has been provisioned.
 	SnapName string `json:"snapname,omitempty"`
 
 	// Capacity of the volume
+	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	Capacity string `json:"capacity"`
 
-	// RecordSize specifies the record size
-	// for the zfs dataset
+	// Specifies a suggested block size for files in the file system.
+	// The size specified must be a power of two greater than or equal to 512 and less than or equal to 128 Kbytes.
+	// RecordSize property can be edited after the volume has been created.
+	// Changing the file system's recordsize affects only files created afterward; existing files are unaffected.
+	// Default Value: 128k.
 	// +kubebuilder:validation:MinLength=1
 	RecordSize string `json:"recordsize,omitempty"`
 
-	// VolBlockSize specifies the block size for the zvol
+	// VolBlockSize specifies the block size for the zvol.
+	// The volsize can only be set to a multiple of volblocksize, and cannot be zero.
+	// VolBlockSize can not be edited after the volume has been provisioned.
+	// Default Value: 8k.
 	// +kubebuilder:validation:MinLength=1
 	VolBlockSize string `json:"volblocksize,omitempty"`
 
-	// Controls the compression algorithm used for this dataset. Compression
-	// specifies if the it should enabled on the zvol. Setting compression to on
-	// indicates that the current default compression algorithm should be used.
-	// The current default compression algorithm is either lzjb or, if the lz4_compress
-	// feature is enabled, lz4.
-	// Changing this property affects only newly-written data.
+	// Compression specifies the block-level compression algorithm to be applied to the ZFS Volume.
+	// The value "on" indicates ZFS to use the default compression algorithm. The default compression
+	// algorithm used by ZFS will be either lzjb or, if the lz4_compress feature is enabled, lz4.
+	// Compression property can be edited after the volume has been created. The change will only
+	// be applied to the newly-written data. For instance, if the Volume was created with "off" and
+	// the next day the compression was modified to "on", the data written prior to setting "on" will
+	// not be compressed.
+	// Default Value: off.
 	// +kubebuilder:validation:Pattern="^(on|off|lzjb|gzip|gzip-[1-9]|zle|lz4)$"
 	Compression string `json:"compression,omitempty"`
 
@@ -129,7 +143,9 @@ type VolumeInfo struct {
 	// Before creating a pool with deduplication enabled, ensure that you have planned your hardware
 	// requirements appropriately and implemented appropriate recovery practices, such as regular backups.
 	// As an alternative to deduplication consider using compression=lz4, as a less resource-intensive alternative.
-	// should be enabled on the zvol
+	// should be enabled on the zvol.
+	// Dedup property can be edited after the volume has been created.
+	// Default Value: off.
 	// +kubebuilder:validation:Enum=on;off
 	Dedup string `json:"dedup,omitempty"`
 
@@ -140,6 +156,7 @@ type VolumeInfo struct {
 	// pool structure, including dataset and snapshot names, dataset hierarchy,
 	// properties, file size, file holes, and deduplication tables
 	// (though the deduplicated data itself is encrypted).
+	// Default Value: off.
 	// +kubebuilder:validation:Pattern="^(on|off|aes-128-[c,g]cm|aes-192-[c,g]cm|aes-256-[c,g]cm)$"
 	Encryption string `json:"encryption,omitempty"`
 
@@ -147,23 +164,37 @@ type VolumeInfo struct {
 	KeyLocation string `json:"keylocation,omitempty"`
 
 	// KeyFormat specifies format of the encryption key
+	// The supported KeyFormats are passphrase, raw, hex.
+	// +kubebuilder:validation:Enum=passphrase;raw;hex
 	KeyFormat string `json:"keyformat,omitempty"`
 
-	// Thinprovision specifies if we should
-	// thin provisioned the volume or not
-	// +kubebuilder:validation:Enum=Yes;no
+	// ThinProvision describes whether space reservation for the source volume is required or not.
+	// The value "yes" indicates that volume should be thin provisioned and "no" means thick provisioning of the volume.
+	// If thinProvision is set to "yes" then volume can be provisioned even if the ZPOOL does not
+	// have the enough capacity.
+	// If thinProvision is set to "no" then volume can be provisioned only if the ZPOOL has enough
+	// capacity and capacity required by volume can be reserved.
+	// ThinProvision can not be modified once volume has been provisioned.
+	// Default Value: no.
+	// +kubebuilder:validation:Enum=yes;no
 	ThinProvision string `json:"thinProvision,omitempty"`
 
 	// volumeType determines whether the volume is of type "DATASET" or "ZVOL".
-	// if fsttype provided in the storageclass is "zfs", then it will create a
-	// volume of type "DATASET". If "ext4", "ext3", "ext2" or "xfs" is mentioned as fstype
-	// in the storageclass, it will create a volume of type "ZVOL" so that it can be
-	// further formatted with the fstype provided in the storageclass.
+	// If fstype provided in the storageclass is "zfs", a volume of type dataset will be created.
+	// If "ext4", "ext3", "ext2" or "xfs" is mentioned as fstype
+	// in the storageclass, then a volume of type zvol will be created, which will be
+	// further formatted as the fstype provided in the storageclass.
+	// VolumeType can not be modified once volume has been provisioned.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=ZVOL;DATASET
 	VolumeType string `json:"volumeType"`
 
-	// FsType specifies filesystem type for the
-	// zfs volume/dataset
+	// FsType specifies filesystem type for the zfs volume/dataset.
+	// If FsType is provided as "zfs", then the driver will create a
+	// ZFS dataset, formatting is not required as underlying filesystem is ZFS anyway.
+	// If FsType is ext2, ext3, ext4 or xfs, then the driver will create a ZVOL and
+	// format the volume accordingly.
+	// FsType can not be modified once volume has been provisioned.
+	// Default Value: ext4.
 	FsType string `json:"fsType,omitempty"`
 }
