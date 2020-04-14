@@ -17,7 +17,7 @@ set -e
 DST_REPO="$GOPATH/src/github.com/openebs/zfs-localpv"
 
 function checkGitDiff() {
-	if [[ `git diff --shortstat | wc -l` != 0 ]]; then echo "Some files got changed after $1";printf "\n";git diff --stat;printf "\n"; exit 1; fi
+	if [[ `git diff --shortstat | wc -l` != 0 ]]; then echo "Some files got changed after $1";printf "\n";git diff;printf "\n"; exit 1; fi
 }
 
 #make golint-travis
