@@ -185,6 +185,7 @@ func (cs *controller) CreateVolume(
 	var selected string
 
 	volName := req.GetName()
+	pool := req.GetParameters()["poolname"]
 	size := req.GetCapacityRange().RequiredBytes
 
 	if err = cs.validateVolumeCreateReq(req); err != nil {
@@ -207,11 +208,13 @@ func (cs *controller) CreateVolume(
 	sendEventOrIgnore(volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
 
 	topology := map[string]string{zfs.ZFSTopologyKey: selected}
+	cntx := map[string]string{zfs.PoolNameKey: pool}
 
 	return csipayload.NewCreateVolumeResponseBuilder().
 		WithName(volName).
 		WithCapacity(size).
 		WithTopology(topology).
+		WithContext(cntx).
 		WithContentSource(contentSource).
 		Build(), nil
 }
