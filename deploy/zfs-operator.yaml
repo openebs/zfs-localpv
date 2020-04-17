@@ -458,6 +458,19 @@ status:
 
 ---
 
+# Create the CSI Driver object
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
+metadata:
+  name: zfs.csi.openebs.io
+spec:
+  # do not require volumeattachment
+  attachRequired: false
+  podInfoOnMount: false
+  volumeLifecycleModes:
+  - Persistent
+---
+
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -920,6 +933,9 @@ rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["*"]
     resources: ["zfsvolumes", "zfssnapshots"]
     verbs: ["*"]
@@ -1000,7 +1016,7 @@ spec:
           image: quay.io/k8scsi/snapshot-controller:v2.0.1
           args:
             - "--v=5"
-            - "--leader-election=false"
+            - "--leader-election=true"
           imagePullPolicy: IfNotPresent
         - name: csi-provisioner
           image: quay.io/k8scsi/csi-provisioner:v1.5.0
@@ -1012,31 +1028,6 @@ spec:
             - "--strict-topology"
             - "--enable-leader-election"
             - "--leader-election-type=leases"
-          env:
-            - name: ADDRESS
-              value: /var/lib/csi/sockets/pluginproxy/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
-        - name: csi-attacher
-          image: quay.io/k8scsi/csi-attacher:v2.0.0
-          imagePullPolicy: IfNotPresent
-          args:
-            - "--v=5"
-            - "--csi-address=$(ADDRESS)"
-            - "--leader-election"
-          env:
-            - name: ADDRESS
-              value: /var/lib/csi/sockets/pluginproxy/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
-        - name: csi-cluster-driver-registrar
-          image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.1
-          args:
-            - "--v=5"
-            - "--driver-requires-attachment=false"
-            - "--csi-address=$(ADDRESS)"
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
@@ -1066,45 +1057,6 @@ spec:
       volumes:
         - name: socket-dir
           emptyDir: {}
----
-
-############################## CSI- Attacher #######################
-# Attacher must be able to work with PVs, nodes and VolumeAttachments
-
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: openebs-zfs-attacher-role
-rules:
-  - apiGroups: [""]
-    resources: ["persistentvolumes"]
-    verbs: ["get", "list", "watch", "update"]
-  - apiGroups: [""]
-    resources: ["nodes"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["csi.storage.k8s.io"]
-    resources: ["csinodeinfos"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["volumeattachments", "csinodes"]
-    verbs: ["get", "list", "watch", "update", "patch"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["get", "watch", "list", "delete", "update", "create"]
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: openebs-zfs-attacher-binding
-subjects:
-  - kind: ServiceAccount
-    name: openebs-zfs-controller-sa
-    namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: openebs-zfs-attacher-role
-  apiGroup: rbac.authorization.k8s.io
-
 ---
 
 kind: ClusterRole
@@ -1158,32 +1110,6 @@ subjects:
 roleRef:
   kind: ClusterRole
   name: openebs-zfs-snapshotter-role
-  apiGroup: rbac.authorization.k8s.io
-
----
-
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: openebs-zfs-cluster-driver-registrar-role
-rules:
-  - apiGroups: ["csi.storage.k8s.io"]
-    resources: ["csidrivers"]
-    verbs: ["create", "delete"]
-
----
-
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: openebs-zfs-cluster-driver-registrar-binding
-subjects:
-  - kind: ServiceAccount
-    name: openebs-zfs-controller-sa
-    namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: openebs-zfs-cluster-driver-registrar-role
   apiGroup: rbac.authorization.k8s.io
 
 ---
