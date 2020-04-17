@@ -1,4 +1,4 @@
-From zfs-driver:v0.6 version ZFS-LocalPV related CRs are now grouped together in its own group called `zfs.openebs.io`. Here steps are mentioned for how to upgrade for refactoring the CRDs.
+From zfs-driver:v0.6 version ZFS-LocalPV related CRs are now grouped together in its own group called `zfs.openebs.io`. Here steps are mentioned for how to upgrade for refactoring the CRDs. Please do not provision/deprovision any volume during the upgrade.
 
 steps to upgrade:-
 
@@ -21,7 +21,9 @@ zfsvolume.zfs.openebs.io/pvc-82368c44-eee8-47ee-85a6-633a8023faa8 created
 zfssnapshot.zfs.openebs.io/snapshot-dc61a056-f495-482b-8e6e-e7ddc4c13f47 created
 zfssnapshot.zfs.openebs.io/snapshot-f9db91ea-529e-4dac-b2b8-ead045c612da created
 ```
-`
+Please note that if you have modified the OPENEBS_NAMESPACE env in the driver's deployment to other namespace. Then you have to pass the namespace as an argument to the upgrade.sh script `sh upgrade/upgrash.sh [namespace]`.
+
+
 3. upgrade the driver to v0.6
 
 ```
@@ -56,3 +58,8 @@ zfssnapshot.openebs.io "snapshot-dc61a056-f495-482b-8e6e-e7ddc4c13f47" deleted
 zfssnapshot.openebs.io "snapshot-f9db91ea-529e-4dac-b2b8-ead045c612da" deleted
 customresourcedefinition.apiextensions.k8s.io "zfssnapshots.openebs.io" deleted
 ```
+
+Please note that if you have modified the OPENEBS_NAMESPACE env in the driver's deployment to other namespace. Then you have to pass the namespace as an argument to the cleanup.sh script `sh upgrade/cleanup.sh [namespace]`.
+
+5. restart kube-controller [optional]
+kube-controller-manager might be using stale volumeattachment resources, it might get flooded with the error logs. Restarting kube-controller will fix it.
