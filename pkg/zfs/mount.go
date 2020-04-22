@@ -78,9 +78,8 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 		}
 	}
 
-	if err := os.RemoveAll(targetPath); err != nil {
+	if err := os.Remove(targetPath); err != nil {
 		logrus.Errorf("zfspv: failed to remove mount path Error: %v", err)
-		return err
 	}
 
 	logrus.Infof("umount done path %v", targetPath)
