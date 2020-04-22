@@ -422,8 +422,22 @@ func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
 // UmountZFSDataset umounts the dataset
 func UmountZFSDataset(vol *apis.ZFSVolume) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
+	var MountVolArg []string
+	MountVolArg = append(MountVolArg, "umount", volume)
+	cmd := exec.Command(ZFSVolCmd, MountVolArg...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		logrus.Errorf("zfs: could not umount the dataset %v cmd %v error: %s",
+			volume, MountVolArg, string(out))
+		return err
+	}
+	// ignoring the failure of setting the mountpoint to none
+	// as the dataset has already been umounted, now the new pod
+	// can mount it and it will change that to desired mountpath
+	// and try to mount it if not mounted
+	SetDatasetMountProp(volume, "none")
 
-	return SetDatasetMountProp(volume, "none")
+	return nil
 }
 
 // GetVolumeProperty gets zfs properties for the volume
