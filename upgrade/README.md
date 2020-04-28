@@ -62,4 +62,5 @@ customresourcedefinition.apiextensions.k8s.io "zfssnapshots.openebs.io" deleted
 Please note that if you have modified the OPENEBS_NAMESPACE env in the driver's deployment to other namespace. Then you have to pass the namespace as an argument to the cleanup.sh script `sh upgrade/cleanup.sh [namespace]`.
 
 5. restart kube-controller [optional]
+
 kube-controller-manager might be using stale volumeattachment resources, it might get flooded with the error logs. Restarting kube-controller will fix it.
