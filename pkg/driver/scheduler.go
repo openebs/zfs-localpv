@@ -107,16 +107,16 @@ func scheduler(topo *csi.TopologyRequirement, schld string, pool string) string 
 
 	if topo == nil ||
 		len(topo.Preferred) == 0 {
-		logrus.Errorf("topology information not provided")
+		logrus.Errorf("scheduler: topology information not provided")
 		return ""
 	}
 
 	nodelist, err := GetNodeList(topo)
 	if err != nil {
-		logrus.Errorf("can not get the ndelist err : %v", err.Error())
+		logrus.Errorf("scheduler: can not get the nodelist err : %v", err.Error())
 		return ""
 	} else if len(nodelist) == 0 {
-		logrus.Errorf("nodelist is empty")
+		logrus.Errorf("scheduler: nodelist is empty")
 		return ""
 	}
 

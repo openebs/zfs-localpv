@@ -177,9 +177,27 @@ func (ns *node) NodeGetInfo(
 		logrus.Errorf("failed to get the node %s", ns.driver.config.NodeID)
 		return nil, err
 	}
+	/*
+	 * The driver will support all the keys and values defined in the node's label.
+	 * if nodes are labeled with the below keys and values
+	 * map[beta.kubernetes.io/arch:amd64 beta.kubernetes.io/os:linux kubernetes.io/arch:amd64 kubernetes.io/hostname:pawan-node-1 kubernetes.io/os:linux node-role.kubernetes.io/worker:true openebs.io/zone:zone1 openebs.io/zpool:ssd]
+	 * The driver will support below key and values
+	 * {
+	 *	beta.kubernetes.io/arch:amd64
+	 *	beta.kubernetes.io/os:linux
+	 *	kubernetes.io/arch:amd64
+	 *	kubernetes.io/hostname:pawan-node-1
+	 *	kubernetes.io/os:linux
+	 *	node-role.kubernetes.io/worker:true
+	 *	openebs.io/zone:zone1
+	 *	openebs.io/zpool:ssd
+	 * }
+	 */
 
 	// support all the keys that node has
 	topology := node.Labels
+
+	// add driver's topology key
 	topology[zfs.ZFSTopologyKey] = ns.driver.config.NodeID
 
 	return &csi.NodeGetInfoResponse{
