@@ -42,7 +42,7 @@ const (
 	// ZFSNodeKey will be used to insert Label in ZfsVolume CR
 	ZFSNodeKey string = "kubernetes.io/nodename"
 	// ZFSTopologyKey is supported topology key for the zfs driver
-	ZFSTopologyKey string = "kubernetes.io/hostname"
+	ZFSTopologyKey string = "openebs.io/nodename"
 	// ZFSStatusPending shows object has not handled yet
 	ZFSStatusPending string = "Pending"
 	// ZFSStatusReady shows object has been processed
