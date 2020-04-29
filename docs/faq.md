@@ -37,7 +37,7 @@ openebs-zfs-node-twmx8     2/2     Running   0          5h28m
 
 ### 3. How to upgrade the driver to newer version
 
-In the [operator file](../deploy/zfs-operator.yaml), change the zfs-driver image to the required tag which you want (like for tag v0.2 use `quay.io/openebs/zfs-driver:v0.2`), and then apply the yaml, there are two places where we need to change the image, one for the controller and once for the node agent. By default, the operator uses the `ci` tag which always points to development image not the release tag, so if you want to test the development image you can use ci tag. Please note that the default ImagePullPolicy is IfNotPresent, that means if `ci` image is already there on the node, it will not be pulled again.
+Follow the instructions here https://github.com/openebs/zfs-localpv/tree/master/upgrade.
 
 ### 4. ZFS Pools are there on certain nodes only, how can I create the storage class.
 
@@ -88,3 +88,31 @@ spec:
   replicas: 2
 ---
 ```
+
+### 4. How to add custom topology key
+
+To add custom topology key, we can label all the nodes with the required key and value :-
+
+```sh
+$ kubectl label node pawan-node-1 openebs.io/rack=rack1
+node/pawan-node-1 labeled
+
+$ kubectl get nodes pawan-node-1 --show-labels
+NAME           STATUS   ROLES    AGE   VERSION   LABELS
+pawan-node-1   Ready    worker   16d   v1.17.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=pawan-node-1,kubernetes.io/os=linux,node-role.kubernetes.io/worker=true,openebs.io/rack=rack1
+
+```
+
+Once we have labeled the node, we can install the zfs driver. The driver will pick the node labels and add that as the supported topology key. If the driver is already installed and you want to add a new topology information, you can label the node with the topology information and then restart of the nodes daemonset are required so that the driver can pick the labels and add them as supported topology keys. We should restart the pod in kube-system namespace with the name as openebs-zfs-node-[xxxxx] which is the node agent pod for the ZFS-LocalPV Driver.
+
+```sh
+$ kubectl get pods -n kube-system -l role=openebs-zfs
+
+NAME                       READY   STATUS    RESTARTS   AGE
+openebs-zfs-controller-0   4/4     Running   0          5h28m
+openebs-zfs-node-4d94n     2/2     Running   0          5h28m
+openebs-zfs-node-gssh8     2/2     Running   0          5h28m
+openebs-zfs-node-twmx8     2/2     Running   0          5h28m
+```
+
+Note that if storageclass is using Immediate binding mode then all the nodes should be labeled using same key, that means, same key should be present on all nodes, nodes can have different values for those keys. If nodes are labeled with different keys i.e. some nodes are having different keys, then ZFSPV's default scheduler can not effictively do the volume count based scheduling. Here, in this case the CSI provisioner will pick keys from any random node and then prepare the preferred topology list using the nodes which has those keys defined and ZFSPV scheduler will schedule the PV among those nodes only.
