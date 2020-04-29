@@ -110,14 +110,18 @@ func (ns *node) NodePublishVolume(
 
 	vol, mountInfo, err := GetVolAndMountInfo(req)
 	if err != nil {
-		goto PublishVolumeResponse
+		return nil, err
 	}
-	// attempt mount operation on the requested path
-	if err = zfs.MountVolume(vol, mountInfo); err != nil {
-		goto PublishVolumeResponse
+	// If the access type is block, do nothing for stage
+	switch req.GetVolumeCapability().GetAccessType().(type) {
+	case *csi.VolumeCapability_Block:
+		// attempt block mount operation on the requested path
+		err = zfs.MountBlock(vol, mountInfo)
+	case *csi.VolumeCapability_Mount:
+		// attempt filesystem mount operation on the requested path
+		err = zfs.MountFilesystem(vol, mountInfo)
 	}
 
-PublishVolumeResponse:
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

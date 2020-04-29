@@ -208,11 +208,37 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 }
 
 // MountVolume mounts the disk to the specified path
-func MountVolume(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+func MountFilesystem(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	switch vol.Spec.VolumeType {
 	case VOLTYPE_DATASET:
 		return MountDataset(vol, mount)
 	default:
 		return MountZvol(vol, mount)
 	}
+}
+
+func MountBlock(vol *apis.ZFSVolume, mountinfo *apis.MountInfo) error {
+	target := mountinfo.MountPath
+	devicePath := ZFS_DEVPATH + vol.Spec.PoolName + "/" + vol.Name
+	mountopt := []string{"bind"}
+
+	mounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
+
+	// Create the mount point as a file since bind mount device node requires it to be a file
+	err := mounter.MakeFile(target)
+	if err != nil {
+		return status.Errorf(codes.Internal, "Could not create target file %q: %v", target, err)
+	}
+
+	// do the bind mount of the zvol device at the target path
+	if err := mounter.Mount(devicePath, target, "", mountopt); err != nil {
+		if removeErr := os.Remove(target); removeErr != nil {
+			return status.Errorf(codes.Internal, "Could not remove mount target %q: %v", target, removeErr)
+		}
+		return status.Errorf(codes.Internal, "mount failed at %v err : %v", target, err)
+	}
+
+	logrus.Infof("NodePublishVolume mounted block device %s at %s", devicePath, target)
+
+	return nil
 }

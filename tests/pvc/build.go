@@ -179,3 +179,13 @@ func (b *Builder) Build() (*corev1.PersistentVolumeClaim, error) {
 	}
 	return b.pvc.object, nil
 }
+
+// WithVolumeMode sets the VolumeMode field in PVC with provided arguments
+func (b *Builder) WithVolumeMode(volumemode *corev1.PersistentVolumeMode) *Builder {
+	if volumemode == nil {
+		b.errs = append(b.errs, errors.New("failed to build PVC object: missing volumemode"))
+		return b
+	}
+	b.pvc.object.Spec.VolumeMode = volumemode
+	return b
+}
