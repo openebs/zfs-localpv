@@ -22,6 +22,7 @@ import (
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
+	k8sapi "github.com/openebs/zfs-localpv/pkg/client/k8s/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
@@ -34,10 +35,39 @@ const (
 	VolumeWeighted = "VolumeWeighted"
 )
 
+// GetNodeList gets the nodelist which satisfies the topology info
+func GetNodeList(topo *csi.TopologyRequirement) ([]string, error) {
+
+	var nodelist []string
+
+	list, err := k8sapi.ListNodes(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, node := range list.Items {
+		for _, prf := range topo.Preferred {
+			nodeFiltered := false
+			for key, value := range prf.Segments {
+				if node.Labels[key] != value {
+					nodeFiltered = true
+					break
+				}
+			}
+			if nodeFiltered == false {
+				nodelist = append(nodelist, node.Name)
+				break
+			}
+		}
+	}
+
+	return nodelist, nil
+}
+
 // volumeWeightedScheduler goes through all the pools on the nodes mentioned
 // in the topology and picks the node which has less volume on
 // the given zfs pool.
-func volumeWeightedScheduler(topo *csi.TopologyRequirement, pool string) string {
+func volumeWeightedScheduler(nodelist []string, pool string) string {
 	var selected string
 
 	zvlist, err := volbuilder.NewKubeclient().
@@ -62,8 +92,7 @@ func volumeWeightedScheduler(topo *csi.TopologyRequirement, pool string) string 
 
 	// schedule it on the node which has less
 	// number of volume for the given pool
-	for _, prf := range topo.Preferred {
-		node := prf.Segments[zfs.ZFSTopologyKey]
+	for _, node := range nodelist {
 		if volmap[node] < numVol {
 			selected = node
 			numVol = volmap[node]
@@ -78,19 +107,29 @@ func scheduler(topo *csi.TopologyRequirement, schld string, pool string) string 
 
 	if topo == nil ||
 		len(topo.Preferred) == 0 {
-		logrus.Errorf("topology information not provided")
+		logrus.Errorf("scheduler: topology information not provided")
 		return ""
 	}
+
+	nodelist, err := GetNodeList(topo)
+	if err != nil {
+		logrus.Errorf("scheduler: can not get the nodelist err : %v", err.Error())
+		return ""
+	} else if len(nodelist) == 0 {
+		logrus.Errorf("scheduler: nodelist is empty")
+		return ""
+	}
+
 	// if there is a single node, schedule it on that
-	if len(topo.Preferred) == 1 {
-		return topo.Preferred[0].Segments[zfs.ZFSTopologyKey]
+	if len(nodelist) == 1 {
+		return nodelist[0]
 	}
 
 	switch schld {
 	case VolumeWeighted:
-		return volumeWeightedScheduler(topo, pool)
+		return volumeWeightedScheduler(nodelist, pool)
 	default:
-		return volumeWeightedScheduler(topo, pool)
+		return volumeWeightedScheduler(nodelist, pool)
 	}
 
 	return ""

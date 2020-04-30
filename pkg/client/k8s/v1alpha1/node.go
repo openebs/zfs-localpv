@@ -68,6 +68,28 @@ func NumberOfNodes() (int, error) {
 	}
 }
 
+// GetNode returns a node instance from kubernetes cluster
+func GetNode(name string) (*corev1.Node, error) {
+	n := Node()
+	node, err := n.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get node")
+	} else {
+		return node, nil
+	}
+}
+
+// ListNodes returns list of node instance from kubernetes cluster
+func ListNodes(options metav1.ListOptions) (*corev1.NodeList, error) {
+	n := Node()
+	nodelist, err := n.List(options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list node")
+	} else {
+		return nodelist, nil
+	}
+}
+
 // GetOSAndKernelVersion gets us the OS,Kernel version
 func GetOSAndKernelVersion() (string, error) {
 	nodes := Node()
