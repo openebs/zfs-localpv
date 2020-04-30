@@ -67,7 +67,7 @@ The above storage class tells that ZFS pool "zfspv-pool" is available on nodes z
 Please note that the provisioner name for ZFS driver is "zfs.csi.openebs.io", we have to use this while creating the storage class so that the volume provisioning/deprovisioning request can come to ZFS driver.
 
 
-### 3. How to install the provisioner in HA
+### 5. How to install the provisioner in HA
 
 To have HA for the provisioner(controller), we can update the replica count to 2(or more as per need) and deploy the yaml. Once yaml is deployed, you can see 2(or more) controller pod running. At a time only one will be active and once it is down, the other will take over. They will use lease mechanism to decide who is active/master. Please note that it has anti affinity rules, so on one node only one pod will be running, that means, if you are using 2 replicas on a single node cluster, the other pod will be in pending state because of the anti-affinity rule. So, before changing the replica count, please make sure you have sufficient nodes.
 
@@ -89,7 +89,7 @@ spec:
 ---
 ```
 
-### 4. How to add custom topology key
+### 6. How to add custom topology key
 
 To add custom topology key, we can label all the nodes with the required key and value :-
 
@@ -102,8 +102,9 @@ NAME           STATUS   ROLES    AGE   VERSION   LABELS
 pawan-node-1   Ready    worker   16d   v1.17.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=pawan-node-1,kubernetes.io/os=linux,node-role.kubernetes.io/worker=true,openebs.io/rack=rack1
 
 ```
+It is recommended is to label all the nodes with the same key, they can have different values for the given keys, but all keys should be present on all the worker node.
 
-Once we have labeled the node, we can install the zfs driver. The driver will pick the node labels and add that as the supported topology key. If the driver is already installed and you want to add a new topology information, you can label the node with the topology information and then restart of the nodes daemonset are required so that the driver can pick the labels and add them as supported topology keys. We should restart the pod in kube-system namespace with the name as openebs-zfs-node-[xxxxx] which is the node agent pod for the ZFS-LocalPV Driver.
+Once we have labeled the node, we can install the zfs driver. The driver will pick the node labels and add that as the supported topology key. If the driver is already installed and you want to add a new topology information, you can label the node with the topology information and then restart of the ZFSPV CSI driver daemon sets (openebs-zfs-node) are required so that the driver can pick the labels and add them as supported topology keys. We should restart the pod in kube-system namespace with the name as openebs-zfs-node-[xxxxx] which is the node agent pod for the ZFS-LocalPV Driver.
 
 ```sh
 $ kubectl get pods -n kube-system -l role=openebs-zfs
@@ -115,4 +116,56 @@ openebs-zfs-node-gssh8     2/2     Running   0          5h28m
 openebs-zfs-node-twmx8     2/2     Running   0          5h28m
 ```
 
-Note that if storageclass is using Immediate binding mode then all the nodes should be labeled using same key, that means, same key should be present on all nodes, nodes can have different values for those keys. If nodes are labeled with different keys i.e. some nodes are having different keys, then ZFSPV's default scheduler can not effictively do the volume count based scheduling. Here, in this case the CSI provisioner will pick keys from any random node and then prepare the preferred topology list using the nodes which has those keys defined and ZFSPV scheduler will schedule the PV among those nodes only.
+We can verify that key has been registered successfully with the ZFSPV CSI Driver by checking the CSI node object yaml :-
+
+```yaml
+$ kubectl get csinodes pawan-node-1 -oyaml
+apiVersion: storage.k8s.io/v1
+kind: CSINode
+metadata:
+  creationTimestamp: "2020-04-13T14:49:59Z"
+  name: pawan-node-1
+  ownerReferences:
+  - apiVersion: v1
+    kind: Node
+    name: pawan-node-1
+    uid: fe268f4b-d9a9-490a-a999-8cde20c4dadb
+  resourceVersion: "4586341"
+  selfLink: /apis/storage.k8s.io/v1/csinodes/pawan-node-1
+  uid: 522c2110-9d75-4bca-9879-098eb8b44e5d
+spec:
+  drivers:
+  - name: zfs.csi.openebs.io
+    nodeID: pawan-node-1
+    topologyKeys:
+    - beta.kubernetes.io/arch
+    - beta.kubernetes.io/os
+    - kubernetes.io/arch
+    - kubernetes.io/hostname
+    - kubernetes.io/os
+    - node-role.kubernetes.io/worker
+    - openebs.io/rack
+```
+
+We can see that "openebs.io/rack" is listed as topology key. Now we can create a storageclass with the topology key created :
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-zfspv
+allowVolumeExpansion: true
+parameters:
+  fstype: "zfs"
+  poolname: "zfspv-pool"
+provisioner: zfs.csi.openebs.io
+allowedTopologies:
+- matchLabelExpressions:
+  - key: openebs.io/rack
+    values:
+      - rack1
+```
+
+The ZFSPV CSI driver will schedule the PV to the nodes where label "openebs.io/rack" is set to "rack1". If there are multiple nodes qualifying this prerequisite, then it will pick the node which has less number of volumes provisioned for the given ZFS Pool.
+
+Note that if storageclass is using Immediate binding mode and topology key is not mentioned then all the nodes should be labeled using same key, that means, same key should be present on all nodes, nodes can have different values for those keys. If nodes are labeled with different keys i.e. some nodes are having different keys, then ZFSPV's default scheduler can not effictively do the volume count based scheduling. Here, in this case the CSI provisioner will pick keys from any random node and then prepare the preferred topology list using the nodes which has those keys defined and ZFSPV scheduler will schedule the PV among those nodes only.
