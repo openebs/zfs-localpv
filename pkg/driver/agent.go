@@ -110,7 +110,7 @@ func (ns *node) NodePublishVolume(
 
 	vol, mountInfo, err := GetVolAndMountInfo(req)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// If the access type is block, do nothing for stage
 	switch req.GetVolumeCapability().GetAccessType().(type) {
