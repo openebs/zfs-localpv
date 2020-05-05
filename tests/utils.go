@@ -127,6 +127,27 @@ func createExt4StorageClass() {
 	Expect(err).To(BeNil(), "while creating a ext4 storageclass {%s}", scName)
 }
 
+func createStorageClass() {
+	var (
+		err error
+	)
+
+	parameters := map[string]string{
+		"poolname": POOLNAME,
+	}
+
+	By("building a default storage class")
+	scObj, err = sc.NewBuilder().
+		WithGenerateName(scName).
+		WithParametersNew(parameters).
+		WithProvisioner(ZFSProvisioner).Build()
+	Expect(err).ShouldNot(HaveOccurred(),
+		"while building default storageclass obj with prefix {%s}", scName)
+
+	scObj, err = SCClient.Create(scObj)
+	Expect(err).To(BeNil(), "while creating a default storageclass {%s}", scName)
+}
+
 func createZfsStorageClass() {
 	var (
 		err error
@@ -322,6 +343,53 @@ func createAndVerifyPVC() {
 	)
 }
 
+func createAndVerifyBlockPVC() {
+	var (
+		err     error
+		pvcName = "zfspv-pvc"
+	)
+
+	volmode := corev1.PersistentVolumeBlock
+
+	By("building a pvc")
+	pvcObj, err = pvc.NewBuilder().
+		WithName(pvcName).
+		WithNamespace(OpenEBSNamespace).
+		WithStorageClass(scObj.Name).
+		WithAccessModes(accessModes).
+		WithVolumeMode(&volmode).
+		WithCapacity(capacity).Build()
+	Expect(err).ShouldNot(
+		HaveOccurred(),
+		"while building pvc {%s} in namespace {%s}",
+		pvcName,
+		OpenEBSNamespace,
+	)
+
+	By("creating above pvc")
+	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Create(pvcObj)
+	Expect(err).To(
+		BeNil(),
+		"while creating pvc {%s} in namespace {%s}",
+		pvcName,
+		OpenEBSNamespace,
+	)
+
+	By("verifying pvc status as bound")
+
+	status := IsPVCBoundEventually(pvcName)
+	Expect(status).To(Equal(true),
+		"while checking status equal to bound")
+
+	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Get(pvcObj.Name, metav1.GetOptions{})
+	Expect(err).To(
+		BeNil(),
+		"while retrieving pvc {%s} in namespace {%s}",
+		pvcName,
+		OpenEBSNamespace,
+	)
+}
+
 func resizeAndVerifyPVC() {
 	var (
 		err     error
@@ -425,6 +493,75 @@ func createAndDeployAppPod() {
 		appName,
 		OpenEBSNamespace,
 	)
+}
+
+func createAndDeployBlockAppPod() {
+	var err error
+	By("building a busybox app pod deployment using above zfs volume")
+	deployObj, err = deploy.NewBuilder().
+		WithName(appName).
+		WithNamespace(OpenEBSNamespace).
+		WithLabelsNew(
+			map[string]string{
+				"app": "busybox",
+			},
+		).
+		WithSelectorMatchLabelsNew(
+			map[string]string{
+				"app": "busybox",
+			},
+		).
+		WithPodTemplateSpecBuilder(
+			pts.NewBuilder().
+				WithLabelsNew(
+					map[string]string{
+						"app": "busybox",
+					},
+				).
+				WithContainerBuilders(
+					container.NewBuilder().
+						WithImage("busybox").
+						WithName("busybox").
+						WithImagePullPolicy(corev1.PullIfNotPresent).
+						WithCommandNew(
+							[]string{
+								"sh",
+								"-c",
+								"date > /mnt/datadir/date.txt; sync; sleep 5; sync; tail -f /dev/null;",
+							},
+						).
+						WithVolumeDevicesNew(
+							[]corev1.VolumeDevice{
+								corev1.VolumeDevice{
+									Name:       "datavol1",
+									DevicePath: "/dev/xvda",
+								},
+							},
+						),
+				).
+				WithVolumeBuilders(
+					k8svolume.NewBuilder().
+						WithName("datavol1").
+						WithPVCSource(pvcObj.Name),
+				),
+		).
+		Build()
+
+	Expect(err).ShouldNot(HaveOccurred(), "while building app deployement {%s}", appName)
+
+	deployObj, err = DeployClient.WithNamespace(OpenEBSNamespace).Create(deployObj)
+	Expect(err).ShouldNot(
+		HaveOccurred(),
+		"while creating pod {%s} in namespace {%s}",
+		appName,
+		OpenEBSNamespace,
+	)
+}
+
+func createDeployVerifyBlockApp() {
+	By("creating and deploying app pod", createAndDeployBlockAppPod)
+	time.Sleep(30 * time.Second)
+	By("verifying app pod is running", verifyAppPodRunning)
 }
 
 func verifyAppPodRunning() {

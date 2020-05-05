@@ -57,7 +57,20 @@ func zvolCreationTest() {
 	By("Deleting storage class", deleteStorageClass)
 }
 
+func blockVolCreationTest() {
+	By("Creating default storage class", createStorageClass)
+	By("creating and verifying PVC bound status", createAndVerifyBlockPVC)
+
+	By("Creating and deploying app pod", createDeployVerifyBlockApp)
+	By("verifying ZFSVolume object", VerifyZFSVolume)
+	By("verifying ZFSVolume property change", VerifyZFSVolumePropEdit)
+	By("Deleting application deployment", deleteAppDeployment)
+	By("Deleting pvc", deletePVC)
+	By("Deleting storage class", deleteStorageClass)
+}
+
 func volumeCreationTest() {
 	By("Running dataset creation test", datasetCreationTest)
 	By("Running zvol creation test", zvolCreationTest)
+	By("Running block volume creation test", blockVolCreationTest)
 }
