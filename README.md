@@ -47,6 +47,10 @@ $ apt-get install zfsutils-linux
 
 Go to each node and create the ZFS Pool, which will be used for provisioning the volumes. You can create the Pool of your choice, it can be striped, mirrored or raidz pool.
 
+Configure the custom topology keys (if needed). This can be used for many purposes like if we want to create the PV on nodes in a particuler zone or building. We can label the nodes accordingly and use that key in the storageclass for taking the scheduling decesion:
+
+https://github.com/openebs/zfs-localpv/blob/master/docs/faq.md#6-how-to-add-custom-topology-key
+
 ### Installation
 
 OpenEBS ZFS driver components can be installed by running the

@@ -1,4 +1,72 @@
-v0.6 / 2020-04-14
+v0.7.0 / 2020-05-15
+=======================
+
+  * feat(grafana): adding basic grafana dashboard ([110](https://github.com/openebs/zfs-localpv/pull/110),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(version): use the travis tag for the version ([114](https://github.com/openebs/zfs-localpv/pull/114),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(README): Fix the link in README file to the raw-block-volume.md file ([109](https://github.com/openebs/zfs-localpv/pull/109),
+  [@w3aman](https://github.com/w3aman))
+  * chore(import-vol): adding steps to import existing volume to ZFS-LocalPV ([108](https://github.com/openebs/zfs-localpv/pull/108),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(doc): adding raw block volume details in README ([106](https://github.com/openebs/zfs-localpv/pull/106),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * refact(build):trim leading v from image tag ([105](https://github.com/openebs/zfs-localpv/pull/105),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * refact(build): make the docker images configurable ([104](https://github.com/openebs/zfs-localpv/pull/104),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * feat(block): adding block volume support for ZFSPV ([102](https://github.com/openebs/zfs-localpv/pull/102),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(topokey): changing topology key to unique name ([101](https://github.com/openebs/zfs-localpv/pull/101),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * docs(project): adding project specific files ([99](https://github.com/openebs/zfs-localpv/pull/99),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(doc , format): Fixed the formatting of ReadME file for upgrade ([98](https://github.com/openebs/zfs-localpv/pull/98),
+  [@w3aman](https://github.com/w3aman))
+  * feat(topology): adding support for custom topology keys ([94](https://github.com/openebs/zfs-localpv/pull/94),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * added developer environment examples ([#92](https://github.com/openebs/zfs-localpv/pull/92),
+  [@filippobosi](https://github.com/filippobosi))
+
+v0.7.0-RC2 / 2020-05-13
+=======================
+
+
+v0.7.0-RC1 / 2020-05-08
+=======================
+
+  * fix(README): Fix the link in README file to the raw-block-volume.md file ([109](https://github.com/openebs/zfs-localpv/pull/109),
+  [@w3aman](https://github.com/w3aman))
+  * chore(import-vol): adding steps to import existing volume to ZFS-LocalPV ([108](https://github.com/openebs/zfs-localpv/pull/108),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * chore(doc): adding raw block volume details in README ([106](https://github.com/openebs/zfs-localpv/pull/106),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * refact(build):trim leading v from image tag ([105](https://github.com/openebs/zfs-localpv/pull/105),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * refact(build): make the docker images configurable ([104](https://github.com/openebs/zfs-localpv/pull/104),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * feat(block): adding block volume support for ZFSPV ([102](https://github.com/openebs/zfs-localpv/pull/102),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(topokey): changing topology key to unique name ([101](https://github.com/openebs/zfs-localpv/pull/101),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * docs(project): adding project specific files ([99](https://github.com/openebs/zfs-localpv/pull/99),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * fix(doc , format): Fixed the formatting of ReadME file for upgrade ([98](https://github.com/openebs/zfs-localpv/pull/98),
+  [@w3aman](https://github.com/w3aman))
+  * feat(topology): adding support for custom topology keys ([94](https://github.com/openebs/zfs-localpv/pull/94),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * added developer environment examples ([#92](https://github.com/openebs/zfs-localpv/pull/92),
+  [@filippobosi](https://github.com/filippobosi))
+
+0.6.1 / 2020-04-23
+=======================
+
+  * potential data loss in case of pod deletion ([#89](https://github.com/openebs/zfs-localpv/pull/89),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+  * avoid creation of volumeattachment object to fix slow volume attachment ([#85](https://github.com/openebs/zfs-localpv/pull/85),
+  [@pawanpraka1](https://github.com/pawanpraka1))
+
+0.6.0 / 2020-04-14
 =======================
 
   * feat(validation): adding validation for ZFSPV CR parameters ([#66](https://github.com/openebs/zfs-localpv/pull/66),
