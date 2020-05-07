@@ -1,4 +1,37 @@
-From zfs-driver:v0.6 version ZFS-LocalPV related CRs are now grouped together in its own group called `zfs.openebs.io`. Here steps are mentioned for how to upgrade for refactoring the CRDs. Please do not provision/deprovision any volume during the upgrade.
+From zfs-driver 0.6 version, the ZFS-LocalPV related CRs are now grouped together in its own group called `zfs.openebs.io`. So if we are using the driver of version less than 0.6 and want to upgrade to 0.6 release or later then we have to follow these steps. If we are already using the ZFS-LocalPV version greater or equal to 0.6 then we just have to apply the yaml from the release branch to upgrade.
+
+So if my current version is 0.6 and want to upgrade to 0.7, then we can just do this to upgrade :-
+
+```
+$ kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/v0.7.x/deploy/zfs-operator.yaml
+```
+
+And if my current version is 0.2 and want to upgrade to 0.5, then we can just do this to upgrade :-
+
+```
+$ kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/v0.5.x/deploy/zfs-operator.yaml
+```
+
+And if my current version is 0.4 and want to upgrade to 0.7, that means we want to upgrade to version greater than 0.6, then we have to follow all the steps mentioned here :-
+
+*Prerequisite*
+
+Please do not provision/deprovision any volumes during the upgrade, if we can not control it, then we can scale down the openebs-zfs-controller stateful set to zero replica which will pause all the provisioning/deprovisioning request. And once upgrade is done, the upgraded Driver will continue the provisioning/deprovisioning process.
+
+```
+$ kubectl edit sts openebs-zfs-controller -n kube-system
+
+```
+And set replicas to zero :
+
+```
+spec:
+  podManagementPolicy: OrderedReady
+    *replicas: 0*
+      revisionHistoryLimit: 10
+```
+
+After this, the controller pod openebs-zfs-controller-x in kube-system namespace will be terminated. Now all the volume provisioning requets will be halted. And it will be recreated as a part of step 3, which will upgrade the image to latest release and also set replicas to the 1(default) which will recreat the controller pod in kube-system and volume provisioning will resume on the upgraded system.
 
 steps to upgrade:-
 
@@ -24,10 +57,12 @@ zfssnapshot.zfs.openebs.io/snapshot-f9db91ea-529e-4dac-b2b8-ead045c612da created
 Please note that if you have modified the OPENEBS_NAMESPACE env in the driver's deployment to other namespace. Then you have to pass the namespace as an argument to the upgrade.sh script `sh upgrade/upgrash.sh [namespace]`.
 
 
-3. *upgrade the driver to v0.6*
+3. *upgrade the driver*
+
+We can now upgrade the driver to the desired release. For example, to upgrade to v0.6, we can apply the below yaml, which will upgrade the driver to 0.6 release.
 
 ```
-$ kubectl apply -f https://github.com/openebs/zfs-localpv/blob/v0.6.x/deploy/zfs-operator.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/v0.6.x/deploy/zfs-operator.yaml
 ```
 
 For future releases if you want to upgrade from v0.4 or v0.5 to the newer version replace `v0.6.x` to the desired version. Check everything is good after upgrading the zfs-driver. Then run the cleanup script to remove old CRDs
