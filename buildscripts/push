@@ -1,4 +1,19 @@
 #!/bin/bash
+
+# Copyright 2019-2020 The OpenEBS Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 set -e
 
 if [ -z ${DIMAGE} ];
@@ -27,7 +42,7 @@ else
   CURRENT_BRANCH=${TRAVIS_BRANCH}
 fi
 
-#Depending on the branch where builds are generated,
+# Depending on the branch where builds are generated,
 # set the tag CI (fixed) and build tags.
 BUILD_TAG="${CURRENT_BRANCH}-${BUILD_ID}"
 CI_TAG="${CURRENT_BRANCH}-ci"
@@ -40,9 +55,18 @@ echo "Set the build/unique image tag as: ${BUILD_TAG}"
 
 function TagAndPushImage() {
   REPO="$1"
-  TAG="$2"
 
-  IMAGE_URI="${REPO}:${TAG}";
+  # Trim the `v` from the TAG if it exists
+  # Example: v1.10.0 maps to 1.10.0
+  # Example: 1.10.0 maps to 1.10.0
+  # Example: v1.10.0-custom maps to 1.10.0-custom
+  TAG="$2#v"
+
+  # Add an option to specify a custom TAG_SUFFIX
+  # via environment variable. Default is no tag.
+  # Example suffix could be "-debug" of "-dev"
+  IMAGE_URI="${REPO}:${TAG}${TAG_SUFFIX}";
+
   sudo docker tag ${IMAGEID} ${IMAGE_URI};
   echo " push ${IMAGE_URI}";
   sudo docker push ${IMAGE_URI};
