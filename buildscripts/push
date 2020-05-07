@@ -60,7 +60,7 @@ function TagAndPushImage() {
   # Example: v1.10.0 maps to 1.10.0
   # Example: 1.10.0 maps to 1.10.0
   # Example: v1.10.0-custom maps to 1.10.0-custom
-  TAG="$2#v"
+  TAG="${2#v}"
 
   # Add an option to specify a custom TAG_SUFFIX
   # via environment variable. Default is no tag.
