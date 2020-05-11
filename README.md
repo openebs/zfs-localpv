@@ -513,7 +513,7 @@ check [resize doc](docs/resize.md).
 
 #### 10. Raw Block Volume
 
-check [raw block volume](docs/raw-block.md).
+check [raw block volume](docs/raw-block-volume.md).
 
 #### 11. Deprovisioning
 for deprovisioning the volume we can delete the application which is using the volume and then we can go ahead and delete the pv, as part of deletion of pv this volume will also be deleted from the ZFS pool and data will be freed.
