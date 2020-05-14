@@ -34,7 +34,7 @@ fi
 
 # Get the version details
 if [ -n "$TRAVIS_TAG" ]; then
-	VERSION="$(git describe --tags `git rev-list --tags --max-count=1`)"
+	VERSION="$TRAVIS_TAG"
 else
 	BUILDDATE=`date +%m-%d-%Y`
 	SHORT_COMMIT="$(git rev-parse --short HEAD)"
