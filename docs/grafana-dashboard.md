@@ -98,27 +98,28 @@ prometheus-operator-prometheus-node-exporter   ClusterIP   10.98.128.115   <none
 - Click on Settings -> Data Source. You must see a Default Prometheus data source for `http://prometheus-operator-prometheus:9090/`
 - Click on Dashboards -> Manage Dashboards. You must see a list of dashboards. Click on any of them like: `kubernetes-compute-resources-cluster`
 
-## Add ZFS Grafana Dashboard
+## Add ZFS-LocalPV Grafana Dashboard
 
 - Login to Granfa UI
 - Click on Create Dashboard -> Import dashboard
 - Paste the below json and Click on Load
 
-https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/sample/grafana-dashboard.json
-
+  ```
+  https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/sample/grafana-dashboard.json
+  ```
 - Select datasource as Prometheus and Import it.
 
-- Now you should see a Dashboard with name as "ZFS-LocalPV"
+- Now you should see a dashboard with name as "ZFS-LocalPV"
 
 This dashboard exposes below metrics
 
+- Volume Capacity (Used space percentage)
+- ZPOOL Read/Write time
+- ZPOOL Read/Write IOs
 - ARC Size, Hits, Misses
 - L2ARC Size, Hits, Misses
-- ZPOOL Read/Write IOs 
-- ZPOOL Read/Write time
-- Volume Stats (Used space percentage)
 
-The Volume Stats will look like this :-
+The "ZFS-LocalPV" dashboard will look like this :-
 
 ![Grafana](https://github.com/openebs/zfs-localpv/blob/master/deploy/sample/vol-stats.png)
 
