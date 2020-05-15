@@ -108,7 +108,7 @@ https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/sample/grafa
 
 - Select datasource as Prometheus and Import it.
 
-- Now you should see a Dashboard with name as "ZFS"
+- Now you should see a Dashboard with name as "ZFS-LocalPV"
 
 This dashboard exposes below metrics
 
