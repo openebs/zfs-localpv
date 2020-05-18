@@ -30,6 +30,7 @@ import (
 // +kubebuilder:printcolumn:name="ZPool",type=string,JSONPath=`.spec.poolName`,description="ZFS Pool where the volume is created"
 // +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.ownerNodeID`,description="Node where the volume is created"
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.spec.capacity`,description="Size of the volume"
+// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.state`,description="Status of the volume"
 // +kubebuilder:printcolumn:name="volblocksize",type=string,JSONPath=`.spec.volblocksize`,description="volblocksize of volume"
 // +kubebuilder:printcolumn:name="recordsize",type=string,JSONPath=`.spec.recordsize`,description="recordsize of created zfs dataset"
 // +kubebuilder:printcolumn:name="Filesystem",type=string,JSONPath=`.spec.fsType`,description="filesystem created on the volume"
@@ -39,7 +40,8 @@ type ZFSVolume struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec VolumeInfo `json:"spec"`
+	Spec   VolumeInfo `json:"spec"`
+	Status VolStatus  `json:"status,omitempty"`
 }
 
 // MountInfo contains the volume related info
@@ -197,4 +199,13 @@ type VolumeInfo struct {
 	// FsType can not be modified once volume has been provisioned.
 	// Default Value: ext4.
 	FsType string `json:"fsType,omitempty"`
+}
+
+type VolStatus struct {
+	// State specifies the current state of the volume provisioning request.
+	// The state "Pending" means that the volume creation request has not
+	// processed yet. The state "Ready" means that the volume has been created
+	// and it is ready for the use.
+	// +kubebuilder:validation:Enum=Pending;Ready
+	State string `json:"state,omitempty"`
 }

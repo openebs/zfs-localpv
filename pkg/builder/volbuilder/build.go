@@ -160,6 +160,12 @@ func (b *Builder) WithVolumeType(vtype string) *Builder {
 	return b
 }
 
+// WithVolumeStatus sets ZFSVolume status
+func (b *Builder) WithVolumeStatus(status string) *Builder {
+	b.volume.Object.Status.State = status
+	return b
+}
+
 // WithFsType sets filesystem for the ZFSVolume
 func (b *Builder) WithFsType(fstype string) *Builder {
 	b.volume.Object.Spec.FsType = fstype

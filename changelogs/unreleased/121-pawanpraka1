@@ -1,0 +1,1 @@
+Fixes an issue where PVC was bound to unusable PV created using incorrect values provided in PVC/Storageclass
