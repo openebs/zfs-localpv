@@ -151,6 +151,8 @@ spec:
   ownerNodeID: pawan-3 # should be the nodename where ZPOOL is running
   poolName: zfspv-pool # poolname where the volume is present
   volumeType: DATASET # whether it is a DATASET or ZVOL
+Status:
+  State: Ready
 ```
 
 Modify the parameters :-

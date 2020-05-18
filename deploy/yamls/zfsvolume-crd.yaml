@@ -32,6 +32,10 @@ spec:
     description: Size of the volume
     name: Size
     type: string
+  - JSONPath: .status.state
+    description: Status of the volume
+    name: Status
+    type: string
   - JSONPath: .spec.volblocksize
     description: volblocksize of volume
     name: volblocksize
@@ -215,6 +219,18 @@ spec:
           - ownerNodeID
           - poolName
           - volumeType
+          type: object
+        status:
+          properties:
+            state:
+              description: State specifies the current state of the volume provisioning
+                request. The state "Pending" means that the volume creation request
+                has not processed yet. The state "Ready" means that the volume has
+                been created and it is ready for the use.
+              enum:
+              - Pending
+              - Ready
+              type: string
           type: object
       required:
       - spec

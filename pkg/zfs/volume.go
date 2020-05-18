@@ -157,6 +157,21 @@ func GetZFSVolume(volumeID string) (*apis.ZFSVolume, error) {
 	return vol, err
 }
 
+// GetZFSVolumeState returns ZFSVolume OwnerNode and State for
+// the given volume. CreateVolume request may call it again and
+// again until volume is "Ready".
+func GetZFSVolumeState(volID string) (string, string, error) {
+	getOptions := metav1.GetOptions{}
+	vol, err := volbuilder.NewKubeclient().
+		WithNamespace(OpenEBSNamespace).Get(volID, getOptions)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	return vol.Spec.OwnerNodeID, vol.Status.State, nil
+}
+
 // UpdateZvolInfo updates ZFSVolume CR with node id and finalizer
 func UpdateZvolInfo(vol *apis.ZFSVolume) error {
 	finalizers := []string{ZFSFinalizer}
@@ -168,6 +183,7 @@ func UpdateZvolInfo(vol *apis.ZFSVolume) error {
 
 	newVol, err := volbuilder.BuildFrom(vol).
 		WithFinalizer(finalizers).
+		WithVolumeStatus(ZFSStatusReady).
 		WithLabels(labels).Build()
 
 	if err != nil {

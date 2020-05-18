@@ -39,6 +39,7 @@ type ZFSVolumesGetter interface {
 type ZFSVolumeInterface interface {
 	Create(*v1alpha1.ZFSVolume) (*v1alpha1.ZFSVolume, error)
 	Update(*v1alpha1.ZFSVolume) (*v1alpha1.ZFSVolume, error)
+	UpdateStatus(*v1alpha1.ZFSVolume) (*v1alpha1.ZFSVolume, error)
 	Delete(name string, options *v1.DeleteOptions) error
 	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
 	Get(name string, options v1.GetOptions) (*v1alpha1.ZFSVolume, error)
@@ -126,6 +127,22 @@ func (c *zFSVolumes) Update(zFSVolume *v1alpha1.ZFSVolume) (result *v1alpha1.ZFS
 		Namespace(c.ns).
 		Resource("zfsvolumes").
 		Name(zFSVolume.Name).
+		Body(zFSVolume).
+		Do().
+		Into(result)
+	return
+}
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+
+func (c *zFSVolumes) UpdateStatus(zFSVolume *v1alpha1.ZFSVolume) (result *v1alpha1.ZFSVolume, err error) {
+	result = &v1alpha1.ZFSVolume{}
+	err = c.client.Put().
+		Namespace(c.ns).
+		Resource("zfsvolumes").
+		Name(zFSVolume.Name).
+		SubResource("status").
 		Body(zFSVolume).
 		Do().
 		Into(result)

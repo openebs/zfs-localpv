@@ -314,6 +314,8 @@ Spec:
   Pool Name:      zfspv-pool
   Recordsize:     4k
   Volume Type:    DATASET
+Status:
+  State: Ready
 Events:           <none>
 ```
 
@@ -488,7 +490,7 @@ Name:         pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd
 Namespace:    openebs
 Labels:       kubernetes.io/nodename=zfspv-node1
 Annotations:  <none>
-API Version:  openebs.io/v1alpha1
+API Version:  zfs.openebs.io/v1alpha1
 Kind:         ZFSVolume
 Metadata:
   Creation Timestamp:  2019-11-22T09:49:29Z
@@ -505,6 +507,8 @@ Spec:
   Pool Name:      zfspv-pool
   Snap Name:      pvc-34133838-0d0d-11ea-96e3-42010a800114@snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
   Volume Type:    DATASET
+Status:
+  State: Ready
 Events:           <none>
 
 Here you can note that this resource has Snapname field which tells that this volume is created from that snapshot.

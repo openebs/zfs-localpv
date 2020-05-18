@@ -1,4 +1,4 @@
-apiVersion: openebs.io/v1alpha1
+apiVersion: zfs.openebs.io/v1alpha1
 kind: ZFSVolume
 metadata:
   name: pvc-34133838-0d0d-11ea-96e3-42010a800114
@@ -16,3 +16,5 @@ spec:
   recordsize: 8k
   thinProvision: "off"
   volumeType: DATASET
+status:
+  state: Ready
