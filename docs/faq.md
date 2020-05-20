@@ -106,6 +106,8 @@ It is recommended is to label all the nodes with the same key, they can have dif
 
 Once we have labeled the node, we can install the zfs driver. The driver will pick the node labels and add that as the supported topology key. If the driver is already installed and you want to add a new topology information, you can label the node with the topology information and then restart of the ZFSPV CSI driver daemon sets (openebs-zfs-node) are required so that the driver can pick the labels and add them as supported topology keys. We should restart the pod in kube-system namespace with the name as openebs-zfs-node-[xxxxx] which is the node agent pod for the ZFS-LocalPV Driver.
 
+Note that restart of ZFSPV CSI driver daemon sets are must in case, if we are going to use WaitForFirstConsumer as volumeBindingMode in storage class. In case of immediate volume binding mode, restart of daemon set is not a must requirement, irrespective of sequence of labeling the node either prior to install zfs driver or after install. However it is recommended to restart the daemon set if we are labeling the nodes after the installation.
+
 ```sh
 $ kubectl get pods -n kube-system -l role=openebs-zfs
 
