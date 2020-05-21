@@ -17,10 +17,11 @@ limitations under the License.
 package zfs
 
 import (
-	"github.com/Sirupsen/logrus"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
-	"k8s.io/kubernetes/pkg/util/mount"
 	"os/exec"
+
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	"github.com/sirupsen/logrus"
+	"k8s.io/kubernetes/pkg/util/mount"
 )
 
 // ResizeExtn can be used to run a resize command on the ext2/3/4 filesystem

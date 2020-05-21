@@ -20,8 +20,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/Sirupsen/logrus"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 func xfs_temp_mount(volume string) error {

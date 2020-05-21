@@ -15,9 +15,10 @@
 package zfs
 
 import (
-	"github.com/Sirupsen/logrus"
 	"os"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"

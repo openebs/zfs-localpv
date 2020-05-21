@@ -17,7 +17,7 @@ limitations under the License.
 package volume
 
 import (
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/scheme"

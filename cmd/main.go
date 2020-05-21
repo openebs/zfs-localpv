@@ -6,11 +6,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	config "github.com/openebs/zfs-localpv/pkg/config"
 	"github.com/openebs/zfs-localpv/pkg/driver"
 	"github.com/openebs/zfs-localpv/pkg/version"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
