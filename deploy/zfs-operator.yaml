@@ -57,23 +57,12 @@ spec:
     description: Status of the volume
     name: Status
     type: string
-  - JSONPath: .spec.volblocksize
-    description: volblocksize of volume
-    name: volblocksize
-    type: string
-  - JSONPath: .spec.recordsize
-    description: recordsize of created zfs dataset
-    name: recordsize
-    type: string
   - JSONPath: .spec.fsType
     description: filesystem created on the volume
     name: Filesystem
     type: string
-  - JSONPath: .status.creationTime
-    description: Timestamp when the volume has been created.
-    name: CreationTime
-    type: date
   - JSONPath: .metadata.creationTimestamp
+    description: Age of the volume
     name: Age
     type: date
   group: zfs.openebs.io

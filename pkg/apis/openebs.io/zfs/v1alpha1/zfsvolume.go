@@ -31,11 +31,8 @@ import (
 // +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.ownerNodeID`,description="Node where the volume is created"
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.spec.capacity`,description="Size of the volume"
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.state`,description="Status of the volume"
-// +kubebuilder:printcolumn:name="volblocksize",type=string,JSONPath=`.spec.volblocksize`,description="volblocksize of volume"
-// +kubebuilder:printcolumn:name="recordsize",type=string,JSONPath=`.spec.recordsize`,description="recordsize of created zfs dataset"
 // +kubebuilder:printcolumn:name="Filesystem",type=string,JSONPath=`.spec.fsType`,description="filesystem created on the volume"
-// +kubebuilder:printcolumn:name="CreationTime",type=date,JSONPath=`.status.creationTime`,description="Timestamp when the volume has been created."
-// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="Age of the volume"
 type ZFSVolume struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
