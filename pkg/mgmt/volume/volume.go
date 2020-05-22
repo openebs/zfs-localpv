@@ -22,7 +22,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"

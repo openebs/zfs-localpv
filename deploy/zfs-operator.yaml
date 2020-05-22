@@ -245,11 +245,14 @@ spec:
       required:
       - spec
       type: object
-  version: v1alpha1
+  version: v1
   versions:
-  - name: v1alpha1
+  - name: v1
     served: true
     storage: true
+  - name: v1alpha1
+    served: true
+    storage: false
 status:
   acceptedNames:
     kind: ""
@@ -449,11 +452,14 @@ spec:
       - spec
       - status
       type: object
-  version: v1alpha1
+  version: v1
   versions:
-  - name: v1alpha1
+  - name: v1
     served: true
     storage: true
+  - name: v1alpha1
+    served: true
+    storage: false
 status:
   acceptedNames:
     kind: ""

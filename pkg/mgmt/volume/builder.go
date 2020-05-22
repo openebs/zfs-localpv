@@ -22,7 +22,7 @@ import (
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/scheme"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
-	listers "github.com/openebs/zfs-localpv/pkg/generated/lister/zfs/v1alpha1"
+	listers "github.com/openebs/zfs-localpv/pkg/generated/lister/zfs/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -85,14 +85,14 @@ func (cb *ZVControllerBuilder) withOpenEBSClient(cs clientset.Interface) *ZVCont
 
 // withZVLister fills zv lister to controller object.
 func (cb *ZVControllerBuilder) withZVLister(sl informers.SharedInformerFactory) *ZVControllerBuilder {
-	zvInformer := sl.Zfs().V1alpha1().ZFSVolumes()
+	zvInformer := sl.Zfs().V1().ZFSVolumes()
 	cb.ZVController.zvLister = zvInformer.Lister()
 	return cb
 }
 
 // withZVSynced adds object sync information in cache to controller object.
 func (cb *ZVControllerBuilder) withZVSynced(sl informers.SharedInformerFactory) *ZVControllerBuilder {
-	zvInformer := sl.Zfs().V1alpha1().ZFSVolumes()
+	zvInformer := sl.Zfs().V1().ZFSVolumes()
 	cb.ZVController.zvSynced = zvInformer.Informer().HasSynced
 	return cb
 }
@@ -116,7 +116,7 @@ func (cb *ZVControllerBuilder) withRecorder(ks kubernetes.Interface) *ZVControll
 
 // withEventHandler adds event handlers controller object.
 func (cb *ZVControllerBuilder) withEventHandler(cvcInformerFactory informers.SharedInformerFactory) *ZVControllerBuilder {
-	cvcInformer := cvcInformerFactory.Zfs().V1alpha1().ZFSVolumes()
+	cvcInformer := cvcInformerFactory.Zfs().V1().ZFSVolumes()
 	// Set up an event handler for when ZV resources change
 	cvcInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    cb.ZVController.addZV,
