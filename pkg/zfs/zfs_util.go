@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 )
 
 // zfs related constants

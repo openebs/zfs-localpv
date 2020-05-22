@@ -22,7 +22,7 @@ import (
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/scheme"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
-	listers "github.com/openebs/zfs-localpv/pkg/generated/lister/zfs/v1alpha1"
+	listers "github.com/openebs/zfs-localpv/pkg/generated/lister/zfs/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -85,14 +85,14 @@ func (cb *SnapControllerBuilder) withOpenEBSClient(cs clientset.Interface) *Snap
 
 // withSnapLister fills snap lister to controller object.
 func (cb *SnapControllerBuilder) withSnapLister(sl informers.SharedInformerFactory) *SnapControllerBuilder {
-	snapInformer := sl.Zfs().V1alpha1().ZFSSnapshots()
+	snapInformer := sl.Zfs().V1().ZFSSnapshots()
 	cb.SnapController.snapLister = snapInformer.Lister()
 	return cb
 }
 
 // withSnapSynced adds object sync information in cache to controller object.
 func (cb *SnapControllerBuilder) withSnapSynced(sl informers.SharedInformerFactory) *SnapControllerBuilder {
-	snapInformer := sl.Zfs().V1alpha1().ZFSSnapshots()
+	snapInformer := sl.Zfs().V1().ZFSSnapshots()
 	cb.SnapController.snapSynced = snapInformer.Informer().HasSynced
 	return cb
 }
@@ -116,7 +116,7 @@ func (cb *SnapControllerBuilder) withRecorder(ks kubernetes.Interface) *SnapCont
 
 // withEventHandler adds event handlers controller object.
 func (cb *SnapControllerBuilder) withEventHandler(cvcInformerFactory informers.SharedInformerFactory) *SnapControllerBuilder {
-	cvcInformer := cvcInformerFactory.Zfs().V1alpha1().ZFSSnapshots()
+	cvcInformer := cvcInformerFactory.Zfs().V1().ZFSSnapshots()
 	// Set up an event handler for when Snap resources change
 	cvcInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    cb.SnapController.addSnap,

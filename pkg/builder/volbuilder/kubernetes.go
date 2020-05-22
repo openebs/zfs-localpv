@@ -17,7 +17,7 @@ package volbuilder
 import (
 	"encoding/json"
 
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	client "github.com/openebs/zfs-localpv/pkg/common/kubernetes/client"
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	"github.com/pkg/errors"
@@ -140,7 +140,7 @@ func defaultGet(
 	name, namespace string,
 	opts metav1.GetOptions,
 ) (*apis.ZFSVolume, error) {
-	return cli.ZfsV1alpha1().
+	return cli.ZfsV1().
 		ZFSVolumes(namespace).
 		Get(name, opts)
 }
@@ -152,7 +152,7 @@ func defaultList(
 	namespace string,
 	opts metav1.ListOptions,
 ) (*apis.ZFSVolumeList, error) {
-	return cli.ZfsV1alpha1().
+	return cli.ZfsV1().
 		ZFSVolumes(namespace).
 		List(opts)
 }
@@ -166,7 +166,7 @@ func defaultDel(
 ) error {
 	deletePropagation := metav1.DeletePropagationForeground
 	opts.PropagationPolicy = &deletePropagation
-	err := cli.ZfsV1alpha1().
+	err := cli.ZfsV1().
 		ZFSVolumes(namespace).
 		Delete(name, opts)
 	return err
@@ -179,7 +179,7 @@ func defaultCreate(
 	vol *apis.ZFSVolume,
 	namespace string,
 ) (*apis.ZFSVolume, error) {
-	return cli.ZfsV1alpha1().
+	return cli.ZfsV1().
 		ZFSVolumes(namespace).
 		Create(vol)
 }
@@ -191,7 +191,7 @@ func defaultUpdate(
 	vol *apis.ZFSVolume,
 	namespace string,
 ) (*apis.ZFSVolume, error) {
-	return cli.ZfsV1alpha1().
+	return cli.ZfsV1().
 		ZFSVolumes(namespace).
 		Update(vol)
 }
