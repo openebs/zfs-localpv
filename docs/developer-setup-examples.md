@@ -21,7 +21,7 @@ kubectl get pods -n kube-system -l role=openebs-zfs
 export OPENEBS_NAMESPACE=openebs
 export KUBECONFIG=$HOME/.kube/config
 
-cd ~/go/src/github.com/openebs/zfs-localpv/tests
+cd ~/path/to/directory/zfs-localpv/tests
 
 ginkgo -v
 ```

@@ -339,9 +339,9 @@ func (ns *node) NodeGetVolumeStats(
 	var usage []*csi.VolumeUsage
 	usage = append(usage, &csi.VolumeUsage{
 		Unit:      csi.VolumeUsage_BYTES,
-		Total:     int64(sfs.Blocks) * sfs.Bsize,
-		Used:      int64(sfs.Blocks-sfs.Bfree) * sfs.Bsize,
-		Available: int64(sfs.Bavail) * sfs.Bsize,
+		Total:     int64(sfs.Blocks) * int64(sfs.Bsize),
+		Used:      int64(sfs.Blocks-sfs.Bfree) * int64(sfs.Bsize),
+		Available: int64(sfs.Bavail) * int64(sfs.Bsize),
 	})
 	usage = append(usage, &csi.VolumeUsage{
 		Unit:      csi.VolumeUsage_INODES,

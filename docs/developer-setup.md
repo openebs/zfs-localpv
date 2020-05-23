@@ -15,19 +15,19 @@
 
 ### Clone fork to local host
 
-Place openebs/zfs-localpv's code on your `GOPATH` using the following cloning procedure.
+Place openebs/zfs-localpv's code in a reporitory on your local machine   using the following cloning procedure.
 Create your clone:
 
 ```sh
 
-mkdir -p $GOPATH/src/github.com/openebs
-cd $GOPATH/src/github.com/openebs
+mkdir -p $/path/to/directory/openebs
+cd $/path/to/directory/src/openebs
 
 # Note: Here user= your github profile name
 git clone https://github.com/$user/zfs-localpv.git
 
 # Configure remote upstream
-cd $GOPATH/src/github.com/openebs/zfs-localpv
+cd $/path/to/directory/openebs/zfs-localpv
 git remote add upstream https://github.com/openebs/zfs-localpv.git
 
 # Never push to upstream master
@@ -36,10 +36,10 @@ git remote set-url --push upstream no_push
 # Confirm that your remotes make sense:
 git remote -v
 ```
-> **Note:** If your `GOPATH` has more than one (`:` separated) paths in it, then you should use *one of your go path* instead of `$GOPATH` in the commands mentioned here. This statement holds throughout this document.
 
 Install the build dependencies.
-  * Run `make bootstrap` to install the required Go tools
+
+* Run `make bootstrap` to install the required Go tools
 
 ## Git Development Workflow
 
@@ -47,7 +47,7 @@ Install the build dependencies.
 Open a terminal on your local host. Change directory to the zfs-localpv fork root.
 
 ```sh
-$ cd $GOPATH/src/github.com/openebs/zfs-localpv
+$ cd $/path/to/directory/openebs/zfs-localpv
 ```
 
  Checkout the master branch.
@@ -121,7 +121,7 @@ $ cd $GOPATH/src/github.com/openebs/zfs-localpv
  8e107a9..5035fa1  master -> master
  ```
 
-### Contributing to a feature or bugfix. 
+### Contributing to a feature or bugfix
 
 Always start with creating a new branch from master to work on a new feature or bugfix. Your branch name should have the format XX-descriptive where XX is the issue number you are working on followed by some descriptive text. For example:
 
@@ -131,6 +131,7 @@ Always start with creating a new branch from master to work on a new feature or 
  $ git checkout -b 1234-fix-developer-docs
  Switched to a new branch '1234-fix-developer-docs'
  ```
+
 Happy Hacking!
 
 ### Building and Testing your changes
