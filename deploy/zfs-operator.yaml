@@ -1244,20 +1244,18 @@ spec:
               mountPath: /plugin
             - name: device-dir
               mountPath: /dev
-            - name: encr-keys
-              mountPath: /home/keys
             - name: zfs-bin
               mountPath: /sbin/zfs
-            - name: libzpool
-              mountPath: /lib/libzpool.so.2
-            - name: libzfscore
-              mountPath: /lib/libzfs_core.so.1
-            - name: libzfs
-              mountPath: /lib/libzfs.so.2
-            - name: libuutil
-              mountPath: /lib/libuutil.so.1
-            - name: libnvpair
-              mountPath: /lib/libnvpair.so.1
+              readOnly: true
+            - name: zfs-usr-bin
+              mountPath: /bin/zfs
+              readOnly: true
+            - name: hostlib
+              mountPath: /lib/host
+              readOnly: true
+            - name: hostlib64
+              mountPath: /lib64/host
+              readOnly: true
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/
               # needed so that any mounts setup inside this container are
@@ -1268,34 +1266,22 @@ spec:
           hostPath:
             path: /dev
             type: Directory
-        - name: encr-keys
-          hostPath:
-            path: /home/keys
-            type: DirectoryOrCreate
         - name: zfs-bin
           hostPath:
             path: /sbin/zfs
-            type: File
-        - name: libzpool
+            type: FileOrCreate
+        - name: zfs-usr-bin
           hostPath:
-            path: /lib/libzpool.so.2.0.0
-            type: File
-        - name: libzfscore
+            path: /usr/sbin/zfs
+            type: FileOrCreate
+        - name: hostlib
           hostPath:
-            path: /lib/libzfs_core.so.1.0.0
-            type: File
-        - name: libzfs
+            path: /lib
+            type: Directory
+        - name: hostlib64
           hostPath:
-            path: /lib/libzfs.so.2.0.0
-            type: File
-        - name: libuutil
-          hostPath:
-            path: /lib/libuutil.so.1.0.1
-            type: File
-        - name: libnvpair
-          hostPath:
-            path: /lib/libnvpair.so.1.0.1
-            type: File
+            path: /lib64
+            type: Directory
         - name: registration-dir
           hostPath:
             path: /var/lib/kubelet/plugins_registry/
