@@ -22,7 +22,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/common/env"
 )
 
-// OpenEBSPingPeriod  ping interval of volume io analytics
+// OpenEBSPingPeriod  interval of volume io ping
 var OpenEBSPingPeriod = "OPENEBS_IO_ANALYTICS_PING_INTERVAL"
 
 const (
