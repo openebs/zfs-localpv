@@ -131,7 +131,7 @@ func (c *ZVController) updateZV(oldObj, newObj interface{}) {
 		return
 	}
 
-	oldZV, ok := oldObj.(*apis.ZFSVolume)
+	oldZV, _ := oldObj.(*apis.ZFSVolume)
 	if zfs.PropertyChanged(oldZV, newZV) ||
 		c.isDeletionCandidate(newZV) {
 		logrus.Infof("Got update event for ZV %s/%s", newZV.Spec.PoolName, newZV.Name)
