@@ -207,7 +207,7 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	return nil
 }
 
-// MountVolume mounts the disk to the specified path
+// MountFilesystem mounts the disk to the specified path
 func MountFilesystem(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	switch vol.Spec.VolumeType {
 	case VOLTYPE_DATASET:
@@ -217,6 +217,7 @@ func MountFilesystem(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	}
 }
 
+// MountBlock mounts the block disk to the specified path
 func MountBlock(vol *apis.ZFSVolume, mountinfo *apis.MountInfo) error {
 	target := mountinfo.MountPath
 	devicePath := ZFS_DEVPATH + vol.Spec.PoolName + "/" + vol.Name

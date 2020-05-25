@@ -101,6 +101,8 @@ func (b *Builder) WithLabels(labels map[string]string) *Builder {
 	return b
 }
 
+// WithFinalizer merge existing finalizers if any
+// with the ones that are provided here
 func (b *Builder) WithFinalizer(finalizer []string) *Builder {
 	b.snap.Object.Finalizers = append(b.snap.Object.Finalizers, finalizer...)
 	return b
