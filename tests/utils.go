@@ -21,6 +21,10 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
 	"github.com/openebs/zfs-localpv/tests/container"
@@ -30,9 +34,6 @@ import (
 	"github.com/openebs/zfs-localpv/tests/pts"
 	"github.com/openebs/zfs-localpv/tests/pvc"
 	"github.com/openebs/zfs-localpv/tests/sc"
-	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 )

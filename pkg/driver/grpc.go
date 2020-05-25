@@ -75,22 +75,22 @@ type NonBlockingGRPCServer interface {
 // NewNonBlockingGRPCServer returns a new instance of NonBlockingGRPCServer
 func NewNonBlockingGRPCServer(ep string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer) NonBlockingGRPCServer {
 	return &nonBlockingGRPCServer{
-		endpoint:     ep,
-		idnty_server: ids,
-		ctrl_server:  cs,
-		agent_server: ns}
+		endpoint:    ep,
+		idntyServer: ids,
+		ctrlServer:  cs,
+		agentServer: ns}
 }
 
 // NonBlocking server
 // dont block the execution for a task to complete.
 // use wait group to wait for all the tasks dispatched.
 type nonBlockingGRPCServer struct {
-	wg           sync.WaitGroup
-	server       *grpc.Server
-	endpoint     string
-	idnty_server csi.IdentityServer
-	ctrl_server  csi.ControllerServer
-	agent_server csi.NodeServer
+	wg          sync.WaitGroup
+	server      *grpc.Server
+	endpoint    string
+	idntyServer csi.IdentityServer
+	ctrlServer  csi.ControllerServer
+	agentServer csi.NodeServer
 }
 
 // Start grpc server for serving CSI endpoints
@@ -98,7 +98,7 @@ func (s *nonBlockingGRPCServer) Start() {
 
 	s.wg.Add(1)
 
-	go s.serve(s.endpoint, s.idnty_server, s.ctrl_server, s.agent_server)
+	go s.serve(s.endpoint, s.idntyServer, s.ctrlServer, s.agentServer)
 
 	return
 }

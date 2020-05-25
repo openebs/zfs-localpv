@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package usage
 
 import (
@@ -195,7 +196,7 @@ func (u *Usage) Build() *Usage {
 	return u
 }
 
-// Application builder is used for adding k8s&openebs environment detail
+// ApplicationBuilder Application builder is used for adding k8s&openebs environment detail
 // for non install events
 func (u *Usage) ApplicationBuilder() *Usage {
 	v := NewVersion()
@@ -214,7 +215,7 @@ func (u *Usage) SetVolumeCapacity(volCapG string) *Usage {
 	return u
 }
 
-// Wrapper for setting the default storage-engine for volume-provision event
+// SetVolumeType Wrapper for setting the default storage-engine for volume-provision event
 func (u *Usage) SetVolumeType(volType, method string) *Usage {
 	if method == VolumeProvision && volType == "" {
 		// Set the default storage engine, if not specified in the request
@@ -225,7 +226,7 @@ func (u *Usage) SetVolumeType(volType, method string) *Usage {
 	return u
 }
 
-// Wrapper for setting replica count for volume events
+// SetReplicaCount Wrapper for setting replica count for volume events
 // NOTE: This doesn't get the replica count in a volume de-provision event.
 // TODO: Pick the current value of replica-count from the CAS-engine
 func (u *Usage) SetReplicaCount(count, method string) *Usage {
@@ -235,7 +236,7 @@ func (u *Usage) SetReplicaCount(count, method string) *Usage {
 		u.SetAction(DefaultReplicaCount)
 	} else {
 		// Catch all case for volume-deprovision event and
-		// volume-provision event with an overriden replica-count
+		// volume-provision event with an overridden replica-count
 		u.SetAction(Replica + count)
 	}
 	return u

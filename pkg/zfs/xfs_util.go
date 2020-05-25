@@ -24,7 +24,7 @@ import (
 	"strings"
 )
 
-func xfs_temp_mount(volume string) error {
+func xfsTempMount(volume string) error {
 	device := ZFS_DEVPATH + volume
 	pvol := strings.Split(volume, "/")
 
@@ -69,11 +69,11 @@ func xfs_temp_mount(volume string) error {
 * There might be something there in the xfs log, we have to clear them
 * so that filesystem is clean and we can generate the UUID for it.
  */
-func xfs_generate_uuid(volume string) error {
+func xfsGenerateUuid(volume string) error {
 	device := ZFS_DEVPATH + volume
 
 	// temporary mount the volume with nouuid to replay the logs
-	err := xfs_temp_mount(volume)
+	err := xfsTempMount(volume)
 	if err != nil {
 		return err
 	}

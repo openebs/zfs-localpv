@@ -46,6 +46,7 @@ type ZFSSnapshotList struct {
 	Items []ZFSSnapshot `json:"items"`
 }
 
+// SnapStatus is a state of ZFSSnapshot resource
 type SnapStatus struct {
 	State string `json:"state,omitempty"`
 }

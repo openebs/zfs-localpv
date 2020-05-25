@@ -24,15 +24,16 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
 	analytics "github.com/openebs/zfs-localpv/pkg/usage"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // controller is the server implementation
@@ -72,6 +73,7 @@ func sendEventOrIgnore(pvName, capacity, stgType, method string) {
 	}
 }
 
+// CreateZFSVolume create new zfs volume from csi volume request
 func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	volName := req.GetName()
 	size := req.GetCapacityRange().RequiredBytes
@@ -127,6 +129,7 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	return selected, nil
 }
 
+// CreateZFSClone create an clone of zfs volume
 func CreateZFSClone(req *csi.CreateVolumeRequest, snapshot string) (string, error) {
 
 	volName := req.GetName()
@@ -265,6 +268,14 @@ func (cs *controller) DeleteVolume(
 	vol, err := zfs.GetVolume(volumeID)
 	if vol != nil && vol.DeletionTimestamp != nil {
 		goto deleteResponse
+	}
+
+	if err != nil {
+		return nil, errors.Wrapf(
+			err,
+			"failed to get volume for {%s}",
+			volumeID,
+		)
 	}
 
 	// Delete the corresponding ZV CR

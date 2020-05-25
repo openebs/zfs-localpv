@@ -22,7 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Namespacegetter abstracts fetching of Namespace from kubernetes cluster
+// NamespaceGetter abstracts fetching of Namespace from kubernetes cluster
 type NamespaceGetter interface {
 	Get(name string, options metav1.GetOptions) (*corev1.Namespace, error)
 }
@@ -43,9 +43,8 @@ func (ns *namespace) Get(name string, options metav1.GetOptions) (*corev1.Namesp
 	cs, err := Clientset().Get()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get namespace: %s", name)
-	} else {
-		return cs.CoreV1().Namespaces().Get(name, options)
 	}
+	return cs.CoreV1().Namespaces().Get(name, options)
 }
 
 // List returns a slice of namespaces defined in a Kubernetes cluster
@@ -53,7 +52,6 @@ func (ns *namespace) List(options metav1.ListOptions) (*corev1.NamespaceList, er
 	cs, err := Clientset().Get()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get namespaces")
-	} else {
-		return cs.CoreV1().Namespaces().List(options)
 	}
+	return cs.CoreV1().Namespaces().List(options)
 }
