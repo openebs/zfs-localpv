@@ -198,7 +198,6 @@ type VolumeInfo struct {
 	FsType string `json:"fsType,omitempty"`
 }
 
-// VolStatus the state of volume
 type VolStatus struct {
 	// State specifies the current state of the volume provisioning request.
 	// The state "Pending" means that the volume creation request has not
