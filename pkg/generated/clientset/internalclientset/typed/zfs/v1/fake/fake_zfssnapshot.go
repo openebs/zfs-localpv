@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	zfsv1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,29 +30,29 @@ import (
 
 // FakeZFSSnapshots implements ZFSSnapshotInterface
 type FakeZFSSnapshots struct {
-	Fake *FakeZfsV1alpha1
+	Fake *FakeZfsV1
 	ns   string
 }
 
-var zfssnapshotsResource = schema.GroupVersionResource{Group: "zfs.openebs.io", Version: "v1alpha1", Resource: "zfssnapshots"}
+var zfssnapshotsResource = schema.GroupVersionResource{Group: "zfs.openebs.io", Version: "v1", Resource: "zfssnapshots"}
 
-var zfssnapshotsKind = schema.GroupVersionKind{Group: "zfs.openebs.io", Version: "v1alpha1", Kind: "ZFSSnapshot"}
+var zfssnapshotsKind = schema.GroupVersionKind{Group: "zfs.openebs.io", Version: "v1", Kind: "ZFSSnapshot"}
 
 // Get takes name of the zFSSnapshot, and returns the corresponding zFSSnapshot object, and an error if there is any.
-func (c *FakeZFSSnapshots) Get(name string, options v1.GetOptions) (result *v1alpha1.ZFSSnapshot, err error) {
+func (c *FakeZFSSnapshots) Get(name string, options v1.GetOptions) (result *zfsv1.ZFSSnapshot, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(zfssnapshotsResource, c.ns, name), &v1alpha1.ZFSSnapshot{})
+		Invokes(testing.NewGetAction(zfssnapshotsResource, c.ns, name), &zfsv1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.ZFSSnapshot), err
+	return obj.(*zfsv1.ZFSSnapshot), err
 }
 
 // List takes label and field selectors, and returns the list of ZFSSnapshots that match those selectors.
-func (c *FakeZFSSnapshots) List(opts v1.ListOptions) (result *v1alpha1.ZFSSnapshotList, err error) {
+func (c *FakeZFSSnapshots) List(opts v1.ListOptions) (result *zfsv1.ZFSSnapshotList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(zfssnapshotsResource, zfssnapshotsKind, c.ns, opts), &v1alpha1.ZFSSnapshotList{})
+		Invokes(testing.NewListAction(zfssnapshotsResource, zfssnapshotsKind, c.ns, opts), &zfsv1.ZFSSnapshotList{})
 
 	if obj == nil {
 		return nil, err
@@ -62,8 +62,8 @@ func (c *FakeZFSSnapshots) List(opts v1.ListOptions) (result *v1alpha1.ZFSSnapsh
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.ZFSSnapshotList{ListMeta: obj.(*v1alpha1.ZFSSnapshotList).ListMeta}
-	for _, item := range obj.(*v1alpha1.ZFSSnapshotList).Items {
+	list := &zfsv1.ZFSSnapshotList{ListMeta: obj.(*zfsv1.ZFSSnapshotList).ListMeta}
+	for _, item := range obj.(*zfsv1.ZFSSnapshotList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -79,43 +79,43 @@ func (c *FakeZFSSnapshots) Watch(opts v1.ListOptions) (watch.Interface, error) {
 }
 
 // Create takes the representation of a zFSSnapshot and creates it.  Returns the server's representation of the zFSSnapshot, and an error, if there is any.
-func (c *FakeZFSSnapshots) Create(zFSSnapshot *v1alpha1.ZFSSnapshot) (result *v1alpha1.ZFSSnapshot, err error) {
+func (c *FakeZFSSnapshots) Create(zFSSnapshot *zfsv1.ZFSSnapshot) (result *zfsv1.ZFSSnapshot, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(zfssnapshotsResource, c.ns, zFSSnapshot), &v1alpha1.ZFSSnapshot{})
+		Invokes(testing.NewCreateAction(zfssnapshotsResource, c.ns, zFSSnapshot), &zfsv1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.ZFSSnapshot), err
+	return obj.(*zfsv1.ZFSSnapshot), err
 }
 
 // Update takes the representation of a zFSSnapshot and updates it. Returns the server's representation of the zFSSnapshot, and an error, if there is any.
-func (c *FakeZFSSnapshots) Update(zFSSnapshot *v1alpha1.ZFSSnapshot) (result *v1alpha1.ZFSSnapshot, err error) {
+func (c *FakeZFSSnapshots) Update(zFSSnapshot *zfsv1.ZFSSnapshot) (result *zfsv1.ZFSSnapshot, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(zfssnapshotsResource, c.ns, zFSSnapshot), &v1alpha1.ZFSSnapshot{})
+		Invokes(testing.NewUpdateAction(zfssnapshotsResource, c.ns, zFSSnapshot), &zfsv1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.ZFSSnapshot), err
+	return obj.(*zfsv1.ZFSSnapshot), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeZFSSnapshots) UpdateStatus(zFSSnapshot *v1alpha1.ZFSSnapshot) (*v1alpha1.ZFSSnapshot, error) {
+func (c *FakeZFSSnapshots) UpdateStatus(zFSSnapshot *zfsv1.ZFSSnapshot) (*zfsv1.ZFSSnapshot, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(zfssnapshotsResource, "status", c.ns, zFSSnapshot), &v1alpha1.ZFSSnapshot{})
+		Invokes(testing.NewUpdateSubresourceAction(zfssnapshotsResource, "status", c.ns, zFSSnapshot), &zfsv1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.ZFSSnapshot), err
+	return obj.(*zfsv1.ZFSSnapshot), err
 }
 
 // Delete takes name of the zFSSnapshot and deletes it. Returns an error if one occurs.
 func (c *FakeZFSSnapshots) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(zfssnapshotsResource, c.ns, name), &v1alpha1.ZFSSnapshot{})
+		Invokes(testing.NewDeleteAction(zfssnapshotsResource, c.ns, name), &zfsv1.ZFSSnapshot{})
 
 	return err
 }
@@ -124,17 +124,17 @@ func (c *FakeZFSSnapshots) Delete(name string, options *v1.DeleteOptions) error 
 func (c *FakeZFSSnapshots) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(zfssnapshotsResource, c.ns, listOptions)
 
-	_, err := c.Fake.Invokes(action, &v1alpha1.ZFSSnapshotList{})
+	_, err := c.Fake.Invokes(action, &zfsv1.ZFSSnapshotList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched zFSSnapshot.
-func (c *FakeZFSSnapshots) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.ZFSSnapshot, err error) {
+func (c *FakeZFSSnapshots) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *zfsv1.ZFSSnapshot, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(zfssnapshotsResource, c.ns, name, pt, data, subresources...), &v1alpha1.ZFSSnapshot{})
+		Invokes(testing.NewPatchSubresourceAction(zfssnapshotsResource, c.ns, name, pt, data, subresources...), &zfsv1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.ZFSSnapshot), err
+	return obj.(*zfsv1.ZFSSnapshot), err
 }
