@@ -76,8 +76,11 @@ func GetVolAndMountInfo(
 
 	mountinfo.FSType = req.GetVolumeCapability().GetMount().GetFsType()
 	mountinfo.MountPath = req.GetTargetPath()
-	mountinfo.ReadOnly = req.GetReadonly()
 	mountinfo.MountOptions = append(mountinfo.MountOptions, req.GetVolumeCapability().GetMount().GetMountFlags()...)
+
+	if req.GetReadonly() {
+		mountinfo.MountOptions = append(mountinfo.MountOptions, "ro")
+	}
 
 	getOptions := metav1.GetOptions{}
 	vol, err := volbuilder.NewKubeclient().
