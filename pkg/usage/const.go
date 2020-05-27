@@ -30,10 +30,10 @@ const (
 	// VolumeDeprovision event is sent when a volume is deleted
 	VolumeDeprovision string = "volume-deprovision"
 	// AppName the application name
-	AppName           string = "OpenEBS"
+	AppName string = "OpenEBS"
 
 	// RunningStatus status is running
-	RunningStatus      string = "running"
+	RunningStatus string = "running"
 	// Event labels
 	EventLabelNode     string = "nodes"
 	EventLabelCapacity string = "capacity"
