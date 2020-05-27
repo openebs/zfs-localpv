@@ -48,7 +48,7 @@ const (
 	VOLTYPE_ZVOL    = "ZVOL"
 )
 
-// PropertyChanged return whether volume is changed
+// PropertyChanged return whether volume property is changed
 func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
 	if oldVol.Spec.VolumeType == VOLTYPE_DATASET &&
 		newVol.Spec.VolumeType == VOLTYPE_DATASET &&

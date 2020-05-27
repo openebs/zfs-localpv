@@ -129,7 +129,7 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	return selected, nil
 }
 
-// CreateZFSClone create an clone of zfs volume
+// CreateZFSClone create a clone of zfs volume
 func CreateZFSClone(req *csi.CreateVolumeRequest, snapshot string) (string, error) {
 
 	volName := req.GetName()
