@@ -57,10 +57,6 @@ type MountInfo struct {
 	// on that node
 	MountPath string `json:"mountPath"`
 
-	// ReadOnly specifies if the volume needs
-	// to be mounted in ReadOnly mode
-	ReadOnly bool `json:"readOnly"`
-
 	// MountOptions specifies the options with
 	// which mount needs to be attempted
 	MountOptions []string `json:"mountOptions"`
