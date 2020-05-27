@@ -21,7 +21,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	v1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -52,11 +52,11 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=zfs.openebs.io, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("zfssnapshots"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Zfs().V1alpha1().ZFSSnapshots().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("zfsvolumes"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Zfs().V1alpha1().ZFSVolumes().Informer()}, nil
+	// Group=zfs.openebs.io, Version=v1
+	case v1.SchemeGroupVersion.WithResource("zfssnapshots"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Zfs().V1().ZFSSnapshots().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("zfsvolumes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Zfs().V1().ZFSVolumes().Informer()}, nil
 
 	}
 

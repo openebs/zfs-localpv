@@ -20,8 +20,8 @@ package fake
 
 import (
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
-	zfsv1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1alpha1"
-	fakezfsv1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1alpha1/fake"
+	zfsv1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1"
+	fakezfsv1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -71,7 +71,7 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 
 var _ clientset.Interface = &Clientset{}
 
-// ZfsV1alpha1 retrieves the ZfsV1alpha1Client
-func (c *Clientset) ZfsV1alpha1() zfsv1alpha1.ZfsV1alpha1Interface {
-	return &fakezfsv1alpha1.FakeZfsV1alpha1{Fake: &c.Fake}
+// ZfsV1 retrieves the ZfsV1Client
+func (c *Clientset) ZfsV1() zfsv1.ZfsV1Interface {
+	return &fakezfsv1.FakeZfsV1{Fake: &c.Fake}
 }
