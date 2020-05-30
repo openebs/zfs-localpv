@@ -17,6 +17,7 @@ limitations under the License.
 package zfs
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -30,6 +31,7 @@ import (
 const (
 	ZFS_DEVPATH = "/dev/zvol/"
 	FSTYPE_ZFS  = "zfs"
+	FSTYPE_NFS  = "nfs"
 )
 
 // zfs command related constants
@@ -50,11 +52,19 @@ const (
 	VOLTYPE_ZVOL    = "ZVOL"
 )
 
+// constants related to sharing with NFS
+const (
+	NFSExportCmd      = "exportfs"
+	NFSExportsFile    = "/etc/exports"
+	NFSOptionsDefault = "ro,wdelay,root_squash,no_subtree_check,sec=sys,ro,secure,root_squash,no_all_squash"
+)
+
 // PropertyChanged return whether volume property is changed
 func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
 	if oldVol.Spec.VolumeType == VOLTYPE_DATASET &&
 		newVol.Spec.VolumeType == VOLTYPE_DATASET &&
-		oldVol.Spec.RecordSize != newVol.Spec.RecordSize {
+		(oldVol.Spec.RecordSize != newVol.Spec.RecordSize ||
+			oldVol.Spec.ShareNfs != newVol.Spec.ShareNfs) {
 		return true
 	}
 
@@ -71,6 +81,8 @@ func GetVolumeType(fstype string) string {
 	 */
 	switch fstype {
 	case FSTYPE_ZFS:
+		return VOLTYPE_DATASET
+	case FSTYPE_NFS:
 		return VOLTYPE_DATASET
 	default:
 		return VOLTYPE_ZVOL
@@ -166,6 +178,7 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 		ZFSVolArg = append(ZFSVolArg, "-o", keyFormat)
 	}
 	ZFSVolArg = append(ZFSVolArg, snapshot, volume)
+	klog.Infof("ZVolArgs are %v", ZFSVolArg)
 	return ZFSVolArg
 }
 
@@ -236,13 +249,25 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 		ZFSVolArg = append(ZFSVolArg, "-o", keyFormat)
 	}
 
-	// set the mount path to none, by default zfs mounts it to the default dataset path
-	ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=legacy", volume)
-
+	// NOTICE: with mountpoint legacy, the zfs logic which automagically exports
+	// NOTICE: on sharenfs will not work and exporting is left to the operator
+	if vol.Spec.FsType == FSTYPE_NFS {
+		//mountPoint := NFS_ROOT + "/" + vol.Name
+		mountPoint := "/" + vol.Spec.PoolName + "/" + vol.Name
+		shareNfsProperty := "on"
+		if len(vol.Spec.ShareNfs) != 0 {
+			// TODO consider validation of at least important opts of exports(5)
+			shareNfsProperty = "sharenfs=" + vol.Spec.ShareNfs
+		}
+		ZFSVolArg = append(ZFSVolArg, "-o", shareNfsProperty)
+		ZFSVolArg = append(ZFSVolArg, "-o", fmt.Sprintf("mountpoint=%s", mountPoint), volume)
+	} else {
+		ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=legacy", volume)
+	}
 	return ZFSVolArg
 }
 
-// builldVolumeSetArgs returns volume set command along with attributes as a string array
+// buildVolumeSetArgs returns volume set command along with attributes as a string array
 // TODO(pawan) need to find a way to identify which property has changed
 func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
@@ -264,6 +289,13 @@ func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 	if len(vol.Spec.Compression) != 0 {
 		compressionProperty := "compression=" + vol.Spec.Compression
 		ZFSVolArg = append(ZFSVolArg, compressionProperty)
+	}
+	if len(vol.Spec.ShareNfs) != 0 {
+		// TODO: consider validation of at least important opts of exports(5)
+		// TODO: find out where the change trigger is set
+		shareNfsProperty := "sharenfs=" + vol.Spec.ShareNfs
+		ZFSVolArg = append(ZFSVolArg, shareNfsProperty)
+		// TODO: vol needs to be mounted to be shared via NFS
 	}
 
 	ZFSVolArg = append(ZFSVolArg, volume)
@@ -394,8 +426,15 @@ func SetDatasetMountProp(volume string, mountpath string) error {
 func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	// set the mountpoint to the path where this volume should be mounted
-	err := SetDatasetMountProp(volume, mountpath)
+	var err error
+	// WARNING: this is a dirty hack just for PoC
+	if vol.Spec.ShareNfs == "" || vol.Spec.ShareNfs == "off" {
+		// set the mountpoint to the path where this volume should be mounted
+		err = SetDatasetMountProp(volume, mountpath)
+	} else {
+		err = SetDatasetMountProp(volume, "/"+volume)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -441,6 +480,37 @@ func SetDatasetLegacyMount(vol *apis.ZFSVolume) error {
 		// set the mountpoint to legacy
 		volume := vol.Spec.PoolName + "/" + vol.Name
 		err = SetDatasetMountProp(volume, "legacy")
+	}
+
+	return err
+}
+
+func UnshareZFSDataset(vol *apis.ZFSVolume) error {
+	// ZFS datasets cannot be destroyed without being unshared first, as without
+	// the rpcbind will still hold handles on the ds, resulting in a is busy err
+	// on destroy, unmount etc
+	volume := vol.Spec.PoolName + "/" + vol.Name
+	mntPnt := "/" + volume
+
+	var UnshareVolArg []string
+	UnshareVolArg = append(UnshareVolArg, "-u", "192.168.0.0/16:"+mntPnt)
+	cmd := exec.Command(NFSExportCmd, UnshareVolArg...)
+	out, err := cmd.CombinedOutput()
+
+	// NOTICE: we may not be strict with this error, ncs `exportfs` complains
+	// NOTICE: about the NFSv4 roots we will get when sharing via zfsutils
+	if err != nil {
+		klog.Errorf("exportfs: could not unshare the dataset %v cmd %v error: %s",
+			volume, UnshareVolArg, string(out))
+	}
+
+	// TODO: determine the exact! cause - `zfs unshare` and `zfs destroy` probably
+	// TODO: do not call correctly bcs of different mount namespace
+	cmd = exec.Command("rpc.mountd", "--manage-gids")
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		klog.Errorf("rpc.mountd: refreshing rpc.mount failed, volume %v cmd %v error: %s",
+			volume, UnshareVolArg, string(out))
 	}
 
 	return err
@@ -516,6 +586,25 @@ func DestroyVolume(vol *apis.ZFSVolume) error {
 		return nil
 	}
 
+	var mounted, mountPoint string
+	mountPoint, err := GetVolumeProperty(vol, "mountpoint")
+	if err != nil {
+		return err
+	}
+	mounted, err = GetVolumeProperty(vol, "mounted")
+	if err != nil {
+		return err
+	}
+
+	if len(vol.Spec.ShareNfs) != 0 &&
+		vol.Spec.ShareNfs != "off" &&
+		mounted == "yes" {
+		err = UnshareZFSDataset(vol)
+		if err != nil {
+			return err
+		}
+	}
+
 	args := buildVolumeDestroyArgs(vol)
 	cmd := exec.Command(ZFSVolCmd, args...)
 	out, err := cmd.CombinedOutput()
@@ -525,6 +614,14 @@ func DestroyVolume(vol *apis.ZFSVolume) error {
 			"zfs: could not destroy volume %v cmd %v error: %s", volume, args, string(out),
 		)
 		return err
+	} else {
+		// note that only the mountpoint _and no data_ is meant to be deleted and
+		// that the op should fail when there is any data left for any reason
+		err = os.Remove(mountPoint)
+		klog.Warningf("Deleting failed with err %v", err)
+		if err != nil {
+			return err
+		}
 	}
 	klog.Infof("destroyed volume %s", volume)
 

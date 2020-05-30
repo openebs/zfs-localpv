@@ -99,6 +99,7 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	schld := parameters["scheduler"]
 	fstype := parameters["fstype"]
 	shared := parameters["shared"]
+	sharenfs := parameters["sharenfs"]
 
 	vtype := zfs.GetVolumeType(fstype)
 
@@ -120,6 +121,7 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 		WithEncryption(encr).
 		WithKeyFormat(kf).
 		WithKeyLocation(kl).
+		WithShareNfs(sharenfs).
 		WithThinProv(tp).
 		WithOwnerNode(selected).
 		WithVolumeType(vtype).
@@ -212,6 +214,8 @@ func (cs *controller) CreateVolume(
 	contentSource := req.GetVolumeContentSource()
 	pvcName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/name")
 
+	pvcFsType := helpers.GetInsensitiveParameter(&parameters, "fstype")
+
 	if err = cs.validateVolumeCreateReq(req); err != nil {
 		return nil, err
 	}
@@ -233,13 +237,23 @@ func (cs *controller) CreateVolume(
 	topology := map[string]string{zfs.ZFSTopologyKey: selected}
 	cntx := map[string]string{zfs.PoolNameKey: pool}
 
-	return csipayload.NewCreateVolumeResponseBuilder().
-		WithName(volName).
-		WithCapacity(size).
-		WithTopology(topology).
-		WithContext(cntx).
-		WithContentSource(contentSource).
-		Build(), nil
+	if pvcFsType != zfs.FSTYPE_NFS {
+		return csipayload.NewCreateVolumeResponseBuilder().
+			WithName(volName).
+			WithCapacity(size).
+			WithTopology(topology).
+			WithContext(cntx).
+			WithContentSource(contentSource).
+			Build(), nil
+	} else {
+		return csipayload.NewCreateVolumeResponseBuilder().
+			WithName(volName).
+			WithCapacity(size).
+			//WithTopology(topology).
+			WithContext(cntx).
+			WithContentSource(contentSource).
+			Build(), nil
+	}
 }
 
 // DeleteVolume deletes the specified volume

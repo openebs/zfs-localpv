@@ -178,6 +178,14 @@ spec:
                 - "yes"
                 - "no"
                 type: string
+              sharenfs:
+                description: 'Specify if, and when, how to share via NFS. Options
+                  are documented in zfs(1M) or zfs(8) and exports(5). Considering
+                  the structure of options to export and the state of
+                  documentation outlined in `github.com/openzfs/zfs/issues/3860`,
+                  validation is non-trivial and very much dependent on other
+                  options.'
+                type: string
               snapname:
                 description: SnapName specifies the name of the snapshot where the
                   volume has been cloned from. Snapname can not be edited after the

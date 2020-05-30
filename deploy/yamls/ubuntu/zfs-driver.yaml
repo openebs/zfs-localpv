@@ -526,6 +526,14 @@ spec:
                 values:
                 - openebs-zfs-controller
             topologyKey: "kubernetes.io/hostname"
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: hosttype
+                    operator: In
+                    values:
+                      - zfsprovider
       priorityClassName: system-cluster-critical
       serviceAccount: openebs-zfs-controller-sa
       containers:
@@ -702,7 +710,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 
 ---
-
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
@@ -712,12 +719,22 @@ spec:
   selector:
     matchLabels:
       app: openebs-zfs-node
+      role: openebs-zfs
   template:
     metadata:
       labels:
         app: openebs-zfs-node
         role: openebs-zfs
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: hosttype
+                    operator: In
+                    values:
+                      - zfsprovider
       priorityClassName: system-node-critical
       serviceAccount: openebs-zfs-node-sa
       hostNetwork: true
@@ -791,11 +808,42 @@ spec:
               mountPath: /lib/libuutil.so.1
             - name: libnvpair
               mountPath: /lib/libnvpair.so.1
+            - name: exportfs
+              mountPath: /usr/sbin/exportfs
+            - name: mount-nfs
+              mountPath: /usr/sbin/mount.nfs
+            - name: rpc-nfsd
+              mountPath: /usr/sbin/rpc.nfsd
+            - name: rpc-mountd
+              mountPath: /usr/sbin/rpc.mountd
+            - name: libtirp
+              mountPath: /usr/lib/x86_64-linux-gnu/libtirpc.so.3
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/
+              mountPropagation: "Bidirectional"
               # needed so that any mounts setup inside this container are
               # propagated back to the host machine.
+            - name: libgssapi
+              mountPath: /usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2
+            - name: libkrb
+              mountPath: /usr/lib/x86_64-linux-gnu/libkrb5.so.3
+            - name: libkrbcrypto
+              mountPath: /usr/lib/x86_64-linux-gnu/libk5crypto.so.3
+            - name: libkrbsupport
+              mountPath: /usr/lib/x86_64-linux-gnu/libkrb5support.so.0
+            - name: libkeyutils
+              mountPath: /usr/lib/x86_64-linux-gnu/libkeyutils.so.1
+            - name: libwrap
+              mountPath: /usr/lib/x86_64-linux-gnu/libwrap.so.0
+            - name: exports
+              mountPath: /etc/exports
+            - name: nfs-state
+              mountPath: /var/lib/nfs
+            - name: tank
+              mountPath: /tank
               mountPropagation: "Bidirectional"
+              # needed so that any mounts setup inside this container are
+              # propagated back to the host machine.
       volumes:
         - name: device-dir
           hostPath:
@@ -829,6 +877,50 @@ spec:
           hostPath:
             path: /lib/libnvpair.so.1.0.1
             type: File
+        - name: exportfs
+          hostPath:
+            path: /usr/sbin/exportfs
+            type: File
+        - name: mount-nfs
+          hostPath:
+            path: /usr/sbin/mount.nfs
+            type: File
+        - name: rpc-nfsd
+          hostPath:
+            path: /usr/sbin/rpc.nfsd
+            type: File
+        - name: rpc-mountd
+          hostPath:
+            path: /usr/sbin/rpc.mountd
+            type: File
+        - name: libtirp
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libtirpc.so.3
+            type: File
+        - name: libgssapi
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2
+            type: File
+        - name: libkrb
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libkrb5.so.3
+            type: File
+        - name: libkrbcrypto
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libk5crypto.so.3
+            type: File
+        - name: libkrbsupport
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libkrb5support.so.0
+            type: File
+        - name: libkeyutils
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libkeyutils.so.1
+            type: File
+        - name: libwrap
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libwrap.so.0
+            type: File
         - name: registration-dir
           hostPath:
             path: /var/lib/kubelet/plugins_registry/
@@ -841,4 +933,225 @@ spec:
           hostPath:
             path: /var/lib/kubelet/
             type: Directory
+        - name: exports
+          hostPath:
+            path: /etc/exports
+            type: File
+        - name: nfs-state
+          hostPath:
+            path: /var/lib/nfs
+            type: Directory
+        - name: tank
+          hostPath:
+            path: /tank
+            type: Directory
+
 ---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: openebs-zfs-nfs
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: openebs-zfs-node
+      role: openebs-nfs
+  template:
+    metadata:
+      labels:
+        app: openebs-zfs-node
+        role: openebs-nfs
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: hosttype
+                    operator: In
+                    values:
+                      - nfsconsumer
+      priorityClassName: system-node-critical
+      serviceAccount: openebs-zfs-node-sa
+      hostNetwork: true
+      containers:
+        - name: csi-node-driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/zfs-localpv /registration/zfs-localpv-reg.sock"]
+          env:
+            - name: ADDRESS
+              value: /plugin/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins/zfs-localpv/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NODE_DRIVER
+              value: openebs-zfs
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /plugin
+            - name: registration-dir
+              mountPath: /registration
+        - name: openebs-zfs-plugin
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["CAP_MKNOD", "CAP_SYS_ADMIN", "SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          image: quay.io/openebs/zfs-driver:ci
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--nodeid=$(OPENEBS_NODE_ID)"
+            - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
+            - "--plugin=$(OPENEBS_NODE_DRIVER)"
+          env:
+            - name: OPENEBS_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: OPENEBS_CSI_ENDPOINT
+              value: unix:///plugin/csi.sock
+            - name: OPENEBS_NODE_DRIVER
+              value: agent
+            - name: OPENEBS_NAMESPACE
+              value: openebs
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /plugin
+            - name: device-dir
+              mountPath: /dev
+            - name: encr-keys
+              mountPath: /home/keys
+            - name: zfs-bin
+              mountPath: /sbin/zfs
+            - name: libzpool
+              mountPath: /lib/libzpool.so.2
+            - name: libzfscore
+              mountPath: /lib/libzfs_core.so.1
+            - name: libzfs
+              mountPath: /lib/libzfs.so.2
+            - name: libuutil
+              mountPath: /lib/libuutil.so.1
+            - name: libnvpair
+              mountPath: /lib/libnvpair.so.1
+            - name: exportfs
+              mountPath: /usr/sbin/exportfs
+            - name: mount-nfs
+              mountPath: /usr/sbin/mount.nfs
+            - name: libtirp
+              mountPath: /usr/lib/x86_64-linux-gnu/libtirpc.so.3
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/
+              mountPropagation: "Bidirectional"
+              # needed so that any mounts setup inside this container are
+              # propagated back to the host machine.
+            - name: libgssapi
+              mountPath: /usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2
+            - name: libkrb
+              mountPath: /usr/lib/x86_64-linux-gnu/libkrb5.so.3
+            - name: libkrbcrypto
+              mountPath: /usr/lib/x86_64-linux-gnu/libk5crypto.so.3
+            - name: libkrbsupport
+              mountPath: /usr/lib/x86_64-linux-gnu/libkrb5support.so.0
+            - name: libkeyutils
+              mountPath: /usr/lib/x86_64-linux-gnu/libkeyutils.so.1
+            - name: exports
+              mountPath: /etc/exports
+            - name: nfs-state
+              mountPath: /var/lib/nfs
+      volumes:
+        - name: device-dir
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: encr-keys
+          hostPath:
+            path: /home/keys
+            type: DirectoryOrCreate
+        - name: zfs-bin
+          hostPath:
+            path: /sbin/zfs
+            type: File
+        - name: libzpool
+          hostPath:
+            path: /lib/libzpool.so.2.0.0
+            type: File
+        - name: libzfscore
+          hostPath:
+            path: /lib/libzfs_core.so.1.0.0
+            type: File
+        - name: libzfs
+          hostPath:
+            path: /lib/libzfs.so.2.0.0
+            type: File
+        - name: libuutil
+          hostPath:
+            path: /lib/libuutil.so.1.0.1
+            type: File
+        - name: libnvpair
+          hostPath:
+            path: /lib/libnvpair.so.1.0.1
+            type: File
+        - name: exportfs
+          hostPath:
+            path: /usr/sbin/exportfs
+            type: File
+        - name: mount-nfs
+          hostPath:
+            path: /usr/sbin/mount.nfs
+            type: File
+        - name: libtirp
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libtirpc.so.3
+            type: File
+        - name: libgssapi
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2
+            type: File
+        - name: libkrb
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libkrb5.so.3
+            type: File
+        - name: libkrbcrypto
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libk5crypto.so.3
+            type: File
+        - name: libkrbsupport
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libkrb5support.so.0
+            type: File
+        - name: libkeyutils
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libkeyutils.so.1
+            type: File
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry/
+            type: DirectoryOrCreate
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/zfs-localpv/
+            type: DirectoryOrCreate
+        - name: pods-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/
+            type: Directory
+        - name: exports
+          hostPath:
+            path: /etc/exports
+            type: File
+        - name: nfs-state
+          hostPath:
+            path: /var/lib/nfs
+            type: Directory

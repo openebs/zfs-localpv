@@ -194,6 +194,11 @@ type VolumeInfo struct {
 	// Default Value: ext4.
 	FsType string `json:"fsType,omitempty"`
 
+	// ShareNfs specifies if, and when, how, to share the dataset via NFS.
+	// It depends on the Linux NFS Kernel Server to be running on the machine
+	// providing the volume and the volume to be mounted.
+	ShareNfs string `json:"sharenfs,omitempty"`
+
 	// Shared specifies whether the volume can be shared among multiple pods.
 	// If it is not set to "yes", then the ZFS-LocalPV Driver will not allow
 	// the volumes to be mounted by more than one pods.

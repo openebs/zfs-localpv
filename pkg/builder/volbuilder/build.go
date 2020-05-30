@@ -148,6 +148,12 @@ func (b *Builder) WithRecordSize(rs string) *Builder {
 	return b
 }
 
+// WithShareNfs sets the sharenfs property string of ZFSVolume
+func (b *Builder) WithShareNfs(sharenfs string) *Builder {
+	b.volume.Object.Spec.ShareNfs = sharenfs
+	return b
+}
+
 // WithVolBlockSize sets the volblocksize of ZFSVolume
 func (b *Builder) WithVolBlockSize(bs string) *Builder {
 	b.volume.Object.Spec.VolBlockSize = bs

@@ -2,6 +2,8 @@ package zfs
 
 import (
 	"fmt"
+	"github.com/openebs/zfs-localpv/pkg/client/k8s/v1alpha1"
+	"net"
 	"os"
 	"os/exec"
 
@@ -69,13 +71,16 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 		return err
 	}
 
-	if err = SetDatasetLegacyMount(vol); err != nil {
-		// ignoring the failure as the volume has already
-		// been umounted, now the new pod can mount it
-		klog.Warningf(
-			"zfs: failed to set legacy mountpoint: %s err: %v",
-			vol.Name, err,
-		)
+	// legacy mount does not work with the "organic" ZFS zfs->nfs logic
+	if vol.Spec.ShareNfs == "" || vol.Spec.ShareNfs == "off" {
+		if err = SetDatasetLegacyMount(vol); err != nil {
+			// ignoring the failure as the volume has already
+			// been umounted, now the new pod can mount it
+			klog.Warningf(
+				"zfs: failed to set legacy mountpoint: %s err: %v",
+				vol.Name, err,
+			)
+		}
 	}
 
 	if err := os.Remove(targetPath); err != nil {
@@ -136,7 +141,8 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 	}
 
 	if len(vol.Spec.OwnerNodeID) > 0 &&
-		vol.Spec.OwnerNodeID != NodeID {
+		vol.Spec.OwnerNodeID != NodeID &&
+		vol.Spec.FsType != "nfs" {
 		return status.Error(codes.Internal, "verifyMount: volume is owned by different node")
 	}
 	if vol.Finalizers == nil {
@@ -150,8 +156,9 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 		return status.Errorf(codes.Internal, "verifyMount: GetVolumePath failed %s", err.Error())
 	}
 
-	// if it is not a shared volume, then make sure it is not mounted to more than one path
-	if vol.Spec.Shared != "yes" {
+	klog.Warningf("vol.Spec is %v", vol.Spec)
+
+	if vol.Spec.FsType != FSTYPE_NFS && vol.Spec.Shared != "yes" {
 		/*
 		 * This check is the famous *Wall Of North*
 		 * It will not let the volume to be mounted
@@ -166,7 +173,7 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 			return status.Errorf(codes.Internal, "verifyMount: Getmounts failed %s", err.Error())
 		} else if len(currentMounts) >= 1 {
 			klog.Errorf(
-				"can not mount, volume:%s already mounted dev %s mounts: %v",
+				"cannot mount, volume:%s already mounted dev %s mounts: %v",
 				vol.Name, devicePath, currentMounts,
 			)
 			return status.Errorf(codes.Internal, "verifyMount: device already mounted at %s", currentMounts)
@@ -203,12 +210,19 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 		return err
 	}
 
-	val, err := GetVolumeProperty(vol, "mountpoint")
-	if err != nil {
-		return err
+	var mountPoint string
+
+	// when NFS, we cannot call `zfs get` on dataset on different host
+	if vol.Spec.FsType != FSTYPE_NFS {
+		mountPoint, err = GetVolumeProperty(vol, "mountpoint")
+		if err != nil {
+			return err
+		}
+	} else {
+		mountPoint = "/" + vol.Spec.PoolName + "/" + vol.Name
 	}
 
-	if val == "legacy" {
+	if mountPoint == "legacy" || vol.Spec.FsType == FSTYPE_NFS {
 		var MountVolArg []string
 		var mntopt string
 
@@ -216,7 +230,42 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 			mntopt += option + ","
 		}
 
-		MountVolArg = append(MountVolArg, "-o", mntopt, "-t", "zfs", volume, mount.MountPath)
+		if len(mntopt) != 0 {
+			MountVolArg = append(MountVolArg, "-o", mntopt)
+		}
+		MountVolArg = append(MountVolArg, "-t", vol.Spec.FsType)
+		if vol.Spec.FsType == FSTYPE_NFS {
+
+			// WARNING: requires the nodenames to be resolvable as is
+			nfsNode := vol.Spec.OwnerNodeID
+			var nfsIp string
+			node, err := v1alpha1.GetNode(nfsNode)
+			if err != nil {
+				klog.Errorf("Getting node failed with error: %v", err)
+			}
+
+			for _, nodeAddress := range node.Status.Addresses {
+				if nodeAddress.Type == "Hostname" {
+					// WARNING: will be non-deterministic if two addresses of hostname
+					// WARNING: exist. possible?
+					nfsHost := nodeAddress.Address
+					// TODO: need to look up, because nodename and dnsname may differ
+					nfsIps, err := net.LookupHost(nfsHost)
+					if len(nfsIps) > 1 {
+						klog.Warningf("NFS servers with more than one IP on k8s nodename are difficult to address.")
+					}
+					nfsIp = nfsIps[0]
+					if err != nil {
+						klog.Errorf("Could not resolve %s, got %v", nfsHost, err)
+					}
+				}
+			}
+			// volume = nfsHost + ":" + NFS_ROOT + "/" + vol.Name
+			volume = nfsIp + ":/" + vol.Spec.PoolName + "/" + vol.Name
+		}
+
+		MountVolArg = append(MountVolArg, volume, mount.MountPath)
+
 		cmd := exec.Command("mount", MountVolArg...)
 		out, err := cmd.CombinedOutput()
 		if err != nil {

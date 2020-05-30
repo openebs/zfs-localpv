@@ -1,0 +1,90 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: zfs-dataset
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: openebs.io/node
+        values:
+          - storage
+allowVolumeExpansion: true
+parameters:
+  compression: "lz4"
+  dedup: "off"
+  fstype: "nfs"
+  poolname: "tank"
+  sharenfs: "rw=@192.168.0.0/16,rw=@127.0.0.0/8,no_root_squash"
+provisioner: zfs.csi.openebs.io
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: zfspv-001
+spec:
+  storageClassName: zfs-dataset
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 128Mi
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: zfspv-002
+spec:
+  storageClassName: zfs-dataset
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 128Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tester-1
+  labels:
+    app: tester-1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tester-1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tester-1
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - tester-1
+              topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: tester
+          image: library/debian:bullseye
+          command:
+            - "/bin/sleep"
+            - "3600"
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /needed4NFS/irrelevantHere1
+              name: nfs-vol-1
+      restartPolicy: Always
+      volumes:
+        - name: nfs-vol-1
+          persistentVolumeClaim:
+            claimName: zfspv-001
