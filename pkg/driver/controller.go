@@ -27,6 +27,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
+	"github.com/openebs/zfs-localpv/pkg/common/helpers"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
 	analytics "github.com/openebs/zfs-localpv/pkg/usage"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
@@ -75,17 +76,25 @@ func sendEventOrIgnore(pvName, capacity, stgType, method string) {
 func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	volName := req.GetName()
 	size := req.GetCapacityRange().RequiredBytes
-	rs := req.GetParameters()["recordsize"]
-	bs := req.GetParameters()["volblocksize"]
-	compression := req.GetParameters()["compression"]
-	dedup := req.GetParameters()["dedup"]
-	encr := req.GetParameters()["encryption"]
-	kf := req.GetParameters()["keyformat"]
-	kl := req.GetParameters()["keylocation"]
-	pool := req.GetParameters()["poolname"]
-	tp := req.GetParameters()["thinprovision"]
-	schld := req.GetParameters()["scheduler"]
-	fstype := req.GetParameters()["fstype"]
+
+	// parameter keys may be mistyped from the CRD specification when declaring
+	// the storageclass, which kubectl validation will not catch. Because ZFS
+	// parameter keys (not values!) are all lowercase, keys may safely be forced
+	// to the lower case.
+	originalParams := req.GetParameters()
+	parameters := helpers.GetCaseInsensitiveMap(&originalParams)
+
+	rs := parameters["recordsize"]
+	bs := parameters["volblocksize"]
+	compression := parameters["compression"]
+	dedup := parameters["dedup"]
+	encr := parameters["encryption"]
+	kf := parameters["keyformat"]
+	kl := parameters["keylocation"]
+	pool := parameters["poolname"]
+	tp := parameters["thinprovision"]
+	schld := parameters["scheduler"]
+	fstype := parameters["fstype"]
 
 	vtype := zfs.GetVolumeType(fstype)
 
@@ -130,7 +139,9 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 func CreateZFSClone(req *csi.CreateVolumeRequest, snapshot string) (string, error) {
 
 	volName := req.GetName()
-	pool := req.GetParameters()["poolname"]
+	parameters := req.GetParameters()
+	// lower case keys, cf CreateZFSVolume()
+	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
 	size := req.GetCapacityRange().RequiredBytes
 	volsize := strconv.FormatInt(int64(size), 10)
 
@@ -188,7 +199,9 @@ func (cs *controller) CreateVolume(
 	var selected string
 
 	volName := req.GetName()
-	pool := req.GetParameters()["poolname"]
+	parameters := req.GetParameters()
+	// lower case keys, cf CreateZFSVolume()
+	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
 	size := req.GetCapacityRange().RequiredBytes
 	contentSource := req.GetVolumeContentSource()
 

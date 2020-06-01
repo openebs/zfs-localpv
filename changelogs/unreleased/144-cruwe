@@ -1,0 +1,1 @@
+Fixes an issue where volumes meant to be filesystem datasets got created as zvols and generally makes storageclass parameter spelling insensitive to case
