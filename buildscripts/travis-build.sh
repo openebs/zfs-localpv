@@ -14,7 +14,7 @@ set -e
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DST_REPO="$GOPATH/src/github.com/openebs/zfs-localpv"
+DST_REPO="$HOME/openebs/zfs-localpv"
 
 function checkGitDiff() {
 	if [[ `git diff --shortstat | wc -l` != 0 ]]; then echo "Some files got changed after $1";printf "\n";git diff;printf "\n"; exit 1; fi
