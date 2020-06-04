@@ -1,0 +1,1 @@
+fixing stale ZFSVolume resource issue when deleting the pvc in pending state

@@ -194,12 +194,12 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 	err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
-		return status.Error(codes.Internal, "dataset can not be mounted")
+		return status.Error(codes.Internal, "invalid mount request")
 	}
 
 	err = MountZFSDataset(vol, mount.MountPath)
 	if err != nil {
-		return status.Error(codes.Internal, "not able to mount the dataset")
+		return status.Errorf(codes.Internal, "zfs: mount failed err : %v", err.Error())
 	}
 
 	logrus.Infof("dataset %v mounted %v", volume, mount.MountPath)

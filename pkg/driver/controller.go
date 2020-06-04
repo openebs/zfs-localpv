@@ -209,16 +209,6 @@ func (cs *controller) CreateVolume(
 		return nil, err
 	}
 
-	selected, state, err := zfs.GetZFSVolumeState(req.Name)
-
-	if err == nil {
-		// ZFSVolume CR has been created, check if it is in Ready state
-		if state == zfs.ZFSStatusReady {
-			goto CreateVolumeResponse
-		}
-		return nil, status.Errorf(codes.Internal, "volume %s creation is Pending", volName)
-	}
-
 	if contentSource != nil && contentSource.GetSnapshot() != nil {
 		snapshotID := contentSource.GetSnapshot().GetSnapshotId()
 
@@ -230,18 +220,6 @@ func (cs *controller) CreateVolume(
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
-	_, state, err = zfs.GetZFSVolumeState(req.Name)
-
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "createvolume: failed to fetch the volume %v", err.Error())
-	}
-
-	if state == zfs.ZFSStatusPending {
-		return nil, status.Errorf(codes.Internal, "volume %s is being created", volName)
-	}
-
-CreateVolumeResponse:
 
 	sendEventOrIgnore(volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
 
