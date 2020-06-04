@@ -94,7 +94,7 @@ export DBUILD_ARGS=--build-arg DBUILD_DATE=${DBUILD_DATE} --build-arg DBUILD_REP
 CSI_DRIVER=zfs-driver
 
 .PHONY: all
-all: test manifests zfs-driver-image
+all: tidy sync test manifests zfs-driver-image
 
 .PHONY: clean
 clean:
@@ -108,6 +108,16 @@ clean:
 format:
 	@echo "--> Running go fmt"
 	@go fmt $(PACKAGES)
+
+.PHONY: tidy
+tidy:
+	@echo "--> Tidying up submodules"
+	@go mod tidy
+	
+.PHONY: module sync
+sync:
+	@echo "--> Syncing vendor directory"
+	@go mod vendor
 
 .PHONY: test
 test: format
