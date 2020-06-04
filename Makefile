@@ -114,7 +114,7 @@ tidy:
 	@echo "--> Tidying up submodules"
 	@go mod tidy
 	
-.PHONY: module sync
+.PHONY: sync
 sync:
 	@echo "--> Syncing vendor directory"
 	@go mod vendor
