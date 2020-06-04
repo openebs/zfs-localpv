@@ -23,10 +23,6 @@ before_install:
   - truncate -s 100G /tmp/disk.img
   - sudo zpool create -f zfspv-pool /tmp/disk.img
 install:
-  - if [ "$TRAVIS_BUILD_DIR" != "$HOME/openebs/zfs-localpv" ]; then
-    mkdir -p $HOME/openebs/;
-    mv $TRAVIS_BUILD_DIR $HOME/openebs;
-    cd $HOME/openebs/zfs-localpv;
   - make bootstrap
   - make format
   - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.16.0/bin/linux/amd64/kubectl
