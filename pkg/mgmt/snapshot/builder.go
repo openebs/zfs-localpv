@@ -17,7 +17,7 @@ limitations under the License.
 package snapshot
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/scheme"

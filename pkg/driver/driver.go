@@ -19,7 +19,7 @@ package driver
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	config "github.com/openebs/zfs-localpv/pkg/config"
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 // volume can only be published once as

@@ -17,7 +17,7 @@ limitations under the License.
 package driver
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"math"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"

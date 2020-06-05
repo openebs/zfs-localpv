@@ -15,7 +15,7 @@
 package zfs
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"os"
 	"strconv"
 

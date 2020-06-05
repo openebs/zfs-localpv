@@ -10,7 +10,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/driver"
 	"github.com/openebs/zfs-localpv/pkg/version"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 

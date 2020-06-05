@@ -5,7 +5,7 @@ import (
 	"os"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/kubernetes/pkg/util/mount"

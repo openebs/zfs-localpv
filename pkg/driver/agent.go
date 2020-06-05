@@ -24,7 +24,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/mgmt/snapshot"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/volume"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc/codes"
