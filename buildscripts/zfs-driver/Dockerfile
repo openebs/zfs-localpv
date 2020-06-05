@@ -24,7 +24,6 @@ ARG DBUILD_SITE_URL
 
 COPY zfs-driver /usr/local/bin/
 COPY entrypoint.sh /usr/local/bin/
-COPY zfs.conf /etc/ld.so.conf.d/
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
@@ -35,5 +34,5 @@ LABEL org.label-schema.build-date=$DBUILD_DATE
 LABEL org.label-schema.vcs-url=$DBUILD_REPO_URL
 LABEL org.label-schema.url=$DBUILD_SITE_URL
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/zfs-driver"]
 EXPOSE 7676 7777

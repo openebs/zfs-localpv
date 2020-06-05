@@ -2,9 +2,6 @@
 
 set -ex
 
-# update the library cache
-ldconfig
-
 echo "[entrypoint.sh] launching zfs-driver."
 
 /usr/local/bin/zfs-driver "$@" &

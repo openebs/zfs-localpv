@@ -783,10 +783,10 @@ spec:
               mountPath: /bin/zfs
               readOnly: true
             - name: hostlib
-              mountPath: /lib/host
+              mountPath: /lib/tls
               readOnly: true
             - name: hostlib64
-              mountPath: /lib64/host
+              mountPath: /lib/x86_64
               readOnly: true
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/
