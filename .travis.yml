@@ -12,7 +12,7 @@ services:
   - docker
 language: go
 go:
-  - 1.12.5
+  - 1.14.4
 
 addons:
   apt:
