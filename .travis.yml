@@ -22,7 +22,7 @@ before_install:
   - sudo apt-get install -y zfsutils-linux
   - truncate -s 100G /tmp/disk.img
   - sudo zpool create -f zfspv-pool /tmp/disk.img
-install: true
+install:
   - make bootstrap
   - make format
   - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.16.0/bin/linux/amd64/kubectl
