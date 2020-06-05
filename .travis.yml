@@ -12,7 +12,7 @@ services:
   - docker
 language: go
 go:
-  - 1.14.X
+  - 1.14.x
 
 addons:
   apt:
