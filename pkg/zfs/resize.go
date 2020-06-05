@@ -17,8 +17,8 @@ limitations under the License.
 package zfs
 
 import (
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	"github.com/Sirupsen/logrus"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"os/exec"
 )

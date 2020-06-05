@@ -26,8 +26,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 	"github.com/Sirupsen/logrus"
+	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 )

@@ -19,8 +19,8 @@ package snapshot
 import (
 	"sync"
 
-	"github.com/pkg/errors"
 	"github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 
 	"time"
 

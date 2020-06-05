@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
@@ -29,7 +30,6 @@ import (
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
 	analytics "github.com/openebs/zfs-localpv/pkg/usage"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
-	"github.com/Sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

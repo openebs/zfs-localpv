@@ -17,9 +17,9 @@ limitations under the License.
 package driver
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	config "github.com/openebs/zfs-localpv/pkg/config"
-	"github.com/Sirupsen/logrus"
 )
 
 // volume can only be published once as

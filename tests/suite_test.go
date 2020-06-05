@@ -17,6 +17,7 @@ limitations under the License.
 package tests
 
 import (
+	"github.com/Sirupsen/logrus"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
@@ -24,7 +25,6 @@ import (
 	"github.com/openebs/zfs-localpv/tests/pod"
 	"github.com/openebs/zfs-localpv/tests/pvc"
 	"github.com/openebs/zfs-localpv/tests/sc"
-	"github.com/Sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
