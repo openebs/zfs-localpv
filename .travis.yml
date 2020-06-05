@@ -8,11 +8,12 @@ env:
   - MINIKUBE_HOME=$HOME
   - CHANGE_MINIKUBE_NONE_USER=true
   - KUBECONFIG=$HOME/.kube/config
+install: true
 services:
   - docker
 language: go
 go:
-  - 1.12.5
+  - 1.14.X
 
 addons:
   apt:

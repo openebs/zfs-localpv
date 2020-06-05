@@ -12,9 +12,9 @@ DIR="$( cd -P "$( dirname "$SOURCE" )/../" && pwd )"
 cd "$DIR"
 
 # Get the git commit
-if [ -f $GOPATH/src/github.com/openebs/zfs-localpv/GITCOMMIT ];
+if [ -f $PWD/GITCOMMIT ];
 then
-    GIT_COMMIT="$(cat $GOPATH/src/github.com/openebs/zfs-localpv/GITCOMMIT)"
+    GIT_COMMIT="$(cat $PWD/zfs-localpv/GITCOMMIT)"
 else
     GIT_COMMIT="$(git rev-parse HEAD)"
 fi
@@ -43,7 +43,7 @@ fi
 
 echo -e "\nbuilding the ZFS Driver version :- $VERSION\n"
 
-VERSION_META="$(cat $GOPATH/src/github.com/openebs/zfs-localpv/BUILDMETA)"
+VERSION_META="$(cat $PWD/BUILDMETA)"
 
 # Determine the arch/os combos we're building for
 UNAME=$(uname)

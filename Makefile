@@ -15,6 +15,9 @@
 # list only csi source code directories
 PACKAGES = $(shell go list ./... | grep -v 'vendor\|pkg/generated')
 
+GO111MODULE ?= on
+export GO111MODULE
+
 UNIT_TEST_PACKAGES = $(shell go list ./... | grep -v 'vendor\|pkg/generated\|tests')
 
 # Lint our code. Reference: https://golang.org/cmd/vet/
@@ -24,11 +27,9 @@ VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods \
 # Tools required for different make
 # targets or for development purposes
 EXTERNAL_TOOLS=\
-	github.com/golang/dep/cmd/dep \
 	golang.org/x/tools/cmd/cover \
 	github.com/axw/gocov/gocov \
 	gopkg.in/matm/v1/gocov-html \
-	github.com/ugorji/go/codec/codecgen \
 	github.com/onsi/ginkgo/ginkgo \
 	github.com/onsi/gomega/...
 
@@ -120,7 +121,7 @@ test: format
 bootstrap: controller-gen
 	@for tool in  $(EXTERNAL_TOOLS) ; do \
 		echo "+ Installing $$tool" ; \
-		go get -u $$tool; \
+	cd &&	GO111MODULE=on go get $$tool; \
 	done
 
 .PHONY: controller-gen
@@ -222,3 +223,19 @@ ci:
 deploy-images:
 	@DIMAGE="${IMAGE_ORG}/zfs-driver" ./buildscripts/push
 
+.PHONY: deps
+deps:
+	@echo "--> Tidying up submodules"
+	@go mod tidy
+	@echo "--> Veryfying submodules"
+	@go mod verify
+
+.PHONY: verify-deps
+verify-deps: deps
+	@if !(git diff --quiet HEAD -- go.sum go.mod); then \
+		echo "go module files are out of date, please commit the changes to go.mod and go.sum"; exit 1; \
+	fi
+
+.PHONY: vendor
+vendor: go.mod go.sum deps
+	@go mod vendor

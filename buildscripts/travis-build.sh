@@ -23,6 +23,9 @@ function checkGitDiff() {
 #make golint-travis
 #rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 
+echo "Running : verify module dependencies"
+GO111MODULE=on make verify-deps
+
 echo "Running : make kubegen"
 make kubegen
 rc=$?; if [[ $rc != 0 ]]; then echo "make kubegen failed"; exit $rc; fi
