@@ -24,11 +24,9 @@ VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods \
 # Tools required for different make
 # targets or for development purposes
 EXTERNAL_TOOLS=\
-	github.com/golang/dep/cmd/dep \
 	golang.org/x/tools/cmd/cover \
 	github.com/axw/gocov/gocov \
 	gopkg.in/matm/v1/gocov-html \
-	github.com/ugorji/go/codec/codecgen \
 	github.com/onsi/ginkgo/ginkgo \
 	github.com/onsi/gomega/...
 
@@ -114,13 +112,31 @@ test: format
 	@echo "--> Running go test" ;
 	@go test $(UNIT_TEST_PACKAGES)
 
+
+.PHONY: deps
+deps:
+	@echo "--> Tidying up submodules"
+	@go mod tidy
+	@echo "--> Verifying submodules"
+	@go mod verify
+
+.PHONY: verify-deps
+verify-deps: deps
+	@if !(git diff --quiet HEAD -- go.sum go.mod); then \
+		echo "go module files are out of date, please commit the changes to go.mod and go.sum"; exit 1; \
+	fi
+
+.PHONY: vendor
+vendor: go.mod go.sum deps
+	@go mod vendor
+
 # Bootstrap downloads tools required
 # during build
 .PHONY: bootstrap
 bootstrap: controller-gen
 	@for tool in  $(EXTERNAL_TOOLS) ; do \
 		echo "+ Installing $$tool" ; \
-		go get -u $$tool; \
+		cd && GO111MODULE=on go get $$tool; \
 	done
 
 .PHONY: controller-gen

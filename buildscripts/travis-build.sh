@@ -23,6 +23,8 @@ function checkGitDiff() {
 #make golint-travis
 #rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 
+make verify-deps
+
 echo "Running : make kubegen"
 make kubegen
 rc=$?; if [[ $rc != 0 ]]; then echo "make kubegen failed"; exit $rc; fi

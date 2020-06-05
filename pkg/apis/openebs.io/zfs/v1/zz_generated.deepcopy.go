@@ -130,7 +130,7 @@ func (in *ZFSSnapshot) DeepCopyObject() runtime.Object {
 func (in *ZFSSnapshotList) DeepCopyInto(out *ZFSSnapshotList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]ZFSSnapshot, len(*in))
@@ -191,7 +191,7 @@ func (in *ZFSVolume) DeepCopyObject() runtime.Object {
 func (in *ZFSVolumeList) DeepCopyInto(out *ZFSVolumeList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]ZFSVolume, len(*in))
