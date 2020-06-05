@@ -81,8 +81,18 @@ cat deploy/yamls/zfsvolume-crd.yaml >> deploy/zfs-operator.yaml
 # Add ZFSSnapshot v1alpha1 and v1 CRDs to the Operator yaml
 cat deploy/yamls/zfssnapshot-crd.yaml >> deploy/zfs-operator.yaml
 
-# Add the driver deployment to the Operator
-cat deploy/yamls/zfs-driver.yaml >> deploy/zfs-operator.yaml
+# Copy the base Operator yaml to CentOS 7 and 8 Operator yamls
+cp deploy/zfs-operator.yaml deploy/operators/centos7/zfs-operator.yaml
+cp deploy/zfs-operator.yaml deploy/operators/centos8/zfs-operator.yaml
+
+# Add the ubuntu driver deployment to the Operator
+cat deploy/yamls/ubuntu/zfs-driver.yaml >> deploy/zfs-operator.yaml
+
+# Add the centos7 driver deployment to the Operator
+cat deploy/yamls/centos7/zfs-driver.yaml >> deploy/operators/centos7/zfs-operator.yaml
+
+# Add the centos8 driver deployment to the Operator
+cat deploy/yamls/centos8/zfs-driver.yaml >> deploy/operators/centos8/zfs-operator.yaml
 
 # To use your own boilerplate text use:
 #   --go-header-file ${SCRIPT_ROOT}/hack/custom-boilerplate.go.txt
