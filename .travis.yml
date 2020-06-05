@@ -8,8 +8,7 @@ env:
   - MINIKUBE_HOME=$HOME
   - CHANGE_MINIKUBE_NONE_USER=true
   - KUBECONFIG=$HOME/.kube/config
-install: true
-services:
+  services:
   - docker
 language: go
 go:
@@ -23,7 +22,7 @@ before_install:
   - sudo apt-get install -y zfsutils-linux
   - truncate -s 100G /tmp/disk.img
   - sudo zpool create -f zfspv-pool /tmp/disk.img
-install:
+install: true
   - if [ "$TRAVIS_BUILD_DIR" != "$GOPATH/src/github.com/openebs/zfs-localpv" ]; then
     mkdir -p $GOPATH/src/github.com/openebs/;
     mv $TRAVIS_BUILD_DIR $GOPATH/src/github.com/openebs;
