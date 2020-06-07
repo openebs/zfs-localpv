@@ -61,11 +61,12 @@ var SupportedVolumeCapabilityAccessModes = []*csi.VolumeCapability_AccessMode{
 }
 
 // sendEventOrIgnore sends anonymous local-pv provision/delete events
-func sendEventOrIgnore(pvName, capacity, stgType, method string) {
+func sendEventOrIgnore(pvcName, pvName, capacity, stgType, method string) {
 	if zfs.GoogleAnalyticsEnabled == "true" {
 		analytics.New().Build().ApplicationBuilder().
 			SetVolumeType(stgType, method).
 			SetDocumentTitle(pvName).
+			SetCampaignName(pvcName).
 			SetLabel(analytics.EventLabelCapacity).
 			SetReplicaCount(analytics.LocalPVReplicaCount, method).
 			SetCategory(method).
@@ -204,6 +205,7 @@ func (cs *controller) CreateVolume(
 	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
 	size := req.GetCapacityRange().RequiredBytes
 	contentSource := req.GetVolumeContentSource()
+	pvcName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/name")
 
 	if err = cs.validateVolumeCreateReq(req); err != nil {
 		return nil, err
@@ -221,7 +223,7 @@ func (cs *controller) CreateVolume(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	sendEventOrIgnore(volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
+	sendEventOrIgnore(pvcName, volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
 
 	topology := map[string]string{zfs.ZFSTopologyKey: selected}
 	cntx := map[string]string{zfs.PoolNameKey: pool}
@@ -268,7 +270,7 @@ func (cs *controller) DeleteVolume(
 		)
 	}
 
-	sendEventOrIgnore(volumeID, vol.Spec.Capacity, "zfs-localpv", analytics.VolumeDeprovision)
+	sendEventOrIgnore("", volumeID, vol.Spec.Capacity, "zfs-localpv", analytics.VolumeDeprovision)
 
 deleteResponse:
 	return csipayload.NewDeleteVolumeResponseBuilder().Build(), nil
