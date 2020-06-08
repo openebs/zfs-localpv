@@ -3,6 +3,7 @@ package zfs
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/Sirupsen/logrus"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
@@ -60,29 +61,28 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 		return nil
 	}
 
-	if vol.Spec.VolumeType == VOLTYPE_DATASET {
-		if err = UmountZFSDataset(vol); err != nil {
-			logrus.Errorf(
-				"zfspv failed to umount dataset: path %s Error: %v",
-				targetPath, err,
-			)
-			return err
-		}
-	} else {
-		if err = mounter.Unmount(targetPath); err != nil {
-			logrus.Errorf(
-				"zfspv failed to unmount zvol: path %s Error: %v",
-				targetPath, err,
-			)
-			return err
-		}
+	if err = mounter.Unmount(targetPath); err != nil {
+		logrus.Errorf(
+			"zfs: failed to unmount %s: path %s err: %v",
+			vol.Name, targetPath, err,
+		)
+		return err
+	}
+
+	if err = SetDatasetLegacyMount(vol); err != nil {
+		// ignoring the failure as the volume has already
+		// been umounted, now the new pod can mount it
+		logrus.Warningf(
+			"zfs: failed to set legacy mountpoint: %s err: %v",
+			vol.Name, err,
+		)
 	}
 
 	if err := os.Remove(targetPath); err != nil {
-		logrus.Errorf("zfspv: failed to remove mount path Error: %v", err)
+		logrus.Errorf("zfspv: failed to remove mount path vol %s err : %v", vol.Name, err)
 	}
 
-	logrus.Infof("umount done path %v", targetPath)
+	logrus.Infof("umount done %s path %v", vol.Name, targetPath)
 
 	return nil
 }
@@ -132,19 +132,19 @@ func IsMountPath(path string) bool {
 
 func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 	if len(mountpath) == 0 {
-		return status.Error(codes.InvalidArgument, "mount path missing in request")
+		return status.Error(codes.InvalidArgument, "verifyMount: mount path missing in request")
 	}
 
 	if len(vol.Spec.OwnerNodeID) > 0 &&
 		vol.Spec.OwnerNodeID != NodeID {
-		return status.Error(codes.Internal, "volume is owned by different node")
+		return status.Error(codes.Internal, "verifyMount: volume is owned by different node")
 	}
 
 	devicePath, err := GetVolumeDevPath(vol)
 	if err != nil {
 		logrus.Errorf("can not get device for volume:%s dev %s err: %v",
 			vol.Name, devicePath, err.Error())
-		return err
+		return status.Errorf(codes.Internal, "verifyMount: GetVolumePath failed %s", err.Error())
 	}
 
 	/*
@@ -158,13 +158,13 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 	if err != nil {
 		logrus.Errorf("can not get mounts for volume:%s dev %s err: %v",
 			vol.Name, devicePath, err.Error())
-		return err
+		return status.Errorf(codes.Internal, "verifyMount: Getmounts failed %s", err.Error())
 	} else if len(currentMounts) >= 1 {
 		logrus.Errorf(
 			"can not mount, volume:%s already mounted dev %s mounts: %v",
 			vol.Name, devicePath, currentMounts,
 		)
-		return status.Error(codes.Internal, "device already mounted")
+		return status.Errorf(codes.Internal, "verifyMount: device already mounted at %s", currentMounts)
 	}
 	return nil
 }
@@ -174,7 +174,7 @@ func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 	err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
-		return status.Error(codes.Internal, "zvol can not be mounted")
+		return err
 	}
 
 	devicePath := ZFS_DEVPATH + volume
@@ -194,15 +194,43 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 	err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
-		return status.Error(codes.Internal, "invalid mount request")
+		return err
 	}
 
-	err = MountZFSDataset(vol, mount.MountPath)
+	val, err := GetVolumeProperty(vol, "mountpoint")
 	if err != nil {
-		return status.Errorf(codes.Internal, "zfs: mount failed err : %v", err.Error())
+		return err
 	}
 
-	logrus.Infof("dataset %v mounted %v", volume, mount.MountPath)
+	if val == "legacy" {
+		var MountVolArg []string
+		var mntopt string
+
+		for _, option := range mount.MountOptions {
+			mntopt += option + ","
+		}
+
+		MountVolArg = append(MountVolArg, "-o", mntopt, "-t", "zfs", volume, mount.MountPath)
+		cmd := exec.Command("mount", MountVolArg...)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			logrus.Errorf("zfs: could not mount the dataset %v cmd %v error: %s",
+				volume, MountVolArg, string(out))
+			return status.Errorf(codes.Internal, "dataset: mount failed err : %s", string(out))
+		}
+		logrus.Infof("dataset : legacy mounted %s => %s", volume, mount.MountPath)
+	} else {
+		/*
+		 * We might have created volumes and then upgraded the node agent before
+		 * getting the mount request for that volume. In this case volume will
+		 * not be created with mountpoint as legacy. Handling the mount in old way.
+		 */
+		err = MountZFSDataset(vol, mount.MountPath)
+		if err != nil {
+			return status.Errorf(codes.Internal, "zfs: mount failed err : %s", err.Error())
+		}
+		logrus.Infof("dataset : mounted %s => %s", volume, mount.MountPath)
+	}
 
 	return nil
 }
