@@ -140,7 +140,7 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 			reservationProperty := "reservation=" + vol.Spec.Capacity
 			ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty)
 		}
-		ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=none")
+		ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=legacy")
 	}
 
 	if len(vol.Spec.Dedup) != 0 {
@@ -235,7 +235,7 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 	}
 
 	// set the mount path to none, by default zfs mounts it to the default dataset path
-	ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=none", volume)
+	ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=legacy", volume)
 
 	return ZFSVolArg
 }
@@ -421,25 +421,24 @@ func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
 	return nil
 }
 
-// UmountZFSDataset umounts the dataset
-func UmountZFSDataset(vol *apis.ZFSVolume) error {
-	volume := vol.Spec.PoolName + "/" + vol.Name
-	var MountVolArg []string
-	MountVolArg = append(MountVolArg, "umount", volume)
-	cmd := exec.Command(ZFSVolCmd, MountVolArg...)
-	out, err := cmd.CombinedOutput()
+// SetDatasetLegacyMount sets the dataset mountpoint to legacy if not set
+func SetDatasetLegacyMount(vol *apis.ZFSVolume) error {
+	if vol.Spec.VolumeType != VOLTYPE_DATASET {
+		return nil
+	}
+
+	prop, err := GetVolumeProperty(vol, "mountpoint")
 	if err != nil {
-		logrus.Errorf("zfs: could not umount the dataset %v cmd %v error: %s",
-			volume, MountVolArg, string(out))
 		return err
 	}
-	// ignoring the failure of setting the mountpoint to none
-	// as the dataset has already been umounted, now the new pod
-	// can mount it and it will change that to desired mountpath
-	// and try to mount it if not mounted
-	SetDatasetMountProp(volume, "none")
 
-	return nil
+	if prop != "legacy" {
+		// set the mountpoint to legacy
+		volume := vol.Spec.PoolName + "/" + vol.Name
+		err = SetDatasetMountProp(volume, "legacy")
+	}
+
+	return err
 }
 
 // GetVolumeProperty gets zfs properties for the volume
@@ -454,7 +453,7 @@ func GetVolumeProperty(vol *apis.ZFSVolume, prop string) (string, error) {
 	if err != nil {
 		logrus.Errorf("zfs: could not get %s on dataset %v cmd %v error: %s",
 			prop, volume, ZFSVolArg, string(out))
-		return "", fmt.Errorf("get %s failed, %s", prop, string(out))
+		return "", fmt.Errorf("zfs get %s failed, %s", prop, string(out))
 	}
 	val := out[:len(out)-1]
 	return string(val), nil
