@@ -19,7 +19,7 @@ package driver
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	k8sapi "github.com/openebs/zfs-localpv/pkg/client/k8s/v1alpha1"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/snapshot"
@@ -77,8 +77,11 @@ func GetVolAndMountInfo(
 
 	mountinfo.FSType = req.GetVolumeCapability().GetMount().GetFsType()
 	mountinfo.MountPath = req.GetTargetPath()
-	mountinfo.ReadOnly = req.GetReadonly()
 	mountinfo.MountOptions = append(mountinfo.MountOptions, req.GetVolumeCapability().GetMount().GetMountFlags()...)
+
+	if req.GetReadonly() {
+		mountinfo.MountOptions = append(mountinfo.MountOptions, "ro")
+	}
 
 	getOptions := metav1.GetOptions{}
 	vol, err := volbuilder.NewKubeclient().

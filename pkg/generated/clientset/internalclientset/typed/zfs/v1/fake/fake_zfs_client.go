@@ -19,26 +19,26 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1alpha1"
+	v1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/typed/zfs/v1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeZfsV1alpha1 struct {
+type FakeZfsV1 struct {
 	*testing.Fake
 }
 
-func (c *FakeZfsV1alpha1) ZFSSnapshots(namespace string) v1alpha1.ZFSSnapshotInterface {
+func (c *FakeZfsV1) ZFSSnapshots(namespace string) v1.ZFSSnapshotInterface {
 	return &FakeZFSSnapshots{c, namespace}
 }
 
-func (c *FakeZfsV1alpha1) ZFSVolumes(namespace string) v1alpha1.ZFSVolumeInterface {
+func (c *FakeZfsV1) ZFSVolumes(namespace string) v1.ZFSVolumeInterface {
 	return &FakeZFSVolumes{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeZfsV1alpha1) RESTClient() rest.Interface {
+func (c *FakeZfsV1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

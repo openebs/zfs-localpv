@@ -20,8 +20,9 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"fmt"
 	"github.com/Sirupsen/logrus"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 )
 
 // zfs related constants
@@ -380,8 +381,9 @@ func SetDatasetMountProp(volume string, mountpath string) error {
 	if err != nil {
 		logrus.Errorf("zfs: could not set mountpoint on dataset %v cmd %v error: %s",
 			volume, ZFSVolArg, string(out))
+		return fmt.Errorf("could not set the mountpoint, %s", string(out))
 	}
-	return err
+	return nil
 }
 
 // MountZFSDataset mounts the dataset to the given mountpoint
@@ -413,7 +415,7 @@ func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
 		if err != nil {
 			logrus.Errorf("zfs: could not mount the dataset %v cmd %v error: %s",
 				volume, MountVolArg, string(out))
-			return err
+			return fmt.Errorf("not able to mount, %s", string(out))
 		}
 	}
 
@@ -453,7 +455,7 @@ func GetVolumeProperty(vol *apis.ZFSVolume, prop string) (string, error) {
 	if err != nil {
 		logrus.Errorf("zfs: could not get %s on dataset %v cmd %v error: %s",
 			prop, volume, ZFSVolArg, string(out))
-		return "", err
+		return "", fmt.Errorf("get %s failed, %s", prop, string(out))
 	}
 	val := out[:len(out)-1]
 	return string(val), nil

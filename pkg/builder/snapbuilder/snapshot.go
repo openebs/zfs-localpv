@@ -15,7 +15,7 @@
 package snapbuilder
 
 import (
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 )
 
 // ZFSSnapshot is a wrapper over

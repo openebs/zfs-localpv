@@ -25,11 +25,12 @@ ZFS-LocalPV is an Apache 2.0 Licensed project and all your commits should be sig
 ## Pull Request Checklist
 * Rebase to the current master branch before submitting your pull request.
 * Commits should be as small as possible. Each commit should follow the checklist below:
-  - For code changes, add tests relevant to the fixed bug or new feature.
+  - For code changes, add tests relevant to the fixed bug or new feature. 
+  - Before committing your code, make sure you have run `make format` and `make manifests`, to format the code and autogenerate the CRDs yaml.
   - Pass the compile and tests - includes spell checks, formatting, etc.
   - Commit header (first line) should convey what changed and it should follow the commit [guideline](https://github.com/openebs/openebs/blob/master/contribute/git-commit-message.md)
   - Commit body should include details such as why the changes are required and how the proposed changes help
-  - DCO Signed
+  - DCO Signed  
 * If your PR is not getting reviewed or you need a specific person to review it, please reach out to the OpenEBS Contributors. See [OpenEBS Community](https://github.com/openebs/openebs/tree/master/community)
 
 ## Sign your work

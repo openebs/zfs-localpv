@@ -31,6 +31,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
+	"github.com/openebs/zfs-localpv/pkg/common/helpers"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
 	analytics "github.com/openebs/zfs-localpv/pkg/usage"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
@@ -61,11 +62,12 @@ var SupportedVolumeCapabilityAccessModes = []*csi.VolumeCapability_AccessMode{
 }
 
 // sendEventOrIgnore sends anonymous local-pv provision/delete events
-func sendEventOrIgnore(pvName, capacity, stgType, method string) {
+func sendEventOrIgnore(pvcName, pvName, capacity, stgType, method string) {
 	if zfs.GoogleAnalyticsEnabled == "true" {
 		analytics.New().Build().ApplicationBuilder().
 			SetVolumeType(stgType, method).
 			SetDocumentTitle(pvName).
+			SetCampaignName(pvcName).
 			SetLabel(analytics.EventLabelCapacity).
 			SetReplicaCount(analytics.LocalPVReplicaCount, method).
 			SetCategory(method).
@@ -77,17 +79,25 @@ func sendEventOrIgnore(pvName, capacity, stgType, method string) {
 func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	volName := req.GetName()
 	size := req.GetCapacityRange().RequiredBytes
-	rs := req.GetParameters()["recordsize"]
-	bs := req.GetParameters()["volblocksize"]
-	compression := req.GetParameters()["compression"]
-	dedup := req.GetParameters()["dedup"]
-	encr := req.GetParameters()["encryption"]
-	kf := req.GetParameters()["keyformat"]
-	kl := req.GetParameters()["keylocation"]
-	pool := req.GetParameters()["poolname"]
-	tp := req.GetParameters()["thinprovision"]
-	schld := req.GetParameters()["scheduler"]
-	fstype := req.GetParameters()["fstype"]
+
+	// parameter keys may be mistyped from the CRD specification when declaring
+	// the storageclass, which kubectl validation will not catch. Because ZFS
+	// parameter keys (not values!) are all lowercase, keys may safely be forced
+	// to the lower case.
+	originalParams := req.GetParameters()
+	parameters := helpers.GetCaseInsensitiveMap(&originalParams)
+
+	rs := parameters["recordsize"]
+	bs := parameters["volblocksize"]
+	compression := parameters["compression"]
+	dedup := parameters["dedup"]
+	encr := parameters["encryption"]
+	kf := parameters["keyformat"]
+	kl := parameters["keylocation"]
+	pool := parameters["poolname"]
+	tp := parameters["thinprovision"]
+	schld := parameters["scheduler"]
+	fstype := parameters["fstype"]
 
 	vtype := zfs.GetVolumeType(fstype)
 
@@ -133,7 +143,9 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 func CreateZFSClone(req *csi.CreateVolumeRequest, snapshot string) (string, error) {
 
 	volName := req.GetName()
-	pool := req.GetParameters()["poolname"]
+	parameters := req.GetParameters()
+	// lower case keys, cf CreateZFSVolume()
+	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
 	size := req.GetCapacityRange().RequiredBytes
 	volsize := strconv.FormatInt(int64(size), 10)
 
@@ -191,22 +203,15 @@ func (cs *controller) CreateVolume(
 	var selected string
 
 	volName := req.GetName()
-	pool := req.GetParameters()["poolname"]
+	parameters := req.GetParameters()
+	// lower case keys, cf CreateZFSVolume()
+	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
 	size := req.GetCapacityRange().RequiredBytes
 	contentSource := req.GetVolumeContentSource()
+	pvcName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/name")
 
 	if err = cs.validateVolumeCreateReq(req); err != nil {
 		return nil, err
-	}
-
-	selected, state, err := zfs.GetZFSVolumeState(req.Name)
-
-	if err == nil {
-		// ZFSVolume CR has been created, check if it is in Ready state
-		if state == zfs.ZFSStatusReady {
-			goto CreateVolumeResponse
-		}
-		return nil, status.Errorf(codes.Internal, "volume %s creation is Pending", volName)
 	}
 
 	if contentSource != nil && contentSource.GetSnapshot() != nil {
@@ -221,19 +226,7 @@ func (cs *controller) CreateVolume(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	_, state, err = zfs.GetZFSVolumeState(req.Name)
-
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "createvolume: failed to fetch the volume %v", err.Error())
-	}
-
-	if state == zfs.ZFSStatusPending {
-		return nil, status.Errorf(codes.Internal, "volume %s is being created", volName)
-	}
-
-CreateVolumeResponse:
-
-	sendEventOrIgnore(volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
+	sendEventOrIgnore(pvcName, volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
 
 	topology := map[string]string{zfs.ZFSTopologyKey: selected}
 	cntx := map[string]string{zfs.PoolNameKey: pool}
@@ -288,7 +281,7 @@ func (cs *controller) DeleteVolume(
 		)
 	}
 
-	sendEventOrIgnore(volumeID, vol.Spec.Capacity, "zfs-localpv", analytics.VolumeDeprovision)
+	sendEventOrIgnore("", volumeID, vol.Spec.Capacity, "zfs-localpv", analytics.VolumeDeprovision)
 
 deleteResponse:
 	return csipayload.NewDeleteVolumeResponseBuilder().Build(), nil

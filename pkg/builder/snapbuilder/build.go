@@ -17,7 +17,7 @@ limitations under the License.
 package snapbuilder
 
 import (
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1alpha1"
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/common/errors"
 )
 
