@@ -49,6 +49,7 @@ const (
 	VOLTYPE_ZVOL    = "ZVOL"
 )
 
+// PropertyChanged return whether volume property is changed
 func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
 	if oldVol.Spec.VolumeType == VOLTYPE_DATASET &&
 		newVol.Spec.VolumeType == VOLTYPE_DATASET &&
@@ -363,7 +364,7 @@ func CreateClone(vol *apis.ZFSVolume) error {
 	}
 
 	if vol.Spec.FsType == "xfs" {
-		return xfs_generate_uuid(volume)
+		return xfsGenerateUuid(volume)
 	}
 	return nil
 }
@@ -597,6 +598,7 @@ func GetVolumeDevPath(vol *apis.ZFSVolume) (string, error) {
 	return dev, nil
 }
 
+// ResizeZFSVolume resize volume
 func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string) error {
 
 	volume := vol.Spec.PoolName + "/" + vol.Name

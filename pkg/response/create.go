@@ -43,7 +43,7 @@ func (b *CreateVolumeResponseBuilder) WithName(name string) *CreateVolumeRespons
 	return b
 }
 
-// WithName sets the capacity against the
+// WithCapacity sets the capacity against the
 // CreateVolumeResponse instance
 func (b *CreateVolumeResponseBuilder) WithCapacity(capacity int64) *CreateVolumeResponseBuilder {
 	b.response.Volume.CapacityBytes = capacity

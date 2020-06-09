@@ -212,11 +212,12 @@ func (c *Client) Config() (config *rest.Config, err error) {
 	return c.getInClusterConfig()
 }
 
-// ConfigForPath returns the kuberentes config instance based on KubeConfig path
+// ConfigForPath returns the kubernetes config instance based on KubeConfig path
 func (c *Client) ConfigForPath(kubeConfigPath string) (config *rest.Config, err error) {
 	return c.buildConfigFromFlags("", kubeConfigPath)
 }
 
+// GetConfigForPathOrDirect returns the kubernetes config instance based on direct KubeConfig
 func (c *Client) GetConfigForPathOrDirect() (config *rest.Config, err error) {
 	if c.KubeConfigPath != "" {
 		return c.ConfigForPath(c.KubeConfigPath)

@@ -21,26 +21,28 @@ const (
 
 	// supported events categories
 
-	// Install event is sent on pod starts
+	// InstallEvent event is sent on pod starts
 	InstallEvent string = "install"
 	// Ping event is sent periodically
 	Ping string = "zfs-ping"
 	// VolumeProvision event is sent when a volume is created
 	VolumeProvision string = "volume-provision"
-	//VolumeDeprovision event is sent when a volume is deleted
+	// VolumeDeprovision event is sent when a volume is deleted
 	VolumeDeprovision string = "volume-deprovision"
-	AppName           string = "OpenEBS"
+	// AppName the application name
+	AppName string = "OpenEBS"
 
+	// RunningStatus status is running
+	RunningStatus string = "running"
 	// Event labels
-	RunningStatus      string = "running"
 	EventLabelNode     string = "nodes"
 	EventLabelCapacity string = "capacity"
 
-	// Event action
+	// Replica Event replication
 	Replica             string = "replica:"
 	DefaultReplicaCount string = "replica:1"
 
-	// Event application name constant for volume event
+	// DefaultCASType Event application name constant for volume event
 	DefaultCASType string = "zfs-localpv"
 
 	// LocalPVReplicaCount is the constant used by usage to represent

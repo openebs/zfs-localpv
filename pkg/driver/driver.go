@@ -29,10 +29,9 @@ var supportedAccessMode = &csi.VolumeCapability_AccessMode{
 	Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER,
 }
 
-// TODO check if this can be renamed to Base
-//
 // CSIDriver defines a common data structure
 // for drivers
+// TODO check if this can be renamed to Base
 type CSIDriver struct {
 	// TODO change the field names to make it
 	// readable

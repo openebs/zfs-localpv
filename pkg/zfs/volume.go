@@ -27,11 +27,11 @@ import (
 )
 
 const (
-	// OpenEBSNamespace is the environment variable to get openebs namespace
+	// OpenEBSNamespaceKey is the environment variable to get openebs namespace
 	//
 	// This environment variable is set via kubernetes downward API
 	OpenEBSNamespaceKey string = "OPENEBS_NAMESPACE"
-	// This environment variable is set via env
+	// GoogleAnalyticsKey This environment variable is set via env
 	GoogleAnalyticsKey string = "OPENEBS_IO_ENABLE_ANALYTICS"
 	// ZFSFinalizer for the ZfsVolume CR
 	ZFSFinalizer string = "zfs.openebs.io/finalizer"
@@ -56,7 +56,7 @@ var (
 	// NodeID is the NodeID of the node on which the pod is present
 	NodeID string
 
-	// should send google analytics or not
+	// GoogleAnalyticsEnabled should send google analytics or not
 	GoogleAnalyticsEnabled string
 )
 

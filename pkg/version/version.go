@@ -108,6 +108,7 @@ func GetGitCommit() string {
 	return strings.TrimSpace(string(output))
 }
 
+// GetVersionDetails return version info from git commit
 func GetVersionDetails() string {
 	return "zfs-" + strings.Join([]string{Get(), GetGitCommit()[0:7]}, "-")
 }

@@ -178,6 +178,7 @@ func (b *Builder) WithSnapshot(snap string) *Builder {
 	return b
 }
 
+// WithPoolName sets Pool name for creating volume
 func (b *Builder) WithPoolName(pool string) *Builder {
 	if pool == "" {
 		b.errs = append(
@@ -192,7 +193,8 @@ func (b *Builder) WithPoolName(pool string) *Builder {
 	return b
 }
 
-func (b *Builder) WithNodename(name string) *Builder {
+// WithNodeName sets NodeID for creating the volume
+func (b *Builder) WithNodeName(name string) *Builder {
 	if name == "" {
 		b.errs = append(
 			b.errs,
@@ -223,6 +225,7 @@ func (b *Builder) WithLabels(labels map[string]string) *Builder {
 	return b
 }
 
+// WithFinalizer sets Finalizer name creating the volume
 func (b *Builder) WithFinalizer(finalizer []string) *Builder {
 	b.volume.Object.Finalizers = append(b.volume.Object.Finalizers, finalizer...)
 	return b

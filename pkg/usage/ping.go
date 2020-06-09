@@ -22,6 +22,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/common/env"
 )
 
+// OpenEBSPingPeriod  ping interval of volume io analytics
 var OpenEBSPingPeriod = "OPENEBS_IO_ANALYTICS_PING_INTERVAL"
 
 const (
@@ -39,7 +40,7 @@ func PingCheck() {
 	u := New()
 	duration := getPingPeriod()
 	ticker := time.NewTicker(duration)
-	for _ = range ticker.C {
+	for range ticker.C {
 		u.Build().
 			InstallBuilder(true).
 			SetCategory(Ping).
@@ -57,7 +58,8 @@ func getPingPeriod() time.Duration {
 	if duration < minimumPingPeriod {
 		// Avoid corner case when the ENV value is undesirable
 		return time.Duration(defaultPingPeriod)
-	} else {
-		return time.Duration(duration)
 	}
+
+	return time.Duration(duration)
+
 }

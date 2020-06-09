@@ -69,6 +69,7 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 	}
 }
 
+// GetVolAndMountInfo get volume and mount info from node csi volume request
 func GetVolAndMountInfo(
 	req *csi.NodePublishVolumeRequest,
 ) (*apis.ZFSVolume, *apis.MountInfo, error) {

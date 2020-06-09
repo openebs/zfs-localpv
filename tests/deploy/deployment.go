@@ -171,7 +171,7 @@ func (b *Builder) WithNodeSelector(selector map[string]string) *Builder {
 	return b
 }
 
-// WithNodeSelector Sets the node selector with the provided argument.
+// WithNodeSelectorNew Sets the node selector with the provided argument.
 func (b *Builder) WithNodeSelectorNew(selector map[string]string) *Builder {
 	if len(selector) == 0 {
 		b.errors = append(
