@@ -1,3 +1,41 @@
+v0.8.0 / 2020-06-13
+========================
+
+  * changing image pull policy to IfNotPresent to make it not pull the image again and again ([#124](https://github.com//pull/124),[@pawanpraka1](https://github.com/pawanpraka1))
+  * moving to legacy mount ([#151](https://github.com//pull/151),[@pawanpraka1](https://github.com/pawanpraka1))
+  * Fixes an issue where volumes meant to be filesystem datasets got created as zvols and generally makes storageclass parameter spelling insensitive to case ([#144](https://github.com//pull/144),[@cruwe](https://github.com/cruwe))
+  * include pvc name in volume events ([#150](https://github.com//pull/150),[@pawanpraka1](https://github.com/pawanpraka1))
+  * Fixes an issue where PVC was bound to unusable PV created using incorrect values provided in PVC/Storageclass ([#121](https://github.com//pull/121),[@pawanpraka1](https://github.com/pawanpraka1))
+  * adding v1 CRD for ZFS-LocalPV  ([#140](https://github.com//pull/140),[@pawanpraka1](https://github.com/pawanpraka1))
+  * add contributing checkout list ([#138](https://github.com//pull/138),[@Icedroid](https://github.com/Icedroid))
+  * fixing golint warnings ([#133](https://github.com//pull/133),[@Icedroid](https://github.com/Icedroid))
+  * removing unnecessary printer columns from ZFSVolume ([#128](https://github.com//pull/128),[@pawanpraka1](https://github.com/pawanpraka1))
+  * fixing stale ZFSVolume resource issue when deleting the pvc in pending state ([#145](https://github.com//pull/145),[@pawanpraka1](https://github.com/pawanpraka1))
+  * Updated the doc for custom-topology support ([#122](https://github.com//pull/122),[@w3aman](https://github.com/w3aman))
+  * adding operator yaml for centos7 and centos8 ([#149](https://github.com//pull/149),[@pawanpraka1](https://github.com/pawanpraka1))
+  * honouring readonly flag for ZFS-LocalPV ([#137](https://github.com//pull/137),[@pawanpraka1](https://github.com/pawanpraka1))
+
+v0.8.0-RC2 / 2020-06-12
+========================
+
+v0.8.0-RC1 / 2020-06-10
+========================
+
+  * changing image pull policy to IfNotPresent to make it not pull the image again and again ([#124](https://github.com//pull/124),[@pawanpraka1](https://github.com/pawanpraka1))
+  * moving to legacy mount ([#151](https://github.com//pull/151),[@pawanpraka1](https://github.com/pawanpraka1))
+  * Fixes an issue where volumes meant to be filesystem datasets got created as zvols and generally makes storageclass parameter spelling insensitive to case ([#144](https://github.com//pull/144),[@cruwe](https://github.com/cruwe))
+  * include pvc name in volume events ([#150](https://github.com//pull/150),[@pawanpraka1](https://github.com/pawanpraka1))
+  * Fixes an issue where PVC was bound to unusable PV created using incorrect values provided in PVC/Storageclass ([#121](https://github.com//pull/121),[@pawanpraka1](https://github.com/pawanpraka1))
+  * adding v1 CRD for ZFS-LocalPV  ([#140](https://github.com//pull/140),[@pawanpraka1](https://github.com/pawanpraka1))
+  * add contributing checkout list ([#138](https://github.com//pull/138),[@Icedroid](https://github.com/Icedroid))
+  * fixing golint warnings ([#133](https://github.com//pull/133),[@Icedroid](https://github.com/Icedroid))
+  * removing unnecessary printer columns from ZFSVolume ([#128](https://github.com//pull/128),[@pawanpraka1](https://github.com/pawanpraka1))
+  * fixing stale ZFSVolume resource issue when deleting the pvc in pending state ([#145](https://github.com//pull/145),[@pawanpraka1](https://github.com/pawanpraka1))
+  * Updated the doc for custom-topology support ([#122](https://github.com//pull/122),[@w3aman](https://github.com/w3aman))
+  * adding operator yaml for centos7 and centos8 ([#149](https://github.com//pull/149),[@pawanpraka1](https://github.com/pawanpraka1))
+  * honouring readonly flag for ZFS-LocalPV ([#137](https://github.com//pull/137),[@pawanpraka1](https://github.com/pawanpraka1))
+
+
 v0.7.0 / 2020-05-15
 =======================
 
