@@ -9,8 +9,7 @@ CSI driver for provisioning Local PVs backed by ZFS and more.
 
 ## Project Status
 
-This project is under active development and considered to be in Alpha state.
-The current implementation only supports provisioning and de-provisioning of ZFS Volumes. Also, few properties like compression, dedup and recordsize can be provided while provisioning the volumes and can also be changed after provisioning is done.
+This project is under active development and with the release of version v0.8.x it is now promoted to beta state. The current implementation supports provisioning and de-provisioning of ZFS Volumes, CSI volume resize, Raw block volumes, Snapshot and Clone. Also, few properties like compression, dedup and recordsize can be provided while provisioning the volumes and can also be changed after provisioning is done.
 
 ## Project Tracker
 
