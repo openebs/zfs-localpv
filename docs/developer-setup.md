@@ -15,19 +15,17 @@
 
 ### Clone fork to local host
 
-Place openebs/zfs-localpv's code on your `GOPATH` using the following cloning procedure.
+Place openebs/zfs-localpv's code on your local machine using the following cloning procedure.
 Create your clone:
 
 ```sh
-
-mkdir -p $GOPATH/src/github.com/openebs
-cd $GOPATH/src/github.com/openebs
+cd path/to/zfs-loclalpv
 
 # Note: Here user= your github profile name
 git clone https://github.com/$user/zfs-localpv.git
 
 # Configure remote upstream
-cd $GOPATH/src/github.com/openebs/zfs-localpv
+cd path/to/folder/zfs-localpv
 git remote add upstream https://github.com/openebs/zfs-localpv.git
 
 # Never push to upstream master
@@ -36,7 +34,6 @@ git remote set-url --push upstream no_push
 # Confirm that your remotes make sense:
 git remote -v
 ```
-> **Note:** If your `GOPATH` has more than one (`:` separated) paths in it, then you should use *one of your go path* instead of `$GOPATH` in the commands mentioned here. This statement holds throughout this document.
 
 Install the build dependencies.
   * Run `make bootstrap` to install the required Go tools
@@ -47,7 +44,7 @@ Install the build dependencies.
 Open a terminal on your local host. Change directory to the zfs-localpv fork root.
 
 ```sh
-$ cd $GOPATH/src/github.com/openebs/zfs-localpv
+$ cd path/to/directory/zfs-localpv
 ```
 
  Checkout the master branch.
