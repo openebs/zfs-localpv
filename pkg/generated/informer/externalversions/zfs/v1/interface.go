@@ -24,6 +24,10 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// ZFSBackups returns a ZFSBackupInformer.
+	ZFSBackups() ZFSBackupInformer
+	// ZFSRestores returns a ZFSRestoreInformer.
+	ZFSRestores() ZFSRestoreInformer
 	// ZFSSnapshots returns a ZFSSnapshotInformer.
 	ZFSSnapshots() ZFSSnapshotInformer
 	// ZFSVolumes returns a ZFSVolumeInformer.
@@ -39,6 +43,16 @@ type version struct {
 // New returns a new Interface.
 func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakListOptions internalinterfaces.TweakListOptionsFunc) Interface {
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
+}
+
+// ZFSBackups returns a ZFSBackupInformer.
+func (v *version) ZFSBackups() ZFSBackupInformer {
+	return &zFSBackupInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ZFSRestores returns a ZFSRestoreInformer.
+func (v *version) ZFSRestores() ZFSRestoreInformer {
+	return &zFSRestoreInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // ZFSSnapshots returns a ZFSSnapshotInformer.

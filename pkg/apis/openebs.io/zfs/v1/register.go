@@ -73,6 +73,10 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ZFSVolumeList{},
 		&ZFSSnapshot{},
 		&ZFSSnapshotList{},
+		&ZFSBackup{},
+		&ZFSBackupList{},
+		&ZFSRestore{},
+		&ZFSRestoreList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

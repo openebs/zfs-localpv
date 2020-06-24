@@ -1,0 +1,12 @@
+apiVersion: zfs.openebs.io/v1
+kind: ZFSBackup
+metadata:
+  name: testbkp
+  namespace: openebs
+spec:
+  volumeName: "pvc-55e3ec53-a82c-4753-9037-9a610ea8b5d6"
+  ownerNodeID: pawan-node-1
+  snapName: "snap1"
+  backupDest: "10.41.10.61:1234"
+status: "Init"
+

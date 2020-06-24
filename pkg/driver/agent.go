@@ -23,6 +23,8 @@ import (
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	k8sapi "github.com/openebs/zfs-localpv/pkg/client/k8s/v1alpha1"
+	"github.com/openebs/zfs-localpv/pkg/mgmt/backup"
+	"github.com/openebs/zfs-localpv/pkg/mgmt/restore"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/snapshot"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/volume"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
@@ -60,6 +62,22 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 	// start the snapshot watcher
 	go func() {
 		err := snapshot.Start(&ControllerMutex, stopCh)
+		if err != nil {
+			klog.Fatalf("Failed to start ZFS volume snapshot management controller: %s", err.Error())
+		}
+	}()
+
+	// start the backup controller
+	go func() {
+		err := backup.Start(&ControllerMutex, stopCh)
+		if err != nil {
+			klog.Fatalf("Failed to start ZFS volume snapshot management controller: %s", err.Error())
+		}
+	}()
+
+	// start the restore controller
+	go func() {
+		err := restore.Start(&ControllerMutex, stopCh)
 		if err != nil {
 			klog.Fatalf("Failed to start ZFS volume snapshot management controller: %s", err.Error())
 		}

@@ -19,6 +19,8 @@ import (
 	"strconv"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	"github.com/openebs/zfs-localpv/pkg/builder/bkpbuilder"
+	"github.com/openebs/zfs-localpv/pkg/builder/restorebuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,6 +47,8 @@ const (
 	ZFSTopologyKey string = "openebs.io/nodename"
 	// ZFSStatusPending shows object has not handled yet
 	ZFSStatusPending string = "Pending"
+	// ZFSStatusFailed shows object operation has failed
+	ZFSStatusFailed string = "Failed"
 	// ZFSStatusReady shows object has been processed
 	ZFSStatusReady string = "Ready"
 )
@@ -63,7 +67,7 @@ var (
 func init() {
 
 	OpenEBSNamespace = os.Getenv(OpenEBSNamespaceKey)
-	if OpenEBSNamespace == "" {
+	if OpenEBSNamespace == "" && os.Getenv("OPENEBS_NODE_DRIVER") != "" {
 		klog.Fatalf("OPENEBS_NAMESPACE environment variable not set")
 	}
 	NodeID = os.Getenv("OPENEBS_NODE_ID")
@@ -254,5 +258,46 @@ func RemoveSnapFinalizer(snap *apis.ZFSSnapshot) error {
 	snap.Finalizers = nil
 
 	_, err := snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(snap)
+	return err
+}
+
+// RemoveBkpFinalizer removes finalizer from ZFSBackup CR
+func RemoveBkpFinalizer(bkp *apis.ZFSBackup) error {
+	bkp.Finalizers = nil
+
+	_, err := bkpbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(bkp)
+	return err
+}
+
+// UpdateBkpInfo updates the backup info with the status
+func UpdateBkpInfo(bkp *apis.ZFSBackup, status apis.ZFSBackupStatus) error {
+	finalizers := []string{ZFSFinalizer}
+	newBkp, err := bkpbuilder.BuildFrom(bkp).WithFinalizer(finalizers).Build()
+
+	// set the status
+	newBkp.Status = status
+
+	if err != nil {
+		klog.Errorf("Update snapshot failed %s err: %s", bkp.Spec.VolumeName, err.Error())
+		return err
+	}
+
+	_, err = bkpbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(newBkp)
+	return err
+}
+
+// UpdateRestoreInfo updates the rstr info with the status
+func UpdateRestoreInfo(rstr *apis.ZFSRestore, status apis.ZFSRestoreStatus) error {
+	newRstr, err := restorebuilder.BuildFrom(rstr).Build()
+
+	// set the status
+	newRstr.Status = status
+
+	if err != nil {
+		klog.Errorf("Update snapshot failed %s err: %s", rstr.Spec.VolumeName, err.Error())
+		return err
+	}
+
+	_, err = restorebuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(newRstr)
 	return err
 }
