@@ -17,6 +17,7 @@ limitations under the License.
 package driver
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -26,8 +27,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
+	"k8s.io/klog"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 )
@@ -43,16 +44,42 @@ func parseEndpoint(ep string) (string, string, error) {
 	return "", "", fmt.Errorf("Invalid endpoint: %v", ep)
 }
 
+//filters if the logd are informative or pollutant
+func isInfotrmativeLog(info string) bool {
+
+	// add the messages that pollute logs to the array
+	var msgsToFilter = [][]byte{
+		[]byte("NodeGetVolumeStats"),
+		[]byte("NodeGetCapabilities"),
+	}
+
+	// checks for message in request
+	for _, msg := range msgsToFilter {
+		if bytes.Contains([]byte(info), msg) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // logGRPC logs all the grpc related errors, i.e the final errors
 // which are returned to the grpc clients
 func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	logrus.Infof("GRPC call: %s", info.FullMethod)
-	logrus.Infof("GRPC request: %s", protosanitizer.StripSecrets(req))
+
+	log := isInfotrmativeLog(info.FullMethod)
+	if log == true {
+		klog.Infof("GRPC call: %s\n requests %s", info.FullMethod, protosanitizer.StripSecrets(req))
+	}
+
 	resp, err := handler(ctx, req)
-	if err != nil {
-		logrus.Errorf("GRPC error: %v", err)
-	} else {
-		logrus.Infof("GRPC response: %s", protosanitizer.StripSecrets(resp))
+
+	if log == true {
+		if err != nil {
+			klog.Errorf("GRPC error: %v", err)
+		} else {
+			klog.Infof("GRPC response: %s", protosanitizer.StripSecrets(resp))
+		}
 	}
 	return resp, err
 }
@@ -125,7 +152,7 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 
 	proto, addr, err := parseEndpoint(endpoint)
 	if err != nil {
-		logrus.Fatal(err.Error())
+		klog.Fatal(err.Error())
 	}
 
 	// Clear off the addr if it is already present, this is done to remove stale
@@ -135,13 +162,13 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 	if proto == "unix" {
 		addr = "/" + addr
 		if err := os.Remove(addr); err != nil && !os.IsNotExist(err) {
-			logrus.Fatalf("Failed to remove %s, error: %s", addr, err.Error())
+			klog.Fatalf("Failed to remove %s, error: %s", addr, err.Error())
 		}
 	}
 
 	listener, err := net.Listen(proto, addr)
 	if err != nil {
-		logrus.Fatalf("Failed to listen: %v", err)
+		klog.Fatalf("Failed to listen: %v", err)
 	}
 
 	opts := []grpc.ServerOption{
@@ -162,7 +189,7 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 		csi.RegisterNodeServer(server, ns)
 	}
 
-	logrus.Infof("Listening for connections on address: %#v", listener.Addr())
+	klog.Infof("Listening for connections on address: %#v", listener.Addr())
 
 	// Start serving requests on the grpc server created
 	server.Serve(listener)
