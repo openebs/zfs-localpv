@@ -44,9 +44,8 @@ func parseEndpoint(ep string) (string, string, error) {
 	return "", "", fmt.Errorf("Invalid endpoint: %v", ep)
 }
 
-// logGRPC logs all the grpc related errors, i.e the final errors
-// which are returned to the grpc clients
-func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+//filters if the logd are informative or pollutant
+func infotrmativeLog(info *grpc.UnaryServerInfo) bool {
 
 	// add the messages that pollute logs to the array
 	var msgsToFilter = [][]byte{
@@ -57,19 +56,29 @@ func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, h
 	// checks for message in request
 	for _, msg := range msgsToFilter {
 		if bytes.Contains([]byte(info.FullMethod), msg) {
-			resp, err := handler(ctx, req)
-			return resp, err
+			return false
 		}
 	}
 
-	klog.Info("GRPC call: %s", info.FullMethod)
-	klog.Info("GRPC request: %s", protosanitizer.StripSecrets(req))
+	return true
+}
+
+// logGRPC logs all the grpc related errors, i.e the final errors
+// which are returned to the grpc clients
+func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+
+	logRequest := infotrmativeLog(info)
+	if logRequest == true {
+		klog.Infof("GRPC call: %s", info.FullMethod)
+		klog.Infof("GRPC request: %s", protosanitizer.StripSecrets(req))
+	}
 
 	resp, err := handler(ctx, req)
+
 	if err != nil {
 		klog.Errorf("GRPC error: %v", err)
-	} else {
-		klog.Info("GRPC response: %s", protosanitizer.StripSecrets(resp))
+	} else if logRequest == true {
+		klog.Infof("GRPC response: %s", protosanitizer.StripSecrets(resp))
 	}
 	return resp, err
 }
@@ -179,7 +188,7 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 		csi.RegisterNodeServer(server, ns)
 	}
 
-	klog.Info("Listening for connections on address: %#v", listener.Addr())
+	klog.Infof("Listening for connections on address: %#v", listener.Addr())
 
 	// Start serving requests on the grpc server created
 	server.Serve(listener)
