@@ -19,13 +19,13 @@ Place openebs/zfs-localpv's code on your local machine using the following cloni
 Create your clone:
 
 ```sh
-cd zfs-loclalpv
+cd zfs-localpv
 
 # Note: Here user= your github profile name
 git clone https://github.com/$user/zfs-localpv.git
 
 # Configure remote upstream
-cd path/to/folder/zfs-localpv
+cd zfs-localpv
 git remote add upstream https://github.com/openebs/zfs-localpv.git
 
 # Never push to upstream master
