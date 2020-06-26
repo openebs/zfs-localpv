@@ -147,24 +147,27 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 		return status.Errorf(codes.Internal, "verifyMount: GetVolumePath failed %s", err.Error())
 	}
 
-	/*
-	 * This check is the famous *Wall Of North*
-	 * It will not let the volume to be mounted
-	 * at more than two places. The volume should
-	 * be unmounted before proceeding to the mount
-	 * operation.
-	 */
-	currentMounts, err := GetMounts(devicePath)
-	if err != nil {
-		klog.Errorf("can not get mounts for volume:%s dev %s err: %v",
-			vol.Name, devicePath, err.Error())
-		return status.Errorf(codes.Internal, "verifyMount: Getmounts failed %s", err.Error())
-	} else if len(currentMounts) >= 1 {
-		klog.Errorf(
-			"can not mount, volume:%s already mounted dev %s mounts: %v",
-			vol.Name, devicePath, currentMounts,
-		)
-		return status.Errorf(codes.Internal, "verifyMount: device already mounted at %s", currentMounts)
+	// if it is not a shared volume, then make sure it is not mounted to more than one path
+	if vol.Spec.Shared != "yes" {
+		/*
+		 * This check is the famous *Wall Of North*
+		 * It will not let the volume to be mounted
+		 * at more than two places. The volume should
+		 * be unmounted before proceeding to the mount
+		 * operation.
+		 */
+		currentMounts, err := GetMounts(devicePath)
+		if err != nil {
+			klog.Errorf("can not get mounts for volume:%s dev %s err: %v",
+				vol.Name, devicePath, err.Error())
+			return status.Errorf(codes.Internal, "verifyMount: Getmounts failed %s", err.Error())
+		} else if len(currentMounts) >= 1 {
+			klog.Errorf(
+				"can not mount, volume:%s already mounted dev %s mounts: %v",
+				vol.Name, devicePath, currentMounts,
+			)
+			return status.Errorf(codes.Internal, "verifyMount: device already mounted at %s", currentMounts)
+		}
 	}
 	return nil
 }

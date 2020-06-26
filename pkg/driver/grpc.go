@@ -69,7 +69,7 @@ func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, h
 
 	log := isInfotrmativeLog(info.FullMethod)
 	if log == true {
-		klog.Infof("GRPC call: %s\n requests %s", info.FullMethod, protosanitizer.StripSecrets(req))
+		klog.Infof("GRPC call: %s requests %s", info.FullMethod, protosanitizer.StripSecrets(req))
 	}
 
 	resp, err := handler(ctx, req)
