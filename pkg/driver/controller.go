@@ -98,6 +98,7 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	tp := parameters["thinprovision"]
 	schld := parameters["scheduler"]
 	fstype := parameters["fstype"]
+	shared := parameters["shared"]
 
 	vtype := zfs.GetVolumeType(fstype)
 
@@ -124,6 +125,7 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 		WithVolumeType(vtype).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		WithFsType(fstype).
+		WithShared(shared).
 		WithCompression(compression).Build()
 
 	if err != nil {

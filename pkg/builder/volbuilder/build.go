@@ -172,6 +172,12 @@ func (b *Builder) WithFsType(fstype string) *Builder {
 	return b
 }
 
+// WithShared sets where filesystem is shared or not
+func (b *Builder) WithShared(shared string) *Builder {
+	b.volume.Object.Spec.Shared = shared
+	return b
+}
+
 // WithSnapshot sets Snapshot name for creating clone volume
 func (b *Builder) WithSnapshot(snap string) *Builder {
 	b.volume.Object.Spec.SnapName = snap
