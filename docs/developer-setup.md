@@ -19,7 +19,7 @@ Place openebs/zfs-localpv's code on your local machine using the following cloni
 Create your clone:
 
 ```sh
-cd path/to/zfs-loclalpv
+cd zfs-loclalpv
 
 # Note: Here user= your github profile name
 git clone https://github.com/$user/zfs-localpv.git
@@ -44,7 +44,7 @@ Install the build dependencies.
 Open a terminal on your local host. Change directory to the zfs-localpv fork root.
 
 ```sh
-$ cd path/to/directory/zfs-localpv
+$ cd zfs-localpv
 ```
 
  Checkout the master branch.
