@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
+	"k8s.io/klog"
 )
 
 var (
@@ -64,7 +64,7 @@ func Get() string {
 	path := filepath.Join(os.Getenv("GOPATH") + versionFile)
 	vBytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		logrus.Errorf("failed to get version: %s", err.Error())
+		klog.Errorf("failed to get version: %s", err.Error())
 		return ""
 	}
 
@@ -83,7 +83,7 @@ func GetBuildMeta() string {
 	path := filepath.Join(os.Getenv("GOPATH") + buildMetaFile)
 	vBytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		logrus.Errorf("failed to get build version: %s", err.Error())
+		klog.Errorf("failed to get build version: %s", err.Error())
 		return ""
 	}
 
@@ -101,7 +101,7 @@ func GetGitCommit() string {
 	cmd := exec.Command("git", "rev-parse", "--verify", "HEAD")
 	output, err := cmd.Output()
 	if err != nil {
-		logrus.Errorf("failed to get git commit: %s", err.Error())
+		klog.Errorf("failed to get git commit: %s", err.Error())
 		return ""
 	}
 

@@ -15,7 +15,6 @@
 package zfs
 
 import (
-	"github.com/Sirupsen/logrus"
 	"os"
 	"strconv"
 
@@ -24,6 +23,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog"
 )
 
 const (
@@ -64,11 +64,11 @@ func init() {
 
 	OpenEBSNamespace = os.Getenv(OpenEBSNamespaceKey)
 	if OpenEBSNamespace == "" {
-		logrus.Fatalf("OPENEBS_NAMESPACE environment variable not set")
+		klog.Fatalf("OPENEBS_NAMESPACE environment variable not set")
 	}
 	NodeID = os.Getenv("OPENEBS_NODE_ID")
 	if NodeID == "" && os.Getenv("OPENEBS_NODE_DRIVER") != "" {
-		logrus.Fatalf("NodeID environment variable not set")
+		klog.Fatalf("NodeID environment variable not set")
 	}
 
 	GoogleAnalyticsEnabled = os.Getenv(GoogleAnalyticsKey)
@@ -82,7 +82,7 @@ func ProvisionVolume(
 
 	_, err := volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Create(vol)
 	if err == nil {
-		logrus.Infof("provisioned volume %s", vol.Name)
+		klog.Infof("provisioned volume %s", vol.Name)
 	}
 
 	return err
@@ -105,7 +105,7 @@ func ProvisionSnapshot(
 
 	_, err := snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Create(snap)
 	if err == nil {
-		logrus.Infof("provisioned snapshot %s", snap.Name)
+		klog.Infof("provisioned snapshot %s", snap.Name)
 	}
 
 	return err
@@ -115,7 +115,7 @@ func ProvisionSnapshot(
 func DeleteSnapshot(snapname string) (err error) {
 	err = snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(snapname)
 	if err == nil {
-		logrus.Infof("deprovisioned snapshot %s", snapname)
+		klog.Infof("deprovisioned snapshot %s", snapname)
 	}
 
 	return
@@ -132,7 +132,7 @@ func GetVolume(volumeID string) (*apis.ZFSVolume, error) {
 func DeleteVolume(volumeID string) (err error) {
 	err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(volumeID)
 	if err == nil {
-		logrus.Infof("deprovisioned volume %s", volumeID)
+		klog.Infof("deprovisioned volume %s", volumeID)
 	}
 
 	return
@@ -217,7 +217,7 @@ func GetZFSSnapshotStatus(snapID string) (string, error) {
 		WithNamespace(OpenEBSNamespace).Get(snapID, getOptions)
 
 	if err != nil {
-		logrus.Errorf("Get snapshot failed %s err: %s", snap.Name, err.Error())
+		klog.Errorf("Get snapshot failed %s err: %s", snap.Name, err.Error())
 		return "", err
 	}
 
@@ -241,7 +241,7 @@ func UpdateSnapInfo(snap *apis.ZFSSnapshot) error {
 	newSnap.Status.State = ZFSStatusReady
 
 	if err != nil {
-		logrus.Errorf("Update snapshot failed %s err: %s", snap.Name, err.Error())
+		klog.Errorf("Update snapshot failed %s err: %s", snap.Name, err.Error())
 		return err
 	}
 

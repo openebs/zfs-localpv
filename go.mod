@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	cloud.google.com/go v0.49.0 // indirect
-	github.com/Sirupsen/logrus v1.4.2
 	github.com/container-storage-interface/spec v1.1.0
 	github.com/docker/go-units v0.4.0
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
@@ -17,7 +16,6 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jpillora/go-ogle-analytics v0.0.0-20161213085824-14b04e0594ef
 	github.com/json-iterator/go v1.1.8 // indirect
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/onsi/ginkgo v1.10.3
 	github.com/onsi/gomega v1.7.1
@@ -42,8 +40,6 @@ require (
 )
 
 replace (
-	github.com/Sirupsen/logrus v1.4.2 => github.com/sirupsen/logrus v1.4.2
-
 	k8s.io/api => k8s.io/api v0.15.12
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.15.12
 	k8s.io/apimachinery => k8s.io/apimachinery v0.15.12

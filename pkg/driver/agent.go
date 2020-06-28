@@ -17,7 +17,8 @@ limitations under the License.
 package driver
 
 import (
-	"github.com/Sirupsen/logrus"
+	"sync"
+
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
@@ -30,8 +31,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
-	"sync"
 )
 
 // node is the server implementation
@@ -52,7 +53,7 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 	go func() {
 		err := volume.Start(&ControllerMutex, stopCh)
 		if err != nil {
-			logrus.Fatalf("Failed to start ZFS volume management controller: %s", err.Error())
+			klog.Fatalf("Failed to start ZFS volume management controller: %s", err.Error())
 		}
 	}()
 
@@ -60,7 +61,7 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 	go func() {
 		err := snapshot.Start(&ControllerMutex, stopCh)
 		if err != nil {
-			logrus.Fatalf("Failed to start ZFS volume snapshot management controller: %s", err.Error())
+			klog.Fatalf("Failed to start ZFS volume snapshot management controller: %s", err.Error())
 		}
 	}()
 
@@ -166,7 +167,7 @@ func (ns *node) NodeUnpublishVolume(
 			"unable to umount the volume %s err : %s",
 			volumeID, err.Error())
 	}
-	logrus.Infof("hostpath: volume %s path: %s has been unmounted.",
+	klog.Infof("hostpath: volume %s path: %s has been unmounted.",
 		volumeID, targetPath)
 
 	return &csi.NodeUnpublishVolumeResponse{}, nil
@@ -182,7 +183,7 @@ func (ns *node) NodeGetInfo(
 
 	node, err := k8sapi.GetNode(ns.driver.config.NodeID)
 	if err != nil {
-		logrus.Errorf("failed to get the node %s", ns.driver.config.NodeID)
+		klog.Errorf("failed to get the node %s", ns.driver.config.NodeID)
 		return nil, err
 	}
 	/*

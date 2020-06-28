@@ -20,14 +20,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Sirupsen/logrus"
-
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog"
 )
 
 // isDeletionCandidate checks if a zfs volume is a deletion candidate.
@@ -114,7 +113,7 @@ func (c *ZVController) addZV(obj interface{}) {
 	if zfs.NodeID != zv.Spec.OwnerNodeID {
 		return
 	}
-	logrus.Infof("Got add event for ZV %s/%s", zv.Spec.PoolName, zv.Name)
+	klog.Infof("Got add event for ZV %s/%s", zv.Spec.PoolName, zv.Name)
 	c.enqueueZV(zv)
 }
 
@@ -134,7 +133,7 @@ func (c *ZVController) updateZV(oldObj, newObj interface{}) {
 	oldZV, _ := oldObj.(*apis.ZFSVolume)
 	if zfs.PropertyChanged(oldZV, newZV) ||
 		c.isDeletionCandidate(newZV) {
-		logrus.Infof("Got update event for ZV %s/%s", newZV.Spec.PoolName, newZV.Name)
+		klog.Infof("Got update event for ZV %s/%s", newZV.Spec.PoolName, newZV.Name)
 		c.enqueueZV(newZV)
 	}
 }
@@ -159,7 +158,7 @@ func (c *ZVController) deleteZV(obj interface{}) {
 		return
 	}
 
-	logrus.Infof("Got delete event for ZV %s/%s", zv.Spec.PoolName, zv.Name)
+	klog.Infof("Got delete event for ZV %s/%s", zv.Spec.PoolName, zv.Name)
 	c.enqueueZV(zv)
 }
 
@@ -172,23 +171,23 @@ func (c *ZVController) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer c.workqueue.ShutDown()
 
 	// Start the informer factories to begin populating the informer caches
-	logrus.Info("Starting ZV controller")
+	klog.Info("Starting ZV controller")
 
 	// Wait for the k8s caches to be synced before starting workers
-	logrus.Info("Waiting for informer caches to sync")
+	klog.Info("Waiting for informer caches to sync")
 	if ok := cache.WaitForCacheSync(stopCh, c.zvSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
-	logrus.Info("Starting ZV workers")
+	klog.Info("Starting ZV workers")
 	// Launch worker to process ZV resources
 	// Threadiness will decide the number of workers you want to launch to process work items from queue
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
 
-	logrus.Info("Started ZV workers")
+	klog.Info("Started ZV workers")
 	<-stopCh
-	logrus.Info("Shutting down ZV workers")
+	klog.Info("Shutting down ZV workers")
 
 	return nil
 }
@@ -244,7 +243,7 @@ func (c *ZVController) processNextWorkItem() bool {
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.
 		c.workqueue.Forget(obj)
-		logrus.Infof("Successfully synced '%s'", key)
+		klog.Infof("Successfully synced '%s'", key)
 		return nil
 	}(obj)
 

@@ -19,7 +19,6 @@ package volume
 import (
 	"sync"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 
 	"time"
@@ -30,6 +29,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog"
 )
 
 var (
@@ -93,7 +93,7 @@ func Start(controllerMtx *sync.RWMutex, stopCh <-chan struct{}) error {
 func getClusterConfig(kubeconfig string) (*rest.Config, error) {
 	cfg, err := rest.InClusterConfig()
 	if err != nil {
-		logrus.Errorf("Failed to get k8s Incluster config. %+v", err)
+		klog.Errorf("Failed to get k8s Incluster config. %+v", err)
 		if kubeconfig == "" {
 			return nil, errors.Wrap(err, "kubeconfig is empty")
 		}

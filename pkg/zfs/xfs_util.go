@@ -20,8 +20,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/Sirupsen/logrus"
 	"strings"
+
+	"k8s.io/klog"
 )
 
 func xfsTempMount(volume string) error {
@@ -32,7 +33,7 @@ func xfsTempMount(volume string) error {
 	tmpdir := "/tmp/" + pvol[1]
 	err := os.Mkdir(tmpdir, 0755)
 	if err != nil {
-		logrus.Errorf("xfs: failed to create tmpdir %s error: %s", tmpdir, err.Error())
+		klog.Errorf("xfs: failed to create tmpdir %s error: %s", tmpdir, err.Error())
 		return err
 	}
 
@@ -40,7 +41,7 @@ func xfsTempMount(volume string) error {
 	cmd := exec.Command("mount", "-o", "nouuid", device, tmpdir)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		logrus.Errorf("xfs: failed to mount volume %s=>%s error: %s", device, tmpdir, string(out))
+		klog.Errorf("xfs: failed to mount volume %s=>%s error: %s", device, tmpdir, string(out))
 		return err
 	}
 
@@ -48,14 +49,14 @@ func xfsTempMount(volume string) error {
 	cmd = exec.Command("umount", tmpdir)
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		logrus.Errorf("xfs: failed to umount tmpdir %s error: %s", tmpdir, string(out))
+		klog.Errorf("xfs: failed to umount tmpdir %s error: %s", tmpdir, string(out))
 		return err
 	}
 
 	// remove the directory
 	err = os.Remove(tmpdir)
 	if err != nil {
-		logrus.Errorf("xfs: failed to remove tmpdir %s error: %s", tmpdir, err.Error())
+		klog.Errorf("xfs: failed to remove tmpdir %s error: %s", tmpdir, err.Error())
 		return err
 	}
 	return nil
@@ -82,9 +83,9 @@ func xfsGenerateUuid(volume string) error {
 	cmd := exec.Command("xfs_admin", "-U", "generate", device)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		logrus.Errorf("xfs: uuid generate failed %s error: %s", volume, string(out))
+		klog.Errorf("xfs: uuid generate failed %s error: %s", volume, string(out))
 		return err
 	}
-	logrus.Infof("xfs: generated UUID for the cloned volume %s \n %v", volume, string(out))
+	klog.Infof("xfs: generated UUID for the cloned volume %s \n %v", volume, string(out))
 	return nil
 }

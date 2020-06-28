@@ -17,10 +17,11 @@ limitations under the License.
 package zfs
 
 import (
-	"github.com/Sirupsen/logrus"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	"k8s.io/kubernetes/pkg/util/mount"
 	"os/exec"
+
+	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	"k8s.io/klog"
+	"k8s.io/kubernetes/pkg/util/mount"
 )
 
 // ResizeExtn can be used to run a resize command on the ext2/3/4 filesystem
@@ -29,7 +30,7 @@ func ResizeExtn(devpath string) error {
 	cmd := exec.Command("resize2fs", devpath)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		logrus.Errorf("zfspv: ResizeExtn failed error: %s", string(out))
+		klog.Errorf("zfspv: ResizeExtn failed error: %s", string(out))
 		return err
 	}
 	return nil
@@ -41,7 +42,7 @@ func ResizeXFS(path string) error {
 	cmd := exec.Command("xfs_growfs", path)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		logrus.Errorf("zfspv: ResizeXFS failed error: %s", string(out))
+		klog.Errorf("zfspv: ResizeXFS failed error: %s", string(out))
 		return err
 	}
 	return nil

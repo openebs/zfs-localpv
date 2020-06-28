@@ -1,9 +1,6 @@
 # cloud.google.com/go v0.49.0
 ## explicit
 cloud.google.com/go/compute/metadata
-# github.com/Sirupsen/logrus v1.4.2 => github.com/sirupsen/logrus v1.4.2
-## explicit
-github.com/Sirupsen/logrus
 # github.com/container-storage-interface/spec v1.1.0
 ## explicit
 github.com/container-storage-interface/spec/lib/go/csi
@@ -72,9 +69,6 @@ github.com/jpillora/go-ogle-analytics
 # github.com/json-iterator/go v1.1.8
 ## explicit
 github.com/json-iterator/go
-# github.com/konsorten/go-windows-terminal-sequences v1.0.2
-## explicit
-github.com/konsorten/go-windows-terminal-sequences
 # github.com/kubernetes-csi/csi-lib-utils v0.6.1
 ## explicit
 github.com/kubernetes-csi/csi-lib-utils/protosanitizer

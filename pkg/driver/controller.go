@@ -22,11 +22,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/klog"
 
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
@@ -107,7 +107,7 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 		return "", status.Error(codes.Internal, "scheduler failed")
 	}
 
-	logrus.Infof("scheduled the volume %s/%s on node %s", pool, volName, selected)
+	klog.Infof("scheduled the volume %s/%s on node %s", pool, volName, selected)
 
 	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
@@ -245,7 +245,7 @@ func (cs *controller) DeleteVolume(
 	ctx context.Context,
 	req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
 
-	logrus.Infof("received request to delete volume {%s}", req.VolumeId)
+	klog.Infof("received request to delete volume {%s}", req.VolumeId)
 
 	var (
 		err error
@@ -377,7 +377,7 @@ func (cs *controller) CreateSnapshot(
 	req *csi.CreateSnapshotRequest,
 ) (*csi.CreateSnapshotResponse, error) {
 
-	logrus.Infof("CreateSnapshot volume %s@%s", req.SourceVolumeId, req.Name)
+	klog.Infof("CreateSnapshot volume %s@%s", req.SourceVolumeId, req.Name)
 
 	snapTimeStamp := time.Now().Unix()
 	state, err := zfs.GetZFSSnapshotStatus(req.Name)
@@ -446,7 +446,7 @@ func (cs *controller) DeleteSnapshot(
 	req *csi.DeleteSnapshotRequest,
 ) (*csi.DeleteSnapshotResponse, error) {
 
-	logrus.Infof("DeleteSnapshot request for %s", req.SnapshotId)
+	klog.Infof("DeleteSnapshot request for %s", req.SnapshotId)
 
 	// snapshodID is formed as <volname>@<snapname>
 	// parsing them here
