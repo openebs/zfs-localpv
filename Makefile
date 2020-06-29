@@ -25,6 +25,7 @@ VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods \
 # targets or for development purposes
 EXTERNAL_TOOLS=\
 	golang.org/x/tools/cmd/cover \
+	github.com/golang/lint/golint\
 	github.com/axw/gocov/gocov \
 	gopkg.in/matm/v1/gocov-html \
 	github.com/onsi/ginkgo/ginkgo \
@@ -238,3 +239,10 @@ ci:
 deploy-images:
 	@DIMAGE="${IMAGE_ORG}/zfs-driver" ./buildscripts/push
 
+.PHONY: lint
+lint:
+	@echo "--> Running go lint"
+	@echo "Consider these golint reccomendations"
+	@golint $(PACKAGES)
+	@echo "--------------------------------"
+	@echo ""
