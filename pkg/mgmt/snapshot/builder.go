@@ -17,8 +17,6 @@ limitations under the License.
 package snapshot
 
 import (
-	"github.com/Sirupsen/logrus"
-
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/scheme"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
@@ -30,6 +28,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/klog"
 )
 
 const controllerAgentName = "zfssnap-controller"
@@ -105,9 +104,9 @@ func (cb *SnapControllerBuilder) withWorkqueueRateLimiting() *SnapControllerBuil
 
 // withRecorder adds recorder to controller object.
 func (cb *SnapControllerBuilder) withRecorder(ks kubernetes.Interface) *SnapControllerBuilder {
-	logrus.Infof("Creating event broadcaster")
+	klog.Infof("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(logrus.Infof)
+	eventBroadcaster.StartLogging(klog.Infof)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: ks.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 	cb.SnapController.recorder = recorder

@@ -17,9 +17,9 @@ limitations under the License.
 package driver
 
 import (
-	"github.com/Sirupsen/logrus"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	config "github.com/openebs/zfs-localpv/pkg/config"
+	"k8s.io/klog"
 )
 
 // volume can only be published once as
@@ -52,7 +52,7 @@ func GetVolumeCapabilityAccessModes() []*csi.VolumeCapability_AccessMode {
 
 	var vcams []*csi.VolumeCapability_AccessMode
 	for _, vcam := range supported {
-		logrus.Infof("enabling volume access mode: %s", vcam.String())
+		klog.Infof("enabling volume access mode: %s", vcam.String())
 		vcams = append(vcams, newVolumeCapabilityAccessMode(vcam))
 	}
 	return vcams

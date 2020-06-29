@@ -17,13 +17,13 @@ limitations under the License.
 package driver
 
 import (
-	"github.com/Sirupsen/logrus"
 	"math"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	k8sapi "github.com/openebs/zfs-localpv/pkg/client/k8s/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog"
 
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 )
@@ -107,16 +107,16 @@ func scheduler(topo *csi.TopologyRequirement, schld string, pool string) string 
 
 	if topo == nil ||
 		len(topo.Preferred) == 0 {
-		logrus.Errorf("scheduler: topology information not provided")
+		klog.Errorf("scheduler: topology information not provided")
 		return ""
 	}
 
 	nodelist, err := GetNodeList(topo)
 	if err != nil {
-		logrus.Errorf("scheduler: can not get the nodelist err : %v", err.Error())
+		klog.Errorf("scheduler: can not get the nodelist err : %v", err.Error())
 		return ""
 	} else if len(nodelist) == 0 {
-		logrus.Errorf("scheduler: nodelist is empty")
+		klog.Errorf("scheduler: nodelist is empty")
 		return ""
 	}
 

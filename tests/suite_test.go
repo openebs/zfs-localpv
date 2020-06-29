@@ -17,7 +17,9 @@ limitations under the License.
 package tests
 
 import (
-	"github.com/Sirupsen/logrus"
+	"os"
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
@@ -28,8 +30,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	"os"
-	"testing"
+	"k8s.io/klog"
 
 	// auth plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -69,7 +70,7 @@ func init() {
 
 	OpenEBSNamespace = os.Getenv("OPENEBS_NAMESPACE")
 	if OpenEBSNamespace == "" {
-		logrus.Fatalf("OPENEBS_NAMESPACE environment variable not set")
+		klog.Fatalf("OPENEBS_NAMESPACE environment variable not set")
 	}
 	SCClient = sc.NewKubeClient(sc.WithKubeConfigPath(KubeConfigPath))
 	PVCClient = pvc.NewKubeClient(pvc.WithKubeConfigPath(KubeConfigPath))

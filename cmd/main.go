@@ -6,12 +6,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	config "github.com/openebs/zfs-localpv/pkg/config"
 	"github.com/openebs/zfs-localpv/pkg/driver"
 	"github.com/openebs/zfs-localpv/pkg/version"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	"github.com/spf13/cobra"
+	"k8s.io/klog"
 )
 
 /*
@@ -70,8 +70,8 @@ func run(config *config.Config) {
 		config.Version = version.Current()
 	}
 
-	logrus.Infof("ZFS Driver Version :- %s - commit :- %s", version.Current(), version.GetGitCommit())
-	logrus.Infof(
+	klog.Infof("ZFS Driver Version :- %s - commit :- %s", version.Current(), version.GetGitCommit())
+	klog.Infof(
 		"DriverName: %s Plugin: %s EndPoint: %s NodeID: %s",
 		config.DriverName,
 		config.PluginType,
