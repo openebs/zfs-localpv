@@ -239,10 +239,10 @@ ci:
 deploy-images:
 	@DIMAGE="${IMAGE_ORG}/zfs-driver" ./buildscripts/push
 
-.PHONY: lint
-lint:
-	@echo "--> Running go lint"
-	@echo "Consider these golint reccomendations"
+.PHONY: golint
+golint:
+	@echo "--> Running golint"
+	@echo "Consider these linter reccomendations"
 	@golint $(PACKAGES)
 	@echo "--------------------------------"
 	@echo ""
