@@ -24,29 +24,29 @@ TEST_DIR="tests"
 
 # Prepare env for runnging BDD tests
 # Minikube is already running
-sudo kubectl apply -f $ZFS_OPERATOR
+kubectl apply -f $ZFS_OPERATOR
 
 dumpAgentLogs() {
   NR=$1
-  AgentPOD=$(sudo kubectl get pods -l app=openebs-zfs-node -o jsonpath='{.items[0].metadata.name}' -n kube-system)
-  sudo kubectl describe po $AgentPOD -n kube-system
+  AgentPOD=$(kubectl get pods -l app=openebs-zfs-node -o jsonpath='{.items[0].metadata.name}' -n kube-system)
+  kubectl describe po $AgentPOD -n kube-system
   printf "\n\n"
-  sudo kubectl logs --tail=${NR} $AgentPOD -n kube-system -c openebs-zfs-plugin
+  kubectl logs --tail=${NR} $AgentPOD -n kube-system -c openebs-zfs-plugin
   printf "\n\n"
 }
 
 dumpControllerLogs() {
   NR=$1
-  ControllerPOD=$(sudo kubectl get pods -l app=openebs-zfs-controller -o jsonpath='{.items[0].metadata.name}' -n kube-system)
-  sudo kubectl describe po $ControllerPOD -n kube-system
+  ControllerPOD=$(kubectl get pods -l app=openebs-zfs-controller -o jsonpath='{.items[0].metadata.name}' -n kube-system)
+  kubectl describe po $ControllerPOD -n kube-system
   printf "\n\n"
-  sudo kubectl logs --tail=${NR} $ControllerPOD -n kube-system -c openebs-zfs-plugin
+  kubectl logs --tail=${NR} $ControllerPOD -n kube-system -c openebs-zfs-plugin
   printf "\n\n"
 }
 
 
 isPodReady(){
-  [ "$(sudo kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n kube-system)" = 'True' ]
+  [ "$(kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n kube-system)" = 'True' ]
 }
 
 
@@ -63,7 +63,7 @@ waitForZFSDriver() {
   
   i=0
   while [ "$i" -le "$period" ]; do
-    zfsDriver="$(sudo kubectl get pods -o 'jsonpath={.items[*].metadata.name}' -n kube-system)"
+    zfsDriver="$(kubectl get pods -o 'jsonpath={.items[*].metadata.name}' -n kube-system)"
     if isDriverReady $zfsDriver; then
       return 0
     fi
@@ -84,7 +84,7 @@ waitForZFSDriver
 
 cd $TEST_DIR
 
-sudo kubectl get po -n kube-system
+kubectl get po -n kube-system
 
 set +e
 
@@ -107,16 +107,16 @@ echo "********************* ZFS Agent logs *********************************"
 dumpAgentLogs 1000
 
 echo "get all the pods"
-sudo kubectl get pods -owide --all-namespaces
+kubectl get pods -owide --all-namespaces
 
 echo "get pvc and pv details"
-sudo kubectl get pvc,pv -oyaml --all-namespaces
+kubectl get pvc,pv -oyaml --all-namespaces
 
 echo "get sc details"
-sudo kubectl get sc --all-namespaces -oyaml
+kubectl get sc --all-namespaces -oyaml
 
 echo "get zfs volume details"
-sudo kubectl get zfsvolumes.zfs.openebs.io -n openebs -oyaml
+kubectl get zfsvolumes.zfs.openebs.io -n openebs -oyaml
 
 exit 1
 fi
