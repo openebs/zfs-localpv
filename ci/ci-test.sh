@@ -19,34 +19,34 @@ set -e
 export OPENEBS_NAMESPACE="openebs"
 export NodeID=$HOSTNAME
 
-ZFS_OPERATOR=$HOME/zfs-localpv/deploy/zfs-operator.yaml
+ZFS_OPERATOR=deploy/zfs-operator.yaml
 TEST_DIR="tests"
 
 # Prepare env for runnging BDD tests
 # Minikube is already running
-kubectl apply -f $ZFS_OPERATOR
+sudo kubectl apply -f $ZFS_OPERATOR
 
 dumpAgentLogs() {
   NR=$1
-  AgentPOD=$(kubectl get pods -l app=openebs-zfs-node -o jsonpath='{.items[0].metadata.name}' -n kube-system)
-  kubectl describe po $AgentPOD -n kube-system
+  AgentPOD=$(sudo kubectl get pods -l app=openebs-zfs-node -o jsonpath='{.items[0].metadata.name}' -n kube-system)
+  sudo kubectl describe po $AgentPOD -n kube-system
   printf "\n\n"
-  kubectl logs --tail=${NR} $AgentPOD -n kube-system -c openebs-zfs-plugin
+  sudo kubectl logs --tail=${NR} $AgentPOD -n kube-system -c openebs-zfs-plugin
   printf "\n\n"
 }
 
 dumpControllerLogs() {
   NR=$1
-  ControllerPOD=$(kubectl get pods -l app=openebs-zfs-controller -o jsonpath='{.items[0].metadata.name}' -n kube-system)
-  kubectl describe po $ControllerPOD -n kube-system
+  ControllerPOD=$(sudo kubectl get pods -l app=openebs-zfs-controller -o jsonpath='{.items[0].metadata.name}' -n kube-system)
+  sudo kubectl describe po $ControllerPOD -n kube-system
   printf "\n\n"
-  kubectl logs --tail=${NR} $ControllerPOD -n kube-system -c openebs-zfs-plugin
+  sudo kubectl logs --tail=${NR} $ControllerPOD -n kube-system -c openebs-zfs-plugin
   printf "\n\n"
 }
 
 
 isPodReady(){
-  [ "$(kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n kube-system)" = 'True' ]
+  [ "$(sudo kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n kube-system)" = 'True' ]
 }
 
 
@@ -63,7 +63,7 @@ waitForZFSDriver() {
   
   i=0
   while [ "$i" -le "$period" ]; do
-    zfsDriver="$(kubectl get pods -o 'jsonpath={.items[*].metadata.name}' -n kube-system)"
+    zfsDriver="$(sudo kubectl get pods -o 'jsonpath={.items[*].metadata.name}' -n kube-system)"
     if isDriverReady $zfsDriver; then
       return 0
     fi
@@ -84,7 +84,7 @@ waitForZFSDriver
 
 cd $TEST_DIR
 
-kubectl get po -n kube-system
+sudo kubectl get po -n kube-system
 
 set +e
 
@@ -107,16 +107,16 @@ echo "********************* ZFS Agent logs *********************************"
 dumpAgentLogs 1000
 
 echo "get all the pods"
-kubectl get pods -owide --all-namespaces
+sudo kubectl get pods -owide --all-namespaces
 
 echo "get pvc and pv details"
-kubectl get pvc,pv -oyaml --all-namespaces
+sudo kubectl get pvc,pv -oyaml --all-namespaces
 
 echo "get sc details"
-kubectl get sc --all-namespaces -oyaml
+sudo kubectl get sc --all-namespaces -oyaml
 
 echo "get zfs volume details"
-kubectl get zfsvolumes.zfs.openebs.io -n openebs -oyaml
+sudo kubectl get zfsvolumes.zfs.openebs.io -n openebs -oyaml
 
 exit 1
 fi
