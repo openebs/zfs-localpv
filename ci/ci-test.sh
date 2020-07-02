@@ -44,8 +44,41 @@ dumpControllerLogs() {
   printf "\n\n"
 }
 
-# wait for zfs driver to be UP
-sleep 20
+
+isPodReady(){
+  [ "$(kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n kube-system)" = 'True' ]
+}
+
+
+isDriverReady(){
+  for pod in $zfsDriver;do
+    isPodReady $pod || return 1
+  done
+}
+
+
+waitForZFSDriver() {
+  period=120
+  interval=1
+  
+  i=0
+  while [ "$i" -le "$period" ]; do
+    zfsDriver="$(kubectl get pods -l role=openebs-zfs -o 'jsonpath={.items[*].metadata.name}' -n kube-system)"
+    if isDriverReady $zfsDriver; then
+      return 0
+    fi
+
+    i=$(( i + interval ))
+    echo "Waiting for zfs-driver to be ready..."
+    sleep "$interval"
+  done
+
+  echo "Waited for $period seconds, but all pods are not ready yet."
+  return 1
+}
+
+# wait for zfs-driver to be up
+waitForZFSDriver
 
 cd $TEST_DIR
 
