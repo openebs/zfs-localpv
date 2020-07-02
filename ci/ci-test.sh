@@ -52,7 +52,7 @@ isPodReady(){
 
 isDriverReady(){
   for pod in $zfsDriver;do
-  isPodReady $pod || return 1
+    isPodReady $pod || return 1
   done
 }
 
