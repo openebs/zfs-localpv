@@ -19,7 +19,7 @@ set -e
 export OPENEBS_NAMESPACE="openebs"
 export NodeID=$HOSTNAME
 
-ZFS_OPERATOR=deploy/zfs-operator.yaml
+ZFS_OPERATOR=$HOME/zfs-localpv/deploy/zfs-operator.yaml
 TEST_DIR="tests"
 
 # Prepare env for runnging BDD tests
@@ -46,7 +46,7 @@ dumpControllerLogs() {
 
 
 isPodReady(){
-  [[ "$(kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n kube-system)" == 'True' ]]
+  [ "$(kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n kube-system)" = 'True' ]
 }
 
 
@@ -60,17 +60,20 @@ isDriverReady(){
 waitForZFSDriver() {
   period=120
   interval=1
-  echo period
-
-  for ((i=0; i<$period; i+=$interval)); do
+  
+  i=0
+  while [ "$i" -le "$period" ]; do
     zfsDriver="$(kubectl get pods -o 'jsonpath={.items[*].metadata.name}' -n kube-system)"
     if isDriverReady $zfsDriver; then
       return 0
     fi
 
+    i=$(( i + interval ))
     echo "Waiting for zfs-driver to be ready..."
     sleep "$interval"
   done
+
+  
 
   echo "Waited for $period seconds, but all pods are not ready yet."
   return 1
