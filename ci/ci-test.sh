@@ -63,7 +63,7 @@ waitForZFSDriver() {
   
   i=0
   while [ "$i" -le "$period" ]; do
-    zfsDriver="$(kubectl get pods -o 'jsonpath={.items[*].metadata.name}' -n kube-system)"
+    zfsDriver="$(kubectl get pods -l role=openebs-zfs -o 'jsonpath={.items[*].metadata.name}' -n kube-system)"
     if isDriverReady $zfsDriver; then
       return 0
     fi
@@ -72,8 +72,6 @@ waitForZFSDriver() {
     echo "Waiting for zfs-driver to be ready..."
     sleep "$interval"
   done
-
-  
 
   echo "Waited for $period seconds, but all pods are not ready yet."
   return 1
