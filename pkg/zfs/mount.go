@@ -139,6 +139,9 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 		vol.Spec.OwnerNodeID != NodeID {
 		return status.Error(codes.Internal, "verifyMount: volume is owned by different node")
 	}
+	if vol.Finalizers == nil {
+		return status.Error(codes.Internal, "verifyMount: volume is not ready, driver has not yet set the finalizer")
+	}
 
 	devicePath, err := GetVolumeDevPath(vol)
 	if err != nil {
