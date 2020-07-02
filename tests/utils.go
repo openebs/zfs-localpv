@@ -106,19 +106,20 @@ func IsPVCDeletedEventually(pvcName string) bool {
 		Should(gomega.BeTrue())
 }
 
-func createExt4StorageClass() {
+func createFstypeStorageClass(ftype string) {
 	var (
 		err error
 	)
 
 	parameters := map[string]string{
 		"poolname": POOLNAME,
-		"fstype":   "ext4",
+		"fstype":   ftype,
 	}
 
-	ginkgo.By("building a ext4 storage class")
+	ginkgo.By("building a " + ftype + " storage class")
 	scObj, err = sc.NewBuilder().
 		WithGenerateName(scName).
+		WithVolumeExpansion(true).
 		WithParametersNew(parameters).
 		WithProvisioner(ZFSProvisioner).Build()
 	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(),
@@ -147,29 +148,6 @@ func createStorageClass() {
 
 	scObj, err = SCClient.Create(scObj)
 	gomega.Expect(err).To(gomega.BeNil(), "while creating a default storageclass {%s}", scName)
-}
-
-func createZfsStorageClass() {
-	var (
-		err error
-	)
-
-	parameters := map[string]string{
-		"poolname": POOLNAME,
-		"fstype":   "zfs",
-	}
-
-	ginkgo.By("building a zfs storage class")
-	scObj, err = sc.NewBuilder().
-		WithGenerateName(scName).
-		WithParametersNew(parameters).
-		WithVolumeExpansion(true).
-		WithProvisioner(ZFSProvisioner).Build()
-	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(),
-		"while building zfs storageclass obj with prefix {%s}", scName)
-
-	scObj, err = SCClient.Create(scObj)
-	gomega.Expect(err).To(gomega.BeNil(), "while creating a zfs storageclass {%s}", scName)
 }
 
 // VerifyZFSVolume verify the properties of a zfs-volume
@@ -399,6 +377,7 @@ func resizeAndVerifyPVC() {
 		pvcName = "zfspv-pvc"
 	)
 	ginkgo.By("updating the pvc with new size")
+	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Get(pvcObj.Name, metav1.GetOptions{})
 	pvcObj, err = pvc.BuildFrom(pvcObj).
 		WithCapacity(NewCapacity).Build()
 	gomega.Expect(err).To(
@@ -430,16 +409,24 @@ func resizeAndVerifyPVC() {
 	)
 }
 func createDeployVerifyApp() {
-	ginkgo.By("creating and deploying app pod", createAndDeployAppPod)
+	ginkgo.By("creating and deploying app pod")
+	createAndDeployAppPod(appName)
 	time.Sleep(30 * time.Second)
 	ginkgo.By("verifying app pod is running", verifyAppPodRunning)
 }
 
-func createAndDeployAppPod() {
+func createDeployVerifyCloneApp() {
+	ginkgo.By("creating and deploying app pod")
+	createAndDeployAppPod(cloneAppName)
+	time.Sleep(30 * time.Second)
+	ginkgo.By("verifying app pod is running", verifyAppPodRunning)
+}
+
+func createAndDeployAppPod(appname string) {
 	var err error
 	ginkgo.By("building a busybox app pod deployment using above zfs volume")
 	deployObj, err = deploy.NewBuilder().
-		WithName(appName).
+		WithName(appname).
 		WithNamespace(OpenEBSNamespace).
 		WithLabelsNew(
 			map[string]string{
@@ -580,22 +567,21 @@ func verifyAppPodRunning() {
 	gomega.Expect(status).To(gomega.Equal(true), "while checking status of pod {%s}", appPod.Items[0].Name)
 }
 
-func deleteAppDeployment() {
+func deleteAppDeployment(appname string) {
 	err := DeployClient.WithNamespace(OpenEBSNamespace).
-		Delete(deployObj.Name, &metav1.DeleteOptions{})
+		Delete(appname, &metav1.DeleteOptions{})
 	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while deleting application pod")
 }
 
-func deletePVC() {
-	err := PVCClient.WithNamespace(OpenEBSNamespace).Delete(pvcName, &metav1.DeleteOptions{})
+func deletePVC(pvcname string) {
+	err := PVCClient.WithNamespace(OpenEBSNamespace).Delete(pvcname, &metav1.DeleteOptions{})
 	gomega.Expect(err).To(
 		gomega.BeNil(),
 		"while deleting pvc {%s} in namespace {%s}",
-		pvcName,
+		pvcname,
 		OpenEBSNamespace,
 	)
 	ginkgo.By("verifying deleted pvc")
-	status := IsPVCDeletedEventually(pvcName)
+	status := IsPVCDeletedEventually(pvcname)
 	gomega.Expect(status).To(gomega.Equal(true), "while trying to get deleted pvc")
-
 }

@@ -26,35 +26,35 @@ var _ = Describe("[zfspv] TEST VOLUME PROVISIONING", func() {
 	})
 })
 
-func datasetCreationTest() {
-	By("Creating zfs storage class", createZfsStorageClass)
-	By("creating and verifying PVC bound status", createAndVerifyPVC)
-	By("Creating and deploying app pod", createDeployVerifyApp)
-	By("verifying ZFSVolume object", VerifyZFSVolume)
-	By("Resizing the PVC", resizeAndVerifyPVC)
-	By("verifying ZFSVolume property change", VerifyZFSVolumePropEdit)
-	By("Deleting application deployment", deleteAppDeployment)
-	By("Deleting pvc", deletePVC)
-	By("Deleting storage class", deleteStorageClass)
-}
+func fsVolCreationTest() {
+	fstypes := []string{"zfs", "ext4", "xfs", "btrfs"}
+	for _, fstype := range fstypes {
+		By("####### Creating the storage class : " + fstype + " #######")
+		createFstypeStorageClass(fstype)
+		By("creating and verifying PVC bound status", createAndVerifyPVC)
+		By("Creating and deploying app pod", createDeployVerifyApp)
+		By("verifying ZFSVolume object", VerifyZFSVolume)
+		By("verifying ZFSVolume property change", VerifyZFSVolumePropEdit)
 
-func zvolCreationTest() {
-	By("Creating ext4 storage class", createExt4StorageClass)
-	By("creating and verifying PVC bound status", createAndVerifyPVC)
+		createSnapshot(pvcName, snapName)
+		verifySnapshotCreated(snapName)
+		createClone(clonePvcName, snapName, scObj.Name)
+		By("Creating and deploying clone app pod", createDeployVerifyCloneApp)
 
-	/*
-	 * commenting app deployment as provisioning is taking time
-	 * since we are creating a zfs pool on a sparse file and mkfs
-	 * is taking forever for zvol.
-	 * Should create the zfs pool on the disk. Need to check if travis
-	 * has that functionality.
-	 */
-	//By("Creating and deploying app pod", createDeployVerifyApp)
-	By("verifying ZFSVolume object", VerifyZFSVolume)
-	By("verifying ZFSVolume property change", VerifyZFSVolumePropEdit)
-	//By("Deleting application deployment", deleteAppDeployment)
-	By("Deleting pvc", deletePVC)
-	By("Deleting storage class", deleteStorageClass)
+		// btrfs does not support online resize
+		if fstype != "btrfs" {
+			By("Resizing the PVC", resizeAndVerifyPVC)
+		}
+		By("Deleting clone and main application deployment")
+		deleteAppDeployment(cloneAppName)
+		deleteAppDeployment(appName)
+
+		By("Deleting snapshot, main pvc and clone pvc")
+		deletePVC(clonePvcName)
+		deleteSnapshot(pvcName, snapName)
+		deletePVC(pvcName)
+		By("Deleting storage class", deleteStorageClass)
+	}
 }
 
 func blockVolCreationTest() {
@@ -64,13 +64,14 @@ func blockVolCreationTest() {
 	By("Creating and deploying app pod", createDeployVerifyBlockApp)
 	By("verifying ZFSVolume object", VerifyZFSVolume)
 	By("verifying ZFSVolume property change", VerifyZFSVolumePropEdit)
-	By("Deleting application deployment", deleteAppDeployment)
-	By("Deleting pvc", deletePVC)
+	By("Deleting application deployment")
+	deleteAppDeployment(appName)
+	By("Deleting pvc")
+	deletePVC(pvcName)
 	By("Deleting storage class", deleteStorageClass)
 }
 
 func volumeCreationTest() {
-	By("Running dataset creation test", datasetCreationTest)
-	By("Running zvol creation test", zvolCreationTest)
+	By("Running volume creation test", fsVolCreationTest)
 	By("Running block volume creation test", blockVolCreationTest)
 }
