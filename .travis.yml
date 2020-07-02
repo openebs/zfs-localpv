@@ -21,7 +21,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y zfsutils-linux
   - truncate -s 100G /tmp/disk.img
-  - sudo zpool create -f zfspv-pool /tmp/disk.img
+  - sudo zpool create zfspv-pool `sudo losetup -f /tmp/disk.img --show`
 install:
   - if [ "$TRAVIS_BUILD_DIR" != "$GOPATH/src/github.com/openebs/zfs-localpv" ]; then
     mkdir -p $GOPATH/src/github.com/openebs/;
@@ -31,13 +31,13 @@ install:
   - make bootstrap
   - make format
   - make golint
-  - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.16.0/bin/linux/amd64/kubectl
+  - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.17.4/bin/linux/amd64/kubectl
     && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
-  - curl -Lo minikube https://storage.googleapis.com/minikube/releases/v1.4.0/minikube-linux-amd64
+  - curl -Lo minikube https://storage.googleapis.com/minikube/releases/v1.8.1/minikube-linux-amd64
     && chmod +x minikube && sudo mv minikube /usr/local/bin/
   - mkdir -p $HOME/.kube $HOME/.minikube
   - touch $KUBECONFIG
-  - sudo minikube start --vm-driver=none --kubernetes-version=v1.16.0
+  - sudo minikube start --vm-driver=none --kubernetes-version=v1.17.4
   - sudo chown -R $USER $HOME/.minikube
   - sudo chown -R $USER $HOME/.kube
   - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}';

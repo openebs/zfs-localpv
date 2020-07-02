@@ -51,7 +51,10 @@ var (
 	scName         = "zfspv-sc"
 	ZFSProvisioner = "zfs.csi.openebs.io"
 	pvcName        = "zfspv-pvc"
+	snapName       = "zfspv-snap"
 	appName        = "busybox-zfspv"
+	clonePvcName   = "zfspv-pvc-clone"
+	cloneAppName   = "busybox-zfspv-clone"
 
 	nsObj            *corev1.Namespace
 	scObj            *storagev1.StorageClass

@@ -20,11 +20,15 @@ export OPENEBS_NAMESPACE="openebs"
 export NodeID=$HOSTNAME
 
 ZFS_OPERATOR=deploy/zfs-operator.yaml
+SNAP_CLASS=deploy/sample/zfssnapclass.yaml
+
 TEST_DIR="tests"
+
 
 # Prepare env for runnging BDD tests
 # Minikube is already running
 kubectl apply -f $ZFS_OPERATOR
+kubectl apply -f $SNAP_CLASS
 
 dumpAgentLogs() {
   NR=$1
@@ -110,11 +114,17 @@ kubectl get pods -owide --all-namespaces
 echo "get pvc and pv details"
 kubectl get pvc,pv -oyaml --all-namespaces
 
+echo "get snapshot details"
+kubectl get volumesnapshot.snapshot -oyaml --all-namespaces
+
 echo "get sc details"
 kubectl get sc --all-namespaces -oyaml
 
 echo "get zfs volume details"
 kubectl get zfsvolumes.zfs.openebs.io -n openebs -oyaml
+
+echo "get zfs snapshot details"
+kubectl get zfssnapshots.zfs.openebs.io -n openebs -oyaml
 
 exit 1
 fi
