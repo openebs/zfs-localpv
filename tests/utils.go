@@ -179,7 +179,7 @@ func VerifyZFSVolume() {
 		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
 	gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", pvcObj.Spec.VolumeName)
 
-	volType := zfs.VoltpeZVol
+	volType := zfs.VolTypeZVol
 	if scObj.Parameters["fstype"] == zfs.FSTypeZFS {
 		volType = zfs.VolTypeDataset
 	}
@@ -274,7 +274,7 @@ func VerifyZFSVolumePropEdit() {
 		gomega.Expect(status).To(gomega.Equal(true), "while updating redordsize {%s}", vol.Name)
 	} else {
 
-		gomega.Expect(vol.Spec.VolumeType).To(gomega.Equal(zfs.VoltpeZVol), "voltype should be zvol {%s}", vol.Name)
+		gomega.Expect(vol.Spec.VolumeType).To(gomega.Equal(zfs.VolTypeZVol), "voltype should be zvol {%s}", vol.Name)
 
 		ginkgo.By("verifying blocksize property update")
 
