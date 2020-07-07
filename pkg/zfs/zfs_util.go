@@ -47,7 +47,7 @@ const (
 // constants to define volume type
 const (
 	VoltypeDataset = "DATASET"
-	VoltpeZVol     = "ZVOL"
+	VoltypeZVol    = "ZVOL"
 )
 
 // PropertyChanged return whether volume property is changed
@@ -73,7 +73,7 @@ func GetVolumeType(fstype string) string {
 	case FSTypeZFS:
 		return VoltypeDataset
 	default:
-		return VoltpeZVol
+		return VoltypeZVol
 	}
 }
 
