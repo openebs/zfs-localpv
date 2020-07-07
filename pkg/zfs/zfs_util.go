@@ -46,14 +46,14 @@ const (
 
 // constants to define volume type
 const (
-	VoltypeDataset = "DATASET"
-	VoltypeZVol    = "ZVOL"
+	VolTypeDataset = "DATASET"
+	VolTypeZVol    = "ZVOL"
 )
 
 // PropertyChanged return whether volume property is changed
 func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
-	if oldVol.Spec.VolumeType == VoltypeDataset &&
-		newVol.Spec.VolumeType == VoltypeDataset &&
+	if oldVol.Spec.VolumeType == VolTypeDataset &&
+		newVol.Spec.VolumeType == VolTypeDataset &&
 		oldVol.Spec.RecordSize != newVol.Spec.RecordSize {
 		return true
 	}
@@ -71,9 +71,9 @@ func GetVolumeType(fstype string) string {
 	 */
 	switch fstype {
 	case FSTypeZFS:
-		return VoltypeDataset
+		return VolTypeDataset
 	default:
-		return VoltypeZVol
+		return VolTypeZVol
 	}
 }
 
@@ -129,7 +129,7 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 
 	ZFSVolArg = append(ZFSVolArg, ZFSCloneArg)
 
-	if vol.Spec.VolumeType == VoltypeDataset {
+	if vol.Spec.VolumeType == VolTypeDataset {
 		if len(vol.Spec.Capacity) != 0 {
 			quotaProperty := "quota=" + vol.Spec.Capacity
 			ZFSVolArg = append(ZFSVolArg, "-o", quotaProperty)
@@ -251,7 +251,7 @@ func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 
 	ZFSVolArg = append(ZFSVolArg, ZFSSetArg)
 
-	if vol.Spec.VolumeType == VoltypeDataset &&
+	if vol.Spec.VolumeType == VolTypeDataset &&
 		len(vol.Spec.RecordSize) != 0 {
 		recordsizeProperty := "recordsize=" + vol.Spec.RecordSize
 		ZFSVolArg = append(ZFSVolArg, recordsizeProperty)
@@ -279,7 +279,7 @@ func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
 
 	ZFSVolArg = append(ZFSVolArg, ZFSSetArg)
 
-	if vol.Spec.VolumeType == VoltypeDataset {
+	if vol.Spec.VolumeType == VolTypeDataset {
 		quotaProperty := "quota=" + vol.Spec.Capacity
 		ZFSVolArg = append(ZFSVolArg, quotaProperty)
 	} else {
@@ -320,7 +320,7 @@ func CreateVolume(vol *apis.ZFSVolume) error {
 
 	if err := getVolume(volume); err != nil {
 		var args []string
-		if vol.Spec.VolumeType == VoltypeDataset {
+		if vol.Spec.VolumeType == VolTypeDataset {
 			args = buildDatasetCreateArgs(vol)
 		} else {
 			args = buildZvolCreateArgs(vol)
@@ -434,7 +434,7 @@ func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
 
 // SetDatasetLegacyMount sets the dataset mountpoint to legacy if not set
 func SetDatasetLegacyMount(vol *apis.ZFSVolume) error {
-	if vol.Spec.VolumeType != VoltypeDataset {
+	if vol.Spec.VolumeType != VolTypeDataset {
 		return nil
 	}
 
@@ -477,7 +477,7 @@ func SetVolumeProp(vol *apis.ZFSVolume) error {
 
 	if len(vol.Spec.Compression) == 0 &&
 		len(vol.Spec.Dedup) == 0 &&
-		(vol.Spec.VolumeType != VoltypeDataset ||
+		(vol.Spec.VolumeType != VolTypeDataset ||
 			len(vol.Spec.RecordSize) == 0) {
 		//nothing to set, just return
 		return nil
@@ -593,7 +593,7 @@ func DestroySnapshot(snap *apis.ZFSSnapshot) error {
 // GetVolumeDevPath returns devpath for the given volume
 func GetVolumeDevPath(vol *apis.ZFSVolume) (string, error) {
 	volume := vol.Spec.PoolName + "/" + vol.Name
-	if vol.Spec.VolumeType == VoltypeDataset {
+	if vol.Spec.VolumeType == VolTypeDataset {
 		return volume, nil
 	}
 

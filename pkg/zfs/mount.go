@@ -244,7 +244,7 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 // MountFilesystem mounts the disk to the specified path
 func MountFilesystem(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	switch vol.Spec.VolumeType {
-	case VoltypeDataset:
+	case VolTypeDataset:
 		return MountDataset(vol, mount)
 	default:
 		return MountZvol(vol, mount)
