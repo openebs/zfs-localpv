@@ -23,8 +23,8 @@ type Pod struct {
 	object *corev1.Pod
 }
 
-// PodList holds the list of API pod instances
-type PodList struct {
+// List holds the list of API pod instances
+type List struct {
 	items []*Pod
 }
 
@@ -36,8 +36,8 @@ type predicateList []Predicate
 // against the provided pod instance
 type Predicate func(*Pod) bool
 
-// ToAPIList converts PodList to API PodList
-func (pl *PodList) ToAPIList() *corev1.PodList {
+// ToAPIList converts List to API List
+func (pl *List) ToAPIList() *corev1.PodList {
 	plist := &corev1.PodList{}
 	for _, pod := range pl.items {
 		plist.Items = append(plist.Items, *pod.object)
@@ -56,8 +56,8 @@ func NewForAPIObject(obj *corev1.Pod, opts ...podBuildOption) *Pod {
 	return p
 }
 
-// Len returns the number of items present in the PodList
-func (pl *PodList) Len() int {
+// Len returns the number of items present in the List
+func (pl *List) Len() int {
 	return len(pl.items)
 }
 
@@ -102,7 +102,7 @@ func IsCompleted() Predicate {
 }
 
 // HasLabels returns true if provided labels
-// map[key]value are present in the provided PodList
+// map[key]value are present in the provided List
 // instance
 func HasLabels(keyValuePair map[string]string) Predicate {
 	return func(p *Pod) bool {
@@ -117,7 +117,7 @@ func HasLabels(keyValuePair map[string]string) Predicate {
 }
 
 // HasLabel return true if provided lable
-// key and value are present in the the provided PodList
+// key and value are present in the the provided List
 // instance
 func (p *Pod) HasLabel(key, value string) bool {
 	val, ok := p.object.GetLabels()[key]
@@ -154,15 +154,15 @@ func (p *Pod) GetAPIObject() *corev1.Pod {
 	return p.object
 }
 
-// FromList created a PodList with provided api podlist
-func FromList(pods *corev1.PodList) *PodList {
+// FromList created a List with provided api List
+func FromList(pods *corev1.PodList) *List {
 	pl := ListBuilderForAPIList(pods).
 		List()
 	return pl
 }
 
 // GetScheduledNodes returns the nodes on which pods are scheduled
-func (pl *PodList) GetScheduledNodes() map[string]int {
+func (pl *List) GetScheduledNodes() map[string]int {
 	nodeNames := make(map[string]int)
 	for _, p := range pl.items {
 		p := p // pin it
@@ -171,8 +171,8 @@ func (pl *PodList) GetScheduledNodes() map[string]int {
 	return nodeNames
 }
 
-// IsMatchNodeAny checks the PodList is running on the provided nodes
-func (pl *PodList) IsMatchNodeAny(nodes map[string]int) bool {
+// IsMatchNodeAny checks the List is running on the provided nodes
+func (pl *List) IsMatchNodeAny(nodes map[string]int) bool {
 	for _, p := range pl.items {
 		p := p // pin it
 		if nodes[p.object.Spec.NodeName] == 0 {

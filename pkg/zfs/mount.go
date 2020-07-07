@@ -183,7 +183,7 @@ func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 		return err
 	}
 
-	devicePath := ZFS_DEVPATH + volume
+	devicePath := ZFSDevPath + volume
 
 	err = FormatAndMountZvol(devicePath, mount)
 	if err != nil {
@@ -244,7 +244,7 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 // MountFilesystem mounts the disk to the specified path
 func MountFilesystem(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 	switch vol.Spec.VolumeType {
-	case VOLTYPE_DATASET:
+	case VolTypeDataset:
 		return MountDataset(vol, mount)
 	default:
 		return MountZvol(vol, mount)
@@ -254,7 +254,7 @@ func MountFilesystem(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 // MountBlock mounts the block disk to the specified path
 func MountBlock(vol *apis.ZFSVolume, mountinfo *apis.MountInfo) error {
 	target := mountinfo.MountPath
-	devicePath := ZFS_DEVPATH + vol.Spec.PoolName + "/" + vol.Name
+	devicePath := ZFSDevPath + vol.Spec.PoolName + "/" + vol.Name
 	mountopt := []string{"bind"}
 
 	mounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}

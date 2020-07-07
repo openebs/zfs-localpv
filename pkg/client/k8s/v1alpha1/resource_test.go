@@ -19,13 +19,13 @@ limitations under the License.
 package v1alpha1
 
 // verify if resource struct is an implementation of ResourceGetter
-var _ ResourceGetter = &resource{}
+var _ ResourceGetter = &ResourceStruct{}
 
 // verify if resource struct is an implementation of ResourceCreator
-var _ ResourceCreator = &resource{}
+var _ ResourceCreator = &ResourceStruct{}
 
 // verify if resource struct is an implementation of ResourceUpdater
-var _ ResourceUpdater = &resource{}
+var _ ResourceUpdater = &ResourceStruct{}
 
 // verify if createOrUpdate struct is an implementation of ResourceApplier
 var _ ResourceApplier = &ResourceCreateOrUpdater{}

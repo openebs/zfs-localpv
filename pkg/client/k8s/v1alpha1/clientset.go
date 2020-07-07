@@ -26,15 +26,16 @@ type ClientsetGetter interface {
 	Get() (*kubernetes.Clientset, error)
 }
 
-type clientset struct{}
+// ClientsetStruct is used to export a kuberneter Clientset
+type ClientsetStruct struct{}
 
 // Clientset returns a pointer to clientset struct
-func Clientset() *clientset {
-	return &clientset{}
+func Clientset() *ClientsetStruct {
+	return &ClientsetStruct{}
 }
 
 // Get returns a new instance of kubernetes clientset
-func (c *clientset) Get() (*kubernetes.Clientset, error) {
+func (c *ClientsetStruct) Get() (*kubernetes.Clientset, error) {
 	config, err := Config().Get()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get kubernetes clientset")

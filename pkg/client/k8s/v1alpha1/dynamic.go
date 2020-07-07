@@ -26,16 +26,17 @@ type DynamicProvider interface {
 	Provide() (k8sdynamic.Interface, error)
 }
 
-type dynamic struct{}
+//DynamicStruct is used to initialise a kuberenets dynamic interface
+type DynamicStruct struct{}
 
 // Dynamic returns a new instance of dynamic
-func Dynamic() *dynamic {
-	return &dynamic{}
+func Dynamic() *DynamicStruct {
+	return &DynamicStruct{}
 }
 
 // Provide provides a kubernetes dynamic client capable of invoking operations
 // against kubernetes resources
-func (d *dynamic) Provide() (k8sdynamic.Interface, error) {
+func (d *DynamicStruct) Provide() (k8sdynamic.Interface, error) {
 	config, err := Config().Get()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to provide dynamic client")

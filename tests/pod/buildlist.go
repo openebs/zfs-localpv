@@ -21,20 +21,20 @@ import (
 )
 
 // ListBuilder enables building an instance of
-// Podlist
+// List
 type ListBuilder struct {
-	list    *PodList
+	list    *List
 	filters predicateList
 }
 
 // NewListBuilder returns a instance of ListBuilder
 func NewListBuilder() *ListBuilder {
-	return &ListBuilder{list: &PodList{items: []*Pod{}}}
+	return &ListBuilder{list: &List{items: []*Pod{}}}
 }
 
-// ListBuilderForAPIList returns a instance of ListBuilder from API PodList
+// ListBuilderForAPIList returns a instance of ListBuilder from API List
 func ListBuilderForAPIList(pods *corev1.PodList) *ListBuilder {
-	b := &ListBuilder{list: &PodList{}}
+	b := &ListBuilder{list: &List{}}
 	if pods == nil {
 		return b
 	}
@@ -47,7 +47,7 @@ func ListBuilderForAPIList(pods *corev1.PodList) *ListBuilder {
 
 // ListBuilderForObjectList returns a instance of ListBuilder from API Pods
 func ListBuilderForObjectList(pods ...*Pod) *ListBuilder {
-	b := &ListBuilder{list: &PodList{}}
+	b := &ListBuilder{list: &List{}}
 	if pods == nil {
 		return b
 	}
@@ -61,11 +61,11 @@ func ListBuilderForObjectList(pods ...*Pod) *ListBuilder {
 // List returns the list of pod
 // instances that was built by this
 // builder
-func (b *ListBuilder) List() *PodList {
+func (b *ListBuilder) List() *List {
 	if b.filters == nil || len(b.filters) == 0 {
 		return b.list
 	}
-	filtered := &PodList{}
+	filtered := &List{}
 	for _, pod := range b.list.items {
 		if b.filters.all(pod) {
 			filtered.items = append(filtered.items, pod)

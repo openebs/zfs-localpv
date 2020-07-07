@@ -92,7 +92,7 @@ func (b *ListBuilder) APIList() (*storagev1.StorageClassList, error) {
 }
 
 // Len returns the number of items present
-// in the PVCList of a builder
+// in the List of a builder
 func (b *ListBuilder) Len() (int, error) {
 	l, err := b.List()
 	if err != nil {

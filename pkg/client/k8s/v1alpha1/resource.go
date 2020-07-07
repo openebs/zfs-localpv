@@ -66,23 +66,24 @@ type ResourceDeleter interface {
 	Delete(obj *unstructured.Unstructured, subresources ...string) error
 }
 
-type resource struct {
+// ResourceStruct is used to abstract a kubernetes struct
+type ResourceStruct struct {
 	gvr       schema.GroupVersionResource // identify a resource
 	namespace string                      // namespace where this resource is to be operated at
 }
 
 // String implements Stringer interface
-func (r *resource) String() string {
+func (r *ResourceStruct) String() string {
 	return r.gvr.String()
 }
 
 // Resource returns a new resource instance
-func Resource(gvr schema.GroupVersionResource, namespace string) *resource {
-	return &resource{gvr: gvr, namespace: namespace}
+func Resource(gvr schema.GroupVersionResource, namespace string) *ResourceStruct {
+	return &ResourceStruct{gvr: gvr, namespace: namespace}
 }
 
 // Create creates a new resource in kubernetes cluster
-func (r *resource) Create(obj *unstructured.Unstructured, subresources ...string) (u *unstructured.Unstructured, err error) {
+func (r *ResourceStruct) Create(obj *unstructured.Unstructured, subresources ...string) (u *unstructured.Unstructured, err error) {
 	if obj == nil {
 		err = errors.Errorf("nil resource instance: failed to create resource '%s' at '%s'", r.gvr, r.namespace)
 		return
@@ -101,7 +102,7 @@ func (r *resource) Create(obj *unstructured.Unstructured, subresources ...string
 }
 
 // Delete deletes a existing resource in kubernetes cluster
-func (r *resource) Delete(obj *unstructured.Unstructured, subresources ...string) error {
+func (r *ResourceStruct) Delete(obj *unstructured.Unstructured, subresources ...string) error {
 	if obj == nil {
 		return errors.Errorf("nil resource instance: failed to delete resource '%s' at '%s'", r.gvr, r.namespace)
 	}
@@ -117,7 +118,7 @@ func (r *resource) Delete(obj *unstructured.Unstructured, subresources ...string
 }
 
 // Get returns a specific resource from kubernetes cluster
-func (r *resource) Get(name string, opts metav1.GetOptions, subresources ...string) (u *unstructured.Unstructured, err error) {
+func (r *ResourceStruct) Get(name string, opts metav1.GetOptions, subresources ...string) (u *unstructured.Unstructured, err error) {
 	if len(strings.TrimSpace(name)) == 0 {
 		err = errors.Errorf("missing resource name: failed to get resource '%s' at '%s'", r.gvr, r.namespace)
 		return
@@ -136,7 +137,7 @@ func (r *resource) Get(name string, opts metav1.GetOptions, subresources ...stri
 }
 
 // Update updates the resource at kubernetes cluster
-func (r *resource) Update(oldobj, newobj *unstructured.Unstructured, subresources ...string) (u *unstructured.Unstructured, err error) {
+func (r *ResourceStruct) Update(oldobj, newobj *unstructured.Unstructured, subresources ...string) (u *unstructured.Unstructured, err error) {
 	if oldobj == nil {
 		err = errors.Errorf("nil old resource instance: failed to update resource '%s' at '%s'", r.gvr, r.namespace)
 		return
@@ -163,7 +164,7 @@ func (r *resource) Update(oldobj, newobj *unstructured.Unstructured, subresource
 }
 
 // List returns a list of specific resource at kubernetes cluster
-func (r *resource) List(opts metav1.ListOptions) (u *unstructured.UnstructuredList, err error) {
+func (r *ResourceStruct) List(opts metav1.ListOptions) (u *unstructured.UnstructuredList, err error) {
 	dynamic, err := Dynamic().Provide()
 	if err != nil {
 		err = errors.Wrapf(err, "failed to list resource '%s'  at '%s'", r.gvr, r.namespace)
@@ -181,7 +182,7 @@ func (r *resource) List(opts metav1.ListOptions) (u *unstructured.UnstructuredLi
 // create or update a given resource. It does so by implementing
 // ResourceApplier interface
 type ResourceCreateOrUpdater struct {
-	*resource
+	*ResourceStruct
 
 	// Various executors required to perform Apply
 	// This is how this instance decouples its dependencies
@@ -222,10 +223,10 @@ func NewResourceCreateOrUpdater(
 ) *ResourceCreateOrUpdater {
 	resource := Resource(gvr, namespace)
 	t := &ResourceCreateOrUpdater{
-		resource: resource,
-		Getter:   resource,
-		Creator:  resource,
-		Updater:  resource,
+		ResourceStruct: resource,
+		Getter:         resource,
+		Creator:        resource,
+		Updater:        resource,
 	}
 	for _, o := range options {
 		o(t)
@@ -235,10 +236,10 @@ func NewResourceCreateOrUpdater(
 
 // String implements Stringer interface
 func (r *ResourceCreateOrUpdater) String() string {
-	if r.resource == nil {
+	if r.ResourceStruct == nil {
 		return fmt.Sprint("ResourceCreateOrUpdater")
 	}
-	return fmt.Sprintf("ResourceCreateOrUpdater %s", r.resource)
+	return fmt.Sprintf("ResourceCreateOrUpdater %s", r.ResourceStruct)
 }
 
 // Apply applies a resource to the kubernetes cluster. In other words, it
@@ -285,7 +286,7 @@ type ResourceDeleteOptions struct {
 
 // Delete is a resource that is suitable to be executed as a Delete operation
 type Delete struct {
-	*resource
+	*ResourceStruct
 	options ResourceDeleteOptions
 }
 
@@ -293,7 +294,7 @@ type Delete struct {
 func DeleteResource(gvr schema.GroupVersionResource, namespace string) *Delete {
 	resource := Resource(gvr, namespace)
 	options := ResourceDeleteOptions{Deleter: resource}
-	return &Delete{resource: resource, options: options}
+	return &Delete{ResourceStruct: resource, options: options}
 }
 
 // Delete deletes a resource from a kubernetes cluster
@@ -313,7 +314,7 @@ type ResourceListOptions struct {
 
 // List is a resource resource that is suitable to be executed as a List operation
 type List struct {
-	*resource
+	*ResourceStruct
 	options ResourceListOptions
 }
 
@@ -321,7 +322,7 @@ type List struct {
 func ListResource(gvr schema.GroupVersionResource, namespace string) *List {
 	resource := Resource(gvr, namespace)
 	options := ResourceListOptions{Lister: resource}
-	return &List{resource: resource, options: options}
+	return &List{ResourceStruct: resource, options: options}
 }
 
 // List lists a resource from a kubernetes cluster
@@ -340,7 +341,7 @@ type ResourceGetOptions struct {
 
 // Get is resource that is suitable to be executed as Get operation
 type Get struct {
-	*resource
+	*ResourceStruct
 	options ResourceGetOptions
 }
 
@@ -348,7 +349,7 @@ type Get struct {
 func GetResource(gvr schema.GroupVersionResource, namespace string) *Get {
 	resource := Resource(gvr, namespace)
 	options := ResourceGetOptions{Getter: resource}
-	return &Get{resource: resource, options: options}
+	return &Get{ResourceStruct: resource, options: options}
 }
 
 // Get gets a resource from a kubernetes cluster
