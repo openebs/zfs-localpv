@@ -25,7 +25,7 @@ VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods \
 # targets or for development purposes
 EXTERNAL_TOOLS=\
 	golang.org/x/tools/cmd/cover \
-	github.com/golang/lint/golint \
+	golang.org/x/lint/golint \
 	github.com/axw/gocov/gocov \
 	gopkg.in/matm/v1/gocov-html \
 	github.com/onsi/ginkgo/ginkgo \
@@ -242,7 +242,7 @@ deploy-images:
 .PHONY: golint
 golint:
 	@echo "--> Running golint"
-	@echo "Consider these linter recommendations:"
-	@golint $(PACKAGES)
+	@golint -set_exit_status $(PACKAGES)
+	@echo "Completed golint no recommendations !!"
 	@echo "--------------------------------"
 	@echo ""

@@ -244,6 +244,8 @@ spec:
             - volumeType
             type: object
           status:
+            description: VolStatus string that specifies the current state of the
+              volume provisioning request.
             properties:
               state:
                 description: State specifies the current state of the volume provisioning
@@ -417,6 +419,8 @@ spec:
             - volumeType
             type: object
           status:
+            description: VolStatus string that specifies the current state of the
+              volume provisioning request.
             properties:
               state:
                 description: State specifies the current state of the volume provisioning
@@ -637,6 +641,8 @@ spec:
             - volumeType
             type: object
           status:
+            description: SnapStatus string that reflects if the snapshot was cretaed
+              successfully
             properties:
               state:
                 type: string
@@ -804,6 +810,8 @@ spec:
             - volumeType
             type: object
           status:
+            description: SnapStatus string that reflects if the snapshot was cretaed
+              successfully
             properties:
               state:
                 type: string

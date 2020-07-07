@@ -21,7 +21,7 @@ import (
 )
 
 // test if dynamic implements DynamicProvider interface
-var _ DynamicProvider = &dynamic{}
+var _ DynamicProvider = &DynamicStruct{}
 
 func TestDynamicProvider(t *testing.T) {
 	tests := map[string]struct {

@@ -30,6 +30,7 @@ install:
     fi
   - make bootstrap
   - make format
+  - make golint
   - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.16.0/bin/linux/amd64/kubectl
     && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
   - curl -Lo minikube https://storage.googleapis.com/minikube/releases/v1.4.0/minikube-linux-amd64

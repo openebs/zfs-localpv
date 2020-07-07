@@ -26,7 +26,7 @@ import (
 )
 
 func xfsTempMount(volume string) error {
-	device := ZFS_DEVPATH + volume
+	device := ZFSDevPath + volume
 	pvol := strings.Split(volume, "/")
 
 	// create a temporary directory to mount the xfs file system
@@ -70,8 +70,8 @@ func xfsTempMount(volume string) error {
 * There might be something there in the xfs log, we have to clear them
 * so that filesystem is clean and we can generate the UUID for it.
  */
-func xfsGenerateUuid(volume string) error {
-	device := ZFS_DEVPATH + volume
+func xfsGenerateUUID(volume string) error {
+	device := ZFSDevPath + volume
 
 	// temporary mount the volume with nouuid to replay the logs
 	err := xfsTempMount(volume)

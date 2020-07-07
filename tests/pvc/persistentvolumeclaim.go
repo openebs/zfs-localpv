@@ -27,21 +27,21 @@ type PVC struct {
 	object *corev1.PersistentVolumeClaim
 }
 
-// PVCList is a wrapper over persistentvolumeclaim api
+// List is a wrapper over persistentvolumeclaim api
 // object. It provides build, validations and other common
 // logic to be used by various feature specific callers.
-type PVCList struct {
+type List struct {
 	items []*PVC
 }
 
 // Len returns the number of items present
-// in the PVCList
-func (p *PVCList) Len() int {
+// in the List
+func (p *List) Len() int {
 	return len(p.items)
 }
 
-// ToAPIList converts PVCList to API PVCList
-func (p *PVCList) ToAPIList() *corev1.PersistentVolumeClaimList {
+// ToAPIList converts List to API List
+func (p *List) ToAPIList() *corev1.PersistentVolumeClaimList {
 	plist := &corev1.PersistentVolumeClaimList{}
 	for _, pvc := range p.items {
 		plist.Items = append(plist.Items, *pvc.object)

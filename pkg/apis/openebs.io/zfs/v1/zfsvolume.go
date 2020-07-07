@@ -63,10 +63,9 @@ type MountInfo struct {
 	MountOptions []string `json:"mountOptions"`
 }
 
+// ZFSVolumeList is a list of ZFSVolume resources
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +resource:path=zfsvolumes
-
-// ZFSVolumeList is a list of ZFSVolume resources
 type ZFSVolumeList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
@@ -202,6 +201,7 @@ type VolumeInfo struct {
 	Shared string `json:"shared,omitempty"`
 }
 
+// VolStatus string that specifies the current state of the volume provisioning request.
 type VolStatus struct {
 	// State specifies the current state of the volume provisioning request.
 	// The state "Pending" means that the volume creation request has not

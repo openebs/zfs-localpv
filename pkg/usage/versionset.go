@@ -33,9 +33,9 @@ var (
 	installerType  = "OPENEBS_IO_INSTALLER_TYPE"
 )
 
-// versionSet is a struct which stores (sort of) fixed information about a
+// VersionSet is a struct which stores (sort of) fixed information about a
 // k8s environment
-type versionSet struct {
+type VersionSet struct {
 	id             string // OPENEBS_IO_USAGE_UUID
 	k8sVersion     string // OPENEBS_IO_K8S_VERSION
 	k8sArch        string // OPENEBS_IO_K8S_ARCH
@@ -45,13 +45,13 @@ type versionSet struct {
 }
 
 // NewVersion returns a new versionSet struct
-func NewVersion() *versionSet {
-	return &versionSet{}
+func NewVersion() *VersionSet {
+	return &VersionSet{}
 }
 
 // fetchAndSetVersion consumes the Kubernetes API to get environment constants
 // and returns a versionSet struct
-func (v *versionSet) fetchAndSetVersion() error {
+func (v *VersionSet) fetchAndSetVersion() error {
 	var err error
 	v.id, err = getUUIDbyNS("default")
 	if err != nil {
@@ -79,7 +79,7 @@ func (v *versionSet) fetchAndSetVersion() error {
 }
 
 // getVersion is a wrapper over fetchAndSetVersion
-func (v *versionSet) getVersion(override bool) error {
+func (v *VersionSet) getVersion(override bool) error {
 	// If ENVs aren't set or the override is true, fetch the required
 	// values from the K8s APIserver
 	if _, present := env.Lookup(openEBSversion); !present || override {

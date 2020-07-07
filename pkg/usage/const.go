@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package usage
 
 const (
@@ -34,12 +35,14 @@ const (
 
 	// RunningStatus status is running
 	RunningStatus string = "running"
-	// Event labels
-	EventLabelNode     string = "nodes"
+	// EventLabelNode holds the string label "nodes"
+	EventLabelNode string = "nodes"
+	// EventLabelCapacity holds the string label "capacity"
 	EventLabelCapacity string = "capacity"
 
 	// Replica Event replication
-	Replica             string = "replica:"
+	Replica string = "replica:"
+	// DefaultReplicaCount holds the replica count string
 	DefaultReplicaCount string = "replica:1"
 
 	// DefaultCASType Event application name constant for volume event

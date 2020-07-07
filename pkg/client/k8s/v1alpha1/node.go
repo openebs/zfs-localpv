@@ -31,30 +31,31 @@ type NodeGetter interface {
 type NodeLister interface {
 	List(options metav1.ListOptions) (*corev1.NodeList, error)
 }
-type node struct{}
 
-func Node() *node {
-	return &node{}
+//NodeStruct returns a struct used to instantiate a kubernetes Node
+type NodeStruct struct{}
+
+// Node returnd a pointer to the node struct
+func Node() *NodeStruct {
+	return &NodeStruct{}
 }
 
 // Get returns a node instance from kubernetes cluster
-func (n *node) Get(name string, options metav1.GetOptions) (*corev1.Node, error) {
+func (n *NodeStruct) Get(name string, options metav1.GetOptions) (*corev1.Node, error) {
 	cs, err := Clientset().Get()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get node: %s", name)
-	} else {
-		return cs.CoreV1().Nodes().Get(name, options)
 	}
+	return cs.CoreV1().Nodes().Get(name, options)
 }
 
 // List returns a slice of Nodes registered in a Kubernetes cluster
-func (n *node) List(options metav1.ListOptions) (*corev1.NodeList, error) {
+func (n *NodeStruct) List(options metav1.ListOptions) (*corev1.NodeList, error) {
 	cs, err := Clientset().Get()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get nodes")
-	} else {
-		return cs.CoreV1().Nodes().List(options)
 	}
+	return cs.CoreV1().Nodes().List(options)
 }
 
 // NumberOfNodes returns the number of nodes registered in a Kubernetes cluster
@@ -63,9 +64,8 @@ func NumberOfNodes() (int, error) {
 	nodes, err := n.List(metav1.ListOptions{})
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to get the number of nodes")
-	} else {
-		return len(nodes.Items), nil
 	}
+	return len(nodes.Items), nil
 }
 
 // GetNode returns a node instance from kubernetes cluster
@@ -74,9 +74,8 @@ func GetNode(name string) (*corev1.Node, error) {
 	node, err := n.Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get node")
-	} else {
-		return node, nil
 	}
+	return node, nil
 }
 
 // ListNodes returns list of node instance from kubernetes cluster
@@ -85,9 +84,8 @@ func ListNodes(options metav1.ListOptions) (*corev1.NodeList, error) {
 	nodelist, err := n.List(options)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to list node")
-	} else {
-		return nodelist, nil
 	}
+	return nodelist, nil
 }
 
 // GetOSAndKernelVersion gets us the OS,Kernel version

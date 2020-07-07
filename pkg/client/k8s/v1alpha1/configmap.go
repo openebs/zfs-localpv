@@ -17,10 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"strings"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 )
 
 // ConfigMapGetter abstracts fetching of ConfigMap instance from kubernetes
@@ -29,18 +30,19 @@ type ConfigMapGetter interface {
 	Get(options metav1.GetOptions) (*corev1.ConfigMap, error)
 }
 
-type configmap struct {
+// Configmap is used to initialise a kubernetes Configmap struct
+type Configmap struct {
 	namespace string // namespace where this configmap exists
 	name      string // name of this configmap
 }
 
 // ConfigMap returns a new instance of configmap
-func ConfigMap(namespace, name string) *configmap {
-	return &configmap{namespace: namespace, name: name}
+func ConfigMap(namespace, name string) *Configmap {
+	return &Configmap{namespace: namespace, name: name}
 }
 
 // Get returns configmap instance from kubernetes cluster
-func (c *configmap) Get(options metav1.GetOptions) (cm *corev1.ConfigMap, err error) {
+func (c *Configmap) Get(options metav1.GetOptions) (cm *corev1.ConfigMap, err error) {
 	if len(strings.TrimSpace(c.name)) == 0 {
 		return nil, errors.Errorf("missing config map name: failed to get config map from namespace %s", c.namespace)
 	}

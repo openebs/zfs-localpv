@@ -17,8 +17,9 @@ limitations under the License.
 package zfs
 
 import (
-	"k8s.io/klog"
 	"os/exec"
+
+	"k8s.io/klog"
 )
 
 /*
@@ -27,8 +28,8 @@ import (
 * volume refers to the same block because of the way ZFS clone works, it will
 * also have the same UUID.
  */
-func btrfsGenerateUuid(volume string) error {
-	device := ZFS_DEVPATH + volume
+func btrfsGenerateUUID(volume string) error {
+	device := ZFSDevPath + volume
 
 	// for mounting the cloned volume for btrfs, a new UUID has to be generated
 	cmd := exec.Command("btrfstune", "-f", "-u", device)

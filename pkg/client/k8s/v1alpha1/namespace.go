@@ -31,15 +31,17 @@ type NamespaceGetter interface {
 type NamespaceLister interface {
 	List(options metav1.ListOptions) (*corev1.NamespaceList, error)
 }
-type namespace struct{}
+
+// NamespaceStruct is used to initialise kubernetes namespace instnaces
+type NamespaceStruct struct{}
 
 // Namespace returns a pointer to the namespace struct
-func Namespace() *namespace {
-	return &namespace{}
+func Namespace() *NamespaceStruct {
+	return &NamespaceStruct{}
 }
 
 // Get returns a namespace instance from kubernetes cluster
-func (ns *namespace) Get(name string, options metav1.GetOptions) (*corev1.Namespace, error) {
+func (ns *NamespaceStruct) Get(name string, options metav1.GetOptions) (*corev1.Namespace, error) {
 	cs, err := Clientset().Get()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get namespace: %s", name)
@@ -48,7 +50,7 @@ func (ns *namespace) Get(name string, options metav1.GetOptions) (*corev1.Namesp
 }
 
 // List returns a slice of namespaces defined in a Kubernetes cluster
-func (ns *namespace) List(options metav1.ListOptions) (*corev1.NamespaceList, error) {
+func (ns *NamespaceStruct) List(options metav1.ListOptions) (*corev1.NamespaceList, error) {
 	cs, err := Clientset().Get()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get namespaces")

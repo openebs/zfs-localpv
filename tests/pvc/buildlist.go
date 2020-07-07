@@ -22,7 +22,7 @@ import (
 )
 
 // ListBuilder enables building an instance of
-// PVCList
+// List
 type ListBuilder struct {
 	// template to build a list of pvcs
 	template *corev1.PersistentVolumeClaim
@@ -32,14 +32,14 @@ type ListBuilder struct {
 	// template
 	count int
 
-	list    *PVCList
+	list    *List
 	filters PredicateList
 	errs    []error
 }
 
 // NewListBuilder returns an instance of ListBuilder
 func NewListBuilder() *ListBuilder {
-	return &ListBuilder{list: &PVCList{}}
+	return &ListBuilder{list: &List{}}
 }
 
 // ListBuilderFromTemplate returns a new instance of
@@ -62,7 +62,7 @@ func ListBuilderFromTemplate(pvc *corev1.PersistentVolumeClaim) *ListBuilder {
 // ListBuilderForAPIObjects returns a new instance of
 // ListBuilder based on provided api pvc list
 func ListBuilderForAPIObjects(pvcs *corev1.PersistentVolumeClaimList) *ListBuilder {
-	b := &ListBuilder{list: &PVCList{}}
+	b := &ListBuilder{list: &List{}}
 
 	if pvcs == nil {
 		b.errs = append(
@@ -82,7 +82,7 @@ func ListBuilderForAPIObjects(pvcs *corev1.PersistentVolumeClaimList) *ListBuild
 
 // ListBuilderForObjects returns a new instance of
 // ListBuilder based on provided pvc list
-func ListBuilderForObjects(pvcs *PVCList) *ListBuilder {
+func ListBuilderForObjects(pvcs *List) *ListBuilder {
 	b := &ListBuilder{}
 	if pvcs == nil {
 		b.errs = append(
@@ -122,7 +122,7 @@ func (b *ListBuilder) buildFromTemplateIfNilList() {
 
 // List returns the list of pvc instances
 // that was built by this builder
-func (b *ListBuilder) List() (*PVCList, error) {
+func (b *ListBuilder) List() (*List, error) {
 	if len(b.errs) > 0 {
 		return nil, errors.Errorf("failed to build pvc list: %+v", b.errs)
 	}
@@ -133,7 +133,7 @@ func (b *ListBuilder) List() (*PVCList, error) {
 		return b.list, nil
 	}
 
-	filteredList := &PVCList{}
+	filteredList := &List{}
 	for _, pvc := range b.list.items {
 		if b.filters.all(pvc) {
 			filteredList.items = append(filteredList.items, pvc)
@@ -144,7 +144,7 @@ func (b *ListBuilder) List() (*PVCList, error) {
 }
 
 // Len returns the number of items present
-// in the PVCList of a builder
+// in the List of a builder
 func (b *ListBuilder) Len() (int, error) {
 	l, err := b.List()
 	if err != nil {

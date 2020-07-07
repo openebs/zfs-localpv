@@ -35,10 +35,9 @@ type ZFSSnapshot struct {
 	Status SnapStatus `json:"status"`
 }
 
+// ZFSSnapshotList is a list of ZFSSnapshot resources
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +resource:path=zfssnapshots
-
-// ZFSSnapshotList is a list of ZFSSnapshot resources
 type ZFSSnapshotList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
@@ -46,6 +45,7 @@ type ZFSSnapshotList struct {
 	Items []ZFSSnapshot `json:"items"`
 }
 
+// SnapStatus string that reflects if the snapshot was cretaed successfully
 type SnapStatus struct {
 	State string `json:"state,omitempty"`
 }

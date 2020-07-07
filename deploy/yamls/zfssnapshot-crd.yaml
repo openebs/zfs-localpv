@@ -196,6 +196,8 @@ spec:
             - volumeType
             type: object
           status:
+            description: SnapStatus string that reflects if the snapshot was cretaed
+              successfully
             properties:
               state:
                 type: string
@@ -363,6 +365,8 @@ spec:
             - volumeType
             type: object
           status:
+            description: SnapStatus string that reflects if the snapshot was cretaed
+              successfully
             properties:
               state:
                 type: string

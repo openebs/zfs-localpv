@@ -19,8 +19,9 @@ package tests
 import (
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo"
+	"github.com/onsi/gomega"
+
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
 	"github.com/openebs/zfs-localpv/tests/container"
@@ -39,14 +40,14 @@ import (
 
 // IsPVCBoundEventually checks if the pvc is bound or not eventually
 func IsPVCBoundEventually(pvcName string) bool {
-	return Eventually(func() bool {
+	return gomega.Eventually(func() bool {
 		volume, err := PVCClient.
 			Get(pvcName, metav1.GetOptions{})
-		Expect(err).ShouldNot(HaveOccurred())
+		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 		return pvc.NewForAPIObject(volume).IsBound()
 	},
 		60, 5).
-		Should(BeTrue())
+		Should(gomega.BeTrue())
 }
 
 // IsPVCResizedEventually checks if the pvc is bound or not eventually
@@ -55,54 +56,54 @@ func IsPVCResizedEventually(pvcName string, newCapacity string) bool {
 	if err != nil {
 		return false
 	}
-	return Eventually(func() bool {
+	return gomega.Eventually(func() bool {
 		volume, err := PVCClient.
 			Get(pvcName, metav1.GetOptions{})
-		Expect(err).ShouldNot(HaveOccurred())
+		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 		pvcStorage := volume.Status.Capacity[corev1.ResourceName(corev1.ResourceStorage)]
 		return pvcStorage == newStorage
 	},
 		120, 5).
-		Should(BeTrue())
+		Should(gomega.BeTrue())
 }
 
 // IsPodRunningEventually return true if the pod comes to running state
 func IsPodRunningEventually(namespace, podName string) bool {
-	return Eventually(func() bool {
+	return gomega.Eventually(func() bool {
 		p, err := PodClient.
 			WithNamespace(namespace).
 			Get(podName, metav1.GetOptions{})
-		Expect(err).ShouldNot(HaveOccurred())
+		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 		return pod.NewForAPIObject(p).
 			IsRunning()
 	},
 		60, 5).
-		Should(BeTrue())
+		Should(gomega.BeTrue())
 }
 
 // IsPropUpdatedEventually checks if the property is updated or not eventually
 func IsPropUpdatedEventually(vol *apis.ZFSVolume, prop string, val string) bool {
-	return Eventually(func() bool {
+	return gomega.Eventually(func() bool {
 
 		newVal, err := zfs.GetVolumeProperty(vol, prop)
-		Expect(err).ShouldNot(HaveOccurred())
+		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 		return (newVal == val)
 	},
 		60, 5).
-		Should(BeTrue())
+		Should(gomega.BeTrue())
 }
 
 // IsPVCDeletedEventually tries to get the deleted pvc
 // and returns true if pvc is not found
 // else returns false
 func IsPVCDeletedEventually(pvcName string) bool {
-	return Eventually(func() bool {
+	return gomega.Eventually(func() bool {
 		_, err := PVCClient.
 			Get(pvcName, metav1.GetOptions{})
 		return k8serrors.IsNotFound(err)
 	},
 		120, 10).
-		Should(BeTrue())
+		Should(gomega.BeTrue())
 }
 
 func createExt4StorageClass() {
@@ -115,16 +116,16 @@ func createExt4StorageClass() {
 		"fstype":   "ext4",
 	}
 
-	By("building a ext4 storage class")
+	ginkgo.By("building a ext4 storage class")
 	scObj, err = sc.NewBuilder().
 		WithGenerateName(scName).
 		WithParametersNew(parameters).
 		WithProvisioner(ZFSProvisioner).Build()
-	Expect(err).ShouldNot(HaveOccurred(),
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(),
 		"while building ext4 storageclass obj with prefix {%s}", scName)
 
 	scObj, err = SCClient.Create(scObj)
-	Expect(err).To(BeNil(), "while creating a ext4 storageclass {%s}", scName)
+	gomega.Expect(err).To(gomega.BeNil(), "while creating a ext4 storageclass {%s}", scName)
 }
 
 func createStorageClass() {
@@ -136,16 +137,16 @@ func createStorageClass() {
 		"poolname": POOLNAME,
 	}
 
-	By("building a default storage class")
+	ginkgo.By("building a default storage class")
 	scObj, err = sc.NewBuilder().
 		WithGenerateName(scName).
 		WithParametersNew(parameters).
 		WithProvisioner(ZFSProvisioner).Build()
-	Expect(err).ShouldNot(HaveOccurred(),
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(),
 		"while building default storageclass obj with prefix {%s}", scName)
 
 	scObj, err = SCClient.Create(scObj)
-	Expect(err).To(BeNil(), "while creating a default storageclass {%s}", scName)
+	gomega.Expect(err).To(gomega.BeNil(), "while creating a default storageclass {%s}", scName)
 }
 
 func createZfsStorageClass() {
@@ -158,145 +159,147 @@ func createZfsStorageClass() {
 		"fstype":   "zfs",
 	}
 
-	By("building a zfs storage class")
+	ginkgo.By("building a zfs storage class")
 	scObj, err = sc.NewBuilder().
 		WithGenerateName(scName).
 		WithParametersNew(parameters).
 		WithVolumeExpansion(true).
 		WithProvisioner(ZFSProvisioner).Build()
-	Expect(err).ShouldNot(HaveOccurred(),
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(),
 		"while building zfs storageclass obj with prefix {%s}", scName)
 
 	scObj, err = SCClient.Create(scObj)
-	Expect(err).To(BeNil(), "while creating a zfs storageclass {%s}", scName)
+	gomega.Expect(err).To(gomega.BeNil(), "while creating a zfs storageclass {%s}", scName)
 }
 
+// VerifyZFSVolume verify the properties of a zfs-volume
 func VerifyZFSVolume() {
-	By("fetching zfs volume")
+	ginkgo.By("fetching zfs volume")
 	vol, err := ZFSClient.WithNamespace(OpenEBSNamespace).
 		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
-	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", pvcObj.Spec.VolumeName)
+	gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", pvcObj.Spec.VolumeName)
 
-	volType := zfs.VOLTYPE_ZVOL
-	if scObj.Parameters["fstype"] == zfs.FSTYPE_ZFS {
-		volType = zfs.VOLTYPE_DATASET
+	volType := zfs.VoltpeZVol
+	if scObj.Parameters["fstype"] == zfs.FSTypeZFS {
+		volType = zfs.VoltypeDataset
 	}
 
-	By("verifying zfs volume")
-	Expect(vol.Spec.PoolName).To(Equal(scObj.Parameters["poolname"]),
+	ginkgo.By("verifying zfs volume")
+	gomega.Expect(vol.Spec.PoolName).To(gomega.Equal(scObj.Parameters["poolname"]),
 		"while checking poolname of zfs volume", pvcObj.Spec.VolumeName)
-	Expect(vol.Spec.FsType).To(Equal(scObj.Parameters["fstype"]),
+	gomega.Expect(vol.Spec.FsType).To(gomega.Equal(scObj.Parameters["fstype"]),
 		"while checking fstype of zfs volume", pvcObj.Spec.VolumeName)
-	Expect(vol.Spec.VolumeType).To(Equal(volType),
+	gomega.Expect(vol.Spec.VolumeType).To(gomega.Equal(volType),
 		"while checking Volume type as dataset", pvcObj.Spec.VolumeName)
-	Expect(vol.Spec.Capacity).To(Equal(capacity),
+	gomega.Expect(vol.Spec.Capacity).To(gomega.Equal(capacity),
 		"while checking capacity of zfs volume", pvcObj.Spec.VolumeName)
 
 	// it might fail if we are checking finializer before event is processed by node agent
-	Expect(vol.Finalizers[0]).To(Equal(zfs.ZFSFinalizer), "while checking finializer to be set {%s}", pvcObj.Spec.VolumeName)
+	gomega.Expect(vol.Finalizers[0]).To(gomega.Equal(zfs.ZFSFinalizer), "while checking finializer to be set {%s}", pvcObj.Spec.VolumeName)
 }
 
+// VerifyZFSVolumePropEdit verigies the volume properties
 func VerifyZFSVolumePropEdit() {
-	By("verifying compression property update")
+	ginkgo.By("verifying compression property update")
 
-	By("fetching zfs volume for setting compression=on")
+	ginkgo.By("fetching zfs volume for setting compression=on")
 	vol, err := ZFSClient.WithNamespace(OpenEBSNamespace).
 		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
-	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+	gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
 
 	val := "on"
 	vol.Spec.Compression = val
 	_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
-	Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+	gomega.Expect(err).To(gomega.BeNil(), "while updating the zfs volume {%s}", vol.Name)
 
 	status := IsPropUpdatedEventually(vol, "compression", val)
-	Expect(status).To(Equal(true), "while updating compression=on {%s}", vol.Name)
+	gomega.Expect(status).To(gomega.Equal(true), "while updating compression=on {%s}", vol.Name)
 
-	By("fetching zfs volume for setting compression=off")
+	ginkgo.By("fetching zfs volume for setting compression=off")
 	vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
 		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
-	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+	gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
 
 	val = "off"
 	vol.Spec.Compression = val
 	_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
-	Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+	gomega.Expect(err).To(gomega.BeNil(), "while updating the zfs volume {%s}", vol.Name)
 
 	status = IsPropUpdatedEventually(vol, "compression", val)
-	Expect(status).To(Equal(true), "while updating compression=off {%s}", vol.Name)
+	gomega.Expect(status).To(gomega.Equal(true), "while updating compression=off {%s}", vol.Name)
 
-	By("verifying dedup property update")
+	ginkgo.By("verifying dedup property update")
 
-	By("fetching zfs volume for setting dedup=on")
+	ginkgo.By("fetching zfs volume for setting dedup=on")
 	vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
 		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
-	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+	gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
 
 	val = "on"
 	vol.Spec.Dedup = val
 	_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
-	Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+	gomega.Expect(err).To(gomega.BeNil(), "while updating the zfs volume {%s}", vol.Name)
 
 	status = IsPropUpdatedEventually(vol, "dedup", val)
-	Expect(status).To(Equal(true), "while updating dedup=on {%s}", vol.Name)
+	gomega.Expect(status).To(gomega.Equal(true), "while updating dedup=on {%s}", vol.Name)
 
-	By("fetching zfs volume for setting dedup=off")
+	ginkgo.By("fetching zfs volume for setting dedup=off")
 	vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
 		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
-	Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+	gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
 
 	val = "off"
 	vol.Spec.Dedup = val
 	_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
-	Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+	gomega.Expect(err).To(gomega.BeNil(), "while updating the zfs volume {%s}", vol.Name)
 
 	status = IsPropUpdatedEventually(vol, "dedup", val)
-	Expect(status).To(Equal(true), "while updating dedup=off {%s}", vol.Name)
+	gomega.Expect(status).To(gomega.Equal(true), "while updating dedup=off {%s}", vol.Name)
 
-	if vol.Spec.VolumeType == zfs.VOLTYPE_DATASET {
-		By("verifying recordsize property update")
+	if vol.Spec.VolumeType == zfs.VoltypeDataset {
+		ginkgo.By("verifying recordsize property update")
 
-		By("fetching zfs volume for setting the recordsize")
+		ginkgo.By("fetching zfs volume for setting the recordsize")
 		vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
 			Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
-		Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+		gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
 
 		val = "4096" // 4k
 		vol.Spec.RecordSize = val
 		vol.Spec.VolBlockSize = "8192"
 		_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
-		Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+		gomega.Expect(err).To(gomega.BeNil(), "while updating the zfs volume {%s}", vol.Name)
 
 		status = IsPropUpdatedEventually(vol, "recordsize", val)
-		Expect(status).To(Equal(true), "while updating redordsize {%s}", vol.Name)
+		gomega.Expect(status).To(gomega.Equal(true), "while updating redordsize {%s}", vol.Name)
 	} else {
 
-		Expect(vol.Spec.VolumeType).To(Equal(zfs.VOLTYPE_ZVOL), "voltype should be zvol {%s}", vol.Name)
+		gomega.Expect(vol.Spec.VolumeType).To(gomega.Equal(zfs.VoltpeZVol), "voltype should be zvol {%s}", vol.Name)
 
-		By("verifying blocksize property update")
+		ginkgo.By("verifying blocksize property update")
 
-		By("fetching zfs volume for setting the blocksize")
+		ginkgo.By("fetching zfs volume for setting the blocksize")
 		vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
 			Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
-		Expect(err).To(BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+		gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
 
 		val, err = zfs.GetVolumeProperty(vol, "volblocksize")
-		Expect(err).ShouldNot(HaveOccurred())
+		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 
 		nval := "8192" // 8k
 		vol.Spec.VolBlockSize = nval
 		vol.Spec.RecordSize = "16384"
 		_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
-		Expect(err).To(BeNil(), "while updating the zfs volume {%s}", vol.Name)
+		gomega.Expect(err).To(gomega.BeNil(), "while updating the zfs volume {%s}", vol.Name)
 
 		status = IsPropUpdatedEventually(vol, "volblocksize", val)
-		Expect(status).To(Equal(true), "while updating volblocksize {%s}", vol.Name)
+		gomega.Expect(status).To(gomega.Equal(true), "while updating volblocksize {%s}", vol.Name)
 	}
 }
 
 func deleteStorageClass() {
 	err := SCClient.Delete(scObj.Name, &metav1.DeleteOptions{})
-	Expect(err).To(BeNil(),
+	gomega.Expect(err).To(gomega.BeNil(),
 		"while deleting zfs storageclass {%s}", scObj.Name)
 }
 
@@ -305,38 +308,38 @@ func createAndVerifyPVC() {
 		err     error
 		pvcName = "zfspv-pvc"
 	)
-	By("building a pvc")
+	ginkgo.By("building a pvc")
 	pvcObj, err = pvc.NewBuilder().
 		WithName(pvcName).
 		WithNamespace(OpenEBSNamespace).
 		WithStorageClass(scObj.Name).
 		WithAccessModes(accessModes).
 		WithCapacity(capacity).Build()
-	Expect(err).ShouldNot(
-		HaveOccurred(),
+	gomega.Expect(err).ShouldNot(
+		gomega.HaveOccurred(),
 		"while building pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
 	)
 
-	By("creating above pvc")
+	ginkgo.By("creating above pvc")
 	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Create(pvcObj)
-	Expect(err).To(
-		BeNil(),
+	gomega.Expect(err).To(
+		gomega.BeNil(),
 		"while creating pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
 	)
 
-	By("verifying pvc status as bound")
+	ginkgo.By("verifying pvc status as bound")
 
 	status := IsPVCBoundEventually(pvcName)
-	Expect(status).To(Equal(true),
+	gomega.Expect(status).To(gomega.Equal(true),
 		"while checking status equal to bound")
 
 	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Get(pvcObj.Name, metav1.GetOptions{})
-	Expect(err).To(
-		BeNil(),
+	gomega.Expect(err).To(
+		gomega.BeNil(),
 		"while retrieving pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
@@ -351,7 +354,7 @@ func createAndVerifyBlockPVC() {
 
 	volmode := corev1.PersistentVolumeBlock
 
-	By("building a pvc")
+	ginkgo.By("building a pvc")
 	pvcObj, err = pvc.NewBuilder().
 		WithName(pvcName).
 		WithNamespace(OpenEBSNamespace).
@@ -359,31 +362,31 @@ func createAndVerifyBlockPVC() {
 		WithAccessModes(accessModes).
 		WithVolumeMode(&volmode).
 		WithCapacity(capacity).Build()
-	Expect(err).ShouldNot(
-		HaveOccurred(),
+	gomega.Expect(err).ShouldNot(
+		gomega.HaveOccurred(),
 		"while building pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
 	)
 
-	By("creating above pvc")
+	ginkgo.By("creating above pvc")
 	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Create(pvcObj)
-	Expect(err).To(
-		BeNil(),
+	gomega.Expect(err).To(
+		gomega.BeNil(),
 		"while creating pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
 	)
 
-	By("verifying pvc status as bound")
+	ginkgo.By("verifying pvc status as bound")
 
 	status := IsPVCBoundEventually(pvcName)
-	Expect(status).To(Equal(true),
+	gomega.Expect(status).To(gomega.Equal(true),
 		"while checking status equal to bound")
 
 	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Get(pvcObj.Name, metav1.GetOptions{})
-	Expect(err).To(
-		BeNil(),
+	gomega.Expect(err).To(
+		gomega.BeNil(),
 		"while retrieving pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
@@ -395,46 +398,46 @@ func resizeAndVerifyPVC() {
 		err     error
 		pvcName = "zfspv-pvc"
 	)
-	By("updating the pvc with new size")
+	ginkgo.By("updating the pvc with new size")
 	pvcObj, err = pvc.BuildFrom(pvcObj).
 		WithCapacity(NewCapacity).Build()
-	Expect(err).To(
-		BeNil(),
+	gomega.Expect(err).To(
+		gomega.BeNil(),
 		"while building pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
 	)
 	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Update(pvcObj)
-	Expect(err).To(
-		BeNil(),
+	gomega.Expect(err).To(
+		gomega.BeNil(),
 		"while updating pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
 	)
 
-	By("verifying pvc size to be updated")
+	ginkgo.By("verifying pvc size to be updated")
 
 	status := IsPVCResizedEventually(pvcName, NewCapacity)
-	Expect(status).To(Equal(true),
+	gomega.Expect(status).To(gomega.Equal(true),
 		"while checking pvc resize")
 
 	pvcObj, err = PVCClient.WithNamespace(OpenEBSNamespace).Get(pvcObj.Name, metav1.GetOptions{})
-	Expect(err).To(
-		BeNil(),
+	gomega.Expect(err).To(
+		gomega.BeNil(),
 		"while retrieving pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
 	)
 }
 func createDeployVerifyApp() {
-	By("creating and deploying app pod", createAndDeployAppPod)
+	ginkgo.By("creating and deploying app pod", createAndDeployAppPod)
 	time.Sleep(30 * time.Second)
-	By("verifying app pod is running", verifyAppPodRunning)
+	ginkgo.By("verifying app pod is running", verifyAppPodRunning)
 }
 
 func createAndDeployAppPod() {
 	var err error
-	By("building a busybox app pod deployment using above zfs volume")
+	ginkgo.By("building a busybox app pod deployment using above zfs volume")
 	deployObj, err = deploy.NewBuilder().
 		WithName(appName).
 		WithNamespace(OpenEBSNamespace).
@@ -484,11 +487,11 @@ func createAndDeployAppPod() {
 		).
 		Build()
 
-	Expect(err).ShouldNot(HaveOccurred(), "while building app deployement {%s}", appName)
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while building app deployement {%s}", appName)
 
 	deployObj, err = DeployClient.WithNamespace(OpenEBSNamespace).Create(deployObj)
-	Expect(err).ShouldNot(
-		HaveOccurred(),
+	gomega.Expect(err).ShouldNot(
+		gomega.HaveOccurred(),
 		"while creating pod {%s} in namespace {%s}",
 		appName,
 		OpenEBSNamespace,
@@ -497,7 +500,7 @@ func createAndDeployAppPod() {
 
 func createAndDeployBlockAppPod() {
 	var err error
-	By("building a busybox app pod deployment using above zfs volume")
+	ginkgo.By("building a busybox app pod deployment using above zfs volume")
 	deployObj, err = deploy.NewBuilder().
 		WithName(appName).
 		WithNamespace(OpenEBSNamespace).
@@ -547,11 +550,11 @@ func createAndDeployBlockAppPod() {
 		).
 		Build()
 
-	Expect(err).ShouldNot(HaveOccurred(), "while building app deployement {%s}", appName)
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while building app deployement {%s}", appName)
 
 	deployObj, err = DeployClient.WithNamespace(OpenEBSNamespace).Create(deployObj)
-	Expect(err).ShouldNot(
-		HaveOccurred(),
+	gomega.Expect(err).ShouldNot(
+		gomega.HaveOccurred(),
 		"while creating pod {%s} in namespace {%s}",
 		appName,
 		OpenEBSNamespace,
@@ -559,9 +562,9 @@ func createAndDeployBlockAppPod() {
 }
 
 func createDeployVerifyBlockApp() {
-	By("creating and deploying app pod", createAndDeployBlockAppPod)
+	ginkgo.By("creating and deploying app pod", createAndDeployBlockAppPod)
 	time.Sleep(30 * time.Second)
-	By("verifying app pod is running", verifyAppPodRunning)
+	ginkgo.By("verifying app pod is running", verifyAppPodRunning)
 }
 
 func verifyAppPodRunning() {
@@ -571,28 +574,28 @@ func verifyAppPodRunning() {
 			LabelSelector: "app=busybox",
 		},
 		)
-	Expect(err).ShouldNot(HaveOccurred(), "while verifying application pod")
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while verifying application pod")
 
 	status := IsPodRunningEventually(OpenEBSNamespace, appPod.Items[0].Name)
-	Expect(status).To(Equal(true), "while checking status of pod {%s}", appPod.Items[0].Name)
+	gomega.Expect(status).To(gomega.Equal(true), "while checking status of pod {%s}", appPod.Items[0].Name)
 }
 
 func deleteAppDeployment() {
 	err := DeployClient.WithNamespace(OpenEBSNamespace).
 		Delete(deployObj.Name, &metav1.DeleteOptions{})
-	Expect(err).ShouldNot(HaveOccurred(), "while deleting application pod")
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while deleting application pod")
 }
 
 func deletePVC() {
 	err := PVCClient.WithNamespace(OpenEBSNamespace).Delete(pvcName, &metav1.DeleteOptions{})
-	Expect(err).To(
-		BeNil(),
+	gomega.Expect(err).To(
+		gomega.BeNil(),
 		"while deleting pvc {%s} in namespace {%s}",
 		pvcName,
 		OpenEBSNamespace,
 	)
-	By("verifying deleted pvc")
+	ginkgo.By("verifying deleted pvc")
 	status := IsPVCDeletedEventually(pvcName)
-	Expect(status).To(Equal(true), "while trying to get deleted pvc")
+	gomega.Expect(status).To(gomega.Equal(true), "while trying to get deleted pvc")
 
 }
