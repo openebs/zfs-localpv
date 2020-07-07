@@ -181,7 +181,7 @@ func VerifyZFSVolume() {
 
 	volType := zfs.VoltpeZVol
 	if scObj.Parameters["fstype"] == zfs.FSTypeZFS {
-		volType = zfs.VoltypeDataset
+		volType = zfs.VolTypeDataset
 	}
 
 	ginkgo.By("verifying zfs volume")
@@ -256,7 +256,7 @@ func VerifyZFSVolumePropEdit() {
 	status = IsPropUpdatedEventually(vol, "dedup", val)
 	gomega.Expect(status).To(gomega.Equal(true), "while updating dedup=off {%s}", vol.Name)
 
-	if vol.Spec.VolumeType == zfs.VoltypeDataset {
+	if vol.Spec.VolumeType == zfs.VolTypeDataset {
 		ginkgo.By("verifying recordsize property update")
 
 		ginkgo.By("fetching zfs volume for setting the recordsize")
