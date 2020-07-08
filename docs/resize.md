@@ -4,6 +4,8 @@ We can resize the volume by updating the PVC yaml to the desired size and apply 
 
 For resize, storageclass that provisions the pvc must support resize. We should have allowVolumeExpansion as true in storageclass
 
+Note: btrfs does not support online volume resize, so we can not resize the btrfs volumes.
+
 ```
 $ cat sc.yaml
 

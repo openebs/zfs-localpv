@@ -106,9 +106,9 @@ parameters you want. In case, zfs properties paramenters are not provided, the v
 Also currently supported fs types are ext2/3/4, xfs and zfs only. The *poolname* is the must argument.
 Also there must be a ZPOOL running on *all the nodes* with the name given in the storage class.
 
-##### ext2/3/4 or xfs as FsType
+##### ext2/3/4 or xfs or btrfs as FsType
 
-If we provide fstype as ext2/3/4 or xfs, the driver will create a ZVOL, which is a blockdevice carved out of ZFS Pool.
+If we provide fstype as ext2/3/4 or xfs or btrfs, the driver will create a ZVOL, which is a blockdevice carved out of ZFS Pool.
 This blockdevice will again formatted as corresponding filesystem(ext2/3/4 or xfs). In this way applications will get desired filesystem.
 Here, in this case there will be a filesystem layer on top of ZFS filesystem, and applications may not get the optimal performance.
 The sample storage class for ext4 fstype is provided below :-
