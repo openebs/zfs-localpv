@@ -361,6 +361,7 @@ spec:
     persistentVolumeClaimName: csi-zfspv
 ```
 Plese note that, you have to create the snapshot in the same namespace where the pvc is created. Check the created snapshot resource, make sure readyToUse field is true, before using this snapshot for any purpose.
+Here one thing need to be noted that, when zfs takes the volume snapshot it is not aware of application, so snapshot may not be application-consistent. For application-consistent snapshot it is always recommended to scale down the application before taking the application-consistent volume snapshot. After taking the snapshot we can scale up the application again and proceed further with the clone-creation.
 
 ```
 $ kubectl get volumesnapshot.snapshot
