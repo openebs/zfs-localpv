@@ -1,3 +1,36 @@
+v0.9.0 / 2020-07-14
+========================
+* fixing xfs mounting issue on centos with ubuntu 20.04 image ([#179](https://github.com/openebs/zfs-localpv/pull/179),[@pawanpraka1](https://github.com/pawanpraka1))
+* change logger from Sirupsen/logrus to klog ([#166](https://github.com/openebs/zfs-localpv/pull/166),[@vaniisgh](https://github.com/vaniisgh))
+* Add checks to ensure zfs-driver status is running in BDD test ([#171](https://github.com/openebs/zfs-localpv/pull/171),[@vaniisgh](https://github.com/vaniisgh))
+* fixing duplicate UUID issue with btrfs ([#172](https://github.com/openebs/zfs-localpv/pull/172),[@pawanpraka1](https://github.com/pawanpraka1))
+* adding shared mount support ZFSPV volumes ([#164](https://github.com/openebs/zfs-localpv/pull/164),[@pawanpraka1](https://github.com/pawanpraka1))
+* update docs to reflect gomod migration  ([#160](https://github.com/openebs/zfs-localpv/pull/160),[@vaniisgh](https://github.com/vaniisgh))
+* add golint target to makefile ([#167](https://github.com/openebs/zfs-localpv/pull/167),[@vaniisgh](https://github.com/vaniisgh))
+* adding support to have btrfs filesystem for ZFS-LocalPV ([#170](https://github.com/openebs/zfs-localpv/pull/170),[@pawanpraka1](https://github.com/pawanpraka1))
+* adds a filter for grpc logs to reduce the pollution ([#161](https://github.com/openebs/zfs-localpv/pull/161),[@vaniisgh](https://github.com/vaniisgh))
+* adding snapshot and clone releated test cases in BDD ([#174](https://github.com/openebs/zfs-localpv/pull/174),[@pawanpraka1](https://github.com/pawanpraka1))
+* add golint to travis & fix linting ([#175](https://github.com/openebs/zfs-localpv/pull/175),[@vaniisgh](https://github.com/vaniisgh))
+
+
+v0.9.0-RC2 / 2020-07-11
+========================
+* fixing xfs mounting issue on centos with ubuntu 20.04 image ([#179](https://github.com/openebs/zfs-localpv/pull/179),[@pawanpraka1](https://github.com/pawanpraka1))
+
+v0.9.0-RC1 / 2020-07-08
+========================
+* change logger from Sirupsen/logrus to klog ([#166](https://github.com/openebs/zfs-localpv/pull/166),[@vaniisgh](https://github.com/vaniisgh))
+* Add checks to ensure zfs-driver status is running in BDD test ([#171](https://github.com/openebs/zfs-localpv/pull/171),[@vaniisgh](https://github.com/vaniisgh))
+* fixing duplicate UUID issue with btrfs ([#172](https://github.com/openebs/zfs-localpv/pull/172),[@pawanpraka1](https://github.com/pawanpraka1))
+* adding shared mount support ZFSPV volumes ([#164](https://github.com/openebs/zfs-localpv/pull/164),[@pawanpraka1](https://github.com/pawanpraka1))
+* update docs to reflect gomod migration  ([#160](https://github.com/openebs/zfs-localpv/pull/160),[@vaniisgh](https://github.com/vaniisgh))
+* add golint target to makefile ([#167](https://github.com/openebs/zfs-localpv/pull/167),[@vaniisgh](https://github.com/vaniisgh))
+* adding support to have btrfs filesystem for ZFS-LocalPV ([#170](https://github.com/openebs/zfs-localpv/pull/170),[@pawanpraka1](https://github.com/pawanpraka1))
+* adds a filter for grpc logs to reduce the pollution ([#161](https://github.com/openebs/zfs-localpv/pull/161),[@vaniisgh](https://github.com/vaniisgh))
+* adding snapshot and clone releated test cases in BDD ([#174](https://github.com/openebs/zfs-localpv/pull/174),[@pawanpraka1](https://github.com/pawanpraka1))
+* add golint to travis & fix linting ([#175](https://github.com/openebs/zfs-localpv/pull/175),[@vaniisgh](https://github.com/vaniisgh))
+
+
 v0.8.0 / 2020-06-13
 ========================
 
