@@ -19,6 +19,7 @@ package zfs
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"strings"
 
@@ -29,35 +30,54 @@ func xfsTempMount(volume string) error {
 	device := ZFSDevPath + volume
 	pvol := strings.Split(volume, "/")
 
+	// evaluate the symlink to get the dev path for volume
+	dev, err := filepath.EvalSymlinks(device)
+	if err != nil {
+		return err
+	}
+
 	// create a temporary directory to mount the xfs file system
 	tmpdir := "/tmp/" + pvol[1]
-	err := os.Mkdir(tmpdir, 0755)
-	if err != nil {
+	err = os.Mkdir(tmpdir, 0755)
+	if os.IsNotExist(err) {
 		klog.Errorf("xfs: failed to create tmpdir %s error: %s", tmpdir, err.Error())
 		return err
 	}
 
-	// mount with nouuid, so that it can play the log
-	cmd := exec.Command("mount", "-o", "nouuid", device, tmpdir)
-	out, err := cmd.CombinedOutput()
+	/*
+	 * Device might have already mounted at the tmp path but umount might have failed
+	 * in previous attempt. Checking here if device is not mounted then only attempt
+	 * to mount it, otherwise proceed with the umount.
+	 */
+	curMounts, err := GetMounts(dev)
 	if err != nil {
-		klog.Errorf("xfs: failed to mount volume %s=>%s error: %s", device, tmpdir, string(out))
+		klog.Errorf("xfs: get mounts failed dev: %s err: %v", device, err.Error())
 		return err
+	} else if len(curMounts) == 0 {
+		// mount with nouuid, so that it can play the log
+		cmd := exec.Command("mount", "-o", "nouuid", device, tmpdir)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			klog.Errorf("xfs: failed to mount volume %s => %s error: %s", device, tmpdir, string(out))
+			return err
+		}
+	} else {
+		klog.Infof("xfs: device already mounted %s => [%v]", device, curMounts)
 	}
 
 	// log has been replayed, unmount the volume
-	cmd = exec.Command("umount", tmpdir)
-	out, err = cmd.CombinedOutput()
+	cmd := exec.Command("umount", tmpdir)
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		klog.Errorf("xfs: failed to umount tmpdir %s error: %s", tmpdir, string(out))
 		return err
 	}
 
-	// remove the directory
+	// remove the tmp directory
 	err = os.Remove(tmpdir)
 	if err != nil {
+		// don't return error, reconciliation is not needed as umount is done
 		klog.Errorf("xfs: failed to remove tmpdir %s error: %s", tmpdir, err.Error())
-		return err
 	}
 	return nil
 }
