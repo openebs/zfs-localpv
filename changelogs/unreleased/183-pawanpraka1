@@ -1,0 +1,1 @@
+fixed uuid generation issue when mount fails
