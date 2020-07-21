@@ -32,9 +32,11 @@ must meet the following prerequisites:
 
 K8S : 1.14+
 
-OS : ubuntu 18.04
+OS : Ubuntu 18.04, Ubuntu 16.04, CentOS 7, CentOS 8
 
 ZFS : 0.7, 0.8
+
+Check the [features](./docs/features.md) supported for each k8s version.
 
 ### Setup
 
@@ -45,6 +47,36 @@ $ apt-get install zfsutils-linux
 ```
 
 Go to each node and create the ZFS Pool, which will be used for provisioning the volumes. You can create the Pool of your choice, it can be striped, mirrored or raidz pool.
+
+If you have the disk(say /dev/sdb) then you can use the below command to create a striped pool:
+
+```
+zpool create zfspv-pool /dev/sdb
+```
+You can also create mirror or raidz pool as per your need. Check https://github.com/openzfs/zfs for more information.
+
+
+If you don't have the disk, then you can create the zpool on the loopback device which is backed by a sparse file. Use this for testing purpose only.
+```
+truncate -s 100G /tmp/disk.img
+zpool create zfspv-pool `sudo losetup -f /tmp/disk.img --show`
+```
+
+Once the ZFS Pool is created, verify the pool via `zpool status` command, you should see something like this :
+
+```
+$ sudo zpool status
+  pool: zfspv-pool
+ state: ONLINE
+  scan: none requested
+config:
+
+	NAME        STATE     READ WRITE CKSUM
+	zfspv-pool  ONLINE       0     0     0
+	  sdb       ONLINE       0     0     0
+
+errors: No known data errors
+```
 
 Configure the custom topology keys (if needed). This can be used for many purposes like if we want to create the PV on nodes in a particuler zone or building. We can label the nodes accordingly and use that key in the storageclass for taking the scheduling decesion:
 
