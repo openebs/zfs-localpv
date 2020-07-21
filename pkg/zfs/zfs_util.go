@@ -370,12 +370,6 @@ func CreateClone(vol *apis.ZFSVolume) error {
 	if vol.Spec.FsType == "btrfs" {
 		return btrfsGenerateUUID(volume)
 	}
-	if vol.Spec.FsType == "btrfs" {
-		return btrfsGenerateUUID(volume)
-	}
-	if vol.Spec.FsType == "btrfs" {
-		return btrfsGenerateUUID(volume)
-	}
 	return nil
 }
 
