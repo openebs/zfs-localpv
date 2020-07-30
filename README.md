@@ -133,7 +133,7 @@ parameters:
 provisioner: zfs.csi.openebs.io
 ```
 
-The storage class contains the volume parameters like recordsize, compression, dedup and fstype. You can select what are all
+The storage class contains the volume parameters like recordsize(should be power of 2), compression, dedup and fstype. You can select what are all
 parameters you want. In case, zfs properties paramenters are not provided, the volume will inherit the properties from the ZFS Pool.
 Also currently supported fs types are ext2/3/4, xfs and zfs only. The *poolname* is the must argument. It should be noted that *poolname*
 can either be the root dataset or a child dataset e.g.
@@ -167,7 +167,7 @@ parameters:
 provisioner: zfs.csi.openebs.io
 ```
 
-Here please note that we are providing `volblocksize` instead of `recordsize` since we will create a ZVOL, for which we can choose the blocksize with which we want to create the block device.
+Here please note that we are providing `volblocksize` instead of `recordsize` since we will create a ZVOL, for which we can choose the blocksize with which we want to create the block device. Here, please note that for ZFS, volblocksize should be power of 2.
 
 ##### zfs as FsType
 
@@ -191,7 +191,7 @@ parameters:
 provisioner: zfs.csi.openebs.io
 ```
 
-Here please note that we are providing `recordsize` which will be used to create the ZFS datasets, which specifies the maximum block size for files in the zfs file system.
+Here please note that we are providing `recordsize` which will be used to create the ZFS datasets, which specifies the maximum block size for files in the zfs file system. The recordsize has to be power of 2 for ZFS datasets.
 
 ##### ZPOOL Availability
 
@@ -241,7 +241,7 @@ spec:
       storage: 4Gi
 ```
 
-Create a PVC using the storage class created for the ZFS driver.
+Create a PVC using the storage class created for the ZFS driver. Here, the allocated volume size will be rounded off to the nearest Mi or Gi notation, check the [faq](./docs/faq.md#7-why-the-zfs-volume-size-is-different-than-the-reqeusted-size-in-pvc) section for more details.
 
 #### 3. Check the kubernetes resource is created for the corresponding zfs volume
 
