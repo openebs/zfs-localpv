@@ -135,8 +135,14 @@ provisioner: zfs.csi.openebs.io
 
 The storage class contains the volume parameters like recordsize, compression, dedup and fstype. You can select what are all
 parameters you want. In case, zfs properties paramenters are not provided, the volume will inherit the properties from the ZFS Pool.
-Also currently supported fs types are ext2/3/4, xfs and zfs only. The *poolname* is the must argument.
-Also there must be a ZPOOL running on *all the nodes* with the name given in the storage class.
+Also currently supported fs types are ext2/3/4, xfs and zfs only. The *poolname* is the must argument. It should be noted that *poolname*
+can either be the root dataset or a child dataset e.g.
+```
+poolname: "zfspv-pool"
+poolname: "zfspv-pool/child"
+```
+
+Also the dataset provided under `poolname` must exist on *all the nodes* with the name given in the storage class.
 
 ##### ext2/3/4 or xfs or btrfs as FsType
 
