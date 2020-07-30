@@ -171,3 +171,56 @@ allowedTopologies:
 The ZFSPV CSI driver will schedule the PV to the nodes where label "openebs.io/rack" is set to "rack1". If there are multiple nodes qualifying this prerequisite, then it will pick the node which has less number of volumes provisioned for the given ZFS Pool.
 
 Note that if storageclass is using Immediate binding mode and topology key is not mentioned then all the nodes should be labeled using same key, that means, same key should be present on all nodes, nodes can have different values for those keys. If nodes are labeled with different keys i.e. some nodes are having different keys, then ZFSPV's default scheduler can not effictively do the volume count based scheduling. Here, in this case the CSI provisioner will pick keys from any random node and then prepare the preferred topology list using the nodes which has those keys defined and ZFSPV scheduler will schedule the PV among those nodes only.
+
+### 7. Why the ZFS volume size is different than the reqeusted size in PVC
+
+Here, we have to note that the size will be rounded off to the nearest Mi or Gi unit. Please note that M/G notation uses 1000 base and Mi/Gi notation uses 1024 base, so 1M will be 1000 * 1000 byte and 1Mi will be 1024 * 1024.
+
+The driver uses below logic to roundoff the capacity:
+
+1. if PVC size is > Gi (1024 * 1024 * 1024), then it will find the size in the nearest Gi unit and allocate that.
+
+allocated = ((size + 1Gi - 1) / Gi) * Gi
+
+For example if the PVC is requesting 4G storage space :-
+
+```
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: csi-zfspv
+spec:
+  storageClassName: openebs-zfspv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4G
+```
+
+Then driver will find the nearest size in Gi, the size allocated will be ((4G + 1Gi - 1) / Gi) * Gi, which will be 4Gi.
+
+2. if PVC size is < Gi (1024 * 1024 * 1024), then it will find the size in the nearest Mi unit and allocate that.
+
+allocated = ((size + 1Mi - 1) / Mi) * Mi
+
+For example if the PVC is requesting 1G (1000 * 1000 * 1000) storage space which is less than 1Gi (1024 * 1024 * 1024):-
+
+```
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: csi-zfspv
+spec:
+  storageClassName: openebs-zfspv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1G
+```
+
+Then driver will find the nearest size in Mi, the size allocated will be ((1G + 1Mi - 1) / Mi) * Mi, which will be 954Mi.
+
+PVC size as zero in not a valid capacity. The minimum allocatable size for the ZFS-LocalPV driver is 1Mi, which means that if we are requesting 1 byte of storage space then 1Mi will be allocated for the volume.
+
