@@ -16,9 +16,6 @@
 
 set -e
 
-export OPENEBS_NAMESPACE="openebs"
-export NodeID=$HOSTNAME
-
 ZFS_OPERATOR=deploy/zfs-operator.yaml
 SNAP_CLASS=deploy/sample/zfssnapclass.yaml
 
