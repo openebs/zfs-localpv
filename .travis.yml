@@ -8,6 +8,8 @@ env:
   - MINIKUBE_HOME=$HOME
   - CHANGE_MINIKUBE_NONE_USER=true
   - KUBECONFIG=$HOME/.kube/config
+  - OPENEBS_NAMESPACE=openebs
+  - NodeID=$HOSTNAME
 services:
   - docker
 language: go

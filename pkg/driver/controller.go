@@ -37,6 +37,14 @@ import (
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 )
 
+// size constants
+const (
+	MB = 1000 * 1000
+	GB = 1000 * 1000 * 1000
+	Mi = 1024 * 1024
+	Gi = 1024 * 1024 * 1024
+)
+
 // controller is the server implementation
 // for CSI Controller
 type controller struct {
@@ -75,10 +83,26 @@ func sendEventOrIgnore(pvcName, pvName, capacity, stgType, method string) {
 	}
 }
 
+// getRoundedCapacity rounds the capacity on 1024 base
+func getRoundedCapacity(size int64) int64 {
+
+	/*
+	 * volblocksize and recordsize must be power of 2 from 512B to 1M
+	 * so keeping the size in the form of Gi or Mi should be
+	 * sufficient to make volsize multiple of volblocksize/recordsize.
+	 */
+	if size > Gi {
+		return ((size + Gi - 1) / Gi) * Gi
+	}
+
+	// Keeping minimum allocatable size as 1Mi (1024 * 1024)
+	return ((size + Mi - 1) / Mi) * Mi
+}
+
 // CreateZFSVolume create new zfs volume from csi volume request
 func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	volName := req.GetName()
-	size := req.GetCapacityRange().RequiredBytes
+	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 
 	// parameter keys may be mistyped from the CRD specification when declaring
 	// the storageclass, which kubectl validation will not catch. Because ZFS
@@ -148,7 +172,7 @@ func CreateZFSClone(req *csi.CreateVolumeRequest, snapshot string) (string, erro
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
 	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
-	size := req.GetCapacityRange().RequiredBytes
+	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 	volsize := strconv.FormatInt(int64(size), 10)
 
 	snapshotID := strings.Split(snapshot, "@")
@@ -208,7 +232,7 @@ func (cs *controller) CreateVolume(
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
 	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
-	size := req.GetCapacityRange().RequiredBytes
+	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 	contentSource := req.GetVolumeContentSource()
 	pvcName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/name")
 
@@ -325,7 +349,8 @@ func (cs *controller) ControllerExpandVolume(
 	req *csi.ControllerExpandVolumeRequest,
 ) (*csi.ControllerExpandVolumeResponse, error) {
 
-	updatedSize := req.GetCapacityRange().GetRequiredBytes()
+	/* round off the new size */
+	updatedSize := getRoundedCapacity(req.GetCapacityRange().GetRequiredBytes())
 
 	vol, err := zfs.GetZFSVolume(req.VolumeId)
 	if err != nil {
