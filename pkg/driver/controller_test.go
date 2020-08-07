@@ -33,6 +33,8 @@ func TestRoundOff(t *testing.T) {
 		"roundOff to nearest Mi":     {input: Mi + 1, expected: Mi * 2},
 		"roundOff to same Gi size":   {input: Gi, expected: Gi},
 		"roundOff to nearest Gi":     {input: Gi + 1, expected: Gi * 2},
+		"roundOff MB size":           {input: 5 * MB, expected: 5 * Mi},
+		"roundOff GB size":           {input: 5 * GB, expected: 5 * Gi},
 	}
 
 	for name, test := range tests {

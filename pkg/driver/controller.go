@@ -39,6 +39,8 @@ import (
 
 // size constants
 const (
+	MB = 1000 * 1000
+	GB = 1000 * 1000 * 1000
 	Mi = 1024 * 1024
 	Gi = 1024 * 1024 * 1024
 )
