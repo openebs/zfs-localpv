@@ -1,3 +1,21 @@
+v0.9.1 / 2020-08-14
+========================
+* mounting the volume if it is ready ([#184](https://github.com/openebs/zfs-localpv/pull/184),[@pawanpraka1](https://github.com/pawanpraka1))
+* fixed uuid generation issue when mount fails ([#183](https://github.com/openebs/zfs-localpv/pull/183),[@pawanpraka1](https://github.com/pawanpraka1))
+* rounding off the volume size to Gi and Mi ([#191](https://github.com/openebs/zfs-localpv/pull/191),[@pawanpraka1](https://github.com/pawanpraka1))
+* removing volumeLifecycleModes from the operator yaml ([#186](https://github.com/openebs/zfs-localpv/pull/186),[@pawanpraka1](https://github.com/pawanpraka1))
+
+v0.9.1-RC2 / 2020-08-12
+========================
+
+v0.9.1-RC1 / 2020-08-10
+========================
+* mounting the volume if it is ready ([#184](https://github.com/openebs/zfs-localpv/pull/184),[@pawanpraka1](https://github.com/pawanpraka1))
+* fixed uuid generation issue when mount fails ([#183](https://github.com/openebs/zfs-localpv/pull/183),[@pawanpraka1](https://github.com/pawanpraka1))
+* rounding off the volume size to Gi and Mi ([#191](https://github.com/openebs/zfs-localpv/pull/191),[@pawanpraka1](https://github.com/pawanpraka1))
+* removing volumeLifecycleModes from the operator yaml ([#186](https://github.com/openebs/zfs-localpv/pull/186),[@pawanpraka1](https://github.com/pawanpraka1))
+
+
 v0.9.0 / 2020-07-14
 ========================
 * fixing xfs mounting issue on centos with ubuntu 20.04 image ([#179](https://github.com/openebs/zfs-localpv/pull/179),[@pawanpraka1](https://github.com/pawanpraka1))
