@@ -87,8 +87,17 @@ https://github.com/openebs/zfs-localpv/blob/master/docs/faq.md#6-how-to-add-cust
 OpenEBS ZFS driver components can be installed by running the
 following command.
 
+Ubuntu
 ```
 kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/zfs-operator.yaml
+```
+CentOS 7
+```
+kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/operators/centos7/zfs-operator.yaml
+```
+CentOS 8 
+```
+kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/operators/centos8/zfs-operator.yaml
 ```
 
 Verify that the ZFS driver Components are installed and running using below command :
