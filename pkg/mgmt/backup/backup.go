@@ -90,7 +90,7 @@ func (c *BkpController) syncBkp(bkp *apis.ZFSBackup) error {
 				klog.Infof("backup %s done %s@%s prevsnap [%s]", bkp.Name, bkp.Spec.VolumeName, bkp.Spec.SnapName, bkp.Spec.PrevSnapName)
 				err = zfs.UpdateBkpInfo(bkp, apis.BKPZFSStatusDone)
 			} else {
-				klog.Errorf("backup %s failed %s@%s", bkp.Name, bkp.Spec.VolumeName, bkp.Spec.SnapName)
+				klog.Errorf("backup %s failed %s@%s err %v", bkp.Name, bkp.Spec.VolumeName, bkp.Spec.SnapName, err)
 				err = zfs.UpdateBkpInfo(bkp, apis.BKPZFSStatusFailed)
 			}
 		}
@@ -102,7 +102,7 @@ func (c *BkpController) syncBkp(bkp *apis.ZFSBackup) error {
 func (c *BkpController) addBkp(obj interface{}) {
 	bkp, ok := obj.(*apis.ZFSBackup)
 	if !ok {
-		runtime.HandleError(fmt.Errorf("Couldn't get bkp object %#v", obj))
+		runtime.HandleError(fmt.Errorf("Couldn't get backup object %#v", obj))
 		return
 	}
 

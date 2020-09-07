@@ -278,7 +278,7 @@ func UpdateBkpInfo(bkp *apis.ZFSBackup, status apis.ZFSBackupStatus) error {
 	newBkp.Status = status
 
 	if err != nil {
-		klog.Errorf("Update snapshot failed %s err: %s", bkp.Spec.VolumeName, err.Error())
+		klog.Errorf("Update backup failed %s err: %s", bkp.Spec.VolumeName, err.Error())
 		return err
 	}
 

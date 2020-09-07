@@ -76,10 +76,9 @@ func (c *RstrController) enqueueRestore(obj interface{}) {
 // ZFSRestore
 func (c *RstrController) syncRestore(rstr *apis.ZFSRestore) error {
 	var err error = nil
-	// ZFSRestore should be deleted. Check if deletion timestamp is set
+	// ZFSRestore should not be deleted. Check if deletion timestamp is set
 	if !c.isDeletionCandidate(rstr) {
-		// if finalizer is not set then it means we are creating
-		// the zfs backup.
+		// if status is Init, then only do the restore
 		if rstr.Status == apis.RSTZFSStatusInit {
 			err = zfs.CreateRestore(rstr)
 			if err == nil {

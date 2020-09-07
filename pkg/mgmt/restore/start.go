@@ -37,7 +37,7 @@ var (
 	kubeconfig string
 )
 
-// Start starts the zfsbackup controller.
+// Start starts the zfsrestore controller.
 func Start(controllerMtx *sync.RWMutex, stopCh <-chan struct{}) error {
 
 	// Get in cluster config

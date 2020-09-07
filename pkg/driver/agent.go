@@ -71,7 +71,7 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 	go func() {
 		err := backup.Start(&ControllerMutex, stopCh)
 		if err != nil {
-			klog.Fatalf("Failed to start ZFS volume snapshot management controller: %s", err.Error())
+			klog.Fatalf("Failed to start ZFS backup management controller: %s", err.Error())
 		}
 	}()
 
@@ -79,7 +79,7 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 	go func() {
 		err := restore.Start(&ControllerMutex, stopCh)
 		if err != nil {
-			klog.Fatalf("Failed to start ZFS volume snapshot management controller: %s", err.Error())
+			klog.Fatalf("Failed to start ZFS restore management controller: %s", err.Error())
 		}
 	}()
 
