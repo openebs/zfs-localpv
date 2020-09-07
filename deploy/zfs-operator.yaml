@@ -1531,6 +1531,24 @@ roleRef:
 
 ---
 
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: openebs-zfspv-bin
+  namespace: kube-system # should be the same namespace where it is getting mounted
+data:
+  zfs: |
+    #!/bin/sh
+    if [ -x /host/sbin/zfs ]; then
+      chroot /host /sbin/zfs "$@"
+    elif [ -x /host/usr/sbin/zfs ]; then
+      chroot /host /usr/sbin/zfs "$@"
+    else
+      chroot /host zfs "$@"
+    fi
+
+---
+
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
@@ -1607,18 +1625,13 @@ spec:
               mountPath: /dev
             - name: encr-keys
               mountPath: /home/keys
-            - name: zfs-bin
+            - name: chroot-zfs
               mountPath: /sbin/zfs
-            - name: libzpool
-              mountPath: /lib/libzpool.so.2
-            - name: libzfscore
-              mountPath: /lib/libzfs_core.so.1
-            - name: libzfs
-              mountPath: /lib/libzfs.so.2
-            - name: libuutil
-              mountPath: /lib/libuutil.so.1
-            - name: libnvpair
-              mountPath: /lib/libnvpair.so.1
+              subPath: zfs
+            - name: host-root
+              mountPath: /host
+              mountPropagation: "HostToContainer"
+              readOnly: true
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/
               # needed so that any mounts setup inside this container are
@@ -1633,30 +1646,14 @@ spec:
           hostPath:
             path: /home/keys
             type: DirectoryOrCreate
-        - name: zfs-bin
+        - name: chroot-zfs
+          configMap:
+            defaultMode: 0555
+            name: openebs-zfspv-bin
+        - name: host-root
           hostPath:
-            path: /sbin/zfs
-            type: File
-        - name: libzpool
-          hostPath:
-            path: /lib/libzpool.so.2.0.0
-            type: File
-        - name: libzfscore
-          hostPath:
-            path: /lib/libzfs_core.so.1.0.0
-            type: File
-        - name: libzfs
-          hostPath:
-            path: /lib/libzfs.so.2.0.0
-            type: File
-        - name: libuutil
-          hostPath:
-            path: /lib/libuutil.so.1.0.1
-            type: File
-        - name: libnvpair
-          hostPath:
-            path: /lib/libnvpair.so.1.0.1
-            type: File
+            path: /
+            type: Directory
         - name: registration-dir
           hostPath:
             path: /var/lib/kubelet/plugins_registry/
