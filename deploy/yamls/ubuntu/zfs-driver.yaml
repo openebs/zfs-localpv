@@ -705,7 +705,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: openebs-zfspv-bin
-  namespace: kube-system
+  namespace: kube-system # should be the same namespace where it is getting mounted
 data:
   zfs: |
     #!/bin/sh
