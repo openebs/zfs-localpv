@@ -749,6 +749,7 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 		klog.Errorf(
 			"zfs: could not restore the volume %v cmd %v error: %s", volume, args, string(out),
 		)
+		return err
 	}
 
 	/*
@@ -762,5 +763,5 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 		return btrfsGenerateUUID(volume)
 	}
 
-	return err
+	return nil
 }
