@@ -93,7 +93,7 @@ export DBUILD_ARGS=--build-arg DBUILD_DATE=${DBUILD_DATE} --build-arg DBUILD_REP
 CSI_DRIVER=zfs-driver
 
 .PHONY: all
-all: test manifests zfs-driver-image
+all: license-check test manifests zfs-driver-image
 
 .PHONY: clean
 clean:
