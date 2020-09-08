@@ -16,11 +16,12 @@ limitations under the License.
 
 /*
 The restore flow is as follows:
+
 - plugin creates a restore storage volume(zvol or dataset)
 
-At the backup time, the plugin backs up the ZFSVolume CR and at while doing the restore we have all the information related to that volume. The plugin first creates the restore destination to store the data.
+At the backup time, the plugin backs up the ZFSVolume CR and while doing the restore we have all the information related to that volume. The plugin first creates the restore destination to store the data.
 
-- plugin then creates the ZFSRestore CR with the destination volume and remote location from where the data needs to be read
+- plugin then creates the ZFSRestore CR with the destination volume and remote location as its server information from where the data will be read for restore purpose.
 
 - restore controller (on node) keeps a watch for new CRs associated with the node id. This node ID will be same as the Node ID present in the ZFSVolume resource.
 
@@ -41,7 +42,7 @@ Limitation with the Initial Version :-
 
 - If the restore doesn't have the specified backup, the plugin itself fails that restore request as there is no Backup to Restore from.
 
-- If the same volume is restored twice, the data will be written again. The plugin should fail this kind of request.
+- If the same volume is restored twice, the data will be written again. The plugin itself fails this kind of request.
 
 */
 

@@ -21,13 +21,13 @@ The Backup flow is as follows:
 
 - It will save the namespace information where the pvc is created also while taking the backup. Plugin will use this info if restoring without a namespace mapping to find if volume has already been restored.
 
-- plugin then creates the ZFSBackup CR with the destination volume and remote location where the data needs to be send.
+- plugin then creates the ZFSBackup CR with status as Init and with the destination volume and remote location where the data needs to be send.
 
 - Backup controller (on node) keeps a watch for new CRs associated with the node id. This node ID will be same as the Node ID present in the ZFSVolume resource.
 
-- The Backup controller will take a snapshot and then send the data to the remote location.
+- if Backup status == init and not marked for deletion, the Backup controller will take a snapshot which needs to be send for the Backup purpose.
 
-- if Backup status == init and not marked for deletion, Backup controller will execute the `zfs send | remote-write` command.
+- Backup controller will execute the `zfs send | remote-write` command which will send the data to the Backup server which is a server running by the plugin. The plugin will read the data and send that to remote location S3 or minio.
 
 - If Backup is deleted then corresponsing snapshot also gets deleted.
 
@@ -40,7 +40,7 @@ Limitation :-
     * Backup status update also failed, then backup will be retried from the beginning (TODO optimize it)
     * Backup status update is successful, the Backup operation will fail.
 
-- A snapshot will exist as long as Backup is be present and it will be cleaned up when the Backup is deleted.
+- A snapshot will exist as long as Backup is present and it will be cleaned up when the Backup is deleted.
 
 */
 
