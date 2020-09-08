@@ -23,7 +23,9 @@ import (
 	"fmt"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
+	"strings"
 )
 
 // zfs related constants
@@ -42,6 +44,8 @@ const (
 	ZFSGetArg      = "get"
 	ZFSListArg     = "list"
 	ZFSSnapshotArg = "snapshot"
+	ZFSSendArg     = "send"
+	ZFSRecvArg     = "recv"
 )
 
 // constants to define volume type
@@ -292,13 +296,56 @@ func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
 	return ZFSVolArg
 }
 
+// builldVolumeBackupArgs returns volume send command for sending the zfs volume
+func buildVolumeBackupArgs(bkp *apis.ZFSBackup, vol *apis.ZFSVolume) []string {
+	var ZFSVolArg []string
+	backupDest := bkp.Spec.BackupDest
+
+	bkpAddr := strings.Split(backupDest, ":")
+
+	curSnap := vol.Spec.PoolName + "/" + vol.Name + "@" + bkp.Spec.SnapName
+
+	remote := " | nc -w 3 " + bkpAddr[0] + " " + bkpAddr[1]
+
+	cmd := ZFSVolCmd + " "
+
+	if len(bkp.Spec.PrevSnapName) > 0 {
+		prevSnap := vol.Spec.PoolName + "/" + vol.Name + "@" + bkp.Spec.PrevSnapName
+		// do incremental send
+		cmd += ZFSSendArg + " -i " + prevSnap + " " + curSnap + " " + remote
+	} else {
+		cmd += ZFSSendArg + " " + curSnap + remote
+	}
+
+	ZFSVolArg = append(ZFSVolArg, "-c", cmd)
+
+	return ZFSVolArg
+}
+
+// builldVolumeRestoreArgs returns volume recv command for receiving the zfs volume
+func buildVolumeRestoreArgs(rstr *apis.ZFSRestore, vol *apis.ZFSVolume) []string {
+	var ZFSVolArg []string
+	restoreSrc := rstr.Spec.RestoreSrc
+
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	rstrAddr := strings.Split(restoreSrc, ":")
+	source := "nc -w 3 " + rstrAddr[0] + " " + rstrAddr[1] + " | "
+
+	cmd := source + ZFSVolCmd + " " + ZFSRecvArg + " -F " + volume
+
+	ZFSVolArg = append(ZFSVolArg, "-c", cmd)
+
+	return ZFSVolArg
+}
+
 // builldVolumeDestroyArgs returns volume destroy command along with attributes as a string array
 func buildVolumeDestroyArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
 
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	ZFSVolArg = append(ZFSVolArg, ZFSDestroyArg, volume)
+	ZFSVolArg = append(ZFSVolArg, ZFSDestroyArg, "-r", volume)
 
 	return ZFSVolArg
 }
@@ -619,4 +666,102 @@ func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string) error {
 
 	err = handleVolResize(vol, mountpath)
 	return err
+}
+
+// CreateBackup creates the backup
+func CreateBackup(bkp *apis.ZFSBackup) error {
+	vol, err := GetZFSVolume(bkp.Spec.VolumeName)
+	if err != nil {
+		return err
+	}
+
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	/* create the snapshot for the backup */
+	snap := &apis.ZFSSnapshot{}
+	snap.Name = bkp.Spec.SnapName
+	snap.Spec.PoolName = vol.Spec.PoolName
+	snap.Labels = map[string]string{ZFSVolKey: vol.Name}
+
+	err = CreateSnapshot(snap)
+
+	if err != nil {
+		klog.Errorf(
+			"zfs: could not create snapshot for the backup vol %s snap %s err %v", volume, snap.Name, err,
+		)
+		return err
+	}
+
+	args := buildVolumeBackupArgs(bkp, vol)
+	cmd := exec.Command("bash", args...)
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		klog.Errorf(
+			"zfs: could not backup the volume %v cmd %v error: %s", volume, args, string(out),
+		)
+	}
+
+	return err
+}
+
+// DestoryBackup deletes the snapshot created
+func DestoryBackup(bkp *apis.ZFSBackup) error {
+	vol, err := GetZFSVolume(bkp.Spec.VolumeName)
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			// Volume has been deleted, return
+			return nil
+		}
+		return err
+	}
+
+	volume := vol.Spec.PoolName + "/" + vol.Name
+
+	/* create the snapshot for the backup */
+	snap := &apis.ZFSSnapshot{}
+	snap.Name = bkp.Spec.SnapName
+	snap.Spec.PoolName = vol.Spec.PoolName
+	snap.Labels = map[string]string{ZFSVolKey: vol.Name}
+
+	err = DestroySnapshot(snap)
+
+	if err != nil {
+		klog.Errorf(
+			"zfs: could not destroy snapshot for the backup vol %s snap %s err %v", volume, snap.Name, err,
+		)
+	}
+	return err
+}
+
+// CreateRestore creates the restore
+func CreateRestore(rstr *apis.ZFSRestore) error {
+	vol, err := GetZFSVolume(rstr.Spec.VolumeName)
+	if err != nil {
+		return err
+	}
+	volume := vol.Spec.PoolName + "/" + vol.Name
+	args := buildVolumeRestoreArgs(rstr, vol)
+	cmd := exec.Command("bash", args...)
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		klog.Errorf(
+			"zfs: could not restore the volume %v cmd %v error: %s", volume, args, string(out),
+		)
+		return err
+	}
+
+	/*
+	 * need to generate a new uuid for zfs and btrfs volumes
+	 * so that we can mount it.
+	 */
+	if vol.Spec.FsType == "xfs" {
+		return xfsGenerateUUID(volume)
+	}
+	if vol.Spec.FsType == "btrfs" {
+		return btrfsGenerateUUID(volume)
+	}
+
+	return nil
 }

@@ -478,7 +478,7 @@ rules:
     resources: ["nodes"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["*"]
-    resources: ["zfsvolumes", "zfssnapshots"]
+    resources: ["zfsvolumes", "zfssnapshots", "zfsbackups", "zfsrestores"]
     verbs: ["*"]
 ---
 
@@ -681,7 +681,7 @@ rules:
     resources: ["persistentvolumes", "nodes", "services"]
     verbs: ["get", "list"]
   - apiGroups: ["*"]
-    resources: ["zfsvolumes", "zfssnapshots"]
+    resources: ["zfsvolumes", "zfssnapshots", "zfsbackups", "zfsrestores"]
     verbs: ["get", "list", "watch", "create", "update", "patch"]
 
 ---

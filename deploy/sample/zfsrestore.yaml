@@ -1,0 +1,11 @@
+apiVersion: zfs.openebs.io/v1
+kind: ZFSRestore
+metadata:
+  name: testrestore
+  namespace: openebs
+spec:
+  volumeName: "pvc-794118b5-143b-49a1-99e8-4c2b80a74776"
+  ownerNodeID: pawan-node-1
+  restoreSrc: "10.41.10.61:1234"
+status: "Init"
+

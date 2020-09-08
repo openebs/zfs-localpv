@@ -26,6 +26,8 @@ import (
 
 type ZfsV1Interface interface {
 	RESTClient() rest.Interface
+	ZFSBackupsGetter
+	ZFSRestoresGetter
 	ZFSSnapshotsGetter
 	ZFSVolumesGetter
 }
@@ -33,6 +35,14 @@ type ZfsV1Interface interface {
 // ZfsV1Client is used to interact with features provided by the zfs.openebs.io group.
 type ZfsV1Client struct {
 	restClient rest.Interface
+}
+
+func (c *ZfsV1Client) ZFSBackups(namespace string) ZFSBackupInterface {
+	return newZFSBackups(c, namespace)
+}
+
+func (c *ZfsV1Client) ZFSRestores(namespace string) ZFSRestoreInterface {
+	return newZFSRestores(c, namespace)
 }
 
 func (c *ZfsV1Client) ZFSSnapshots(namespace string) ZFSSnapshotInterface {

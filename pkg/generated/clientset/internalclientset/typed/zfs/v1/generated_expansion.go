@@ -18,6 +18,10 @@ limitations under the License.
 
 package v1
 
+type ZFSBackupExpansion interface{}
+
+type ZFSRestoreExpansion interface{}
+
 type ZFSSnapshotExpansion interface{}
 
 type ZFSVolumeExpansion interface{}

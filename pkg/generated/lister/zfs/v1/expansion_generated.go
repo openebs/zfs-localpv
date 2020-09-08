@@ -18,6 +18,22 @@ limitations under the License.
 
 package v1
 
+// ZFSBackupListerExpansion allows custom methods to be added to
+// ZFSBackupLister.
+type ZFSBackupListerExpansion interface{}
+
+// ZFSBackupNamespaceListerExpansion allows custom methods to be added to
+// ZFSBackupNamespaceLister.
+type ZFSBackupNamespaceListerExpansion interface{}
+
+// ZFSRestoreListerExpansion allows custom methods to be added to
+// ZFSRestoreLister.
+type ZFSRestoreListerExpansion interface{}
+
+// ZFSRestoreNamespaceListerExpansion allows custom methods to be added to
+// ZFSRestoreNamespaceLister.
+type ZFSRestoreNamespaceListerExpansion interface{}
+
 // ZFSSnapshotListerExpansion allows custom methods to be added to
 // ZFSSnapshotLister.
 type ZFSSnapshotListerExpansion interface{}

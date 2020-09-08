@@ -28,6 +28,14 @@ type FakeZfsV1 struct {
 	*testing.Fake
 }
 
+func (c *FakeZfsV1) ZFSBackups(namespace string) v1.ZFSBackupInterface {
+	return &FakeZFSBackups{c, namespace}
+}
+
+func (c *FakeZfsV1) ZFSRestores(namespace string) v1.ZFSRestoreInterface {
+	return &FakeZFSRestores{c, namespace}
+}
+
 func (c *FakeZfsV1) ZFSSnapshots(namespace string) v1.ZFSSnapshotInterface {
 	return &FakeZFSSnapshots{c, namespace}
 }
