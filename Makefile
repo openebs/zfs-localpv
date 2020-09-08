@@ -93,7 +93,7 @@ export DBUILD_ARGS=--build-arg DBUILD_DATE=${DBUILD_DATE} --build-arg DBUILD_REP
 CSI_DRIVER=zfs-driver
 
 .PHONY: all
-all: test manifests zfs-driver-image
+all: license-check test manifests zfs-driver-image
 
 .PHONY: clean
 clean:
@@ -246,3 +246,16 @@ golint:
 	@echo "Completed golint no recommendations !!"
 	@echo "--------------------------------"
 	@echo ""
+
+.PHONY: license-check
+license-check:
+	@echo "--> Checking license header..."
+	@licRes=$$(for file in $$(find . -type f -regex '.*\.sh\|.*\.go\|.*Docker.*\|.*\Makefile*' ! -path './vendor/*' ) ; do \
+               awk 'NR<=5' $$file | grep -Eq "(Copyright|generated|GENERATED)" || echo $$file; \
+       done); \
+       if [ -n "$${licRes}" ]; then \
+               echo "license header checking failed:"; echo "$${licRes}"; \
+               exit 1; \
+       fi
+	@echo "--> Done checking license."
+	@echo
