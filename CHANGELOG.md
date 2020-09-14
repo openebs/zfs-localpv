@@ -1,3 +1,25 @@
+v1.0.0 / 2020-09-15
+========================
+* adding velero backup and restore support ([#162](https://github.com/openebs/zfs-localpv/pull/162),[@pawanpraka1](https://github.com/pawanpraka1))
+* update go version to 1.14.7 ([#201](https://github.com/openebs/zfs-localpv/pull/201),[@pawanpraka1](https://github.com/pawanpraka1))
+* mounting the root filesystem to remove the dependency on the Operating system ([#204](https://github.com/openebs/zfs-localpv/pull/204),[@pawanpraka1](https://github.com/pawanpraka1))
+* Add license-check for .go , .sh , Dockerfile and Makefile ([#205](https://github.com/openebs/zfs-localpv/pull/205),[@ajeetrai707](https://github.com/AJEETRAI707))
+
+v1.0.0-RC2 / 2020-09-14
+========================
+
+v1.0.0-RC1 / 2020-09-10
+========================
+* adding velero backup and restore support ([#162](https://github.com/openebs/zfs-localpv/pull/162),[@pawanpraka1](https://github.com/pawanpraka1))
+* update go version to 1.14.7 ([#201](https://github.com/openebs/zfs-localpv/pull/201),[@pawanpraka1](https://github.com/pawanpraka1))
+* mounting the root filesystem to remove the dependency on the Operating system ([#204](https://github.com/openebs/zfs-localpv/pull/204),[@pawanpraka1](https://github.com/pawanpraka1))
+* Add license-check for .go , .sh , Dockerfile and Makefile ([#205](https://github.com/openebs/zfs-localpv/pull/205),[@ajeetrai707](https://github.com/AJEETRAI707))
+
+
+v0.9.2 / 2020-08-26
+========================
+* Reverting back to old way of checking the volume status ([#196](https://github.com/openebs/zfs-localpv/pull/196),[@pawanpraka1](https://github.com/pawanpraka1))
+
 v0.9.1 / 2020-08-14
 ========================
 * mounting the volume if it is ready ([#184](https://github.com/openebs/zfs-localpv/pull/184),[@pawanpraka1](https://github.com/pawanpraka1))
