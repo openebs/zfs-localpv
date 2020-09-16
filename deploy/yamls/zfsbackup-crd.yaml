@@ -65,6 +65,7 @@ spec:
             backupDest:
               description: BackupDest is the remote address for backup transfer
               minLength: 1
+              pattern: ^([0-9]+.[0-9]+.[0-9]+.[0-9]+:[0-9]+)$
               type: string
             ownerNodeID:
               description: OwnerNodeID is a name of the nodes where the source volume
@@ -90,6 +91,13 @@ spec:
           type: object
         status:
           description: ZFSBackupStatus is to hold status of backup
+          enum:
+          - Init
+          - Done
+          - Failed
+          - Pending
+          - InProgress
+          - Invalid
           type: string
       required:
       - spec
