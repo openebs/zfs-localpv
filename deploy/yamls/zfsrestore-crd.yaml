@@ -55,6 +55,7 @@ spec:
               description: it can be ip:port in case of restore from remote or volumeName
                 in case of local restore
               minLength: 1
+              pattern: ^([0-9]+.[0-9]+.[0-9]+.[0-9]+:[0-9]+)$
               type: string
             volumeName:
               description: volume name to where restore has to be performed
@@ -67,6 +68,13 @@ spec:
           type: object
         status:
           description: ZFSRestoreStatus is to hold result of action.
+          enum:
+          - Init
+          - Done
+          - Failed
+          - Pending
+          - InProgress
+          - Invalid
           type: string
       required:
       - spec

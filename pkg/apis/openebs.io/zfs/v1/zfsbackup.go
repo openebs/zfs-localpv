@@ -34,8 +34,10 @@ import (
 type ZFSBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              ZFSBackupSpec   `json:"spec"`
-	Status            ZFSBackupStatus `json:"status"`
+	Spec              ZFSBackupSpec `json:"spec"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=Init;Done;Failed;Pending;InProgress;Invalid
+	Status ZFSBackupStatus `json:"status"`
 }
 
 // ZFSBackupSpec is the spec for a ZFSBackup resource
@@ -61,6 +63,7 @@ type ZFSBackupSpec struct {
 	// BackupDest is the remote address for backup transfer
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern="^([0-9]+.[0-9]+.[0-9]+.[0-9]+:[0-9]+)$"
 	BackupDest string `json:"backupDest"`
 }
 
@@ -69,9 +72,6 @@ type ZFSBackupStatus string
 
 // Status written onto ZFSBackup objects.
 const (
-	// BKPZFSStatusEmpty ensures the create operation is to be done, if import fails.
-	BKPZFSStatusEmpty ZFSBackupStatus = ""
-
 	// BKPZFSStatusDone , backup is completed.
 	BKPZFSStatusDone ZFSBackupStatus = "Done"
 
