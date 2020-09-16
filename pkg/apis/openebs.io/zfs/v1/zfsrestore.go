@@ -29,7 +29,9 @@ type ZFSRestore struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"` // set name to restore name + volume name + something like csp tag
 	Spec              ZFSRestoreSpec              `json:"spec"`
-	Status            ZFSRestoreStatus            `json:"status"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=Init;Done;Failed;Pending;InProgress;Invalid
+	Status ZFSRestoreStatus `json:"status"`
 }
 
 // ZFSRestoreSpec is the spec for a ZFSRestore resource
@@ -46,6 +48,7 @@ type ZFSRestoreSpec struct {
 	// it can be ip:port in case of restore from remote or volumeName in case of local restore
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern="^([0-9]+.[0-9]+.[0-9]+.[0-9]+:[0-9]+)$"
 	RestoreSrc string `json:"restoreSrc"`
 }
 
@@ -54,9 +57,6 @@ type ZFSRestoreStatus string
 
 // Status written onto CStrorRestore object.
 const (
-	// RSTZFSStatusEmpty ensures the create operation is to be done, if import fails.
-	RSTZFSStatusEmpty ZFSRestoreStatus = ""
-
 	// RSTZFSStatusDone , restore operation is completed.
 	RSTZFSStatusDone ZFSRestoreStatus = "Done"
 

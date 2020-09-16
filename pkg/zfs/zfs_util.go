@@ -297,11 +297,14 @@ func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
 }
 
 // builldVolumeBackupArgs returns volume send command for sending the zfs volume
-func buildVolumeBackupArgs(bkp *apis.ZFSBackup, vol *apis.ZFSVolume) []string {
+func buildVolumeBackupArgs(bkp *apis.ZFSBackup, vol *apis.ZFSVolume) ([]string, error) {
 	var ZFSVolArg []string
 	backupDest := bkp.Spec.BackupDest
 
 	bkpAddr := strings.Split(backupDest, ":")
+	if len(bkpAddr) != 2 {
+		return ZFSVolArg, fmt.Errorf("zfs: invalid backup server address %s", backupDest)
+	}
 
 	curSnap := vol.Spec.PoolName + "/" + vol.Name + "@" + bkp.Spec.SnapName
 
@@ -319,24 +322,28 @@ func buildVolumeBackupArgs(bkp *apis.ZFSBackup, vol *apis.ZFSVolume) []string {
 
 	ZFSVolArg = append(ZFSVolArg, "-c", cmd)
 
-	return ZFSVolArg
+	return ZFSVolArg, nil
 }
 
 // builldVolumeRestoreArgs returns volume recv command for receiving the zfs volume
-func buildVolumeRestoreArgs(rstr *apis.ZFSRestore, vol *apis.ZFSVolume) []string {
+func buildVolumeRestoreArgs(rstr *apis.ZFSRestore, vol *apis.ZFSVolume) ([]string, error) {
 	var ZFSVolArg []string
 	restoreSrc := rstr.Spec.RestoreSrc
 
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
 	rstrAddr := strings.Split(restoreSrc, ":")
+	if len(rstrAddr) != 2 {
+		return ZFSVolArg, fmt.Errorf("zfs: invalid restore server address %s", restoreSrc)
+	}
+
 	source := "nc -w 3 " + rstrAddr[0] + " " + rstrAddr[1] + " | "
 
 	cmd := source + ZFSVolCmd + " " + ZFSRecvArg + " -F " + volume
 
 	ZFSVolArg = append(ZFSVolArg, "-c", cmd)
 
-	return ZFSVolArg
+	return ZFSVolArg, nil
 }
 
 // builldVolumeDestroyArgs returns volume destroy command along with attributes as a string array
@@ -692,7 +699,10 @@ func CreateBackup(bkp *apis.ZFSBackup) error {
 		return err
 	}
 
-	args := buildVolumeBackupArgs(bkp, vol)
+	args, err := buildVolumeBackupArgs(bkp, vol)
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command("bash", args...)
 	out, err := cmd.CombinedOutput()
 
@@ -741,7 +751,11 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 		return err
 	}
 	volume := vol.Spec.PoolName + "/" + vol.Name
-	args := buildVolumeRestoreArgs(rstr, vol)
+	args, err := buildVolumeRestoreArgs(rstr, vol)
+	if err != nil {
+		return err
+	}
+
 	cmd := exec.Command("bash", args...)
 	out, err := cmd.CombinedOutput()
 
