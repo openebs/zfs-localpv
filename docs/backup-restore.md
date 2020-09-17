@@ -12,7 +12,7 @@ follow the steps mentioned [here](https://velero.io/docs/v1.4/basic-install/) to
 
 ### 2. Deploy Velero
 
-1. setup the credential file
+#### 1. setup the credential file
 
 ```
 $ cat /home/pawan/velero/credentials-minio
@@ -23,7 +23,7 @@ aws_access_key_id = minio
 aws_secret_access_key = minio123
 
 ```
-2. Install Velero
+#### 2. Install Velero
 
 ```
 velero install --provider aws --bucket velero --secret-file /home/pawan/velero/credentials-minio --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000 --use-volume-snapshots=true --use-restic
@@ -54,7 +54,7 @@ velero-7d9c448bc5-j424s   1/1     Running     3          69s
 
 ### 4. Setup ZFS-LocalPV Plugin
 
-1. Install the Velero Plugin for ZFS-LocalPV
+#### 1. Install the Velero Plugin for ZFS-LocalPV
 
 ```
 velero plugin add openebs/velero-plugin:2.1.0
@@ -62,7 +62,7 @@ velero plugin add openebs/velero-plugin:2.1.0
 
 We have to install the velero-plugin 2.1.0 or later version which has the support for ZFS-LocalPV.
 
-2. Setup the snapshot location to store the data
+#### 2. Setup the snapshot location to store the data
 
 Create the volume snapshot location which has the information about where the snapshot should be stored
 
@@ -94,13 +94,13 @@ kubectl get volumesnapshotlocations.velero.io -n velero
 
 ### 5. Create the Backup
 
-1. Create the backup using the below velero command, add all the namespaces you want to backed up in comma separated format in --include-namespaces parameter.
+Create the backup using the below velero command, add all the namespaces you want to backed up in comma separated format in --include-namespaces parameter.
 
 ```
 velero backup create my-backup --snapshot-volumes --include-namespaces=<backup-namespaces> --volume-snapshot-locations=zfspv --storage-location=default
 ```
 
-2. Check the backup status
+We can check the backup status using `velero backup get` command:
 
 ```
 $ velero backup get
@@ -112,12 +112,12 @@ Once Status is Complete, the backup has been completed successfully.
 
 ### 6. Do the Restore
 
-1. We can restore the backup using below command, we can provide the namespace mapping if we want to restore in different namespace. If namespace mapping is not provided, then it will restore in the source namespace in which the backup was present.
+We can restore the backup using below command, we can provide the namespace mapping if we want to restore in different namespace. If namespace mapping is not provided, then it will restore in the source namespace in which the backup was present.
 
 ```
 velero restore create --from-backup my-backup --restore-volumes=true --namespace-mappings <source-ns>:<dest-ns>
 ```
-2. Check the restore status
+Now we can heck the restore status:
 
 ```
 $ velero restore get
