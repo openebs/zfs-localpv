@@ -3,6 +3,7 @@
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_shield)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3523/badge)](https://bestpractices.coreinfrastructure.org/en/projects/3523)
 [![Slack](https://img.shields.io/badge/chat!!!-slack-ff1493.svg?style=flat-square)](https://openebsslacksignup.herokuapp.com/)
+[![Community Meetings](https://img.shields.io/badge/Community-Meetings-blue)](https://hackmd.io/yJb407JWRyiwLU-XDndOLA?view)
 
 
 CSI driver for provisioning Local PVs backed by ZFS and more.
@@ -13,7 +14,7 @@ This project is under active development and with the release of version v0.8.x 
 
 ## Project Tracker
 
-See [roadmap](https://github.com/orgs/openebs/projects/10) and [e2e-test](https://github.com/openebs/e2e-tests/projects/7).
+See [roadmap](https://github.com/orgs/openebs/projects/10), [e2e-wiki](https://github.com/openebs/zfs-localpv/wiki/ZFS-LocalPV-e2e-test-cases) and [e2e-test](https://github.com/openebs/e2e-tests/projects/7).
 
 ## Usage
 
@@ -32,7 +33,7 @@ must meet the following prerequisites:
 
 K8S : 1.14+
 
-OS : Ubuntu 18.04, Ubuntu 16.04, CentOS 7, CentOS 8
+OS : Ubuntu, CentOS
 
 ZFS : 0.7, 0.8
 
@@ -84,15 +85,13 @@ https://github.com/openebs/zfs-localpv/blob/master/docs/faq.md#6-how-to-add-cust
 
 ### Installation
 
-OpenEBS ZFS driver components can be installed by running the
-following command.
+We can install the latest release of OpenEBS ZFS driver by running the following command.
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/zfs-operator.yaml
+$ kubectl apply -f https://openebs.github.io/charts/zfs-operator.yaml
 ```
 
 Verify that the ZFS driver Components are installed and running using below command :
-
 
 ```
 $ kubectl get pods -n kube-system -l role=openebs-zfs
@@ -103,7 +102,7 @@ on the nodes.
 
 ```
 NAME                       READY   STATUS    RESTARTS   AGE
-openebs-zfs-controller-0   4/4     Running   0          5h28m
+openebs-zfs-controller-0   5/5     Running   0          5h28m
 openebs-zfs-node-4d94n     2/2     Running   0          5h28m
 openebs-zfs-node-gssh8     2/2     Running   0          5h28m
 openebs-zfs-node-twmx8     2/2     Running   0          5h28m
@@ -135,14 +134,13 @@ provisioner: zfs.csi.openebs.io
 
 The storage class contains the volume parameters like recordsize(should be power of 2), compression, dedup and fstype. You can select what are all
 parameters you want. In case, zfs properties paramenters are not provided, the volume will inherit the properties from the ZFS Pool.
-Also currently supported fs types are ext2/3/4, xfs and zfs only. The *poolname* is the must argument. It should be noted that *poolname*
-can either be the root dataset or a child dataset e.g.
+The *poolname* is the must argument. It should be noted that *poolname* can either be the root dataset or a child dataset e.g.
 ```
 poolname: "zfspv-pool"
 poolname: "zfspv-pool/child"
 ```
 
-Also the dataset provided under `poolname` must exist on *all the nodes* with the name given in the storage class.
+Also the dataset provided under `poolname` must exist on *all the nodes* with the name given in the storage class. Check the doc on [storageclasses](docs/storageclasses.md) to know all the supported parameters for ZFS-LocalPV
 
 ##### ext2/3/4 or xfs or btrfs as FsType
 
