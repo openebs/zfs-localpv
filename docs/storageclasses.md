@@ -19,13 +19,13 @@ allowed values: "zfs", "ext2", "ext3", "ext4", "xfs", "btrfs"
 
 ### recordsize (*optional* parameter)
 
-This parameter is application if fstype provided is "zfs" otherwise it will be ignored. It specifies a suggested block size for files in the file system.
+This parameter is applicable if fstype provided is "zfs" otherwise it will be ignored. It specifies a suggested block size for files in the file system.
 
 allowed values: Any power of 2 from 512 bytes to 128 Kbytes
 
 ### volblocksize (*optional* parameter)
 
-This parameter is application if fstype is anyhting but "zfs" where we create a ZVOL a raw block device carved out of ZFS Pool. It specifies the block size to use for the zvol. The volume size can only be set to a multiple of volblocksize, and cannot be zero.
+This parameter is applicable if fstype is anything but "zfs" where we create a ZVOL a raw block device carved out of ZFS Pool. It specifies the block size to use for the zvol. The volume size can only be set to a multiple of volblocksize, and cannot be zero.
 
 allowed values: Any power of 2 from 512 bytes to 128 Kbytes
 
@@ -49,7 +49,7 @@ allowed values: "yes", "no"
 
 ### shared (*optional* parameter)
 
-Shared specifies whether the volume can be shared among multiple pods. If it is not set to "yes", then the ZFS-LocalPV Driver will not allow the volumes to be mounted by more than one pods. The default value is "no" is shared is not provided in the storageclass.
+Shared specifies whether the volume can be shared among multiple pods. If it is not set to "yes", then the ZFS-LocalPV Driver will not allow the volumes to be mounted by more than one pods. The default value is "no" if shared is not provided in the storageclass.
 
 allowed values: "yes", "no"
 
@@ -185,14 +185,18 @@ The ZFS-LocalPV driver will create the Volume in the Pool “zfspv-pool” prese
 
 The problem with the above StorageClass is that it works fine if the number of nodes is less, but if the number of nodes is huge, it is cumbersome to list all the nodes like this. In that case, what we can do is, we can label all the similar nodes using the same key value and use that label to create the StorageClass.
 
+```
 pawan@pawan-master:~/pawan$ kubectl label node pawan-node-2 openebs.io/zpool=nvme
 node/pawan-node-2 labeled
 pawan@pawan-master:~/pawan$ kubectl label node pawan-node-1 openebs.io/zpool=nvme
 node/pawan-node-1 labeled
+```
 
-Now, restart the ZFS-LocalPV Driver (if already deployed otherwise, please ignore) so that it can pick the new node label as the supported topology.
+Now, restart the ZFS-LocalPV Driver (if already deployed, otherwise please ignore) so that it can pick the new node label as the supported topology. Check [faq](./faq.md#6-how-to-add-custom-topology-key) for more details.
 
+```
 $ kubectl delete po -n kube-system -l role=openebs-zfs
+```
 
 Now, we can create the StorageClass like this:
 

@@ -117,7 +117,7 @@ We can restore the backup using below command, we can provide the namespace mapp
 ```
 velero restore create --from-backup my-backup --restore-volumes=true --namespace-mappings <source-ns>:<dest-ns>
 ```
-Now we can heck the restore status:
+Now we can check the restore status:
 
 ```
 $ velero restore get
