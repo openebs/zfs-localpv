@@ -28,7 +28,7 @@ import (
 )
 
 // FormatAndMountZvol formats and mounts the created volume to the desired mount path
-func FormatAndMountZvol(devicePath string, mountInfo *apis.MountInfo) error {
+func FormatAndMountZvol(devicePath string, mountInfo *MountInfo) error {
 	mounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
 
 	err := mounter.FormatAndMount(devicePath, mountInfo.MountPath, mountInfo.FSType, mountInfo.MountOptions)
@@ -191,7 +191,7 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 }
 
 // MountZvol mounts the disk to the specified path
-func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+func MountZvol(vol *apis.ZFSVolume, mount *MountInfo) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 	err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
@@ -211,7 +211,7 @@ func MountZvol(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 }
 
 // MountDataset mounts the zfs dataset to the specified path
-func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+func MountDataset(vol *apis.ZFSVolume, mount *MountInfo) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 	err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
@@ -257,7 +257,7 @@ func MountDataset(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 }
 
 // MountFilesystem mounts the disk to the specified path
-func MountFilesystem(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
+func MountFilesystem(vol *apis.ZFSVolume, mount *MountInfo) error {
 	switch vol.Spec.VolumeType {
 	case VolTypeDataset:
 		return MountDataset(vol, mount)
@@ -267,7 +267,7 @@ func MountFilesystem(vol *apis.ZFSVolume, mount *apis.MountInfo) error {
 }
 
 // MountBlock mounts the block disk to the specified path
-func MountBlock(vol *apis.ZFSVolume, mountinfo *apis.MountInfo) error {
+func MountBlock(vol *apis.ZFSVolume, mountinfo *MountInfo) error {
 	target := mountinfo.MountPath
 	devicePath := ZFSDevPath + vol.Spec.PoolName + "/" + vol.Name
 	mountopt := []string{"bind"}
@@ -291,4 +291,25 @@ func MountBlock(vol *apis.ZFSVolume, mountinfo *apis.MountInfo) error {
 	klog.Infof("NodePublishVolume mounted block device %s at %s", devicePath, target)
 
 	return nil
+}
+
+// MountInfo contains the volume related info
+// for all types of volumes in ZFSVolume
+type MountInfo struct {
+	// FSType of a volume will specify the
+	// format type - ext4(default), xfs of PV
+	FSType string `json:"fsType"`
+
+	// AccessMode of a volume will hold the
+	// access mode of the volume
+	AccessModes []string `json:"accessModes"`
+
+	// MountPath of the volume will hold the
+	// path on which the volume is mounted
+	// on that node
+	MountPath string `json:"mountPath"`
+
+	// MountOptions specifies the options with
+	// which mount needs to be attempted
+	MountOptions []string `json:"mountOptions"`
 }

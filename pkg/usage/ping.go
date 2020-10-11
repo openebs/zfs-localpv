@@ -17,9 +17,9 @@ limitations under the License.
 package usage
 
 import (
-	"time"
-
+	"fmt"
 	"github.com/openebs/zfs-localpv/pkg/common/env"
+	"time"
 )
 
 // OpenEBSPingPeriod  ping interval of volume io analytics
@@ -50,7 +50,7 @@ func PingCheck() {
 
 // getPingPeriod sets the duration of health events, defaults to 24
 func getPingPeriod() time.Duration {
-	value := env.GetOrDefault(OpenEBSPingPeriod, string(defaultPingPeriod))
+	value := env.GetOrDefault(OpenEBSPingPeriod, fmt.Sprint(defaultPingPeriod))
 	duration, _ := time.ParseDuration(value)
 	// Sanitychecks for setting time duration of health events
 	// This way, we are checking for negative and zero time duration and we
