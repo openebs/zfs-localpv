@@ -27,6 +27,27 @@ import (
 	"k8s.io/kubernetes/pkg/util/mount"
 )
 
+// MountInfo contains the volume related info
+// for all types of volumes in ZFSVolume
+type MountInfo struct {
+	// FSType of a volume will specify the
+	// format type - ext4(default), xfs of PV
+	FSType string `json:"fsType"`
+
+	// AccessMode of a volume will hold the
+	// access mode of the volume
+	AccessModes []string `json:"accessModes"`
+
+	// MountPath of the volume will hold the
+	// path on which the volume is mounted
+	// on that node
+	MountPath string `json:"mountPath"`
+
+	// MountOptions specifies the options with
+	// which mount needs to be attempted
+	MountOptions []string `json:"mountOptions"`
+}
+
 // FormatAndMountZvol formats and mounts the created volume to the desired mount path
 func FormatAndMountZvol(devicePath string, mountInfo *MountInfo) error {
 	mounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
@@ -291,25 +312,4 @@ func MountBlock(vol *apis.ZFSVolume, mountinfo *MountInfo) error {
 	klog.Infof("NodePublishVolume mounted block device %s at %s", devicePath, target)
 
 	return nil
-}
-
-// MountInfo contains the volume related info
-// for all types of volumes in ZFSVolume
-type MountInfo struct {
-	// FSType of a volume will specify the
-	// format type - ext4(default), xfs of PV
-	FSType string `json:"fsType"`
-
-	// AccessMode of a volume will hold the
-	// access mode of the volume
-	AccessModes []string `json:"accessModes"`
-
-	// MountPath of the volume will hold the
-	// path on which the volume is mounted
-	// on that node
-	MountPath string `json:"mountPath"`
-
-	// MountOptions specifies the options with
-	// which mount needs to be attempted
-	MountOptions []string `json:"mountOptions"`
 }
