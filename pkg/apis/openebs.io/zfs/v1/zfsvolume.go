@@ -42,27 +42,6 @@ type ZFSVolume struct {
 	Status VolStatus  `json:"status,omitempty"`
 }
 
-// MountInfo contains the volume related info
-// for all types of volumes in ZFSVolume
-type MountInfo struct {
-	// FSType of a volume will specify the
-	// format type - ext4(default), xfs of PV
-	FSType string `json:"fsType"`
-
-	// AccessMode of a volume will hold the
-	// access mode of the volume
-	AccessModes []string `json:"accessModes"`
-
-	// MountPath of the volume will hold the
-	// path on which the volume is mounted
-	// on that node
-	MountPath string `json:"mountPath"`
-
-	// MountOptions specifies the options with
-	// which mount needs to be attempted
-	MountOptions []string `json:"mountOptions"`
-}
-
 // ZFSVolumeList is a list of ZFSVolume resources
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +resource:path=zfsvolumes
