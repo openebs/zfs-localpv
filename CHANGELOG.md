@@ -1,3 +1,12 @@
+v1.0.1-RC2 / 2020-10-12
+========================
+
+v1.0.1-RC1 / 2020-10-08
+========================
+* removing centos yamls from the repo ([#211](https://github.com/openebs/zfs-localpv/pull/211),[@pawanpraka1](https://github.com/pawanpraka1))
+* adding validation for backup and restore ([#221](https://github.com/openebs/zfs-localpv/pull/221),[@pawanpraka1](https://github.com/pawanpraka1))
+
+
 v1.0.0 / 2020-09-15
 ========================
 * adding velero backup and restore support ([#162](https://github.com/openebs/zfs-localpv/pull/162),[@pawanpraka1](https://github.com/pawanpraka1))
