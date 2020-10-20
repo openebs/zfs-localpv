@@ -1540,6 +1540,9 @@ apiVersion: apps/v1
 metadata:
   name: openebs-zfs-controller
   namespace: kube-system
+  labels:
+    openebs.io/component-name: openebs-zfs-controller
+    openebs.io/version: ci
 spec:
   selector:
     matchLabels:
@@ -1552,6 +1555,8 @@ spec:
       labels:
         app: openebs-zfs-controller
         role: openebs-zfs
+        openebs.io/component-name: openebs-zfs-controller
+        openebs.io/version: ci
     spec:
       affinity:
         podAntiAffinity:
@@ -1763,15 +1768,24 @@ apiVersion: apps/v1
 metadata:
   name: openebs-zfs-node
   namespace: kube-system
+  labels:
+    openebs.io/component-name: openebs-zfs-node
+    openebs.io/version: ci
 spec:
   selector:
     matchLabels:
       app: openebs-zfs-node
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 100%
+    type: RollingUpdate
   template:
     metadata:
       labels:
         app: openebs-zfs-node
         role: openebs-zfs
+        openebs.io/component-name: openebs-zfs-node
+        openebs.io/version: ci
     spec:
       priorityClassName: system-node-critical
       serviceAccount: openebs-zfs-node-sa
@@ -1807,8 +1821,6 @@ spec:
         - name: openebs-zfs-plugin
           securityContext:
             privileged: true
-            capabilities:
-              add: ["CAP_MKNOD", "CAP_SYS_ADMIN", "SYS_ADMIN"]
             allowPrivilegeEscalation: true
           image: quay.io/openebs/zfs-driver:ci
           imagePullPolicy: IfNotPresent
