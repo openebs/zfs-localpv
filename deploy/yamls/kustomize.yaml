@@ -1,0 +1,10 @@
+images:
+  - name: quay.io/openebs/zfs-driver
+    newTag: ci
+resources:
+- namespace.yaml
+- zfsvolume-crd.yaml
+- zfssnapshot-crd.yaml
+- zfsbackup-crd.yaml
+- zfsrestore-crd.yaml
+- zfs-driver.yaml

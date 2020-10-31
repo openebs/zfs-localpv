@@ -92,6 +92,8 @@ We can install the latest release of OpenEBS ZFS driver by running the following
 $ kubectl apply -f https://openebs.github.io/charts/zfs-operator.yaml
 ```
 
+We can also install it via kustomize using `kubectl apply -k deploy/yamls`, check the [kustomize yaml](deploy/yamls/kustomize.yaml)
+
 Verify that the ZFS driver Components are installed and running using below command :
 
 ```
