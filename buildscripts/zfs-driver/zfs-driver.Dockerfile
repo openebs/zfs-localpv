@@ -12,7 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+FROM golang:1.14.7 as build
+
+ARG TARGETOS
+ARG TARGETARCH
+ARG TARGETVARIANT=""
+
+ENV GO111MODULE=on \
+  GOOS=${TARGETOS} \
+  GOARCH=${TARGETARCH} \
+  GOARM=${TARGETVARIANT} \
+  DEBIAN_FRONTEND=noninteractive \
+  PATH="/root/go/bin:${PATH}"
+
+WORKDIR /go/src/github.com/openebs/zfs-localpv/
+
+RUN apt-get update && apt-get install -y make git
+
+COPY go.mod go.sum ./
+# Get dependancies - will also be cached if we won't change mod/sum
+RUN go mod download
+
+COPY . .
+
+RUN make buildx.csi-driver
+
 FROM ubuntu:19.10
+
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN apt-get update; exit 0
 RUN apt-get -y install rsyslog libssl-dev xfsprogs ca-certificates
@@ -22,10 +48,7 @@ ARG DBUILD_DATE
 ARG DBUILD_REPO_URL
 ARG DBUILD_SITE_URL
 
-COPY zfs-driver /usr/local/bin/
-COPY entrypoint.sh /usr/local/bin/
-
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY --from=build /go/src/github.com/openebs/zfs-localpv/bin/zfs-driver/zfs-driver /usr/local/bin/zfs-driver
 
 LABEL org.label-schema.name="zfs-driver"
 LABEL org.label-schema.description="OpenEBS ZFS LocalPV Driver"
