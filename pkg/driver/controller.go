@@ -165,8 +165,56 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	return selected, nil
 }
 
-// CreateZFSClone create a clone of zfs volume
-func CreateZFSClone(req *csi.CreateVolumeRequest, snapshot string) (string, error) {
+// CreateVolClone creates the clone from a volume
+func CreateVolClone(req *csi.CreateVolumeRequest, srcVol string) (string, error) {
+	volName := req.GetName()
+	parameters := req.GetParameters()
+	// lower case keys, cf CreateZFSVolume()
+	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
+	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
+	volsize := strconv.FormatInt(int64(size), 10)
+
+	vol, err := zfs.GetZFSVolume(srcVol)
+	if err != nil {
+		return "", status.Error(codes.NotFound, err.Error())
+	}
+
+	if vol.Spec.PoolName != pool {
+		return "", status.Errorf(codes.Internal,
+			"clone: different pool src pool %s dst pool %s",
+			vol.Spec.PoolName, pool)
+	}
+
+	if vol.Spec.Capacity != volsize {
+		return "", status.Error(codes.Internal, "clone: volume size is not matching")
+	}
+
+	selected := vol.Spec.OwnerNodeID
+
+	labels := map[string]string{zfs.ZFSVolKey: vol.Name}
+
+	// create the clone from the source volume
+
+	volObj, err := volbuilder.NewBuilder().
+		WithName(volName).
+		WithVolumeStatus(zfs.ZFSStatusPending).
+		WithLabels(labels).Build()
+
+	volObj.Spec = vol.Spec
+	// use the snapshot name same as new volname
+	volObj.Spec.SnapName = vol.Name + "@" + volName
+
+	err = zfs.ProvisionVolume(volObj)
+	if err != nil {
+		return "", status.Errorf(codes.Internal,
+			"clone: not able to provision the volume %s", err.Error())
+	}
+
+	return selected, nil
+}
+
+// CreateSnapClone creates the clone from a snapshot
+func CreateSnapClone(req *csi.CreateVolumeRequest, snapshot string) (string, error) {
 
 	volName := req.GetName()
 	parameters := req.GetParameters()
@@ -243,7 +291,10 @@ func (cs *controller) CreateVolume(
 	if contentSource != nil && contentSource.GetSnapshot() != nil {
 		snapshotID := contentSource.GetSnapshot().GetSnapshotId()
 
-		selected, err = CreateZFSClone(req, snapshotID)
+		selected, err = CreateSnapClone(req, snapshotID)
+	} else if contentSource != nil && contentSource.GetVolume() != nil {
+		srcVol := contentSource.GetVolume().GetVolumeId()
+		selected, err = CreateVolClone(req, srcVol)
 	} else {
 		selected, err = CreateZFSVolume(req)
 	}
