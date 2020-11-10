@@ -50,7 +50,8 @@ install:
 before_script:
   - "./buildscripts/travis-build.sh"
 script:
-  - sudo -E env "PATH=$PATH" make ci
+  - sudo -E env "PATH=$PATH" make ci || travis_terminate 1
+  - sudo -E env "PATH=$PATH" make sanity || travis_terminate 1
 after_success:
   - make deploy-images
   - bash <(curl -s https://codecov.io/bash)

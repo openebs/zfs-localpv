@@ -17,6 +17,8 @@ limitations under the License.
 package snapbuilder
 
 import (
+	"strings"
+
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/common/errors"
 )
@@ -80,7 +82,7 @@ func (b *Builder) WithName(name string) *Builder {
 		)
 		return b
 	}
-	b.snap.Object.Name = name
+	b.snap.Object.Name = strings.ToLower(name)
 	return b
 }
 

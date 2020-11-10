@@ -17,6 +17,7 @@ package zfs
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/bkpbuilder"
@@ -119,7 +120,7 @@ func ProvisionSnapshot(
 
 // DeleteSnapshot deletes the corresponding ZFSSnapshot CR
 func DeleteSnapshot(snapname string) (err error) {
-	err = snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(snapname)
+	err = snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(strings.ToLower(snapname))
 	if err == nil {
 		klog.Infof("deprovisioned snapshot %s", snapname)
 	}
@@ -136,7 +137,7 @@ func GetVolume(volumeID string) (*apis.ZFSVolume, error) {
 
 // DeleteVolume deletes the corresponding ZFSVol CR
 func DeleteVolume(volumeID string) (err error) {
-	err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(volumeID)
+	err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(strings.ToLower(volumeID))
 	if err == nil {
 		klog.Infof("deprovisioned volume %s", volumeID)
 	}
@@ -159,7 +160,7 @@ func GetVolList(volumeID string) (*apis.ZFSVolumeList, error) {
 func GetZFSVolume(volumeID string) (*apis.ZFSVolume, error) {
 	getOptions := metav1.GetOptions{}
 	vol, err := volbuilder.NewKubeclient().
-		WithNamespace(OpenEBSNamespace).Get(volumeID, getOptions)
+		WithNamespace(OpenEBSNamespace).Get(strings.ToLower(volumeID), getOptions)
 	return vol, err
 }
 
@@ -212,7 +213,7 @@ func RemoveZvolFinalizer(vol *apis.ZFSVolume) error {
 func GetZFSSnapshot(snapID string) (*apis.ZFSSnapshot, error) {
 	getOptions := metav1.GetOptions{}
 	snap, err := snapbuilder.NewKubeclient().
-		WithNamespace(OpenEBSNamespace).Get(snapID, getOptions)
+		WithNamespace(OpenEBSNamespace).Get(strings.ToLower(snapID), getOptions)
 	return snap, err
 }
 
@@ -220,7 +221,7 @@ func GetZFSSnapshot(snapID string) (*apis.ZFSSnapshot, error) {
 func GetZFSSnapshotStatus(snapID string) (string, error) {
 	getOptions := metav1.GetOptions{}
 	snap, err := snapbuilder.NewKubeclient().
-		WithNamespace(OpenEBSNamespace).Get(snapID, getOptions)
+		WithNamespace(OpenEBSNamespace).Get(strings.ToLower(snapID), getOptions)
 
 	if err != nil {
 		klog.Errorf("Get snapshot failed %s err: %s", snap.Name, err.Error())
