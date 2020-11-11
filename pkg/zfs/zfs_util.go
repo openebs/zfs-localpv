@@ -401,6 +401,26 @@ func CreateVolume(vol *apis.ZFSVolume) error {
 func CreateClone(vol *apis.ZFSVolume) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
+	if srcVol, ok := vol.Labels[ZFSSrcVolKey]; ok {
+		// datasource is volume, create the snapshot first
+		snap := &apis.ZFSSnapshot{}
+		snap.Name = vol.Name // use volname as snapname
+		snap.Spec = vol.Spec
+		// add src vol name
+		snap.Labels = map[string]string{ZFSVolKey: srcVol}
+
+		klog.Infof("creating snapshot %s@%s for the clone %s", srcVol, snap.Name, volume)
+
+		err := CreateSnapshot(snap)
+
+		if err != nil {
+			klog.Errorf(
+				"zfs: could not create snapshot for the clone vol %s snap %s err %v", volume, snap.Name, err,
+			)
+			return err
+		}
+	}
+
 	if err := getVolume(volume); err != nil {
 		var args []string
 		args = buildCloneCreateArgs(vol)
@@ -580,6 +600,27 @@ func DestroyVolume(vol *apis.ZFSVolume) error {
 		)
 		return err
 	}
+
+	if srcVol, ok := vol.Labels[ZFSSrcVolKey]; ok {
+		// datasource is volume, delete the dependent snapshot
+		snap := &apis.ZFSSnapshot{}
+		snap.Name = vol.Name // snapname is same as volname
+		snap.Spec = vol.Spec
+		// add src vol name
+		snap.Labels = map[string]string{ZFSVolKey: srcVol}
+
+		klog.Infof("destroying snapshot %s@%s for the clone %s", srcVol, snap.Name, volume)
+
+		err := DestroySnapshot(snap)
+
+		if err != nil {
+			// no need to reconcile as volume has already been deleted
+			klog.Errorf(
+				"zfs: could not destroy snapshot for the clone vol %s snap %s err %v", volume, snap.Name, err,
+			)
+		}
+	}
+
 	klog.Infof("destroyed volume %s", volume)
 
 	return nil
