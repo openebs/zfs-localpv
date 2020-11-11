@@ -33,21 +33,21 @@ else
 fi
 
 # Set BUILDMETA based on travis tag
-if [[ -n "$TRAVIS_TAG" ]] && [[ $TRAVIS_TAG != *"RC"* ]]; then
+if [[ -n "$RELEASE_TAG" ]] && [[ $RELEASE_TAG != *"RC"* ]]; then
     echo "released" > BUILDMETA
 fi
 
 CURRENT_BRANCH=""
-if [ -z ${TRAVIS_BRANCH} ];
+if [ -z ${BRANCH} ];
 then
   CURRENT_BRANCH=$(git branch | grep \* | cut -d ' ' -f2)
 else
-  CURRENT_BRANCH=${TRAVIS_BRANCH}
+  CURRENT_BRANCH=${BRANCH}
 fi
 
 # Get the version details
-if [ -n "$TRAVIS_TAG" ]; then
-	VERSION="$TRAVIS_TAG"
+if [ -n "$RELEASE_TAG" ]; then
+	VERSION="$RELEASE_TAG"
 else
 	BUILDDATE=`date +%m-%d-%Y`
 	SHORT_COMMIT="$(git rev-parse --short HEAD)"
@@ -70,15 +70,6 @@ if [ "$UNAME" = "Darwin" ] ; then
   XC_OS="darwin"
 elif [ "$UNAME" = "Linux" ] ; then
   XC_OS="linux"
-fi
-
-if [ "${ARCH}" = "i686" ] ; then
-    XC_ARCH='386'
-elif [ "${ARCH}" = "x86_64" ] ; then
-    XC_ARCH='amd64'
-else
-    echo "Unusable architecture: ${ARCH}"
-    exit 1
 fi
 
 
@@ -145,19 +136,6 @@ for F in $(find ${DEV_PLATFORM} -mindepth 1 -maxdepth 1 -type f); do
     cp ${F} bin/${PNAME}/
     cp ${F} ${MAIN_GOPATH}/bin/
 done
-
-if [[ "x${DEV}" == "x" ]]; then
-    # Zip and copy to the dist dir
-    echo "==> Packaging..."
-    for PLATFORM in $(find ./bin/${PNAME} -mindepth 1 -maxdepth 1 -type d); do
-        OSARCH=$(basename ${PLATFORM})
-        echo "--> ${OSARCH}"
-
-        pushd "$PLATFORM" >/dev/null 2>&1
-        zip ../${PNAME}-${OSARCH}.zip ./*
-        popd >/dev/null 2>&1
-    done
-fi
 
 # Done!
 echo
