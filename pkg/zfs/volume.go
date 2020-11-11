@@ -39,6 +39,8 @@ const (
 	ZFSFinalizer string = "zfs.openebs.io/finalizer"
 	// ZFSVolKey for the ZfsSnapshot CR to store Persistence Volume name
 	ZFSVolKey string = "openebs.io/persistent-volume"
+	// ZFSSrcVolKey key for the source Volume name
+	ZFSSrcVolKey string = "openebs.io/source-volume"
 	// PoolNameKey is key for ZFS pool name
 	PoolNameKey string = "openebs.io/poolname"
 	// ZFSNodeKey will be used to insert Label in ZfsVolume CR

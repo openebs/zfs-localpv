@@ -401,7 +401,7 @@ func CreateVolume(vol *apis.ZFSVolume) error {
 func CreateClone(vol *apis.ZFSVolume) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
 
-	if srcVol, ok := vol.Labels[ZFSVolKey]; ok {
+	if srcVol, ok := vol.Labels[ZFSSrcVolKey]; ok {
 		// datasource is volume, create the snapshot first
 		snap := &apis.ZFSSnapshot{}
 		snap.Name = vol.Name // use volname as snapname
@@ -601,7 +601,7 @@ func DestroyVolume(vol *apis.ZFSVolume) error {
 		return err
 	}
 
-	if srcVol, ok := vol.Labels[ZFSVolKey]; ok {
+	if srcVol, ok := vol.Labels[ZFSSrcVolKey]; ok {
 		// datasource is volume, delete the dependent snapshot
 		snap := &apis.ZFSSnapshot{}
 		snap.Name = vol.Name // snapname is same as volname

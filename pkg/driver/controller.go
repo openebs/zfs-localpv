@@ -191,7 +191,7 @@ func CreateVolClone(req *csi.CreateVolumeRequest, srcVol string) (string, error)
 
 	selected := vol.Spec.OwnerNodeID
 
-	labels := map[string]string{zfs.ZFSVolKey: vol.Name}
+	labels := map[string]string{zfs.ZFSSrcVolKey: vol.Name}
 
 	// create the clone from the source volume
 
