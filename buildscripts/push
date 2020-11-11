@@ -47,6 +47,8 @@ if [[ ${BUILDX} ]]; then
 fi
 
 IMAGEID=$( sudo docker images -q ${DIMAGE}:ci )
+DIMAGE="${DIMAGE}-${XC_ARCH}"
+
 echo "${DIMAGE}:ci -> $IMAGEID"
 if [ -z ${IMAGEID} ];
 then
