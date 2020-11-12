@@ -14,6 +14,8 @@
 
 FROM golang:1.14.7 as build
 
+ARG BRANCH
+ARG RELEASE_TAG
 ARG TARGETOS
 ARG TARGETARCH
 ARG TARGETVARIANT=""
@@ -23,7 +25,9 @@ ENV GO111MODULE=on \
   GOARCH=${TARGETARCH} \
   GOARM=${TARGETVARIANT} \
   DEBIAN_FRONTEND=noninteractive \
-  PATH="/root/go/bin:${PATH}"
+  PATH="/root/go/bin:${PATH}" \
+  BRANCH=${BRANCH} \
+  RELEASE_TAG=${RELEASE_TAG}
 
 WORKDIR /go/src/github.com/openebs/zfs-localpv/
 
