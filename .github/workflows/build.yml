@@ -51,17 +51,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set tag
+      - name: Set Tag
         run: |
           BRANCH="${GITHUB_REF##*/}"
           CI_TAG=${BRANCH#v}-ci
           if [ ${BRANCH} = "master" ]; then
             CI_TAG="ci"
           fi
-          echo "::set-env name=TAG::${CI_TAG}"
-          echo "::set-env name=BRANCH::${BRANCH}"
+          echo "TAG=${CI_TAG}" >> $GITHUB_ENV
+          echo "BRANCH=${BRANCH}" >> $GITHUB_ENV
+
+      - name: Print Tag info
+        run: |
           echo "BRANCH: ${BRANCH}"
-          echo "TAG: ${CI_TAG}"
+          echo "TAG: ${TAG}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
