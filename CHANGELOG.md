@@ -1,3 +1,24 @@
+v1.1.0 / 2020-11-14
+========================
+* changing the zfs-driver images to multi-arch docker hub ([#237](https://github.com/openebs/zfs-localpv/pull/237),[@w3aman](https://github.com/w3aman))
+* Remove MountInfo struct from the api files ([#225](https://github.com/openebs/zfs-localpv/pull/225),[@codegagan](https://github.com/codegagan))
+* adding deployment yaml via kustomize ([#231](https://github.com/openebs/zfs-localpv/pull/231),[@pawanpraka1](https://github.com/pawanpraka1))
+* add support for creating the Clone from volume as datasource ([#234](https://github.com/openebs/zfs-localpv/pull/234),[@pawanpraka1](https://github.com/pawanpraka1))
+* add support for multi arch container image ([#233](https://github.com/openebs/zfs-localpv/pull/233),[@prateekpandey14](https://github.com/prateekpandey14))
+* support parallel/faster upgrades for node daemonset ([#230](https://github.com/openebs/zfs-localpv/pull/230),[@pawanpraka1](https://github.com/pawanpraka1))
+
+v1.1.0-RC2 / 2020-11-13
+========================
+
+v1.1.0-RC1 / 2020-11-12
+========================
+* Remove MountInfo struct from the api files ([#225](https://github.com/openebs/zfs-localpv/pull/225),[@codegagan](https://github.com/codegagan))
+* adding deployment yaml via kustomize ([#231](https://github.com/openebs/zfs-localpv/pull/231),[@pawanpraka1](https://github.com/pawanpraka1))
+* add support for creating the Clone from volume as datasource ([#234](https://github.com/openebs/zfs-localpv/pull/234),[@pawanpraka1](https://github.com/pawanpraka1))
+* add support for multi arch container image ([#233](https://github.com/openebs/zfs-localpv/pull/233),[@prateekpandey14](https://github.com/prateekpandey14))
+* support parallel/faster upgrades for node daemonset ([#230](https://github.com/openebs/zfs-localpv/pull/230),[@pawanpraka1](https://github.com/pawanpraka1))
+
+
 v1.0.1 / 2020-10-14
 ========================
 * removing centos yamls from the repo ([#211](https://github.com/openebs/zfs-localpv/pull/211),[@pawanpraka1](https://github.com/pawanpraka1))
