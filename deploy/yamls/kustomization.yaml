@@ -1,6 +1,6 @@
 images:
   - name: quay.io/openebs/zfs-driver
-    newTag: ci
+    newTag: 1.1.0
 resources:
 - namespace.yaml
 - zfsvolume-crd.yaml
