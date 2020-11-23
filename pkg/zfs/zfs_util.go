@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	"github.com/openebs/zfs-localpv/pkg/btrfs"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
 	"strings"
@@ -442,7 +443,8 @@ func CreateClone(vol *apis.ZFSVolume) error {
 		return xfsGenerateUUID(volume)
 	}
 	if vol.Spec.FsType == "btrfs" {
-		return btrfsGenerateUUID(volume)
+		device := ZFSDevPath + volume
+		return btrfs.GenerateUUID(device)
 	}
 	return nil
 }
@@ -815,7 +817,8 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 		return xfsGenerateUUID(volume)
 	}
 	if vol.Spec.FsType == "btrfs" {
-		return btrfsGenerateUUID(volume)
+		device := ZFSDevPath + volume
+		return btrfs.GenerateUUID(device)
 	}
 
 	return nil

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package zfs
+package btrfs
 
 import (
 	"os/exec"
@@ -28,16 +28,16 @@ import (
 * volume refers to the same block because of the way ZFS clone works, it will
 * also have the same UUID.
  */
-func btrfsGenerateUUID(volume string) error {
-	device := ZFSDevPath + volume
 
+// GenerateUUID generates a new btrfs UUID for the given device
+func GenerateUUID(device string) error {
 	// for mounting the cloned volume for btrfs, a new UUID has to be generated
 	cmd := exec.Command("btrfstune", "-f", "-u", device)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		klog.Errorf("btrfs: uuid generate failed %s error: %s", volume, string(out))
+		klog.Errorf("btrfs: uuid generate failed for device %s error: %s", device, string(out))
 		return err
 	}
-	klog.Infof("btrfs: generated UUID for the cloned volume %s \n %v", volume, string(out))
+	klog.Infof("btrfs: generated UUID for the device %s \n %v", device, string(out))
 	return nil
 }
