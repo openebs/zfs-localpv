@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package zfs
+package xfs
 
 import (
+	"github.com/openebs/zfs-localpv/pkg/mount"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,9 +27,9 @@ import (
 	"k8s.io/klog"
 )
 
-func xfsTempMount(volume string) error {
-	device := ZFSDevPath + volume
-	pvol := strings.Split(volume, "/")
+func xfsTempMount(device string) error {
+	pvol := strings.Split(device, "/")
+	volname := pvol[len(pvol)-1]
 
 	// evaluate the symlink to get the dev path for volume
 	dev, err := filepath.EvalSymlinks(device)
@@ -37,7 +38,7 @@ func xfsTempMount(volume string) error {
 	}
 
 	// create a temporary directory to mount the xfs file system
-	tmpdir := "/tmp/" + pvol[1]
+	tmpdir := "/tmp/" + volname
 	err = os.Mkdir(tmpdir, 0755)
 	if os.IsNotExist(err) {
 		klog.Errorf("xfs: failed to create tmpdir %s error: %s", tmpdir, err.Error())
@@ -49,7 +50,7 @@ func xfsTempMount(volume string) error {
 	 * in previous attempt. Checking here if device is not mounted then only attempt
 	 * to mount it, otherwise proceed with the umount.
 	 */
-	curMounts, err := GetMounts(dev)
+	curMounts, err := mount.GetMounts(dev)
 	if err != nil {
 		klog.Errorf("xfs: get mounts failed dev: %s err: %v", device, err.Error())
 		return err
@@ -58,7 +59,7 @@ func xfsTempMount(volume string) error {
 		cmd := exec.Command("mount", "-o", "nouuid", device, tmpdir)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			klog.Errorf("xfs: failed to mount volume %s => %s error: %s", device, tmpdir, string(out))
+			klog.Errorf("xfs: failed to mount device %s => %s error: %s", device, tmpdir, string(out))
 			return err
 		}
 	} else {
@@ -90,11 +91,11 @@ func xfsTempMount(volume string) error {
 * There might be something there in the xfs log, we have to clear them
 * so that filesystem is clean and we can generate the UUID for it.
  */
-func xfsGenerateUUID(volume string) error {
-	device := ZFSDevPath + volume
 
+// GenerateUUID generates a new UUID for the given device
+func GenerateUUID(device string) error {
 	// temporary mount the volume with nouuid to replay the logs
-	err := xfsTempMount(volume)
+	err := xfsTempMount(device)
 	if err != nil {
 		return err
 	}
@@ -103,9 +104,9 @@ func xfsGenerateUUID(volume string) error {
 	cmd := exec.Command("xfs_admin", "-U", "generate", device)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		klog.Errorf("xfs: uuid generate failed %s error: %s", volume, string(out))
+		klog.Errorf("xfs: uuid generate failed for device %s error: %s", device, string(out))
 		return err
 	}
-	klog.Infof("xfs: generated UUID for the cloned volume %s \n %v", volume, string(out))
+	klog.Infof("xfs: generated UUID for the device %s \n %v", device, string(out))
 	return nil
 }
