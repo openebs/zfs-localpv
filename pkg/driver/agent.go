@@ -27,6 +27,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/mgmt/restore"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/snapshot"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/volume"
+	"github.com/openebs/zfs-localpv/pkg/mount"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
 	"golang.org/x/sys/unix"
@@ -349,7 +350,7 @@ func (ns *node) NodeGetVolumeStats(
 		return nil, status.Error(codes.InvalidArgument, "path is not provided")
 	}
 
-	if zfs.IsMountPath(path) == false {
+	if mount.IsMountPath(path) == false {
 		return nil, status.Error(codes.InvalidArgument, "path is not a mount path")
 	}
 

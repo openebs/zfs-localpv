@@ -21,6 +21,7 @@ import (
 	"os/exec"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	mnt "github.com/openebs/zfs-localpv/pkg/mount"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/klog"
@@ -123,49 +124,6 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 	return nil
 }
 
-// GetMounts gets mountpoints for the specified volume
-func GetMounts(dev string) ([]string, error) {
-
-	var (
-		currentMounts []string
-		err           error
-		mountList     []mount.MountPoint
-	)
-
-	mounter := mount.New("")
-	// Get list of mounted paths present with the node
-	if mountList, err = mounter.List(); err != nil {
-		return nil, err
-	}
-	for _, mntInfo := range mountList {
-		if mntInfo.Device == dev {
-			currentMounts = append(currentMounts, mntInfo.Path)
-		}
-	}
-	return currentMounts, nil
-}
-
-// IsMountPath returns true if path is a mount path
-func IsMountPath(path string) bool {
-
-	var (
-		err       error
-		mountList []mount.MountPoint
-	)
-
-	mounter := mount.New("")
-	// Get list of mounted paths present with the node
-	if mountList, err = mounter.List(); err != nil {
-		return false
-	}
-	for _, mntInfo := range mountList {
-		if mntInfo.Path == path {
-			return true
-		}
-	}
-	return false
-}
-
 func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 	if len(mountpath) == 0 {
 		return status.Error(codes.InvalidArgument, "verifyMount: mount path missing in request")
@@ -195,7 +153,7 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 		 * be unmounted before proceeding to the mount
 		 * operation.
 		 */
-		currentMounts, err := GetMounts(devicePath)
+		currentMounts, err := mnt.GetMounts(devicePath)
 		if err != nil {
 			klog.Errorf("can not get mounts for volume:%s dev %s err: %v",
 				vol.Name, devicePath, err.Error())
