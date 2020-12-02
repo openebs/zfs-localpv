@@ -262,6 +262,38 @@ my-backup-20200914211331   my-backup   InProgress   0          0        2020-09-
 
 Once the Status is `Completed` we can check the pods in the destination namespace and verify that everything is up and running. We can also verify the data has been restored.
 
+### Restore on a different node
+
+We have the node affinity set on the PV and the ZFSVolume object has the original node name as the owner of the Volume. While doing the restore if original node is not present, the Pod will not come into running state.
+We can use velero [RestoreItemAction](https://velero.io/docs/v1.5/restore-reference/#changing-pvc-selected-node) for this and create a config map which will have the node mapping like below:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # any name can be used; Velero uses the labels (below)
+  # to identify it rather than the name
+  name: change-pvc-node-selector-config
+  # must be in the velero namespace
+  namespace: velero
+  # the below labels should be used verbatim in your
+  # ConfigMap.
+  labels:
+    # this value-less label identifies the ConfigMap as
+    # config for a plugin (i.e. the built-in restore item action plugin)
+    velero.io/plugin-config: ""
+    # this label identifies the name and kind of plugin
+    # that this ConfigMap is for.
+    velero.io/change-pvc-node-selector: RestoreItemAction
+data:
+  # add 1+ key-value pairs here, where the key is the old
+  # node name and the value is the new node name.
+  pawan-old-node1: pawan-new-node1
+  pawan-old-node2: pawan-new-node2
+```
+
+While doing the restore the ZFS-LocalPV plugin will set the affinity on the PV as per the node mapping provided in the config map. Here in the above case the PV created on nodes `pawan-old-node1` and `pawan-old-node2` will be moved to `pawan-new-node1` and `pawan-new-node2` respectively.
+
 ## Things to Consider:
 
 - Once VolumeSnapshotLocation has been created, we should never modify it, we should always create a new VolumeSnapshotLocation and use that. If we want to modify it, we should cleanup old backups/schedule first and then modify it and then create the backup/schedule. Also we should not switch the volumesnapshot location for the given scheduled backup, we should always create a new schedule if backups for the old schedule is present.
