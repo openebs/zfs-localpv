@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: openebs-zfs-controller
+  {{- with .Values.controller.annotations }}
+  annotations: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "openebs-zfslocalpv.controller.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "openebs-zfslocalpv.controller.matchLabels" . | nindent 6 }}
+  serviceName: "openebs-zfs"
+  replicas: {{ .Values.controller.replicas }}
+  template:
+    metadata:
+      {{- with .Values.controller.podAnnotations }}
+      annotations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "openebs-zfslocalpv.controller.labels" . | nindent 8 }}
+        {{- with .Values.controller.podLabels}}
+        {{ toYaml . | nindent 8 }}
+        {{- end}}
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - openebs-zfs-controller
+            topologyKey: "kubernetes.io/hostname"
+      priorityClassName: system-cluster-critical
+      serviceAccount: openebs-zfs-controller-sa
+      containers:
+        - name: {{ .Values.controller.resizer.name }}
+          image: "{{ .Values.controller.resizer.image.registry }}{{ .Values.controller.resizer.image.repository }}:{{ .Values.controller.resizer.image.tag }}"
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: {{ .Values.controller.resizer.image.pullPolicy }}
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: {{ .Values.controller.snapshotter.name }}
+          image: "{{ .Values.controller.snapshotter.image.registry }}{{ .Values.controller.snapshotter.image.repository }}:{{ .Values.controller.snapshotter.image.tag }}"
+          imagePullPolicy: {{ .Values.controller.snapshotter.image.pullPolicy }}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: {{ .Values.controller.snapshotController.name }}
+          image: "{{ .Values.controller.snapshotController.image.registry }}{{ .Values.controller.snapshotController.image.repository }}:{{ .Values.controller.snapshotController.image.tag }}"
+          args:
+            - "--v=5"
+            - "--leader-election=true"
+          imagePullPolicy: {{ .Values.controller.snapshotController.image.pullPolicy }}
+        - name: {{ .Values.controller.provisioner.name }}
+          image: "{{ .Values.controller.provisioner.image.registry }}{{ .Values.controller.provisioner.image.repository }}:{{ .Values.controller.provisioner.image.tag }}"
+          imagePullPolicy: {{ .Values.controller.provisioner.image.pullPolicy }}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=5"
+            - "--feature-gates=Topology=true"
+            - "--strict-topology"
+            - "--enable-leader-election"
+            - "--leader-election-type=leases"
+            - "--extra-create-metadata=true"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: {{ .Values.zfsPlugin.name }}
+          image: "{{ .Values.zfsPlugin.image.registry }}{{ .Values.zfsPlugin.image.repository }}:{{ .Values.zfsPlugin.image.tag }}"
+          imagePullPolicy: {{ .Values.zfsPlugin.image.pullPolicy }}
+          env:
+            - name: OPENEBS_CONTROLLER_DRIVER
+              value: controller
+            - name: OPENEBS_CSI_ENDPOINT
+              value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+            - name: OPENEBS_NAMESPACE
+              value: openebs
+            - name: OPENEBS_IO_INSTALLER_TYPE
+              value: "zfs-operator"
+            - name: OPENEBS_IO_ENABLE_ANALYTICS
+              value: "true"
+          args :
+            - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
+            - "--plugin=$(OPENEBS_CONTROLLER_DRIVER)"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+{{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 2 }}
+{{- end }}
+{{- if .Values.controller.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.controller.nodeSelector | indent 8 }}
+{{- end }}
+{{- if .Values.controller.securityContext }}
+      securityContext:
+{{ toYaml .Values.controller.securityContext | indent 8 }}
+{{- end }}
+{{- if .Values.controller.tolerations }}
+      tolerations:
+{{ toYaml .Values.controller.tolerations | indent 8 }}
+{{- end }}

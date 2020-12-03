@@ -1690,7 +1690,7 @@ kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: openebs-zfs-controller-sa
-  namespace: kube-system
+  namespace: openebs
 
 ---
 kind: ClusterRole
@@ -1740,7 +1740,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: openebs-zfs-controller-sa
-    namespace: kube-system
+    namespace: openebs
 roleRef:
   kind: ClusterRole
   name: openebs-zfs-provisioner-role
@@ -1751,7 +1751,7 @@ kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: openebs-zfs-controller
-  namespace: kube-system
+  namespace: openebs
   labels:
     openebs.io/component-name: openebs-zfs-controller
     openebs.io/version: ci
@@ -1902,7 +1902,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: openebs-zfs-controller-sa
-    namespace: kube-system
+    namespace: openebs
 roleRef:
   kind: ClusterRole
   name: openebs-zfs-snapshotter-role
@@ -1920,7 +1920,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: openebs-zfs-node-sa
-  namespace: kube-system
+  namespace: openebs
 
 ---
 
@@ -1948,7 +1948,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: openebs-zfs-node-sa
-    namespace: kube-system
+    namespace: openebs
 roleRef:
   kind: ClusterRole
   name: openebs-zfs-driver-registrar-role
@@ -1960,7 +1960,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: openebs-zfspv-bin
-  namespace: kube-system # should be the same namespace where it is getting mounted
+  namespace: openebs # should be the same namespace where it is getting mounted
 data:
   zfs: |
     #!/bin/sh
@@ -1978,7 +1978,7 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: openebs-zfs-node
-  namespace: kube-system
+  namespace: openebs
   labels:
     openebs.io/component-name: openebs-zfs-node
     openebs.io/version: ci
