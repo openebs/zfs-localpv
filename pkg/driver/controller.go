@@ -118,6 +118,21 @@ func waitForReadyVolume(volname string) error {
 	return nil
 }
 
+func waitForVolDestroy(volname string) error {
+	for true {
+		_, err := zfs.GetZFSVolume(volname)
+		if err != nil {
+			if k8serror.IsNotFound(err) {
+				return nil
+			}
+			return status.Errorf(codes.Internal,
+				"zfs: destroy wait failed, not able to get the volume %s %s", volname, err.Error())
+		}
+		time.Sleep(time.Second)
+	}
+	return nil
+}
+
 // CreateZFSVolume create new zfs volume from csi volume request
 func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	volName := strings.ToLower(req.GetName())
@@ -148,11 +163,19 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	capacity := strconv.FormatInt(int64(size), 10)
 
 	if vol, err := zfs.GetZFSVolume(volName); err == nil {
-		if vol.Spec.Capacity != capacity {
-			return "", status.Errorf(codes.AlreadyExists,
-				"volume %s already present", volName)
+		if vol.DeletionTimestamp != nil {
+			if _, ok := parameters["wait"]; ok {
+				if err := waitForVolDestroy(volName); err != nil {
+					return "", err
+				}
+			}
+		} else {
+			if vol.Spec.Capacity != capacity {
+				return "", status.Errorf(codes.AlreadyExists,
+					"volume %s already present", volName)
+			}
+			return vol.Spec.OwnerNodeID, nil
 		}
-		return vol.Spec.OwnerNodeID, nil
 	}
 
 	nmap, err := getNodeMap(schld, pool)
@@ -260,7 +283,6 @@ func CreateVolClone(req *csi.CreateVolumeRequest, srcVol string) (string, error)
 
 // CreateSnapClone creates the clone from a snapshot
 func CreateSnapClone(req *csi.CreateVolumeRequest, snapshot string) (string, error) {
-
 	volName := strings.ToLower(req.GetName())
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
@@ -325,7 +347,7 @@ func (cs *controller) CreateVolume(
 		return nil, err
 	}
 
-	volName := req.GetName()
+	volName := strings.ToLower(req.GetName())
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
 	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
@@ -377,7 +399,7 @@ func (cs *controller) DeleteVolume(
 		return nil, err
 	}
 
-	volumeID := req.GetVolumeId()
+	volumeID := strings.ToLower(req.GetVolumeId())
 
 	// verify if the volume has already been deleted
 	vol, err := zfs.GetVolume(volumeID)
@@ -484,7 +506,8 @@ func (cs *controller) ControllerExpandVolume(
 	ctx context.Context,
 	req *csi.ControllerExpandVolumeRequest,
 ) (*csi.ControllerExpandVolumeResponse, error) {
-	if req.VolumeId == "" {
+	volumeID := strings.ToLower(req.GetVolumeId())
+	if volumeID == "" {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
 			"ControllerExpandVolume: no volumeID provided",
@@ -494,12 +517,12 @@ func (cs *controller) ControllerExpandVolume(
 	/* round off the new size */
 	updatedSize := getRoundedCapacity(req.GetCapacityRange().GetRequiredBytes())
 
-	vol, err := zfs.GetZFSVolume(req.VolumeId)
+	vol, err := zfs.GetZFSVolume(volumeID)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
 			"ControllerExpandVolumeRequest: failed to get ZFSVolume in for %s, {%s}",
-			req.VolumeId,
+			volumeID,
 			err.Error(),
 		)
 	}
@@ -509,7 +532,7 @@ func (cs *controller) ControllerExpandVolume(
 		return nil, status.Errorf(
 			codes.Internal,
 			"ControllerExpandVolumeRequest: failed to parse volsize in for %s, {%s}",
-			req.VolumeId,
+			volumeID,
 			err.Error(),
 		)
 	}
@@ -528,7 +551,7 @@ func (cs *controller) ControllerExpandVolume(
 		return nil, status.Errorf(
 			codes.Internal,
 			"failed to handle ControllerExpandVolumeRequest for %s, {%s}",
-			req.VolumeId,
+			volumeID,
 			err.Error(),
 		)
 	}
@@ -539,16 +562,18 @@ func (cs *controller) ControllerExpandVolume(
 }
 
 func verifySnapshotRequest(req *csi.CreateSnapshotRequest) error {
-	if req.Name == "" || req.SourceVolumeId == "" {
+	snapName := strings.ToLower(req.GetName())
+	volumeID := strings.ToLower(req.GetSourceVolumeId())
+
+	if snapName == "" || volumeID == "" {
 		return status.Errorf(
 			codes.InvalidArgument,
 			"CreateSnapshot error invalid request %s: %s",
-			req.SourceVolumeId, req.Name,
+			volumeID, snapName,
 		)
 	}
 
-	volName := strings.ToLower(req.SourceVolumeId)
-	snap, err := zfs.GetZFSSnapshot(req.Name)
+	snap, err := zfs.GetZFSSnapshot(snapName)
 
 	if err != nil {
 		if k8serror.IsNotFound(err) {
@@ -557,14 +582,14 @@ func verifySnapshotRequest(req *csi.CreateSnapshotRequest) error {
 		return status.Errorf(
 			codes.NotFound,
 			"CreateSnapshot error snap %s %s get failed : %s",
-			req.Name, req.SourceVolumeId, err.Error(),
+			snapName, volumeID, err.Error(),
 		)
 	}
-	if snap.Labels[zfs.ZFSVolKey] != volName {
+	if snap.Labels[zfs.ZFSVolKey] != volumeID {
 		return status.Errorf(
 			codes.AlreadyExists,
 			"CreateSnapshot error snapshot %s already exist for different source vol %s: %s",
-			req.Name, snap.Labels[zfs.ZFSVolKey], req.SourceVolumeId,
+			snapName, snap.Labels[zfs.ZFSVolKey], volumeID,
 		)
 	}
 	return nil
@@ -577,8 +602,10 @@ func (cs *controller) CreateSnapshot(
 	ctx context.Context,
 	req *csi.CreateSnapshotRequest,
 ) (*csi.CreateSnapshotResponse, error) {
+	snapName := strings.ToLower(req.GetName())
+	volumeID := strings.ToLower(req.GetSourceVolumeId())
 
-	klog.Infof("CreateSnapshot volume %s@%s", req.SourceVolumeId, req.Name)
+	klog.Infof("CreateSnapshot volume %s@%s", volumeID, snapName)
 
 	err := verifySnapshotRequest(req)
 	if err != nil {
@@ -586,23 +613,23 @@ func (cs *controller) CreateSnapshot(
 	}
 
 	snapTimeStamp := time.Now().Unix()
-	state, err := zfs.GetZFSSnapshotStatus(req.Name)
+	state, err := zfs.GetZFSSnapshotStatus(snapName)
 
 	if err == nil {
 		return csipayload.NewCreateSnapshotResponseBuilder().
-			WithSourceVolumeID(req.SourceVolumeId).
-			WithSnapshotID(req.SourceVolumeId+"@"+req.Name).
+			WithSourceVolumeID(volumeID).
+			WithSnapshotID(volumeID+"@"+snapName).
 			WithCreationTime(snapTimeStamp, 0).
 			WithReadyToUse(state == zfs.ZFSStatusReady).
 			Build(), nil
 	}
 
-	vol, err := zfs.GetZFSVolume(req.SourceVolumeId)
+	vol, err := zfs.GetZFSVolume(volumeID)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.NotFound,
 			"CreateSnapshot not able to get volume %s: %s, {%s}",
-			req.SourceVolumeId, req.Name,
+			volumeID, snapName,
 			err.Error(),
 		)
 	}
@@ -610,14 +637,14 @@ func (cs *controller) CreateSnapshot(
 	labels := map[string]string{zfs.ZFSVolKey: vol.Name}
 
 	snapObj, err := snapbuilder.NewBuilder().
-		WithName(req.Name).
+		WithName(snapName).
 		WithLabels(labels).Build()
 
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
 			"failed to create snapshotobject for %s: %s, {%s}",
-			req.SourceVolumeId, req.Name,
+			volumeID, snapName,
 			err.Error(),
 		)
 	}
@@ -629,16 +656,16 @@ func (cs *controller) CreateSnapshot(
 		return nil, status.Errorf(
 			codes.Internal,
 			"failed to handle CreateSnapshotRequest for %s: %s, {%s}",
-			req.SourceVolumeId, req.Name,
+			volumeID, snapName,
 			err.Error(),
 		)
 	}
 
-	state, _ = zfs.GetZFSSnapshotStatus(req.Name)
+	state, _ = zfs.GetZFSSnapshotStatus(snapName)
 
 	return csipayload.NewCreateSnapshotResponseBuilder().
-		WithSourceVolumeID(req.SourceVolumeId).
-		WithSnapshotID(req.SourceVolumeId+"@"+req.Name).
+		WithSourceVolumeID(volumeID).
+		WithSnapshotID(volumeID+"@"+snapName).
 		WithCreationTime(snapTimeStamp, 0).
 		WithReadyToUse(state == zfs.ZFSStatusReady).
 		Build(), nil
