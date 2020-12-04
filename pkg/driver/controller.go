@@ -33,6 +33,7 @@ import (
 	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
 	"github.com/openebs/zfs-localpv/pkg/common/helpers"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
+	schd "github.com/openebs/zfs-localpv/pkg/scheduler"
 	analytics "github.com/openebs/zfs-localpv/pkg/usage"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 )
@@ -126,7 +127,13 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 
 	vtype := zfs.GetVolumeType(fstype)
 
-	selected := scheduler(req.AccessibilityRequirements, schld, pool)
+	nmap, err := getNodeMap(schld, pool)
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "get node map failed : %s", err.Error())
+	}
+
+	// run the scheduler
+	selected := schd.Scheduler(req, nmap)
 
 	if len(selected) == 0 {
 		return "", status.Error(codes.Internal, "scheduler failed")

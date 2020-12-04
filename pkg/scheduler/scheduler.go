@@ -14,29 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package driver
+package scheduler
 
 import (
 	"math"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	k8sapi "github.com/openebs/zfs-localpv/pkg/client/k8s/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
-
-	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 )
 
-// scheduling algorithm constants
-const (
-	// pick the node where less volumes are provisioned for the given pool
-	// this will be the default scheduler when none provided
-	VolumeWeighted = "VolumeWeighted"
-)
-
-// GetNodeList gets the nodelist which satisfies the topology info
-func GetNodeList(topo *csi.TopologyRequirement) ([]string, error) {
+// getNodeList gets the nodelist which satisfies the topology info
+func getNodeList(topo *csi.TopologyRequirement) ([]string, error) {
 
 	var nodelist []string
 
@@ -64,54 +54,34 @@ func GetNodeList(topo *csi.TopologyRequirement) ([]string, error) {
 	return nodelist, nil
 }
 
-// volumeWeightedScheduler goes through all the pools on the nodes mentioned
-// in the topology and picks the node which has less volume on
-// the given zfs pool.
-func volumeWeightedScheduler(nodelist []string, pool string) string {
+// runScheduler goes through the node mapping
+// in the topology and picks the node which is less weighted
+func runScheduler(nodelist []string, nmap map[string]int64) string {
 	var selected string
 
-	zvlist, err := volbuilder.NewKubeclient().
-		WithNamespace(zfs.OpenEBSNamespace).
-		List(metav1.ListOptions{})
+	var weight int64 = math.MaxInt64
 
-	if err != nil {
-		return ""
-	}
-
-	volmap := map[string]int{}
-
-	// create the map of the volume count
-	// for the given pool
-	for _, zv := range zvlist.Items {
-		if zv.Spec.PoolName == pool {
-			volmap[zv.Spec.OwnerNodeID]++
-		}
-	}
-
-	var numVol int = math.MaxInt32
-
-	// schedule it on the node which has less
-	// number of volume for the given pool
+	// schedule it on the node which has less weight
 	for _, node := range nodelist {
-		if volmap[node] < numVol {
+		if nmap[node] < weight {
 			selected = node
-			numVol = volmap[node]
+			weight = nmap[node]
 		}
 	}
 	return selected
 }
 
-// scheduler schedules the PV as per topology constraints for
-// the given zfs pool.
-func scheduler(topo *csi.TopologyRequirement, schld string, pool string) string {
-
+// Scheduler schedules the PV as per topology constraints for
+// the given node weight.
+func Scheduler(req *csi.CreateVolumeRequest, nmap map[string]int64) string {
+	topo := req.AccessibilityRequirements
 	if topo == nil ||
 		len(topo.Preferred) == 0 {
 		klog.Errorf("scheduler: topology information not provided")
 		return ""
 	}
 
-	nodelist, err := GetNodeList(topo)
+	nodelist, err := getNodeList(topo)
 	if err != nil {
 		klog.Errorf("scheduler: can not get the nodelist err : %v", err.Error())
 		return ""
@@ -125,12 +95,5 @@ func scheduler(topo *csi.TopologyRequirement, schld string, pool string) string 
 		return nodelist[0]
 	}
 
-	switch schld {
-	case VolumeWeighted:
-		return volumeWeightedScheduler(nodelist, pool)
-	default:
-		return volumeWeightedScheduler(nodelist, pool)
-	}
-
-	return ""
+	return runScheduler(nodelist, nmap)
 }
