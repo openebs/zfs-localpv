@@ -1,8 +1,8 @@
 kind: ServiceAccount
 apiVersion: v1
 metadata:
-  name: openebs-zfs-controller-sa
-  namespace: openebs
+  name: {{ .Values.serviceAccount.controller.name }}
+  namespace: {{ .Release.Namespace }}
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -46,8 +46,8 @@ metadata:
   name: openebs-zfs-provisioner-binding
 subjects:
   - kind: ServiceAccount
-    name: openebs-zfs-controller-sa
-    namespace: openebs
+    name: {{ .Values.serviceAccount.controller.name }}
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: openebs-zfs-provisioner-role
@@ -99,8 +99,8 @@ metadata:
   name: openebs-zfs-snapshotter-binding
 subjects:
   - kind: ServiceAccount
-    name: openebs-zfs-controller-sa
-    namespace: openebs
+    name: {{ .Values.serviceAccount.controller.name }}
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: openebs-zfs-snapshotter-role
@@ -109,8 +109,8 @@ roleRef:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: openebs-zfs-node-sa
-  namespace: openebs
+  name: {{ .Values.serviceAccount.zfsNode.name }}
+  namespace: {{ .Release.Namespace }}
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -133,8 +133,8 @@ metadata:
   name: openebs-zfs-driver-registrar-binding
 subjects:
   - kind: ServiceAccount
-    name: openebs-zfs-node-sa
-    namespace: openebs
+    name: {{ .Values.serviceAccount.zfsNode.name }}
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: openebs-zfs-driver-registrar-role

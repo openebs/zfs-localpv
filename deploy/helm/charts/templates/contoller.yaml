@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: openebs-zfs-controller
+  name: {{ template "zfslocalpv.fullname" . }}-controller
   {{- with .Values.controller.annotations }}
   annotations: {{ toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    {{- include "openebs-zfslocalpv.controller.labels" . | nindent 4 }}
+    {{- include "zfslocalpv.controller.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      {{- include "openebs-zfslocalpv.controller.matchLabels" . | nindent 6 }}
+      {{- include "zfslocalpv.controller.matchLabels" . | nindent 6 }}
   serviceName: "openebs-zfs"
   replicas: {{ .Values.controller.replicas }}
   template:
@@ -19,7 +19,7 @@ spec:
       annotations: {{ toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "openebs-zfslocalpv.controller.labels" . | nindent 8 }}
+        {{- include "zfslocalpv.controller.labels" . | nindent 8 }}
         {{- with .Values.controller.podLabels}}
         {{ toYaml . | nindent 8 }}
         {{- end}}
@@ -35,7 +35,7 @@ spec:
                 - openebs-zfs-controller
             topologyKey: "kubernetes.io/hostname"
       priorityClassName: system-cluster-critical
-      serviceAccount: openebs-zfs-controller-sa
+      serviceAccount: {{ .Values.serviceAccount.controller.name }}
       containers:
         - name: {{ .Values.controller.resizer.name }}
           image: "{{ .Values.controller.resizer.image.registry }}{{ .Values.controller.resizer.image.repository }}:{{ .Values.controller.resizer.image.tag }}"

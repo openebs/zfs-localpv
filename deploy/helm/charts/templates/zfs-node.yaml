@@ -1,16 +1,16 @@
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
-  name: openebs-zfs-node
+  name: {{ template "zfslocalpv.fullname" . }}-node
   {{- with .Values.zfsNode.annotations }}
   annotations: {{ toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    {{- include "openebs-zfslocalpv.zfsNode.labels" . | nindent 4 }}
+    {{- include "zfslocalpv.zfsNode.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      {{- include "openebs-zfslocalpv.zfsNode.matchLabels" . | nindent 6 }}
+      {{- include "zfslocalpv.zfsNode.matchLabels" . | nindent 6 }}
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 100%
@@ -21,13 +21,13 @@ spec:
       annotations: {{ toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "openebs-zfslocalpv.zfsNode.labels" . | nindent 8 }}
+        {{- include "zfslocalpv.zfsNode.labels" . | nindent 8 }}
         {{- with .Values.zfsNode.podLabels}}
         {{ toYaml . | nindent 8 }}
         {{- end}}
     spec:
       priorityClassName: system-node-critical
-      serviceAccount: openebs-zfs-node-sa
+      serviceAccount: {{ .Values.serviceAccount.zfsNode.name }}
       hostNetwork: true
       containers:
         - name: {{ .Values.zfsNode.driverRegistrar.name }}

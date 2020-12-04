@@ -2,7 +2,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: openebs-zfspv-bin
-  namespace: openebs # should be the same namespace where it is getting mounted
+  namespace: {{ .Release.Namespace }} # should be the same namespace where it is getting mounted
 data:
   zfs: |
     #!/bin/sh
