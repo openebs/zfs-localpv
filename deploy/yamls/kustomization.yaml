@@ -1,5 +1,5 @@
 images:
-  - name: quay.io/openebs/zfs-driver
+  - name: openebs/zfs-driver
     newTag: ci
 resources:
 - namespace.yaml
