@@ -92,7 +92,8 @@ We can install the latest release of OpenEBS ZFS driver by running the following
 $ kubectl apply -f https://openebs.github.io/charts/zfs-operator.yaml
 ```
 
-We can also install it via kustomize using `kubectl apply -k deploy/yamls`, check the [kustomize yaml](deploy/yamls/kustomization.yaml)
+We can also install it via kustomize using `kubectl apply -k deploy/yamls`, check the [kustomize yaml](deploy/yamls/kustomization.yaml).
+For microk8s, we need to change the kubelet directory to `/var/snap/microk8s/common/var/lib/kubelet/`, we need to replace `/var/lib/kubelet/` with `/var/snap/microk8s/common/var/lib/kubelet/` at all the places in the operator yaml and then we can apply it on microk8s.
 
 Verify that the ZFS driver Components are installed and running using below command :
 
