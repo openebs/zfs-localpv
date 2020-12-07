@@ -5,7 +5,7 @@ on:
     paths:
       - 'deploy/helm/**'
     branches:
-      - develop
+      - master
 
 jobs:
   release:

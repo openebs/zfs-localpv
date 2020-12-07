@@ -5,12 +5,12 @@ on:
     paths:
       - 'deploy/helm/**'
     branches:
-      - develop
+      - master
   pull_request:
     paths:
       - 'deploy/helm/**'
     branches:
-      - develop
+      - master
 
 jobs:
   lint-test:
