@@ -93,7 +93,7 @@ spec:
               mountPropagation: "HostToContainer"
               readOnly: true
             - name: pods-mount-dir
-              mountPath: /var/lib/kubelet/
+              mountPath: {{ .Values.zfsNode.podsMountDir }}
               # needed so that any mounts setup inside this container are
               # propagated back to the host machine.
               mountPropagation: "Bidirectional"

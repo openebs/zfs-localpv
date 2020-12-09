@@ -25,6 +25,9 @@ zfsNode:
   annotations: {}
   podAnnotations: {}
   resources: {}
+  # This can be configured to run on various different k8s ditributions like
+  # microk8s where mount dir is different
+  podsMountDir: "/var/lib/kubelet/"
   # limits:
   #   cpu: 10m
   #   memory: 32Mi
