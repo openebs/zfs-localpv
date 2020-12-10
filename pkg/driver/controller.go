@@ -133,6 +133,23 @@ func waitForVolDestroy(volname string) error {
 	return nil
 }
 
+func waitForReadySnapshot(snapname string) error {
+	for true {
+		snap, err := zfs.GetZFSSnapshot(snapname)
+		if err != nil {
+			return status.Errorf(codes.Internal,
+				"zfs: wait failed, not able to get the snapshot %s %s", snapname, err.Error())
+		}
+
+		switch snap.Status.State {
+		case zfs.ZFSStatusReady:
+			return nil
+		}
+		time.Sleep(time.Second)
+	}
+	return nil
+}
+
 // CreateZFSVolume create new zfs volume from csi volume request
 func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	volName := strings.ToLower(req.GetName())
@@ -222,12 +239,6 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	if err != nil {
 		return "", status.Errorf(codes.Internal,
 			"not able to provision the volume %s", err.Error())
-	}
-
-	if _, ok := parameters["wait"]; ok {
-		if err := waitForReadyVolume(volName); err != nil {
-			return "", err
-		}
 	}
 
 	return selected, nil
@@ -368,6 +379,12 @@ func (cs *controller) CreateVolume(
 
 	if err != nil {
 		return nil, err
+	}
+
+	if _, ok := parameters["wait"]; ok {
+		if err := waitForReadyVolume(volName); err != nil {
+			return nil, err
+		}
 	}
 
 	sendEventOrIgnore(pvcName, volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
@@ -659,6 +676,15 @@ func (cs *controller) CreateSnapshot(
 			volumeID, snapName,
 			err.Error(),
 		)
+	}
+
+	originalParams := req.GetParameters()
+	parameters := helpers.GetCaseInsensitiveMap(&originalParams)
+
+	if _, ok := parameters["wait"]; ok {
+		if err := waitForReadySnapshot(snapName); err != nil {
+			return nil, err
+		}
 	}
 
 	state, _ = zfs.GetZFSSnapshotStatus(snapName)

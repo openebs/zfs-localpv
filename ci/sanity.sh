@@ -76,7 +76,7 @@ EOT
 
 function startTestSuite() {
 	echo "================== Start csi-sanity test suite ================="
-	./csi-sanity --ginkgo.v --csi.controllerendpoint=///tmp/csi.sock --csi.endpoint=/var/lib/kubelet/plugins/zfs-localpv/csi.sock --csi.testvolumeparameters=/tmp/parameters.json
+	./csi-sanity --ginkgo.v --csi.controllerendpoint=///tmp/csi.sock --csi.endpoint=/var/lib/kubelet/plugins/zfs-localpv/csi.sock --csi.testvolumeparameters=/tmp/parameters.json --csi.testsnapshotparameters=/tmp/parameters.json
 	if [ $? -ne 0 ];
 	then
 		dumpAllLogs

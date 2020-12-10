@@ -41,7 +41,7 @@ COPY . .
 
 RUN make buildx.csi-driver
 
-FROM ubuntu:19.10
+FROM ubuntu:18.04
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN apt-get update; exit 0
