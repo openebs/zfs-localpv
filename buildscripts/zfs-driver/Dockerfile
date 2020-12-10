@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:19.10
+FROM ubuntu:18.04
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN apt-get update; exit 0
 RUN apt-get -y install rsyslog libssl-dev xfsprogs ca-certificates
