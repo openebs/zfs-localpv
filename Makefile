@@ -235,6 +235,12 @@ zfs-driver-image: zfs-driver
 ci:
 	@echo "--> Running ci test";
 	$(PWD)/ci/ci-test.sh
+
+.PHONY: sanity
+sanity:
+	@echo "--> Running CSI Sanity test";
+	$(PWD)/ci/sanity.sh
+
 # Push images
 deploy-images:
 	@DIMAGE="${IMAGE_ORG}/zfs-driver" ./buildscripts/push

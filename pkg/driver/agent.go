@@ -17,6 +17,7 @@ limitations under the License.
 package driver
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -103,10 +104,12 @@ func GetVolAndMountInfo(
 		mountinfo.MountOptions = append(mountinfo.MountOptions, "ro")
 	}
 
+	volName := strings.ToLower(req.GetVolumeId())
+
 	getOptions := metav1.GetOptions{}
 	vol, err := volbuilder.NewKubeclient().
 		WithNamespace(zfs.OpenEBSNamespace).
-		Get(req.GetVolumeId(), getOptions)
+		Get(volName, getOptions)
 
 	if err != nil {
 		return nil, nil, err
@@ -277,7 +280,7 @@ func (ns *node) NodeStageVolume(
 	req *csi.NodeStageVolumeRequest,
 ) (*csi.NodeStageVolumeResponse, error) {
 
-	return &csi.NodeStageVolumeResponse{}, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // NodeUnstageVolume unmounts the volume from
@@ -289,7 +292,7 @@ func (ns *node) NodeUnstageVolume(
 	req *csi.NodeUnstageVolumeRequest,
 ) (*csi.NodeUnstageVolumeResponse, error) {
 
-	return &csi.NodeUnstageVolumeResponse{}, nil
+	return nil, status.Error(codes.Unimplemented, "")
 }
 
 // TODO
@@ -309,11 +312,19 @@ func (ns *node) NodeExpandVolume(
 ) (*csi.NodeExpandVolumeResponse, error) {
 
 	volumeID := req.GetVolumeId()
+	if req.GetVolumePath() == "" || volumeID == "" {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"path not provided for NodeExpandVolume Request %s",
+			volumeID,
+		)
+	}
+
 	vol, err := zfs.GetZFSVolume(volumeID)
 
 	if err != nil {
 		return nil, status.Errorf(
-			codes.Internal,
+			codes.NotFound,
 			"failed to handle NodeExpandVolume Request for %s, {%s}",
 			req.VolumeId,
 			err.Error(),
@@ -351,7 +362,7 @@ func (ns *node) NodeGetVolumeStats(
 	}
 
 	if mount.IsMountPath(path) == false {
-		return nil, status.Error(codes.InvalidArgument, "path is not a mount path")
+		return nil, status.Error(codes.NotFound, "path is not a mount path")
 	}
 
 	var sfs unix.Statfs_t

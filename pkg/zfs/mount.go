@@ -124,24 +124,24 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 	return nil
 }
 
-func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
+func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) (bool, error) {
 	if len(mountpath) == 0 {
-		return status.Error(codes.InvalidArgument, "verifyMount: mount path missing in request")
+		return false, status.Error(codes.InvalidArgument, "verifyMount: mount path missing in request")
 	}
 
 	if len(vol.Spec.OwnerNodeID) > 0 &&
 		vol.Spec.OwnerNodeID != NodeID {
-		return status.Error(codes.Internal, "verifyMount: volume is owned by different node")
+		return false, status.Error(codes.Internal, "verifyMount: volume is owned by different node")
 	}
 	if vol.Finalizers == nil {
-		return status.Error(codes.Internal, "verifyMount: volume is not ready to be mounted")
+		return false, status.Error(codes.Internal, "verifyMount: volume is not ready to be mounted")
 	}
 
 	devicePath, err := GetVolumeDevPath(vol)
 	if err != nil {
 		klog.Errorf("can not get device for volume:%s dev %s err: %v",
 			vol.Name, devicePath, err.Error())
-		return status.Errorf(codes.Internal, "verifyMount: GetVolumePath failed %s", err.Error())
+		return false, status.Errorf(codes.Internal, "verifyMount: GetVolumePath failed %s", err.Error())
 	}
 
 	// if it is not a shared volume, then make sure it is not mounted to more than one path
@@ -157,24 +157,32 @@ func verifyMountRequest(vol *apis.ZFSVolume, mountpath string) error {
 		if err != nil {
 			klog.Errorf("can not get mounts for volume:%s dev %s err: %v",
 				vol.Name, devicePath, err.Error())
-			return status.Errorf(codes.Internal, "verifyMount: Getmounts failed %s", err.Error())
+			return false, status.Errorf(codes.Internal, "verifyMount: Getmounts failed %s", err.Error())
 		} else if len(currentMounts) >= 1 {
+			if currentMounts[0] == mountpath {
+				return true, nil
+			}
 			klog.Errorf(
 				"can not mount, volume:%s already mounted dev %s mounts: %v",
 				vol.Name, devicePath, currentMounts,
 			)
-			return status.Errorf(codes.Internal, "verifyMount: device already mounted at %s", currentMounts)
+			return false, status.Errorf(codes.Internal, "verifyMount: device already mounted at %s", currentMounts)
 		}
 	}
-	return nil
+	return false, nil
 }
 
 // MountZvol mounts the disk to the specified path
 func MountZvol(vol *apis.ZFSVolume, mount *MountInfo) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
-	err := verifyMountRequest(vol, mount.MountPath)
+	mounted, err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
 		return err
+	}
+
+	if mounted {
+		klog.Infof("zvol : already mounted %s => %s", volume, mount.MountPath)
+		return nil
 	}
 
 	devicePath := ZFSDevPath + volume
@@ -192,9 +200,14 @@ func MountZvol(vol *apis.ZFSVolume, mount *MountInfo) error {
 // MountDataset mounts the zfs dataset to the specified path
 func MountDataset(vol *apis.ZFSVolume, mount *MountInfo) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
-	err := verifyMountRequest(vol, mount.MountPath)
+	mounted, err := verifyMountRequest(vol, mount.MountPath)
 	if err != nil {
 		return err
+	}
+
+	if mounted {
+		klog.Infof("dataset : already mounted %s => %s", volume, mount.MountPath)
+		return nil
 	}
 
 	val, err := GetVolumeProperty(vol, "mountpoint")
@@ -237,6 +250,16 @@ func MountDataset(vol *apis.ZFSVolume, mount *MountInfo) error {
 
 // MountFilesystem mounts the disk to the specified path
 func MountFilesystem(vol *apis.ZFSVolume, mount *MountInfo) error {
+	if err := os.MkdirAll(mount.MountPath, 0000); err != nil {
+		return status.Errorf(codes.Internal, "Could not create dir {%q}, err: %v", mount.MountPath, err)
+	}
+
+	// in case if the dir already exists, above call returns nil
+	// so permission needs to be updated
+	if err := os.Chmod(mount.MountPath, 0000); err != nil {
+		return status.Errorf(codes.Internal, "Could not change mode of dir {%q}, err: %v", mount.MountPath, err)
+	}
+
 	switch vol.Spec.VolumeType {
 	case VolTypeDataset:
 		return MountDataset(vol, mount)
