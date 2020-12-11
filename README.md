@@ -6,12 +6,13 @@
 [![Community Meetings](https://img.shields.io/badge/Community-Meetings-blue)](https://hackmd.io/yJb407JWRyiwLU-XDndOLA?view)
 [![Go Report](https://goreportcard.com/badge/github.com/openebs/zfs-localpv)](https://goreportcard.com/report/github.com/openebs/zfs-localpv)
 
+<img width="300" align="right" alt="OpenEBS Logo" src="https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/stacked/color/openebs-stacked-color.png" xmlns="http://www.w3.org/1999/html">
 
 CSI driver for provisioning Local PVs backed by ZFS and more.
 
 ## Project Status
 
-This project is under active development and with the release of version v0.8.x it is now promoted to beta state. The current implementation supports provisioning and de-provisioning of ZFS Volumes, CSI volume resize, Raw block volumes, Snapshot and Clone. Also, few properties like compression, dedup and recordsize can be provided while provisioning the volumes and can also be changed after provisioning is done.
+With the release of version 1.1.0, the ZFS-LocalPV is promoted to GA. It is ready for the production, see our [adopters](https://github.com/openebs/openebs/issues/2719).
 
 ## Project Tracker
 
@@ -224,47 +225,7 @@ The above storage class tells that ZFS pool "zfspv-pool" is available on nodes z
 
 Please note that the provisioner name for ZFS driver is "zfs.csi.openebs.io", we have to use this while creating the storage class so that the volume provisioning/deprovisioning request can come to ZFS driver.
 
-#### 2. Create a PVC
-
-```
-$ cat pvc.yaml
-
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: csi-zfspv
-spec:
-  storageClassName: openebs-zfspv
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 4Gi
-```
-
-Create a PVC using the storage class created for the ZFS driver. Here, the allocated volume size will be rounded off to the nearest Mi or Gi notation, check the [faq](./docs/faq.md#7-why-the-zfs-volume-size-is-different-than-the-reqeusted-size-in-pvc) section for more details.
-
-#### 3. Check the kubernetes resource is created for the corresponding zfs volume
-
-```
-$ kubectl get zv -n openebs
-NAME                                       ZPOOL        NODE          SIZE         VOLBLOCKSIZE   RECORDSIZE   FILESYSTEM
-pvc-34133838-0d0d-11ea-96e3-42010a800114   zfspv-pool   zfspv-node1   4294967296                  4k           zfs
-
-```
-
-The ZFS driver will create a ZFS dataset(zvol) on the node zfspv-node1 for the mentioned ZFS pool and the dataset name will same as PV name.
-Go to the node zfspv-node1 and check the volume :-
-
-```
-$ zfs list
-NAME                                                  USED  AVAIL  REFER  MOUNTPOINT
-zfspv-pool                                            444K   362G    96K  /zfspv-pool
-zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114    96K  4.00G    96K  none
-
-```
-
-#### 4. Scheduler
+##### Scheduler
  
 The ZFS driver has a scheduler which will try to distribute the PV across the nodes so that one node should not be loaded with all the volumes. Currently the driver has
 VolumeWeighted scheduling algorithm, in which it will try to find a ZFS pool which has less number of volumes provisioned in it from all the nodes where the ZFS pools are available.
@@ -292,40 +253,38 @@ parameters:
 provisioner: zfs.csi.openebs.io
 volumeBindingMode: WaitForFirstConsumer
 ```
+
 Please note that once a PV is created for a node, application using that PV will always get scheduled to that particular node only, as PV will be sticky to that node.
 The scheduling algorithm by ZFS driver or kubernetes will come into picture only during the deployment time. Once the PV is created, 
 the application can not move anywhere as the data is there on the node where the PV is.
 
-#### 5. Deploy the application using this PVC
+#### 2. Create the PVC
 
 ```
-$ cat fio.yaml
+$ cat pvc.yaml
 
+kind: PersistentVolumeClaim
 apiVersion: v1
-kind: Pod
 metadata:
-  name: fio
+  name: csi-zfspv
 spec:
-  restartPolicy: Never
-  containers:
-  - name: perfrunner
-    image: openebs/tests-fio
-    command: ["/bin/bash"]
-    args: ["-c", "while true ;do sleep 50; done"]
-    volumeMounts:
-       - mountPath: /datadir
-         name: fio-vol
-    tty: true
-  volumes:
-  - name: fio-vol
-    persistentVolumeClaim:
-      claimName: csi-zfspv
+  storageClassName: openebs-zfspv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
 ```
 
-After the deployment of the application, we can go to the node and see that the zfs volume is being used
-by the application for reading/writting the data and space is consumed from the ZFS pool.
+Create a PVC using the storage class created for the ZFS driver. Here, the allocated volume size will be rounded off to the nearest Mi or Gi notation, check the [faq](./docs/faq.md#7-why-the-zfs-volume-size-is-different-than-the-reqeusted-size-in-pvc) section for more details.
 
-Also we can check the kubernetes resource for the corresponding zfs volume
+If we are using the immediate binding in the storageclass then we can check the kubernetes resource for the corresponding zfs volume, other wise in late binding case, we can check the same after pod has been scheduled.
+
+```
+$ kubectl get zv -n openebs
+NAME                                       ZPOOL        NODE           SIZE         STATUS   FILESYSTEM   AGE
+pvc-34133838-0d0d-11ea-96e3-42010a800114   zfspv-pool   zfspv-node1    4294967296   Ready    zfs          4s
+```
 
 ```
 $ kubectl describe zv pvc-34133838-0d0d-11ea-96e3-42010a800114 -n openebs
@@ -357,7 +316,50 @@ Status:
 Events:           <none>
 ```
 
-#### 6. ZFS Property Change
+The ZFS driver will create a ZFS dataset(or zvol as per fstype in the storageclass) on the node zfspv-node1 for the mentioned ZFS pool and the dataset name will same as PV name.
+Go to the node zfspv-node1 and check the volume :-
+
+```
+$ zfs list
+NAME                                                  USED  AVAIL  REFER  MOUNTPOINT
+zfspv-pool                                            444K   362G    96K  /zfspv-pool
+zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114    96K  4.00G    96K  legacy
+
+```
+
+#### 3. Deploy the application
+
+Create the deployment yaml using the pvc backed by ZFS-LocalPV storage.
+
+```
+$ cat fio.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fio
+spec:
+  restartPolicy: Never
+  containers:
+  - name: perfrunner
+    image: openebs/tests-fio
+    command: ["/bin/bash"]
+    args: ["-c", "while true ;do sleep 50; done"]
+    volumeMounts:
+       - mountPath: /datadir
+         name: fio-vol
+    tty: true
+  volumes:
+  - name: fio-vol
+    persistentVolumeClaim:
+      claimName: csi-zfspv
+```
+
+After the deployment of the application, we can go to the node and see that the zfs volume is being used
+by the application for reading/writting the data and space is consumed from the ZFS pool.
+
+#### 4. ZFS Property Change
+
 ZFS Volume Property can be changed like compression on/off can be done by just simply editing the kubernetes resource for the corresponding zfs volume by using below command :
 
 ```
@@ -372,7 +374,8 @@ below command on the node:
 zfs get all zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114
 ```
 
-#### 7. Deprovisioning
+#### 5. Deprovisioning
+
 for deprovisioning the volume we can delete the application which is using the volume and then we can go ahead and delete the pv, as part of deletion of pv this volume will also be deleted from the ZFS pool and data will be freed.
 
 ```
