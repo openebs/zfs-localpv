@@ -114,7 +114,3 @@ Create labels for openebs zfs-localpv node daemon
 {{ include "zfslocalpv.zfsNode.matchLabels" . }}
 {{ include "zfslocalpv.zfsNode.componentLabels" . }}
 {{- end -}}
-
-
-
-

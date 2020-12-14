@@ -8,8 +8,7 @@ imagePullSecrets:
 # - name: "image-pull-secret"
 
 zfsNode:
-  componentName:  openebs-zfs-node
-  enabled: true
+  componentName: openebs-zfs-node
   driverRegistrar:
     name: "csi-node-driver-registrar"
     image:
@@ -36,14 +35,14 @@ zfsNode:
   #   memory: 32Mi
   ## Labels to be added to openebs-zfs node pods
   podLabels:
-    name:  openebs-zfs-node
+    name: openebs-zfs-node
   nodeSelector: {}
   tolerations: []
   securityContext: {}
   labels: {}
 
 controller:
-  componentName:  openebs-zfs-controller
+  componentName: openebs-zfs-controller
   resizer:
     name: "csi-resizer"
     image:
@@ -97,7 +96,7 @@ controller:
   #   memory: 32Mi
   ## Labels to be added to openebs-zfs controller pods
   podLabels:
-    name:  openebs-zfs-controller
+    name: openebs-zfs-controller
   nodeSelector: {}
   tolerations: []
   securityContext: {}
