@@ -6,12 +6,13 @@
 [![Community Meetings](https://img.shields.io/badge/Community-Meetings-blue)](https://hackmd.io/yJb407JWRyiwLU-XDndOLA?view)
 [![Go Report](https://goreportcard.com/badge/github.com/openebs/zfs-localpv)](https://goreportcard.com/report/github.com/openebs/zfs-localpv)
 
+<img width="300" align="right" alt="OpenEBS Logo" src="https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/stacked/color/openebs-stacked-color.png" xmlns="http://www.w3.org/1999/html">
 
 CSI driver for provisioning Local PVs backed by ZFS and more.
 
 ## Project Status
 
-This project is under active development and with the release of version v0.8.x it is now promoted to beta state. The current implementation supports provisioning and de-provisioning of ZFS Volumes, CSI volume resize, Raw block volumes, Snapshot and Clone. Also, few properties like compression, dedup and recordsize can be provided while provisioning the volumes and can also be changed after provisioning is done.
+With the release of version 1.2.0, the ZFS-LocalPV is promoted to GA. It is ready for the production, see our [adopters](https://github.com/openebs/openebs/issues/2719).
 
 ## Project Tracker
 
@@ -225,47 +226,7 @@ The above storage class tells that ZFS pool "zfspv-pool" is available on nodes z
 
 Please note that the provisioner name for ZFS driver is "zfs.csi.openebs.io", we have to use this while creating the storage class so that the volume provisioning/deprovisioning request can come to ZFS driver.
 
-#### 2. Create a PVC
-
-```
-$ cat pvc.yaml
-
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: csi-zfspv
-spec:
-  storageClassName: openebs-zfspv
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 4Gi
-```
-
-Create a PVC using the storage class created for the ZFS driver. Here, the allocated volume size will be rounded off to the nearest Mi or Gi notation, check the [faq](./docs/faq.md#7-why-the-zfs-volume-size-is-different-than-the-reqeusted-size-in-pvc) section for more details.
-
-#### 3. Check the kubernetes resource is created for the corresponding zfs volume
-
-```
-$ kubectl get zv -n openebs
-NAME                                       ZPOOL        NODE          SIZE         VOLBLOCKSIZE   RECORDSIZE   FILESYSTEM
-pvc-34133838-0d0d-11ea-96e3-42010a800114   zfspv-pool   zfspv-node1   4294967296                  4k           zfs
-
-```
-
-The ZFS driver will create a ZFS dataset(zvol) on the node zfspv-node1 for the mentioned ZFS pool and the dataset name will same as PV name.
-Go to the node zfspv-node1 and check the volume :-
-
-```
-$ zfs list
-NAME                                                  USED  AVAIL  REFER  MOUNTPOINT
-zfspv-pool                                            444K   362G    96K  /zfspv-pool
-zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114    96K  4.00G    96K  none
-
-```
-
-#### 4. Scheduler
+##### Scheduler
  
 The ZFS driver has a scheduler which will try to distribute the PV across the nodes so that one node should not be loaded with all the volumes. Currently the driver has
 VolumeWeighted scheduling algorithm, in which it will try to find a ZFS pool which has less number of volumes provisioned in it from all the nodes where the ZFS pools are available.
@@ -293,40 +254,38 @@ parameters:
 provisioner: zfs.csi.openebs.io
 volumeBindingMode: WaitForFirstConsumer
 ```
+
 Please note that once a PV is created for a node, application using that PV will always get scheduled to that particular node only, as PV will be sticky to that node.
 The scheduling algorithm by ZFS driver or kubernetes will come into picture only during the deployment time. Once the PV is created, 
 the application can not move anywhere as the data is there on the node where the PV is.
 
-#### 5. Deploy the application using this PVC
+#### 2. Create the PVC
 
 ```
-$ cat fio.yaml
+$ cat pvc.yaml
 
+kind: PersistentVolumeClaim
 apiVersion: v1
-kind: Pod
 metadata:
-  name: fio
+  name: csi-zfspv
 spec:
-  restartPolicy: Never
-  containers:
-  - name: perfrunner
-    image: openebs/tests-fio
-    command: ["/bin/bash"]
-    args: ["-c", "while true ;do sleep 50; done"]
-    volumeMounts:
-       - mountPath: /datadir
-         name: fio-vol
-    tty: true
-  volumes:
-  - name: fio-vol
-    persistentVolumeClaim:
-      claimName: csi-zfspv
+  storageClassName: openebs-zfspv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
 ```
 
-After the deployment of the application, we can go to the node and see that the zfs volume is being used
-by the application for reading/writting the data and space is consumed from the ZFS pool.
+Create a PVC using the storage class created for the ZFS driver. Here, the allocated volume size will be rounded off to the nearest Mi or Gi notation, check the [faq](./docs/faq.md#7-why-the-zfs-volume-size-is-different-than-the-reqeusted-size-in-pvc) section for more details.
 
-Also we can check the kubernetes resource for the corresponding zfs volume
+If we are using the immediate binding in the storageclass then we can check the kubernetes resource for the corresponding zfs volume, other wise in late binding case, we can check the same after pod has been scheduled.
+
+```
+$ kubectl get zv -n openebs
+NAME                                       ZPOOL        NODE           SIZE         STATUS   FILESYSTEM   AGE
+pvc-34133838-0d0d-11ea-96e3-42010a800114   zfspv-pool   zfspv-node1    4294967296   Ready    zfs          4s
+```
 
 ```
 $ kubectl describe zv pvc-34133838-0d0d-11ea-96e3-42010a800114 -n openebs
@@ -358,7 +317,50 @@ Status:
 Events:           <none>
 ```
 
-#### 6. ZFS Property Change
+The ZFS driver will create a ZFS dataset(or zvol as per fstype in the storageclass) on the node zfspv-node1 for the mentioned ZFS pool and the dataset name will same as PV name.
+Go to the node zfspv-node1 and check the volume :-
+
+```
+$ zfs list
+NAME                                                  USED  AVAIL  REFER  MOUNTPOINT
+zfspv-pool                                            444K   362G    96K  /zfspv-pool
+zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114    96K  4.00G    96K  legacy
+
+```
+
+#### 3. Deploy the application
+
+Create the deployment yaml using the pvc backed by ZFS-LocalPV storage.
+
+```
+$ cat fio.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fio
+spec:
+  restartPolicy: Never
+  containers:
+  - name: perfrunner
+    image: openebs/tests-fio
+    command: ["/bin/bash"]
+    args: ["-c", "while true ;do sleep 50; done"]
+    volumeMounts:
+       - mountPath: /datadir
+         name: fio-vol
+    tty: true
+  volumes:
+  - name: fio-vol
+    persistentVolumeClaim:
+      claimName: csi-zfspv
+```
+
+After the deployment of the application, we can go to the node and see that the zfs volume is being used
+by the application for reading/writting the data and space is consumed from the ZFS pool.
+
+#### 4. ZFS Property Change
+
 ZFS Volume Property can be changed like compression on/off can be done by just simply editing the kubernetes resource for the corresponding zfs volume by using below command :
 
 ```
@@ -373,201 +375,8 @@ below command on the node:
 zfs get all zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114
 ```
 
-#### 7. Snapshot
+#### 5. Deprovisioning
 
-We can create a snapshot of a volume which can be used further for creating a clone and for taking a backup. To create a snapshot, we have to first create a snapshotclass just like a storage class.
-
-```yaml
-kind: VolumeSnapshotClass
-apiVersion: snapshot.storage.k8s.io/v1beta1
-metadata:
-  name: zfspv-snapclass
-  annotations:
-    snapshot.storage.kubernetes.io/is-default-class: "true"
-driver: zfs.csi.openebs.io
-deletionPolicy: Delete
-```
-
-Then create the snapshot using the above snapshotclass :
-
-```yaml
-apiVersion: snapshot.storage.k8s.io/v1beta1
-kind: VolumeSnapshot
-metadata:
-  name: zfspv-snap
-spec:
-  volumeSnapshotClassName: zfspv-snapclass
-  source:
-    persistentVolumeClaimName: csi-zfspv
-```
-Plese note that, you have to create the snapshot in the same namespace where the pvc is created. Check the created snapshot resource, make sure readyToUse field is true, before using this snapshot for any purpose.
-Here one thing need to be noted that, when zfs takes the volume snapshot it is not aware of application, so snapshot may not be application-consistent. For application-consistent snapshot it is always recommended to scale down the application before taking the application-consistent volume snapshot. After taking the snapshot we can scale up the application again and proceed further with the clone-creation.
-
-```
-$ kubectl get volumesnapshot.snapshot
-NAME         AGE
-zfspv-snap   2m8s
-
-$ kubectl get volumesnapshot.snapshot zfspv-snap -o yaml
-apiVersion: snapshot.storage.k8s.io/v1beta1
-kind: VolumeSnapshot
-metadata:
-  annotations:
-    kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"snapshot.storage.k8s.io/v1beta1","kind":"VolumeSnapshot","metadata":{"annotations":{},"name":"zfspv-snap","namespace":"default"},"spec":{"source":{"persistentVolumeClaimName":"csi-zfspv"},"volumeSnapshotClassName":"zfspv-snapclass"}}
-  creationTimestamp: "2020-02-25T08:25:51Z"
-  finalizers:
-  - snapshot.storage.kubernetes.io/volumesnapshot-as-source-protection
-  - snapshot.storage.kubernetes.io/volumesnapshot-bound-protection
-  generation: 1
-  name: zfspv-snap
-  namespace: default
-  resourceVersion: "447494"
-  selfLink: /apis/snapshot.storage.k8s.io/v1beta1/namespaces/default/volumesnapshots/zfspv-snap
-  uid: 3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
-spec:
-  source:
-    persistentVolumeClaimName: csi-zfspv
-  volumeSnapshotClassName: zfspv-snapclass
-status:
-  boundVolumeSnapshotContentName: snapcontent-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
-  creationTime: "2020-02-25T08:25:51Z"
-  readyToUse: true
-  restoreSize: "0"
-```
-
-Check the OpenEBS resource for the created snapshot. Check, status should be Ready.
-
-```
-$ kubectl get zfssnap -n openebs
-NAME                                            AGE
-snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd   3m32s
-
-$ kubectl get zfssnap snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd -n openebs -oyaml
-apiVersion: openebs.io/v1alpha1
-kind: ZFSSnapshot
-metadata:
-  creationTimestamp: "2020-02-25T08:25:51Z"
-  finalizers:
-  - zfs.openebs.io/finalizer
-  generation: 2
-  labels:
-    kubernetes.io/nodename: zfspv-node1
-    openebs.io/persistent-volume: pvc-34133838-0d0d-11ea-96e3-42010a800114
-  name: snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
-  namespace: openebs
-  resourceVersion: "447328"
-  selfLink: /apis/openebs.io/v1alpha1/namespaces/openebs/zfssnapshots/snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
-  uid: 6142492c-3785-498f-aa4a-569ec6c0e2b8
-spec:
-  capacity: "4294967296"
-  fsType: zfs
-  ownerNodeID: zfspv-node1
-  poolName: zfspv-pool
-  volumeType: DATASET
-status:
-  state: Ready
-```
-
-we can go to the node and confirm that snapshot has been created :-
-
-```
-$ zfs list -t all
-NAME                                                                                                USED  AVAIL  REFER  MOUNTPOINT
-zfspv-pool                                                                                          468K  96.4G    96K  /zfspv-pool
-zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114                                                  96K  4.00G    96K  none
-zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114@snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd     0B      -    96K  -
-```
-
-#### 8. Clone
-
-We can create a clone volume from a snapshot and use that volume for some application. We can create a pvc yaml and mention the snapshot name in the datasource. Please note that for kubernetes version less than 1.17, `VolumeSnapshotDataSource` feature gate needs to be enabled at kubelet and kube-apiserver
-
-```yaml
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: zfspv-clone
-spec:
-  storageClassName: openebs-zfspv
-  dataSource:
-    name: zfspv-snap
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 4Gi
-```
-The above yaml says that create a volume from the snapshot zfspv-snap. Applying the above yaml will create a clone volume on the same node where the original volume is present. The newly created clone PV will also be there on the same node where the original PV is there.
-
-Note that the clone PVC should also be of the same size as that of the original volume as right now resize is not supported. Also note that the poolname should also be same, as across the ZPOOL clone is not supported. So, if you are using a separate storageclass for the clone PVC, please make sure it refers to the same ZPOOL.
-
-```
-$ kubectl get pvc
-NAME          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS    AGE
-csi-zfspv     Bound    pvc-34133838-0d0d-11ea-96e3-42010a800114   4Gi        RWO            openebs-zfspv   3h42m
-zfspv-clone   Bound    pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd   4Gi        RWO            openebs-zfspv   78s
-```
-
-We can see in the above output that zfspv-clone claim has been created and it is bound also. Also, we can check the zfs list on node and verify that clone volume is created.
-
-```
-$ zfs list -t all
-NAME                                                                                                USED  AVAIL  REFER  MOUNTPOINT
-zfspv-pool                                                                                          444K  96.4G    96K  /zfspv-pool
-zfspv-pool/pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd                                                   0B     4G    96K  none
-zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114                                                  96K  4.00G    96K  none
-zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114@snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd     0B      -    96K  -
-```
-
-The clone volume will have properties same as snapshot properties which are the properties when that snapshot has been created. The ZFSVolume object for the clone volume will be something like below :-
-
-```
-$ kubectl describe zv pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd -n openebs
-Name:         pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd
-Namespace:    openebs
-Labels:       kubernetes.io/nodename=zfspv-node1
-Annotations:  <none>
-API Version:  zfs.openebs.io/v1alpha1
-Kind:         ZFSVolume
-Metadata:
-  Creation Timestamp:  2019-11-22T09:49:29Z
-  Finalizers:
-    zfs.openebs.io/finalizer
-  Generation:        1
-  Resource Version:  2881
-  Self Link:         /apis/openebs.io/v1alpha1/namespaces/openebs/zfsvolumes/pvc-e1230d2c-b32a-48f7-8b76-ca335b253dcd
-  UID:               60bc4df2-0d0d-11ea-96e3-42010a800114
-Spec:
-  Capacity:       4294967296
-  Fs Type:        zfs
-  Owner Node ID:  zfspv-node1
-  Pool Name:      zfspv-pool
-  Snap Name:      pvc-34133838-0d0d-11ea-96e3-42010a800114@snapshot-3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
-  Volume Type:    DATASET
-Status:
-  State: Ready
-Events:           <none>
-
-Here you can note that this resource has Snapname field which tells that this volume is created from that snapshot.
-
-```
-
-#### 9. Volume Resize
-
-check [resize doc](docs/resize.md).
-
-#### 10. Raw Block Volume
-
-check [raw block volume](docs/raw-block-volume.md).
-
-#### 11. Backup/Restore
-
-check [backup/restore](docs/backup-restore.md).
-
-#### 12. Deprovisioning
 for deprovisioning the volume we can delete the application which is using the volume and then we can go ahead and delete the pv, as part of deletion of pv this volume will also be deleted from the ZFS pool and data will be freed.
 
 ```
@@ -576,6 +385,25 @@ pod "fio" deleted
 $ kubectl delete -f pvc.yaml
 persistentvolumeclaim "csi-zfspv" deleted
 ```
+
+Features
+---
+
+- [x] Access Modes
+    - [x] ReadWriteOnce
+    - ~~ReadOnlyMany~~
+    - ~~ReadWriteMany~~
+- [x] Volume modes
+    - [x] `Filesystem` mode
+    - [x] `Block` mode
+- [x] Supports fsTypes: `ext4`, `btrfs`, `xfs`, `zfs`
+- [x] Volume metrics
+- [x] [Snapshot](docs/snapshot.md)
+- [x] [Clone](docs/clone.md)
+- [x] [Volume Resize](docs/resize.md)
+- [x] [Raw Block Volume](docs/raw-block-volume.md)
+- [x] [Backup/Restore](docs/backup-restore.md)
+- [ ] Ephemeral inline volume
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_large)
