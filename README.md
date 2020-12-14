@@ -12,7 +12,7 @@ CSI driver for provisioning Local PVs backed by ZFS and more.
 
 ## Project Status
 
-With the release of version 1.1.0, the ZFS-LocalPV is promoted to GA. It is ready for the production, see our [adopters](https://github.com/openebs/openebs/issues/2719).
+With the release of version 1.2.0, the ZFS-LocalPV is promoted to GA. It is ready for the production, see our [adopters](https://github.com/openebs/openebs/issues/2719).
 
 ## Project Tracker
 
