@@ -1,0 +1,1 @@
+removing quay from kustomization.yaml as we are using multiarch docker images
