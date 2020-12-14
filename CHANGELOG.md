@@ -1,3 +1,37 @@
+v1.2.1 / 2020-12-15
+========================
+* fixing idempotency check for the mount path ([#260](https://github.com/openebs/zfs-localpv/pull/260),[@pawanpraka1](https://github.com/pawanpraka1))
+
+
+v1.2.0 / 2020-12-13
+========================
+
+* removing quay from kustomization.yaml as we are using multiarch docker images ([#248](https://github.com/openebs/zfs-localpv/pull/248),[@pawanpraka1](https://github.com/pawanpraka1))
+* move xfs and mount code out of zfs package ([#245](https://github.com/openebs/zfs-localpv/pull/245),[@pawanpraka1](https://github.com/pawanpraka1))
+* move btrfs code out of zfs package ([#244](https://github.com/openebs/zfs-localpv/pull/244),[@pawanpraka1](https://github.com/pawanpraka1))
+* add github action for chart test and release ([#250](https://github.com/openebs/zfs-localpv/pull/250),[@shubham14bajpai](https://github.com/shubham14bajpai))
+* fixing flaky sanity test case ([#256](https://github.com/openebs/zfs-localpv/pull/256),[@pawanpraka1](https://github.com/pawanpraka1))
+* refactor scheduler for ZFS-LocalPV ([#249](https://github.com/openebs/zfs-localpv/pull/249),[@pawanpraka1](https://github.com/pawanpraka1))
+* moving to ubuntu bionic(18.04 LTS) docker image ([#255](https://github.com/openebs/zfs-localpv/pull/255),[@pawanpraka1](https://github.com/pawanpraka1))
+* fixed the kustomize yaml name to kustomization.yaml ([#243](https://github.com/openebs/zfs-localpv/pull/243),[@pawanpraka1](https://github.com/pawanpraka1))
+* adding CSI Sanity test for ZFS-LocalPV ([#232](https://github.com/openebs/zfs-localpv/pull/232),[@pawanpraka1](https://github.com/pawanpraka1))
+
+v1.2.0-RC2 / 2020-12-12
+========================
+
+v1.2.0-RC1 / 2020-12-10
+========================
+* removing quay from kustomization.yaml as we are using multiarch docker images ([#248](https://github.com/openebs/zfs-localpv/pull/248),[@pawanpraka1](https://github.com/pawanpraka1))
+* move xfs and mount code out of zfs package ([#245](https://github.com/openebs/zfs-localpv/pull/245),[@pawanpraka1](https://github.com/pawanpraka1))
+* move btrfs code out of zfs package ([#244](https://github.com/openebs/zfs-localpv/pull/244),[@pawanpraka1](https://github.com/pawanpraka1))
+* add github action for chart test and release ([#250](https://github.com/openebs/zfs-localpv/pull/250),[@shubham14bajpai](https://github.com/shubham14bajpai))
+* fixing flaky sanity test case ([#256](https://github.com/openebs/zfs-localpv/pull/256),[@pawanpraka1](https://github.com/pawanpraka1))
+* refactor scheduler for ZFS-LocalPV ([#249](https://github.com/openebs/zfs-localpv/pull/249),[@pawanpraka1](https://github.com/pawanpraka1))
+* moving to ubuntu bionic(18.04 LTS) docker image ([#255](https://github.com/openebs/zfs-localpv/pull/255),[@pawanpraka1](https://github.com/pawanpraka1))
+* fixed the kustomize yaml name to kustomization.yaml ([#243](https://github.com/openebs/zfs-localpv/pull/243),[@pawanpraka1](https://github.com/pawanpraka1))
+* adding CSI Sanity test for ZFS-LocalPV ([#232](https://github.com/openebs/zfs-localpv/pull/232),[@pawanpraka1](https://github.com/pawanpraka1))
+
+
 v1.1.0 / 2020-11-14
 ========================
 * changing the zfs-driver images to multi-arch docker hub ([#237](https://github.com/openebs/zfs-localpv/pull/237),[@w3aman](https://github.com/w3aman))
