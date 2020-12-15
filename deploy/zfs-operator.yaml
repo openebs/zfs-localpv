@@ -1542,7 +1542,7 @@ metadata:
   namespace: kube-system
   labels:
     openebs.io/component-name: openebs-zfs-controller
-    openebs.io/version: 1.2.0
+    openebs.io/version: 1.2.1
 spec:
   selector:
     matchLabels:
@@ -1556,7 +1556,7 @@ spec:
         app: openebs-zfs-controller
         role: openebs-zfs
         openebs.io/component-name: openebs-zfs-controller
-        openebs.io/version: 1.2.0
+        openebs.io/version: 1.2.1
     spec:
       affinity:
         podAntiAffinity:
@@ -1620,7 +1620,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: openebs-zfs-plugin
-          image: openebs/zfs-driver:1.2.0
+          image: openebs/zfs-driver:1.2.1
           imagePullPolicy: IfNotPresent
           env:
             - name: OPENEBS_CONTROLLER_DRIVER
@@ -1770,7 +1770,7 @@ metadata:
   namespace: kube-system
   labels:
     openebs.io/component-name: openebs-zfs-node
-    openebs.io/version: 1.2.0
+    openebs.io/version: 1.2.1
 spec:
   selector:
     matchLabels:
@@ -1785,7 +1785,7 @@ spec:
         app: openebs-zfs-node
         role: openebs-zfs
         openebs.io/component-name: openebs-zfs-node
-        openebs.io/version: 1.2.0
+        openebs.io/version: 1.2.1
     spec:
       priorityClassName: system-node-critical
       serviceAccount: openebs-zfs-node-sa
@@ -1822,7 +1822,7 @@ spec:
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
-          image: openebs/zfs-driver:1.2.0
+          image: openebs/zfs-driver:1.2.1
           imagePullPolicy: IfNotPresent
           args:
             - "--nodeid=$(OPENEBS_NODE_ID)"
