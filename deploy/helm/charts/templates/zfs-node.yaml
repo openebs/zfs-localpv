@@ -45,7 +45,7 @@ spec:
             - name: ADDRESS
               value: /plugin/csi.sock
             - name: DRIVER_REG_SOCK_PATH
-              value: /var/lib/kubelet/plugins/zfs-localpv/csi.sock
+              value: {{ .Values.zfsNode.kubeletDir }}plugins/zfs-localpv/csi.sock
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -93,7 +93,7 @@ spec:
               mountPropagation: "HostToContainer"
               readOnly: true
             - name: pods-mount-dir
-              mountPath: {{ .Values.zfsNode.podsMountDir }}
+              mountPath: {{ .Values.zfsNode.kubeletDir }}
               # needed so that any mounts setup inside this container are
               # propagated back to the host machine.
               mountPropagation: "Bidirectional"
@@ -116,15 +116,15 @@ spec:
             type: Directory
         - name: registration-dir
           hostPath:
-            path: /var/lib/kubelet/plugins_registry/
+            path: {{ .Values.zfsNode.kubeletDir }}plugins_registry/
             type: DirectoryOrCreate
         - name: plugin-dir
           hostPath:
-            path: /var/lib/kubelet/plugins/zfs-localpv/
+            path: {{ .Values.zfsNode.kubeletDir }}plugins/zfs-localpv/
             type: DirectoryOrCreate
         - name: pods-mount-dir
           hostPath:
-            path: /var/lib/kubelet/
+            path: {{ .Values.zfsNode.kubeletDir }}
             type: Directory
 {{- if .Values.imagePullSecrets }}
       imagePullSecrets:

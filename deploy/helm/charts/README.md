@@ -25,7 +25,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsNode.driverRegistrar.image.pullPolicy`                  | Image pull policy for csi-node-driver-registrar       | `IfNotPresent`                            |
 | `zfsNode.driverRegistrar.image.tag`                         | Image tag for csi-node-driver-registrar               | `v1.2.0`                                        |
 | `zfsNode.updateStrategy.type`               | Update strategy for zfsnode daemonset             | `RollingUpdate`                           |
-| `zfsNode.podsMountDir`               | Kubelet mount point for zfsnode daemonset            | `"/var/lib/kubelet/"`                           |
+| `zfsNode.kubeletDir`               | Kubelet mount point for zfsnode daemonset            | `"/var/lib/kubelet/"`                           |
 | `zfsNode.annotations`                       | Annotations for zfsnode daemonset metadata        | `""`                                      |
 | `zfsNode.podAnnotations`                    | Annotations for zfsnode daemonset's pods metadata | `""`                                      |
 | `zfsNode.resources`                         | Resource and request and limit for zfsnode daemonset containers | `""`                                      |
