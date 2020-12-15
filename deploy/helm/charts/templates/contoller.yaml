@@ -11,7 +11,7 @@ spec:
   selector:
     matchLabels:
       {{- include "zfslocalpv.controller.matchLabels" . | nindent 6 }}
-  serviceName: "openebs-zfs"
+  serviceName: {{ .Values.serviceAccount.controller.name }}
   replicas: {{ .Values.controller.replicas }}
   template:
     metadata:

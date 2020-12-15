@@ -1,3 +1,4 @@
+{{- if .Values.serviceAccount.controller.create -}}
 kind: ServiceAccount
 apiVersion: v1
 metadata:
@@ -53,7 +54,6 @@ roleRef:
   name: openebs-zfs-provisioner-role
   apiGroup: rbac.authorization.k8s.io
 ---
-
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -106,6 +106,8 @@ roleRef:
   name: openebs-zfs-snapshotter-role
   apiGroup: rbac.authorization.k8s.io
 ---
+{{- end }}
+{{- if .Values.serviceAccount.zfsNode.create -}}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -140,3 +142,4 @@ roleRef:
   name: openebs-zfs-driver-registrar-role
   apiGroup: rbac.authorization.k8s.io
 ---
+{{- end }}
