@@ -77,7 +77,9 @@ spec:
             - name: OPENEBS_NODE_DRIVER
               value: agent
             - name: OPENEBS_NAMESPACE
-              value: openebs
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           volumeMounts:
             - name: plugin-dir
               mountPath: /plugin
