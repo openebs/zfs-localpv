@@ -2,11 +2,13 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 release:
-  version: "1.1.0"
+  version: "1.2.1"
 
 imagePullSecrets:
 # - name: "image-pull-secret"
 
+# zfsNode contains the configurables for
+# the zfs node daemonset
 zfsNode:
   componentName: openebs-zfs-node
   driverRegistrar:
@@ -41,8 +43,12 @@ zfsNode:
   securityContext: {}
   labels: {}
 
-controller:
+# zfsController contains the configurables for
+# the zfs controller statefulset
+zfsController:
   componentName: openebs-zfs-controller
+  replicas: 1
+  serviceName: openebs-zfs
   resizer:
     name: "csi-resizer"
     image:
@@ -62,7 +68,7 @@ controller:
       repository: k8scsi/csi-snapshotter
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v2.0.1
+      tag: v3.0.2
   snapshotController:
     name: "snapshot-controller"
     image:
@@ -72,7 +78,7 @@ controller:
       repository: k8scsi/snapshot-controller
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v2.0.1
+      tag: v3.0.2
   provisioner:
     name: "csi-provisioner"
     image:
@@ -101,6 +107,8 @@ controller:
   tolerations: []
   securityContext: {}
 
+# zfsPlugin is the common csi container used by the
+# controller statefulset and node daemonset
 zfsPlugin:
   name: "openebs-zfs-plugin"
   image:
@@ -118,7 +126,7 @@ crd:
   enableInstall: true
 
 serviceAccount:
-  controller:
+  zfsController:
     # Specifies whether a service account should be created
     create: true
     # The name of the service account to use.

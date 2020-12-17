@@ -2,25 +2,25 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ template "zfslocalpv.fullname" . }}-controller
-  {{- with .Values.controller.annotations }}
+  {{- with .Values.zfsController.annotations }}
   annotations: {{ toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    {{- include "zfslocalpv.controller.labels" . | nindent 4 }}
+    {{- include "zfslocalpv.zfsController.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      {{- include "zfslocalpv.controller.matchLabels" . | nindent 6 }}
-  serviceName: {{ .Values.serviceAccount.controller.name }}
-  replicas: {{ .Values.controller.replicas }}
+      {{- include "zfslocalpv.zfsController.matchLabels" . | nindent 6 }}
+  serviceName: "{{ .Values.zfsController.serviceName }}"
+  replicas: {{ .Values.zfsController.replicas }}
   template:
     metadata:
-      {{- with .Values.controller.podAnnotations }}
+      {{- with .Values.zfsController.podAnnotations }}
       annotations: {{ toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "zfslocalpv.controller.labels" . | nindent 8 }}
-        {{- with .Values.controller.podLabels}}
+        {{- include "zfslocalpv.zfsController.labels" . | nindent 8 }}
+        {{- with .Values.zfsController.podLabels}}
         {{ toYaml . | nindent 8 }}
         {{- end}}
     spec:
@@ -35,10 +35,10 @@ spec:
                 - openebs-zfs-controller
             topologyKey: "kubernetes.io/hostname"
       priorityClassName: system-cluster-critical
-      serviceAccount: {{ .Values.serviceAccount.controller.name }}
+      serviceAccount: {{ .Values.serviceAccount.zfsController.name }}
       containers:
-        - name: {{ .Values.controller.resizer.name }}
-          image: "{{ .Values.controller.resizer.image.registry }}{{ .Values.controller.resizer.image.repository }}:{{ .Values.controller.resizer.image.tag }}"
+        - name: {{ .Values.zfsController.resizer.name }}
+          image: "{{ .Values.zfsController.resizer.image.registry }}{{ .Values.zfsController.resizer.image.repository }}:{{ .Values.zfsController.resizer.image.tag }}"
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
@@ -46,13 +46,13 @@ spec:
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
-          imagePullPolicy: {{ .Values.controller.resizer.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.zfsController.resizer.image.pullPolicy }}
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
-        - name: {{ .Values.controller.snapshotter.name }}
-          image: "{{ .Values.controller.snapshotter.image.registry }}{{ .Values.controller.snapshotter.image.repository }}:{{ .Values.controller.snapshotter.image.tag }}"
-          imagePullPolicy: {{ .Values.controller.snapshotter.image.pullPolicy }}
+        - name: {{ .Values.zfsController.snapshotter.name }}
+          image: "{{ .Values.zfsController.snapshotter.image.registry }}{{ .Values.zfsController.snapshotter.image.repository }}:{{ .Values.zfsController.snapshotter.image.tag }}"
+          imagePullPolicy: {{ .Values.zfsController.snapshotter.image.pullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
             - "--leader-election"
@@ -62,15 +62,15 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
-        - name: {{ .Values.controller.snapshotController.name }}
-          image: "{{ .Values.controller.snapshotController.image.registry }}{{ .Values.controller.snapshotController.image.repository }}:{{ .Values.controller.snapshotController.image.tag }}"
+        - name: {{ .Values.zfsController.snapshotController.name }}
+          image: "{{ .Values.zfsController.snapshotController.image.registry }}{{ .Values.zfsController.snapshotController.image.repository }}:{{ .Values.zfsController.snapshotController.image.tag }}"
           args:
             - "--v=5"
             - "--leader-election=true"
-          imagePullPolicy: {{ .Values.controller.snapshotController.image.pullPolicy }}
-        - name: {{ .Values.controller.provisioner.name }}
-          image: "{{ .Values.controller.provisioner.image.registry }}{{ .Values.controller.provisioner.image.repository }}:{{ .Values.controller.provisioner.image.tag }}"
-          imagePullPolicy: {{ .Values.controller.provisioner.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.zfsController.snapshotController.image.pullPolicy }}
+        - name: {{ .Values.zfsController.provisioner.name }}
+          image: "{{ .Values.zfsController.provisioner.image.registry }}{{ .Values.zfsController.provisioner.image.repository }}:{{ .Values.zfsController.provisioner.image.tag }}"
+          imagePullPolicy: {{ .Values.zfsController.provisioner.image.pullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
             - "--v=5"
@@ -114,15 +114,15 @@ spec:
       imagePullSecrets:
 {{ toYaml .Values.imagePullSecrets | indent 2 }}
 {{- end }}
-{{- if .Values.controller.nodeSelector }}
+{{- if .Values.zfsController.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.controller.nodeSelector | indent 8 }}
+{{ toYaml .Values.zfsController.nodeSelector | indent 8 }}
 {{- end }}
-{{- if .Values.controller.securityContext }}
+{{- if .Values.zfsController.securityContext }}
       securityContext:
-{{ toYaml .Values.controller.securityContext | indent 8 }}
+{{ toYaml .Values.zfsController.securityContext | indent 8 }}
 {{- end }}
-{{- if .Values.controller.tolerations }}
+{{- if .Values.zfsController.tolerations }}
       tolerations:
-{{ toYaml .Values.controller.tolerations | indent 8 }}
+{{ toYaml .Values.zfsController.tolerations | indent 8 }}
 {{- end }}

@@ -35,11 +35,11 @@ Create chart name and version as used by the chart label.
 {{/*
 Create the name of the service account for controller
 */}}
-{{- define "zfslocalpv.controller.serviceAccountName" -}}
-{{- if .Values.serviceAccount.controller.create }}
-{{- default (include "zfslocalpv.fullname" .) .Values.serviceAccount.controller.name }}
+{{- define "zfslocalpv.zfsController.serviceAccountName" -}}
+{{- if .Values.serviceAccount.zfsController.create }}
+{{- default (include "zfslocalpv.fullname" .) .Values.serviceAccount.zfsController.name }}
 {{- else }}
-{{- default "default" .Values.serviceAccount.controller.name }}
+{{- default "default" .Values.serviceAccount.zfsController.name }}
 {{- end -}}
 {{- end -}}
 
@@ -67,27 +67,27 @@ role: {{ .Values.role | quote }}
 {{/*
 Create match labels for openebs zfs-localpv controller
 */}}
-{{- define "zfslocalpv.controller.matchLabels" -}}
-app: {{ .Values.controller.componentName | quote }}
+{{- define "zfslocalpv.zfsController.matchLabels" -}}
+app: {{ .Values.zfsController.componentName | quote }}
 release: {{ .Release.Name }}
-component: {{ .Values.controller.componentName | quote }}
+component: {{ .Values.zfsController.componentName | quote }}
 {{- end -}}
 
 {{/*
 Create component labels for zfslocalpv controller
 */}}
-{{- define "zfslocalpv.controller.componentLabels" -}}
-openebs.io/component-name: {{ .Values.controller.componentName | quote }}
+{{- define "zfslocalpv.zfsController.componentLabels" -}}
+openebs.io/component-name: {{ .Values.zfsController.componentName | quote }}
 {{- end -}}
 
 
 {{/*
 Create labels for openebs zfs-localpv controller
 */}}
-{{- define "zfslocalpv.controller.labels" -}}
+{{- define "zfslocalpv.zfsController.labels" -}}
 {{ include "zfslocalpv.common.metaLabels" . }}
-{{ include "zfslocalpv.controller.matchLabels" . }}
-{{ include "zfslocalpv.controller.componentLabels" . }}
+{{ include "zfslocalpv.zfsController.matchLabels" . }}
+{{ include "zfslocalpv.zfsController.componentLabels" . }}
 {{- end -}}
 
 {{/*

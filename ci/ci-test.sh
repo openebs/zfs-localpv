@@ -24,7 +24,8 @@ TEST_DIR="tests"
 
 # Prepare env for runnging BDD tests
 # Minikube is already running
-kubectl apply -f $ZFS_OPERATOR
+kubectl create ns openebs
+helm install openebs  --namespace openebs deploy/helm/charts/ --set zfsPlugin.image.tag=ci
 kubectl apply -f $SNAP_CLASS
 
 dumpAgentLogs() {

@@ -1,8 +1,8 @@
-{{- if .Values.serviceAccount.controller.create -}}
+{{- if .Values.serviceAccount.zfsController.create -}}
 kind: ServiceAccount
 apiVersion: v1
 metadata:
-  name: {{ .Values.serviceAccount.controller.name }}
+  name: {{ .Values.serviceAccount.zfsController.name }}
   namespace: {{ .Release.Namespace }}
 ---
 kind: ClusterRole
@@ -47,7 +47,7 @@ metadata:
   name: openebs-zfs-provisioner-binding
 subjects:
   - kind: ServiceAccount
-    name: {{ .Values.serviceAccount.controller.name }}
+    name: {{ .Values.serviceAccount.zfsController.name }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
@@ -99,7 +99,7 @@ metadata:
   name: openebs-zfs-snapshotter-binding
 subjects:
   - kind: ServiceAccount
-    name: {{ .Values.serviceAccount.controller.name }}
+    name: {{ .Values.serviceAccount.zfsController.name }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
