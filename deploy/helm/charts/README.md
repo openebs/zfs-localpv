@@ -34,12 +34,12 @@ Please visit the [link](https://openebs.github.io/zfs-localpv/) for install inst
 
 ```console
 # Helm
-$ helm install [RELEASE_NAME] openebs-zfslocalpv/zfslocalpv-provisioner
+$ helm install [RELEASE_NAME] openebs-zfslocalpv/zfs-localpv
 ```
 
 **Note:** If moving from the operator to helm
 - Make sure the namespace provided in the helm install command is same as `OPENEBS_NAMESPACE` (by default it is `openebs`) env in the controller statefulset.
-- If the above namespace is not `kube-system`, clean up the stale statefulset and daemonset from `kube-system` namespace using the below commands
+- Before installing, clean up the stale statefulset and daemonset from `kube-system` namespace using the below commands
 ```sh
 kubectl delete sts openebs-zfs-controller -n kube-system
 kubectl delete ds openebs-zfs-node -n kube-system
