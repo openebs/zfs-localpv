@@ -17,7 +17,7 @@ limitations under the License.
 package sc
 
 import (
-	"github.com/openebs/zfs-localpv/pkg/common/errors"
+	"github.com/openebs/lib-csi/pkg/common/errors"
 	storagev1 "k8s.io/api/storage/v1"
 )
 

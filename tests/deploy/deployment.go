@@ -14,7 +14,7 @@ limitations under the License.
 package deploy
 
 import (
-	"github.com/openebs/zfs-localpv/pkg/common/errors"
+	"github.com/openebs/lib-csi/pkg/common/errors"
 	templatespec "github.com/openebs/zfs-localpv/tests/pts"
 	"github.com/openebs/zfs-localpv/tests/stringer"
 	appsv1 "k8s.io/api/apps/v1"

@@ -17,7 +17,7 @@ limitations under the License.
 package pvc
 
 import (
-	"github.com/openebs/zfs-localpv/pkg/common/errors"
+	"github.com/openebs/lib-csi/pkg/common/errors"
 	corev1 "k8s.io/api/core/v1"
 )
 

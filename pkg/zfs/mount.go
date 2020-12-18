@@ -20,8 +20,8 @@ import (
 	"os"
 	"os/exec"
 
+	mnt "github.com/openebs/lib-csi/pkg/mount"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	mnt "github.com/openebs/zfs-localpv/pkg/mount"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/klog"

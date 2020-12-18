@@ -17,8 +17,8 @@ limitations under the License.
 package usage
 
 import (
-	k8sapi "github.com/openebs/zfs-localpv/pkg/client/k8s/v1alpha1"
-	env "github.com/openebs/zfs-localpv/pkg/common/env"
+	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
+	env "github.com/openebs/lib-csi/pkg/common/env"
 	openebsversion "github.com/openebs/zfs-localpv/pkg/version"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"

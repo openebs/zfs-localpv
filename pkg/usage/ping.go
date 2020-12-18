@@ -18,8 +18,9 @@ package usage
 
 import (
 	"fmt"
-	"github.com/openebs/zfs-localpv/pkg/common/env"
 	"time"
+
+	"github.com/openebs/lib-csi/pkg/common/env"
 )
 
 // OpenEBSPingPeriod  ping interval of volume io analytics

@@ -17,7 +17,7 @@ limitations under the License.
 // TODO
 // Move this file to pkg/k8sresource/v1alpha1
 
-package v1alpha1
+package k8s
 
 import (
 	"fmt"
@@ -237,7 +237,7 @@ func NewResourceCreateOrUpdater(
 // String implements Stringer interface
 func (r *ResourceCreateOrUpdater) String() string {
 	if r.ResourceStruct == nil {
-		return fmt.Sprint("ResourceCreateOrUpdater")
+		return "ResourceCreateOrUpdater"
 	}
 	return fmt.Sprintf("ResourceCreateOrUpdater %s", r.ResourceStruct)
 }

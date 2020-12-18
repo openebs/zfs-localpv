@@ -22,12 +22,13 @@ import (
 
 	"fmt"
 
+	"strings"
+
+	"github.com/openebs/lib-csi/pkg/btrfs"
+	"github.com/openebs/lib-csi/pkg/xfs"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	"github.com/openebs/zfs-localpv/pkg/btrfs"
-	"github.com/openebs/zfs-localpv/pkg/xfs"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
-	"strings"
 )
 
 // zfs related constants

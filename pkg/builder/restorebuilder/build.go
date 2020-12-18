@@ -17,8 +17,8 @@ limitations under the License.
 package restorebuilder
 
 import (
+	"github.com/openebs/lib-csi/pkg/common/errors"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	"github.com/openebs/zfs-localpv/pkg/common/errors"
 )
 
 // Builder is the builder object for ZFSRestore
