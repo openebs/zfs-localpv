@@ -20,7 +20,7 @@ import (
 	"math"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s/v1alpha1"
+	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 )
@@ -44,7 +44,7 @@ func getNodeList(topo *csi.TopologyRequirement) ([]string, error) {
 					break
 				}
 			}
-			if nodeFiltered == false {
+			if !nodeFiltered {
 				nodelist = append(nodelist, node.Name)
 				break
 			}

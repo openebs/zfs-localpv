@@ -15,7 +15,7 @@ require (
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/onsi/ginkgo v1.10.3
 	github.com/onsi/gomega v1.7.1
-	github.com/openebs/lib-csi v0.0.0
+	github.com/openebs/lib-csi v0.0.0-20201218144414-a64be5d4731e
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.5.1
@@ -34,7 +34,6 @@ require (
 )
 
 replace (
-	github.com/openebs/lib-csi => github.com/shubham14bajpai/lib-csi v0.0.0-20201218111054-ecb5bfada741
 	k8s.io/api => k8s.io/api v0.15.12
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.15.12
 	k8s.io/apimachinery => k8s.io/apimachinery v0.15.12

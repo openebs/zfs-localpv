@@ -17,7 +17,7 @@ limitations under the License.
 package usage
 
 import (
-	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s/v1alpha1"
+	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
 )
 
 // Usage struct represents all information about a usage metric sent to

@@ -106,10 +106,10 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/openebs/lib-csi v0.0.0 => github.com/shubham14bajpai/lib-csi v0.0.0-20201218111054-ecb5bfada741
+# github.com/openebs/lib-csi v0.0.0-20201218144414-a64be5d4731e
 ## explicit
 github.com/openebs/lib-csi/pkg/btrfs
-github.com/openebs/lib-csi/pkg/client/k8s/v1alpha1
+github.com/openebs/lib-csi/pkg/client/k8s
 github.com/openebs/lib-csi/pkg/common/env
 github.com/openebs/lib-csi/pkg/common/errors
 github.com/openebs/lib-csi/pkg/common/helpers
@@ -586,7 +586,6 @@ sigs.k8s.io/controller-runtime/pkg/manager/signals
 sigs.k8s.io/controller-runtime/pkg/runtime/signals
 # sigs.k8s.io/yaml v1.1.0
 sigs.k8s.io/yaml
-# github.com/openebs/lib-csi => github.com/shubham14bajpai/lib-csi v0.0.0-20201218111054-ecb5bfada741
 # k8s.io/api => k8s.io/api v0.15.12
 # k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.15.12
 # k8s.io/apimachinery => k8s.io/apimachinery v0.15.12
