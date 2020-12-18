@@ -17,8 +17,8 @@ limitations under the License.
 package sc
 
 import (
-	"github.com/openebs/zfs-localpv/pkg/common/errors"
-	client "github.com/openebs/zfs-localpv/pkg/common/kubernetes/client"
+	"github.com/openebs/lib-csi/pkg/common/errors"
+	client "github.com/openebs/lib-csi/pkg/common/kubernetes/client"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

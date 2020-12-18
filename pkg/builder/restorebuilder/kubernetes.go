@@ -17,8 +17,8 @@ package restorebuilder
 import (
 	"encoding/json"
 
+	client "github.com/openebs/lib-csi/pkg/common/kubernetes/client"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	client "github.com/openebs/zfs-localpv/pkg/common/kubernetes/client"
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

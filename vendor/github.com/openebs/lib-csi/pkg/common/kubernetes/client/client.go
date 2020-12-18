@@ -20,7 +20,7 @@ import (
 	"strings"
 	"sync"
 
-	env "github.com/openebs/zfs-localpv/pkg/common/env"
+	env "github.com/openebs/lib-csi/pkg/common/env"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"

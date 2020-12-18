@@ -8,25 +8,19 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/ghodss/yaml v1.0.0
-	github.com/gogo/protobuf v1.3.0 // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/protobuf v1.3.2
-	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
-	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jpillora/go-ogle-analytics v0.0.0-20161213085824-14b04e0594ef
-	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/onsi/ginkgo v1.10.3
 	github.com/onsi/gomega v1.7.1
+	github.com/openebs/lib-csi v0.0.0
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.5.1
-	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472 // indirect
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
 	golang.org/x/sys v0.0.0-20190902133755-9109b7679e13
-	google.golang.org/appengine v1.6.2 // indirect
 	google.golang.org/grpc v1.23.1
 	k8s.io/api v0.15.12
 	k8s.io/apimachinery v0.15.12
@@ -36,11 +30,11 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a // indirect
 	k8s.io/kubernetes v1.15.12
-	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f // indirect
 	sigs.k8s.io/controller-runtime v0.2.0
 )
 
 replace (
+	github.com/openebs/lib-csi => github.com/shubham14bajpai/lib-csi v0.0.0-20201218111054-ecb5bfada741
 	k8s.io/api => k8s.io/api v0.15.12
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.15.12
 	k8s.io/apimachinery => k8s.io/apimachinery v0.15.12

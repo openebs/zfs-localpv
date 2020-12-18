@@ -29,12 +29,12 @@ import (
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
 
+	errors "github.com/openebs/lib-csi/pkg/common/errors"
+	"github.com/openebs/lib-csi/pkg/common/helpers"
+	schd "github.com/openebs/lib-csi/pkg/scheduler"
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
-	errors "github.com/openebs/zfs-localpv/pkg/common/errors"
-	"github.com/openebs/zfs-localpv/pkg/common/helpers"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
-	schd "github.com/openebs/zfs-localpv/pkg/scheduler"
 	analytics "github.com/openebs/zfs-localpv/pkg/usage"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 )

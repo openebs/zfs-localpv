@@ -15,7 +15,7 @@
 package pts
 
 import (
-	"github.com/openebs/zfs-localpv/pkg/common/errors"
+	"github.com/openebs/lib-csi/pkg/common/errors"
 	"github.com/openebs/zfs-localpv/tests/container"
 	volume "github.com/openebs/zfs-localpv/tests/k8svolume"
 	corev1 "k8s.io/api/core/v1"

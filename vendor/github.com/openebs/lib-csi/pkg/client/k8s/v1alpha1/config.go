@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/openebs/zfs-localpv/pkg/common/env"
+	"github.com/openebs/lib-csi/pkg/common/env"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"

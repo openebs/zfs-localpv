@@ -17,7 +17,7 @@ limitations under the License.
 package xfs
 
 import (
-	"github.com/openebs/zfs-localpv/pkg/mount"
+	"github.com/openebs/lib-csi/pkg/mount"
 	"os"
 	"os/exec"
 	"path/filepath"

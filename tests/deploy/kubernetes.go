@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	client "github.com/openebs/zfs-localpv/pkg/common/kubernetes/client"
+	client "github.com/openebs/lib-csi/pkg/common/kubernetes/client"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

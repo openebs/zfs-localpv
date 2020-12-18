@@ -17,11 +17,11 @@ package pvc
 import (
 	"strings"
 
-	"github.com/openebs/zfs-localpv/pkg/common/errors"
+	"github.com/openebs/lib-csi/pkg/common/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	client "github.com/openebs/zfs-localpv/pkg/common/kubernetes/client"
+	client "github.com/openebs/lib-csi/pkg/common/kubernetes/client"
 	"k8s.io/client-go/kubernetes"
 )
 
