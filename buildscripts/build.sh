@@ -66,13 +66,6 @@ if [ "$UNAME" != "Linux" -a "$UNAME" != "Darwin" ] ; then
     exit 1
 fi
 
-if [ "$UNAME" = "Darwin" ] ; then
-  XC_OS="darwin"
-elif [ "$UNAME" = "Linux" ] ; then
-  XC_OS="linux"
-fi
-
-
 if [ -z "${PNAME}" ];
 then
     echo "Project name not defined"
@@ -90,11 +83,8 @@ echo "==> Removing old directory..."
 rm -rf bin/${PNAME}/*
 mkdir -p bin/${PNAME}/
 
-# If its dev mode, only build for ourself
-if [[ "${DEV}" ]]; then
-    XC_OS=$(go env GOOS)
-    XC_ARCH=$(go env GOARCH)
-fi
+XC_OS=$(go env GOOS)
+XC_ARCH=$(go env GOARCH)
 
 # Build!
 echo "==> Building ${CTLNAME} using $(go version)... "
