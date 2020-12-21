@@ -58,20 +58,13 @@ echo -e "\nbuilding the ZFS Driver version :- $VERSION\n"
 
 VERSION_META="$(cat $PWD/BUILDMETA)"
 
-# Determine the arch/os combos we're building for
-UNAME=$(uname)
-ARCH=$(uname -m)
-if [ "$UNAME" != "Linux" -a "$UNAME" != "Darwin" ] ; then
+XC_OS=$(go env GOOS)
+XC_ARCH=$(go env GOARCH)
+
+if [ "$XC_OS" != "linux" -a "$XC_OS" != "darwin" ] ; then
     echo "Sorry, this OS is not supported yet."
     exit 1
 fi
-
-if [ "$UNAME" = "Darwin" ] ; then
-  XC_OS="darwin"
-elif [ "$UNAME" = "Linux" ] ; then
-  XC_OS="linux"
-fi
-
 
 if [ -z "${PNAME}" ];
 then
@@ -89,12 +82,6 @@ fi
 echo "==> Removing old directory..."
 rm -rf bin/${PNAME}/*
 mkdir -p bin/${PNAME}/
-
-# If its dev mode, only build for ourself
-if [[ "${DEV}" ]]; then
-    XC_OS=$(go env GOOS)
-    XC_ARCH=$(go env GOARCH)
-fi
 
 # Build!
 echo "==> Building ${CTLNAME} using $(go version)... "
