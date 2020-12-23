@@ -254,14 +254,10 @@ func MountDataset(vol *apis.ZFSVolume, mount *MountInfo) error {
 
 // MountFilesystem mounts the disk to the specified path
 func MountFilesystem(vol *apis.ZFSVolume, mount *MountInfo) error {
-	if err := os.MkdirAll(mount.MountPath, 0000); err != nil {
+	// creating the directory with 0755 permission so that it can be accessed by other person.
+	// if the directory already exist(old k8s), the creator should set the proper permission.
+	if err := os.MkdirAll(mount.MountPath, 0755); err != nil {
 		return status.Errorf(codes.Internal, "Could not create dir {%q}, err: %v", mount.MountPath, err)
-	}
-
-	// in case if the dir already exists, above call returns nil
-	// so permission needs to be updated
-	if err := os.Chmod(mount.MountPath, 0000); err != nil {
-		return status.Errorf(codes.Internal, "Could not change mode of dir {%q}, err: %v", mount.MountPath, err)
 	}
 
 	switch vol.Spec.VolumeType {
