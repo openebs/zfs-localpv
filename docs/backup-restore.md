@@ -35,6 +35,12 @@ We can install Velero by using below command
 velero install --provider aws --bucket velero --secret-file /home/pawan/velero/credentials-minio --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000 --use-volume-snapshots=true --use-restic
 ```
 
+If we want to use cloud storage like AWS-S3 buckets for storing backups we can use the following command
+
+```
+velero install --provider aws --bucket <bucket_name> --secret-file <./aws-iam-creds> --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=<bucket_region>,s3ForcePathStyle="true" --use-volume-snapshots=true --use-restic
+```
+
 We have to install the velero 1.5 or later version for ZFS-LocalPV.
 
 ### c. Deploy MinIO
