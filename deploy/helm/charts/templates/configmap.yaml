@@ -3,6 +3,8 @@ apiVersion: v1
 metadata:
   name: openebs-zfspv-bin
   namespace: {{ .Release.Namespace }} # should be the same namespace where it is getting mounted
+  labels:
+    {{- include "zfslocalpv.zfsNode.labels" . | nindent 4 }}
 data:
   zfs: |
     #!/bin/sh
