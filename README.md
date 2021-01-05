@@ -33,7 +33,7 @@ must meet the following prerequisites:
 
 ### Supported System
 
-K8S : 1.14+
+K8S : 1.17+
 
 OS : Ubuntu, CentOS
 
