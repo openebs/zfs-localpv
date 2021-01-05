@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	snapYAML = `apiVersion: snapshot.storage.k8s.io/v1beta1
+	snapYAML = `apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshot
 metadata:
   name: #snapname
