@@ -20,7 +20,7 @@ zfsNode:
       repository: k8scsi/csi-node-driver-registrar
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v1.2.0
+      tag: v2.1.0
   updateStrategy:
     type: RollingUpdate
   annotations: {}
@@ -58,7 +58,7 @@ zfsController:
       repository: k8scsi/csi-resizer
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v0.4.0
+      tag: v1.1.0
   snapshotter:
     name: "csi-snapshotter"
     image:
@@ -68,7 +68,7 @@ zfsController:
       repository: k8scsi/csi-snapshotter
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v3.0.2
+      tag: v4.0.0
   snapshotController:
     name: "snapshot-controller"
     image:
@@ -78,7 +78,7 @@ zfsController:
       repository: k8scsi/snapshot-controller
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v3.0.2
+      tag: v4.0.0
   provisioner:
     name: "csi-provisioner"
     image:
@@ -88,7 +88,7 @@ zfsController:
       repository: k8scsi/csi-provisioner
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v1.6.0
+      tag: v2.1.0
   updateStrategy:
     type: RollingUpdate
   annotations: {}
