@@ -1,0 +1,143 @@
+# Default values for openebs-zfslocalpv.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+release:
+  version: "1.2.1"
+
+imagePullSecrets:
+# - name: "image-pull-secret"
+
+# zfsNode contains the configurables for
+# the zfs node daemonset
+zfsNode:
+  componentName: openebs-zfs-node
+  driverRegistrar:
+    name: "csi-node-driver-registrar"
+    image:
+      # Make sure that registry name end with a '/'.
+      # For example : quay.io/ is a correct value here and quay.io is incorrect
+      registry: quay.io/
+      repository: k8scsi/csi-node-driver-registrar
+      pullPolicy: IfNotPresent
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: v2.1.0
+  updateStrategy:
+    type: RollingUpdate
+  annotations: {}
+  podAnnotations: {}
+  resources: {}
+  # This can be configured to run on various different k8s ditributions like
+  # microk8s where kubelet dir is different
+  kubeletDir: "/var/lib/kubelet/"
+  # limits:
+  #   cpu: 10m
+  #   memory: 32Mi
+  # requests:
+  #   cpu: 10m
+  #   memory: 32Mi
+  ## Labels to be added to openebs-zfs node pods
+  podLabels:
+    name: openebs-zfs-node
+  nodeSelector: {}
+  tolerations: []
+  securityContext: {}
+  labels: {}
+
+# zfsController contains the configurables for
+# the zfs controller statefulset
+zfsController:
+  componentName: openebs-zfs-controller
+  replicas: 1
+  serviceName: openebs-zfs
+  resizer:
+    name: "csi-resizer"
+    image:
+      # Make sure that registry name end with a '/'.
+      # For example : quay.io/ is a correct value here and quay.io is incorrect
+      registry: quay.io/
+      repository: k8scsi/csi-resizer
+      pullPolicy: IfNotPresent
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: v1.1.0
+  snapshotter:
+    name: "csi-snapshotter"
+    image:
+      # Make sure that registry name end with a '/'.
+      # For example : quay.io/ is a correct value here and quay.io is incorrect
+      registry: quay.io/
+      repository: k8scsi/csi-snapshotter
+      pullPolicy: IfNotPresent
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: v4.0.0
+  snapshotController:
+    name: "snapshot-controller"
+    image:
+      # Make sure that registry name end with a '/'.
+      # For example : quay.io/ is a correct value here and quay.io is incorrect
+      registry: quay.io/
+      repository: k8scsi/snapshot-controller
+      pullPolicy: IfNotPresent
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: v4.0.0
+  provisioner:
+    name: "csi-provisioner"
+    image:
+      # Make sure that registry name end with a '/'.
+      # For example : quay.io/ is a correct value here and quay.io is incorrect
+      registry: quay.io/
+      repository: k8scsi/csi-provisioner
+      pullPolicy: IfNotPresent
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: v2.1.0
+  updateStrategy:
+    type: RollingUpdate
+  annotations: {}
+  podAnnotations: {}
+  resources: {}
+  # limits:
+  #   cpu: 10m
+  #   memory: 32Mi
+  # requests:
+  #   cpu: 10m
+  #   memory: 32Mi
+  ## Labels to be added to openebs-zfs controller pods
+  podLabels:
+    name: openebs-zfs-controller
+  nodeSelector: {}
+  tolerations: []
+  securityContext: {}
+
+# zfsPlugin is the common csi container used by the
+# controller statefulset and node daemonset
+zfsPlugin:
+  name: "openebs-zfs-plugin"
+  image:
+    # Make sure that registry name end with a '/'.
+    # For example : quay.io/ is a correct value here and quay.io is incorrect
+    registry:
+    repository: openebs/zfs-driver
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: 1.2.1
+
+role: openebs-zfs
+
+crd:
+  enableInstall: true
+
+serviceAccount:
+  zfsController:
+    # Specifies whether a service account should be created
+    create: true
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: openebs-zfs-controller-sa
+  zfsNode:
+    # Specifies whether a service account should be created
+    create: true
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: openebs-zfs-node-sa
+
+analytics:
+  enabled: true
