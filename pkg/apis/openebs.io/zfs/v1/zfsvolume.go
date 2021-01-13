@@ -186,6 +186,6 @@ type VolStatus struct {
 	// The state "Pending" means that the volume creation request has not
 	// processed yet. The state "Ready" means that the volume has been created
 	// and it is ready for the use.
-	// +kubebuilder:validation:Enum=Pending;Ready
+	// +kubebuilder:validation:Enum=Pending;Ready;Failed
 	State string `json:"state,omitempty"`
 }

@@ -15,8 +15,11 @@
 package zfs
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/bkpbuilder"
@@ -80,18 +83,63 @@ func init() {
 	GoogleAnalyticsEnabled = os.Getenv(GoogleAnalyticsKey)
 }
 
+func checkVolCreation(ctx context.Context, volname string) (bool, error) {
+	timeout := time.After(10 * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			return true, fmt.Errorf("zfs: context deadline reached")
+		case <-timeout:
+			return true, fmt.Errorf("zfs: vol creation timeout reached")
+		default:
+			vol, err := GetZFSVolume(volname)
+			if err != nil {
+				return false, fmt.Errorf("zfs: wait failed, not able to get the volume %s %s", volname, err.Error())
+			}
+
+			switch vol.Status.State {
+			case ZFSStatusReady:
+				return false, nil
+			case ZFSStatusFailed:
+				return false, fmt.Errorf("zfs: volume creation failed")
+			}
+
+			klog.Infof("zfs: waiting for volume %s/%s to be created on node %s",
+				vol.Spec.PoolName, volname, vol.Spec.OwnerNodeID)
+
+			time.Sleep(time.Second)
+		}
+	}
+}
+
 // ProvisionVolume creates a ZFSVolume(zv) CR,
 // watcher for zvc is present in CSI agent
 func ProvisionVolume(
+	ctx context.Context,
 	vol *apis.ZFSVolume,
-) error {
+) (bool, error) {
+	timeout := false
+	zv, err := GetZFSVolume(vol.Name)
 
-	_, err := volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Create(vol)
 	if err == nil {
-		klog.Infof("provisioned volume %s", vol.Name)
+		// update the spec and status
+		zv.Spec = vol.Spec
+		zv.Status = vol.Status
+		_, err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(zv)
+	} else {
+		_, err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Create(vol)
 	}
 
-	return err
+	if err == nil {
+		timeout, err = checkVolCreation(ctx, vol.Name)
+	}
+
+	if err != nil {
+		klog.Infof("zfs: volume %s/%s provisioning failed on node %s err: %s",
+			vol.Spec.PoolName, vol.Name, vol.Spec.OwnerNodeID, err.Error())
+	}
+
+	return timeout, err
 }
 
 // ResizeVolume resizes the zfs volume
@@ -138,7 +186,9 @@ func GetVolume(volumeID string) (*apis.ZFSVolume, error) {
 func DeleteVolume(volumeID string) (err error) {
 	err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(volumeID)
 	if err == nil {
-		klog.Infof("deprovisioned volume %s", volumeID)
+		klog.Infof("zfs: deleted the volume %s", volumeID)
+	} else {
+		klog.Infof("zfs: volume %s deletion failed %s", volumeID, err.Error())
 	}
 
 	return
@@ -179,17 +229,22 @@ func GetZFSVolumeState(volID string) (string, string, error) {
 }
 
 // UpdateZvolInfo updates ZFSVolume CR with node id and finalizer
-func UpdateZvolInfo(vol *apis.ZFSVolume) error {
-	finalizers := []string{ZFSFinalizer}
+func UpdateZvolInfo(vol *apis.ZFSVolume, status string) error {
+	finalizers := []string{}
 	labels := map[string]string{ZFSNodeKey: NodeID}
 
 	if vol.Finalizers != nil {
 		return nil
 	}
 
+	switch status {
+	case ZFSStatusReady:
+		finalizers = append(finalizers, ZFSFinalizer)
+	}
+
 	newVol, err := volbuilder.BuildFrom(vol).
 		WithFinalizer(finalizers).
-		WithVolumeStatus(ZFSStatusReady).
+		WithVolumeStatus(status).
 		WithLabels(labels).Build()
 
 	if err != nil {

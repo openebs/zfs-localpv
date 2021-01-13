@@ -95,7 +95,9 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 				err = zfs.CreateVolume(zv)
 			}
 			if err == nil {
-				err = zfs.UpdateZvolInfo(zv)
+				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusReady)
+			} else {
+				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusFailed)
 			}
 		}
 	}
@@ -132,7 +134,8 @@ func (c *ZVController) updateZV(oldObj, newObj interface{}) {
 
 	oldZV, _ := oldObj.(*apis.ZFSVolume)
 	if zfs.PropertyChanged(oldZV, newZV) ||
-		c.isDeletionCandidate(newZV) {
+		c.isDeletionCandidate(newZV) ||
+		newZV.Status.State == zfs.ZFSStatusPending {
 		klog.Infof("Got update event for ZV %s/%s", newZV.Spec.PoolName, newZV.Name)
 		c.enqueueZV(newZV)
 	}
