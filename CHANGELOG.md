@@ -1,3 +1,23 @@
+v1.3.0 / 2021-01-13
+========================
+* adding capacity weighted scheduler ([#266](https://github.com/openebs/zfs-localpv/pull/266),[@pawanpraka1](https://github.com/pawanpraka1))
+* use common lib-csi imports ([#263](https://github.com/openebs/zfs-localpv/pull/263),[@shubham14bajpai](https://github.com/shubham14bajpai))
+* Cross Build enviroment bug fixes ([#264](https://github.com/openebs/zfs-localpv/pull/264),[@praveengt](https://github.com/praveengt))
+* bump k8s csi to latest stable container images ([#271](https://github.com/openebs/zfs-localpv/pull/271),[@shubham14bajpai](https://github.com/shubham14bajpai))
+* creating directory with 0755 permission ([#262](https://github.com/openebs/zfs-localpv/pull/262),[@pawanpraka1](https://github.com/pawanpraka1))
+
+v1.3.0-RC2 / 2021-01-11
+========================
+
+v1.3.0-RC1 / 2021-01-09
+========================
+* adding capacity weighted scheduler ([#266](https://github.com/openebs/zfs-localpv/pull/266),[@pawanpraka1](https://github.com/pawanpraka1))
+* use common lib-csi imports ([#263](https://github.com/openebs/zfs-localpv/pull/263),[@shubham14bajpai](https://github.com/shubham14bajpai))
+* Cross Build enviroment bug fixes ([#264](https://github.com/openebs/zfs-localpv/pull/264),[@praveengt](https://github.com/praveengt))
+* bump k8s csi to latest stable container images ([#271](https://github.com/openebs/zfs-localpv/pull/271),[@shubham14bajpai](https://github.com/shubham14bajpai))
+* creating directory with 0755 permission ([#262](https://github.com/openebs/zfs-localpv/pull/262),[@pawanpraka1](https://github.com/pawanpraka1))
+
+
 v1.2.1 / 2020-12-15
 ========================
 * fixing idempotency check for the mount path ([#260](https://github.com/openebs/zfs-localpv/pull/260),[@pawanpraka1](https://github.com/pawanpraka1))
