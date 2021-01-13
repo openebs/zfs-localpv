@@ -101,23 +101,6 @@ func getRoundedCapacity(size int64) int64 {
 	return ((size + Mi - 1) / Mi) * Mi
 }
 
-func waitForReadyVolume(volname string) error {
-	for true {
-		vol, err := zfs.GetZFSVolume(volname)
-		if err != nil {
-			return status.Errorf(codes.Internal,
-				"zfs: wait failed, not able to get the volume %s %s", volname, err.Error())
-		}
-
-		switch vol.Status.State {
-		case zfs.ZFSStatusReady:
-			return nil
-		}
-		time.Sleep(time.Second)
-	}
-	return nil
-}
-
 func waitForVolDestroy(volname string) error {
 	for true {
 		_, err := zfs.GetZFSVolume(volname)
@@ -129,6 +112,7 @@ func waitForVolDestroy(volname string) error {
 				"zfs: destroy wait failed, not able to get the volume %s %s", volname, err.Error())
 		}
 		time.Sleep(time.Second)
+		klog.Infof("waiting for volume to be destroyed %s", volname)
 	}
 	return nil
 }
@@ -151,7 +135,7 @@ func waitForReadySnapshot(snapname string) error {
 }
 
 // CreateZFSVolume create new zfs volume from csi volume request
-func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
+func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string, error) {
 	volName := strings.ToLower(req.GetName())
 	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 
@@ -191,6 +175,10 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 				return "", status.Errorf(codes.AlreadyExists,
 					"volume %s already present", volName)
 			}
+			if vol.Status.State != zfs.ZFSStatusReady {
+				return "", status.Errorf(codes.Aborted,
+					"volume %s request already pending", volName)
+			}
 			return vol.Spec.OwnerNodeID, nil
 		}
 	}
@@ -200,21 +188,19 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 		return "", status.Errorf(codes.Internal, "get node map failed : %s", err.Error())
 	}
 
-	// run the scheduler get the preferred nodelist
-	var selected string
-	nodelist := schd.Scheduler(req, nmap)
-	if len(nodelist) != 0 {
-		selected = nodelist[0]
-	}
-	if len(selected) == 0 {
+	var prfList []string
+
+	if node, ok := parameters["node"]; ok {
 		// (hack): CSI Sanity test does not pass topology information
-		selected = parameters["node"]
-		if len(selected) == 0 {
-			return "", status.Error(codes.Internal, "scheduler failed, not able to select a node to create the PV")
-		}
+		prfList = append(prfList, node)
+	} else {
+		// run the scheduler
+		prfList = schd.Scheduler(req, nmap)
 	}
 
-	klog.Infof("scheduled the volume %s/%s on node %s", pool, volName, selected)
+	if len(prfList) == 0 {
+		return "", status.Error(codes.Internal, "scheduler failed, node list is empty for creating the PV")
+	}
 
 	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
@@ -227,7 +213,6 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 		WithKeyFormat(kf).
 		WithKeyLocation(kl).
 		WithThinProv(tp).
-		WithOwnerNode(selected).
 		WithVolumeType(vtype).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		WithFsType(fstype).
@@ -238,17 +223,36 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 		return "", status.Error(codes.Internal, err.Error())
 	}
 
-	err = zfs.ProvisionVolume(volObj)
-	if err != nil {
-		return "", status.Errorf(codes.Internal,
-			"not able to provision the volume %s", err.Error())
+	klog.Infof("zfs: trying volume creation %s/%s on node %s", pool, volName, prfList)
+
+	// try volume creation sequentially on all nodes
+	for _, node := range prfList {
+		vol, _ := volbuilder.BuildFrom(volObj).WithOwnerNode(node).WithVolumeStatus(zfs.ZFSStatusPending).Build()
+
+		timeout := false
+
+		timeout, err = zfs.ProvisionVolume(ctx, vol)
+		if err == nil {
+			return node, nil
+		}
+
+		// if timeout reached, return the error and let csi retry the volume creation
+		if timeout {
+			break
+		}
 	}
 
-	return selected, nil
+	if err != nil {
+		// volume provisioning failed, delete the zfs volume resource
+		zfs.DeleteVolume(volName) // ignore error
+	}
+
+	return "", status.Errorf(codes.Internal,
+		"not able to provision the volume, nodes %v, err : %s", prfList, err.Error())
 }
 
 // CreateVolClone creates the clone from a volume
-func CreateVolClone(req *csi.CreateVolumeRequest, srcVol string) (string, error) {
+func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol string) (string, error) {
 	volName := strings.ToLower(req.GetName())
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
@@ -286,17 +290,17 @@ func CreateVolClone(req *csi.CreateVolumeRequest, srcVol string) (string, error)
 	// use the snapshot name same as new volname
 	volObj.Spec.SnapName = vol.Name + "@" + volName
 
-	err = zfs.ProvisionVolume(volObj)
+	_, err = zfs.ProvisionVolume(ctx, volObj)
 	if err != nil {
 		return "", status.Errorf(codes.Internal,
-			"clone: not able to provision the volume %s", err.Error())
+			"clone: not able to provision the volume err : %s", err.Error())
 	}
 
 	return selected, nil
 }
 
 // CreateSnapClone creates the clone from a snapshot
-func CreateSnapClone(req *csi.CreateVolumeRequest, snapshot string) (string, error) {
+func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot string) (string, error) {
 	volName := strings.ToLower(req.GetName())
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
@@ -339,10 +343,10 @@ func CreateSnapClone(req *csi.CreateVolumeRequest, snapshot string) (string, err
 	volObj.Spec = snap.Spec
 	volObj.Spec.SnapName = strings.ToLower(snapshot)
 
-	err = zfs.ProvisionVolume(volObj)
+	_, err = zfs.ProvisionVolume(ctx, volObj)
 	if err != nil {
 		return "", status.Errorf(codes.Internal,
-			"not able to provision the clone volume %s", err.Error())
+			"not able to provision the clone volume err : %s", err.Error())
 	}
 
 	return selected, nil
@@ -372,23 +376,19 @@ func (cs *controller) CreateVolume(
 	if contentSource != nil && contentSource.GetSnapshot() != nil {
 		snapshotID := contentSource.GetSnapshot().GetSnapshotId()
 
-		selected, err = CreateSnapClone(req, snapshotID)
+		selected, err = CreateSnapClone(ctx, req, snapshotID)
 	} else if contentSource != nil && contentSource.GetVolume() != nil {
 		srcVol := contentSource.GetVolume().GetVolumeId()
-		selected, err = CreateVolClone(req, srcVol)
+		selected, err = CreateVolClone(ctx, req, srcVol)
 	} else {
-		selected, err = CreateZFSVolume(req)
+		selected, err = CreateZFSVolume(ctx, req)
 	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	if _, ok := parameters["wait"]; ok {
-		if err := waitForReadyVolume(volName); err != nil {
-			return nil, err
-		}
-	}
+	klog.Infof("created the volume %s/%s on node %s", pool, volName, selected)
 
 	sendEventOrIgnore(pvcName, volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
 
@@ -411,11 +411,7 @@ func (cs *controller) DeleteVolume(
 
 	klog.Infof("received request to delete volume {%s}", req.VolumeId)
 
-	var (
-		err error
-	)
-
-	if err = cs.validateDeleteVolumeReq(req); err != nil {
+	if err := cs.validateDeleteVolumeReq(req); err != nil {
 		return nil, err
 	}
 
@@ -436,6 +432,11 @@ func (cs *controller) DeleteVolume(
 			"failed to get volume for {%s}",
 			volumeID,
 		)
+	}
+
+	// if volume is not ready, create volume will delete it
+	if vol.Status.State != zfs.ZFSStatusReady {
+		return nil, status.Error(codes.Internal, "can not delete, volume creation is in progress")
 	}
 
 	// Delete the corresponding ZV CR
