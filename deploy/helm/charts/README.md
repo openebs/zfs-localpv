@@ -78,7 +78,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsPlugin.image.registry`| Registry for openebs-zfs-plugin image| `""`|
 | `zfsPlugin.image.repository`| Image repository for openebs-zfs-plugin| `openebs/zfs-driver`|
 | `zfsPlugin.image.pullPolicy`| Image pull policy for openebs-zfs-plugin| `IfNotPresent`|
-| `zfsPlugin.image.tag`| Image tag for openebs-zfs-plugin| `1.1.0`|
+| `zfsPlugin.image.tag`| Image tag for openebs-zfs-plugin| `1.3.0`|
 | `zfsNode.driverRegistrar.image.registry`| Registry for csi-node-driver-registrar image| `quay.io/`|
 | `zfsNode.driverRegistrar.image.repository`| Image repository for csi-node-driver-registrar| `k8scsi/csi-node-driver-registrar`|
 | `zfsNode.driverRegistrar.image.pullPolicy`| Image pull policy for csi-node-driver-registrar| `IfNotPresent`|
