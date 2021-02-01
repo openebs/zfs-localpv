@@ -703,7 +703,7 @@ func GetVolumeDevPath(vol *apis.ZFSVolume) (string, error) {
 }
 
 // ResizeZFSVolume resize volume
-func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string) error {
+func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string, resizefs bool) error {
 
 	volume := vol.Spec.PoolName + "/" + vol.Name
 	args := buildVolumeResizeArgs(vol)
@@ -717,7 +717,11 @@ func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string) error {
 		return err
 	}
 
-	err = handleVolResize(vol, mountpath)
+	if resizefs == true {
+		// resize the filesystem so that applications can use the expanded space
+		err = handleVolResize(vol, mountpath)
+	}
+
 	return err
 }
 
