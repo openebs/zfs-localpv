@@ -7,6 +7,11 @@ release:
 imagePullSecrets:
 # - name: "image-pull-secret"
 
+
+rbac:
+  # rbac.pspEnabled: `true` if PodSecurityPolicy resources should be created
+  pspEnabled: false
+
 # zfsNode contains the configurables for
 # the zfs node daemonset
 zfsNode:

@@ -118,6 +118,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.nodeSelector`| Nodeselector for zfs localpv controller statefulset pods| `""`|
 | `zfsController.tolerations` | zfs localpv controller statefulset's pod toleration values | `""`|
 | `zfsController.securityContext` | Seurity context for zfs localpv controller statefulset container | `""`|
+| `rbac.pspEnabled` | Enable PodSecurityPolicy | `false` |
 | `serviceAccount.zfsNode.create` | Create a service account for zfsnode or not| `true`|
 | `serviceAccount.zfsNode.name` | Name for the zfsnode service account| `openebs-zfs-node-sa`|
 | `serviceAccount.zfsController.create` | Create a service account for zfs localpv controller or not| `true`|
