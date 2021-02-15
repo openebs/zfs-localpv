@@ -1,3 +1,19 @@
+v1.4.0 / 2021-02-13
+========================
+
+* update k8s sidecar images to gcr ([#284](https://github.com/openebs/zfs-localpv/pull/284),[@shubham14bajpai](https://github.com/shubham14bajpai))
+* adding resize support for raw block volumes ([#281](https://github.com/openebs/zfs-localpv/pull/281),[@pawanpraka1](https://github.com/pawanpraka1))
+
+v1.4.0-RC2 / 2021-02-11
+========================
+
+
+v1.4.0-RC1 / 2021-02-08
+========================
+* update k8s sidecar images to gcr ([#284](https://github.com/openebs/zfs-localpv/pull/284),[@shubham14bajpai](https://github.com/shubham14bajpai))
+* adding resize support for raw block volumes ([#281](https://github.com/openebs/zfs-localpv/pull/281),[@pawanpraka1](https://github.com/pawanpraka1))
+
+
 v1.3.0 / 2021-01-13
 ========================
 * adding capacity weighted scheduler ([#266](https://github.com/openebs/zfs-localpv/pull/266),[@pawanpraka1](https://github.com/pawanpraka1))
