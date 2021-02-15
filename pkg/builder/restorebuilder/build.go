@@ -99,6 +99,12 @@ func (b *Builder) WithVolume(name string) *Builder {
 	return b
 }
 
+// WithVolSpec copies volume spec to ZFSRestore Object
+func (b *Builder) WithVolSpec(vspec apis.VolumeInfo) *Builder {
+	b.rstr.Object.VolSpec = vspec
+	return b
+}
+
 // WithNode sets the node id for ZFSRestore
 func (b *Builder) WithNode(node string) *Builder {
 	if node == "" {

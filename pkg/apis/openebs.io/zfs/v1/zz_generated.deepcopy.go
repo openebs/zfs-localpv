@@ -154,6 +154,7 @@ func (in *ZFSRestore) DeepCopyInto(out *ZFSRestore) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Spec = in.Spec
+	out.VolSpec = in.VolSpec
 	return
 }
 
