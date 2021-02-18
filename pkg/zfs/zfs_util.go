@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 
 	"fmt"
+	"os"
+	"time"
 
 	"strings"
 
@@ -824,6 +826,24 @@ func DestoryBackup(bkp *apis.ZFSBackup) error {
 	return err
 }
 
+// getDevice waits for the device to be created and returns the devpath
+func getDevice(volume string) (string, error) {
+	device := ZFSDevPath + volume
+	// device should be created within 5 seconds
+	timeout := time.After(5 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			return "", fmt.Errorf("zfs: not able to get the device: %s", device)
+		default:
+			if _, err := os.Stat(device); err == nil {
+				return device, nil
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
 // CreateRestore creates the restore
 func CreateRestore(rstr *apis.ZFSRestore) error {
 	if len(rstr.VolSpec.PoolName) == 0 {
@@ -858,11 +878,17 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 	 * so that we can mount it.
 	 */
 	if rstr.VolSpec.FsType == "xfs" {
-		device := ZFSDevPath + volume
+		device, err := getDevice(volume)
+		if err != nil {
+			return err
+		}
 		return xfs.GenerateUUID(device)
 	}
 	if rstr.VolSpec.FsType == "btrfs" {
-		device := ZFSDevPath + volume
+		device, err := getDevice(volume)
+		if err != nil {
+			return err
+		}
 		return btrfs.GenerateUUID(device)
 	}
 
