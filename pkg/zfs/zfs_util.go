@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 
 	"fmt"
+	"os"
+	"time"
 
 	"strings"
 
@@ -329,11 +331,12 @@ func buildVolumeBackupArgs(bkp *apis.ZFSBackup, vol *apis.ZFSVolume) ([]string, 
 }
 
 // builldVolumeRestoreArgs returns volume recv command for receiving the zfs volume
-func buildVolumeRestoreArgs(rstr *apis.ZFSRestore, vol *apis.ZFSVolume) ([]string, error) {
+func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) ([]string, error) {
 	var ZFSVolArg []string
+	var ZFSRecvParam string
 	restoreSrc := rstr.Spec.RestoreSrc
 
-	volume := vol.Spec.PoolName + "/" + vol.Name
+	volume := rstr.VolSpec.PoolName + "/" + rstr.Spec.VolumeName
 
 	rstrAddr := strings.Split(restoreSrc, ":")
 	if len(rstrAddr) != 2 {
@@ -342,7 +345,36 @@ func buildVolumeRestoreArgs(rstr *apis.ZFSRestore, vol *apis.ZFSVolume) ([]strin
 
 	source := "nc -w 3 " + rstrAddr[0] + " " + rstrAddr[1] + " | "
 
-	cmd := source + ZFSVolCmd + " " + ZFSRecvArg + " -F " + volume
+	if rstr.VolSpec.VolumeType == VolTypeDataset {
+		if len(rstr.VolSpec.Capacity) != 0 {
+			ZFSRecvParam += " -o quota=" + rstr.VolSpec.Capacity
+		}
+		if len(rstr.VolSpec.RecordSize) != 0 {
+			ZFSRecvParam += " -o recordsize=" + rstr.VolSpec.RecordSize
+		}
+		if rstr.VolSpec.ThinProvision == "no" {
+			ZFSRecvParam += " -o reservation=" + rstr.VolSpec.Capacity
+		}
+		ZFSRecvParam += " -o mountpoint=legacy"
+	}
+
+	if len(rstr.VolSpec.Dedup) != 0 {
+		ZFSRecvParam += " -o dedup=" + rstr.VolSpec.Dedup
+	}
+	if len(rstr.VolSpec.Compression) != 0 {
+		ZFSRecvParam += " -o compression=" + rstr.VolSpec.Compression
+	}
+	if len(rstr.VolSpec.Encryption) != 0 {
+		ZFSRecvParam += " -o encryption=" + rstr.VolSpec.Encryption
+	}
+	if len(rstr.VolSpec.KeyLocation) != 0 {
+		ZFSRecvParam += " -o keylocation=" + rstr.VolSpec.KeyLocation
+	}
+	if len(rstr.VolSpec.KeyFormat) != 0 {
+		ZFSRecvParam += " -o keyformat=" + rstr.VolSpec.KeyFormat
+	}
+
+	cmd := source + ZFSVolCmd + " " + ZFSRecvArg + ZFSRecvParam + " -F " + volume
 
 	ZFSVolArg = append(ZFSVolArg, "-c", cmd)
 
@@ -794,17 +826,42 @@ func DestoryBackup(bkp *apis.ZFSBackup) error {
 	return err
 }
 
+// getDevice waits for the device to be created and returns the devpath
+func getDevice(volume string) (string, error) {
+	device := ZFSDevPath + volume
+	// device should be created within 5 seconds
+	timeout := time.After(5 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			return "", fmt.Errorf("zfs: not able to get the device: %s", device)
+		default:
+			if _, err := os.Stat(device); err == nil {
+				return device, nil
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
 // CreateRestore creates the restore
 func CreateRestore(rstr *apis.ZFSRestore) error {
-	vol, err := GetZFSVolume(rstr.Spec.VolumeName)
+	if len(rstr.VolSpec.PoolName) == 0 {
+		// for backward compatibility, older version of
+		// velero will not add spec in the ZFSRestore Object
+		// query it here and fill that information
+		vol, err := GetZFSVolume(rstr.Spec.VolumeName)
+		if err != nil {
+			return err
+		}
+		rstr.VolSpec = vol.Spec
+	}
+	args, err := buildVolumeRestoreArgs(rstr)
 	if err != nil {
 		return err
 	}
-	volume := vol.Spec.PoolName + "/" + vol.Name
-	args, err := buildVolumeRestoreArgs(rstr, vol)
-	if err != nil {
-		return err
-	}
+
+	volume := rstr.VolSpec.PoolName + "/" + rstr.Spec.VolumeName
 
 	cmd := exec.Command("bash", args...)
 	out, err := cmd.CombinedOutput()
@@ -820,12 +877,18 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 	 * need to generate a new uuid for zfs and btrfs volumes
 	 * so that we can mount it.
 	 */
-	if vol.Spec.FsType == "xfs" {
-		device := ZFSDevPath + volume
+	if rstr.VolSpec.FsType == "xfs" {
+		device, err := getDevice(volume)
+		if err != nil {
+			return err
+		}
 		return xfs.GenerateUUID(device)
 	}
-	if vol.Spec.FsType == "btrfs" {
-		device := ZFSDevPath + volume
+	if rstr.VolSpec.FsType == "btrfs" {
+		device, err := getDevice(volume)
+		if err != nil {
+			return err
+		}
 		return btrfs.GenerateUUID(device)
 	}
 

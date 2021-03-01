@@ -29,6 +29,7 @@ type ZFSRestore struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"` // set name to restore name + volume name + something like csp tag
 	Spec              ZFSRestoreSpec              `json:"spec"`
+	VolSpec           VolumeInfo                  `json:"volSpec,omitempty"`
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=Init;Done;Failed;Pending;InProgress;Invalid
 	Status ZFSRestoreStatus `json:"status"`
