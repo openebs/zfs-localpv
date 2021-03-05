@@ -78,7 +78,6 @@ jobs:
         run: |
           echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
           echo "OPENEBS_NAMESPACE=openebs" >> $GITHUB_ENV
-          echo "NodeID=$HOSTNAME" >> $GITHUB_ENV
 
       - name: Build images locally
         run: make zfs-driver-image || exit 1;
