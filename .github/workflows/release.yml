@@ -19,8 +19,55 @@ on:
       - 'v*'
 
 jobs:
+  bdd-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        kubernetes: [v1.20.1]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Installation
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y zfsutils-linux
+          truncate -s 100G /tmp/disk.img
+          sudo zpool create zfspv-pool `sudo losetup -f /tmp/disk.img --show`
+
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14.7
+
+      - name: Setup Minikube-Kubernetes
+        uses: manusa/actions-setup-minikube@v2.3.0
+        with:
+          minikube version: v1.16.0
+          kubernetes version: ${{ matrix.kubernetes }}
+          github token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setting environment variables
+        run: |
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+          echo "OPENEBS_NAMESPACE=openebs" >> $GITHUB_ENV
+          echo "NodeID=$HOSTNAME" >> $GITHUB_ENV
+
+      - name: Build images locally
+        run: make zfs-driver-image || exit 1;
+
+      - name: bootstrap
+        run: make bootstrap
+
+      - name: Running tests
+        run: |
+          make ci
+          make sanity 
+
   csi-driver:
     runs-on: ubuntu-latest
+    needs: ['bdd-test']
     steps:
       - name: Checkout
         uses: actions/checkout@v1
