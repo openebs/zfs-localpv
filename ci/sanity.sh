@@ -54,7 +54,7 @@ EOT
 
 	sudo rm -rf /tmp/csi.sock
 	CSI_TEST_REPO="https://github.com/$test_repo/csi-test.git"
-	CSI_REPO_PATH="$GOPATH/src/github.com/$test_repo/csi-test"
+	CSI_REPO_PATH="$(go env GOPATH)/src/github.com/$test_repo/csi-test"
 	if [ ! -d "$CSI_REPO_PATH" ] ; then
 		git clone -b "v4.0.1" "$CSI_TEST_REPO" "$CSI_REPO_PATH"
 	else
