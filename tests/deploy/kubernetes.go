@@ -17,6 +17,7 @@ limitations under the License.
 package deploy
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -112,7 +113,7 @@ func defaultGet(
 	opts *metav1.GetOptions,
 ) (*appsv1.Deployment, error) {
 
-	return cli.AppsV1().Deployments(namespace).Get(name, *opts)
+	return cli.AppsV1().Deployments(namespace).Get(context.TODO(), name, *opts)
 }
 
 // defaultList is the default implementation to list
@@ -123,7 +124,7 @@ func defaultList(
 	opts *metav1.ListOptions,
 ) (*appsv1.DeploymentList, error) {
 
-	return cli.AppsV1().Deployments(namespace).List(*opts)
+	return cli.AppsV1().Deployments(namespace).List(context.TODO(), *opts)
 }
 
 // defaultCreate is the default implementation to create
@@ -134,7 +135,7 @@ func defaultCreate(
 	deploy *appsv1.Deployment,
 ) (*appsv1.Deployment, error) {
 
-	return cli.AppsV1().Deployments(namespace).Create(deploy)
+	return cli.AppsV1().Deployments(namespace).Create(context.TODO(), deploy, metav1.CreateOptions{})
 }
 
 // defaultDel is the default implementation to delete a
@@ -146,7 +147,7 @@ func defaultDel(
 	opts *metav1.DeleteOptions,
 ) error {
 
-	return cli.AppsV1().Deployments(namespace).Delete(name, opts)
+	return cli.AppsV1().Deployments(namespace).Delete(context.TODO(), name, *opts)
 }
 
 func defaultPatch(
@@ -156,7 +157,7 @@ func defaultPatch(
 	data []byte,
 	subresources ...string,
 ) (*appsv1.Deployment, error) {
-	return cli.AppsV1().Deployments(namespace).Patch(name, pt, data, subresources...)
+	return cli.AppsV1().Deployments(namespace).Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
 }
 
 // defaultRolloutStatus is the default implementation to

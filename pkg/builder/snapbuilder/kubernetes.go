@@ -15,6 +15,7 @@
 package snapbuilder
 
 import (
+	"context"
 	"encoding/json"
 
 	client "github.com/openebs/lib-csi/pkg/common/kubernetes/client"
@@ -142,7 +143,7 @@ func defaultGet(
 ) (*apis.ZFSSnapshot, error) {
 	return cli.ZfsV1().
 		ZFSSnapshots(namespace).
-		Get(name, opts)
+		Get(context.TODO(), name, opts)
 }
 
 // defaultList is the default implementation to list
@@ -154,7 +155,7 @@ func defaultList(
 ) (*apis.ZFSSnapshotList, error) {
 	return cli.ZfsV1().
 		ZFSSnapshots(namespace).
-		List(opts)
+		List(context.TODO(), opts)
 }
 
 // defaultCreate is the default implementation to delete
@@ -168,7 +169,7 @@ func defaultDel(
 	opts.PropagationPolicy = &deletePropagation
 	err := cli.ZfsV1().
 		ZFSSnapshots(namespace).
-		Delete(name, opts)
+		Delete(context.TODO(), name, *opts)
 	return err
 }
 
@@ -181,7 +182,7 @@ func defaultCreate(
 ) (*apis.ZFSSnapshot, error) {
 	return cli.ZfsV1().
 		ZFSSnapshots(namespace).
-		Create(vol)
+		Create(context.TODO(), vol, metav1.CreateOptions{})
 }
 
 // defaultUpdate is the default implementation to update
@@ -193,7 +194,7 @@ func defaultUpdate(
 ) (*apis.ZFSSnapshot, error) {
 	return cli.ZfsV1().
 		ZFSSnapshots(namespace).
-		Update(vol)
+		Update(context.TODO(), vol, metav1.UpdateOptions{})
 }
 
 // withDefaults sets the default options

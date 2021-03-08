@@ -26,8 +26,10 @@ import (
 )
 
 // ZFSRestoreLister helps list ZFSRestores.
+// All objects returned here must be treated as read-only.
 type ZFSRestoreLister interface {
 	// List lists all ZFSRestores in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ZFSRestore, err error)
 	// ZFSRestores returns an object that can list and get ZFSRestores.
 	ZFSRestores(namespace string) ZFSRestoreNamespaceLister
@@ -58,10 +60,13 @@ func (s *zFSRestoreLister) ZFSRestores(namespace string) ZFSRestoreNamespaceList
 }
 
 // ZFSRestoreNamespaceLister helps list and get ZFSRestores.
+// All objects returned here must be treated as read-only.
 type ZFSRestoreNamespaceLister interface {
 	// List lists all ZFSRestores in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ZFSRestore, err error)
 	// Get retrieves the ZFSRestore from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.ZFSRestore, error)
 	ZFSRestoreNamespaceListerExpansion
 }

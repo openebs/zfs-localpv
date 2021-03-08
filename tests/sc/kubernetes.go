@@ -17,6 +17,8 @@ limitations under the License.
 package sc
 
 import (
+	"context"
+
 	"github.com/openebs/lib-csi/pkg/common/errors"
 	client "github.com/openebs/lib-csi/pkg/common/kubernetes/client"
 	storagev1 "k8s.io/api/storage/v1"
@@ -84,22 +86,22 @@ func (k *Kubeclient) withDefaults() {
 	}
 	if k.list == nil {
 		k.list = func(cli *kubernetes.Clientset, opts metav1.ListOptions) (*storagev1.StorageClassList, error) {
-			return cli.StorageV1().StorageClasses().List(opts)
+			return cli.StorageV1().StorageClasses().List(context.TODO(), opts)
 		}
 	}
 	if k.get == nil {
 		k.get = func(cli *kubernetes.Clientset, name string, opts metav1.GetOptions) (*storagev1.StorageClass, error) {
-			return cli.StorageV1().StorageClasses().Get(name, opts)
+			return cli.StorageV1().StorageClasses().Get(context.TODO(), name, opts)
 		}
 	}
 	if k.create == nil {
 		k.create = func(cli *kubernetes.Clientset, sc *storagev1.StorageClass) (*storagev1.StorageClass, error) {
-			return cli.StorageV1().StorageClasses().Create(sc)
+			return cli.StorageV1().StorageClasses().Create(context.TODO(), sc, metav1.CreateOptions{})
 		}
 	}
 	if k.del == nil {
 		k.del = func(cli *kubernetes.Clientset, name string, opts *metav1.DeleteOptions) error {
-			return cli.StorageV1().StorageClasses().Delete(name, opts)
+			return cli.StorageV1().StorageClasses().Delete(context.TODO(), name, *opts)
 		}
 	}
 }

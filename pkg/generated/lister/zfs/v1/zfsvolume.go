@@ -26,8 +26,10 @@ import (
 )
 
 // ZFSVolumeLister helps list ZFSVolumes.
+// All objects returned here must be treated as read-only.
 type ZFSVolumeLister interface {
 	// List lists all ZFSVolumes in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ZFSVolume, err error)
 	// ZFSVolumes returns an object that can list and get ZFSVolumes.
 	ZFSVolumes(namespace string) ZFSVolumeNamespaceLister
@@ -58,10 +60,13 @@ func (s *zFSVolumeLister) ZFSVolumes(namespace string) ZFSVolumeNamespaceLister 
 }
 
 // ZFSVolumeNamespaceLister helps list and get ZFSVolumes.
+// All objects returned here must be treated as read-only.
 type ZFSVolumeNamespaceLister interface {
 	// List lists all ZFSVolumes in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ZFSVolume, err error)
 	// Get retrieves the ZFSVolume from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.ZFSVolume, error)
 	ZFSVolumeNamespaceListerExpansion
 }

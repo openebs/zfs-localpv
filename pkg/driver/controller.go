@@ -204,14 +204,11 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 	selected := schd.Scheduler(req, nmap)
 
 	if len(selected) == 0 {
-		// (hack): CSI Sanity test does not pass topology information
-		selected = parameters["node"]
-		if len(selected) == 0 {
-			return "", status.Error(codes.Internal, "scheduler failed, not able to select a node to create the PV")
-		}
+		return "", status.Error(codes.Internal, "scheduler failed, not able to select a node to create the PV")
 	}
 
-	klog.Infof("scheduled the volume %s/%s on node %s", pool, volName, selected)
+	owner := selected[0]
+	klog.Infof("scheduling the volume %s/%s on node %s", pool, volName, owner)
 
 	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
@@ -224,7 +221,7 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 		WithKeyFormat(kf).
 		WithKeyLocation(kl).
 		WithThinProv(tp).
-		WithOwnerNode(selected).
+		WithOwnerNode(owner).
 		WithVolumeType(vtype).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		WithFsType(fstype).
@@ -241,7 +238,7 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 			"not able to provision the volume %s", err.Error())
 	}
 
-	return selected, nil
+	return owner, nil
 }
 
 // CreateVolClone creates the clone from a volume

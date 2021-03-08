@@ -19,6 +19,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	"time"
 
 	v1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
@@ -37,15 +38,15 @@ type ZFSSnapshotsGetter interface {
 
 // ZFSSnapshotInterface has methods to work with ZFSSnapshot resources.
 type ZFSSnapshotInterface interface {
-	Create(*v1.ZFSSnapshot) (*v1.ZFSSnapshot, error)
-	Update(*v1.ZFSSnapshot) (*v1.ZFSSnapshot, error)
-	UpdateStatus(*v1.ZFSSnapshot) (*v1.ZFSSnapshot, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.ZFSSnapshot, error)
-	List(opts metav1.ListOptions) (*v1.ZFSSnapshotList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.ZFSSnapshot, err error)
+	Create(ctx context.Context, zFSSnapshot *v1.ZFSSnapshot, opts metav1.CreateOptions) (*v1.ZFSSnapshot, error)
+	Update(ctx context.Context, zFSSnapshot *v1.ZFSSnapshot, opts metav1.UpdateOptions) (*v1.ZFSSnapshot, error)
+	UpdateStatus(ctx context.Context, zFSSnapshot *v1.ZFSSnapshot, opts metav1.UpdateOptions) (*v1.ZFSSnapshot, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.ZFSSnapshot, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.ZFSSnapshotList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ZFSSnapshot, err error)
 	ZFSSnapshotExpansion
 }
 
@@ -64,20 +65,20 @@ func newZFSSnapshots(c *ZfsV1Client, namespace string) *zFSSnapshots {
 }
 
 // Get takes name of the zFSSnapshot, and returns the corresponding zFSSnapshot object, and an error if there is any.
-func (c *zFSSnapshots) Get(name string, options metav1.GetOptions) (result *v1.ZFSSnapshot, err error) {
+func (c *zFSSnapshots) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.ZFSSnapshot, err error) {
 	result = &v1.ZFSSnapshot{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("zfssnapshots").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of ZFSSnapshots that match those selectors.
-func (c *zFSSnapshots) List(opts metav1.ListOptions) (result *v1.ZFSSnapshotList, err error) {
+func (c *zFSSnapshots) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ZFSSnapshotList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -88,13 +89,13 @@ func (c *zFSSnapshots) List(opts metav1.ListOptions) (result *v1.ZFSSnapshotList
 		Resource("zfssnapshots").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested zFSSnapshots.
-func (c *zFSSnapshots) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *zFSSnapshots) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -105,87 +106,90 @@ func (c *zFSSnapshots) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("zfssnapshots").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a zFSSnapshot and creates it.  Returns the server's representation of the zFSSnapshot, and an error, if there is any.
-func (c *zFSSnapshots) Create(zFSSnapshot *v1.ZFSSnapshot) (result *v1.ZFSSnapshot, err error) {
+func (c *zFSSnapshots) Create(ctx context.Context, zFSSnapshot *v1.ZFSSnapshot, opts metav1.CreateOptions) (result *v1.ZFSSnapshot, err error) {
 	result = &v1.ZFSSnapshot{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("zfssnapshots").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(zFSSnapshot).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a zFSSnapshot and updates it. Returns the server's representation of the zFSSnapshot, and an error, if there is any.
-func (c *zFSSnapshots) Update(zFSSnapshot *v1.ZFSSnapshot) (result *v1.ZFSSnapshot, err error) {
+func (c *zFSSnapshots) Update(ctx context.Context, zFSSnapshot *v1.ZFSSnapshot, opts metav1.UpdateOptions) (result *v1.ZFSSnapshot, err error) {
 	result = &v1.ZFSSnapshot{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("zfssnapshots").
 		Name(zFSSnapshot.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(zFSSnapshot).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *zFSSnapshots) UpdateStatus(zFSSnapshot *v1.ZFSSnapshot) (result *v1.ZFSSnapshot, err error) {
+func (c *zFSSnapshots) UpdateStatus(ctx context.Context, zFSSnapshot *v1.ZFSSnapshot, opts metav1.UpdateOptions) (result *v1.ZFSSnapshot, err error) {
 	result = &v1.ZFSSnapshot{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("zfssnapshots").
 		Name(zFSSnapshot.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(zFSSnapshot).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the zFSSnapshot and deletes it. Returns an error if one occurs.
-func (c *zFSSnapshots) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *zFSSnapshots) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("zfssnapshots").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *zFSSnapshots) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (c *zFSSnapshots) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("zfssnapshots").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched zFSSnapshot.
-func (c *zFSSnapshots) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.ZFSSnapshot, err error) {
+func (c *zFSSnapshots) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ZFSSnapshot, err error) {
 	result = &v1.ZFSSnapshot{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("zfssnapshots").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

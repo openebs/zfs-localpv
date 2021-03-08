@@ -19,6 +19,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	time "time"
 
 	zfsv1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
@@ -61,13 +62,13 @@ func NewFilteredZFSVolumeInformer(client internalclientset.Interface, namespace 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ZfsV1().ZFSVolumes(namespace).List(options)
+				return client.ZfsV1().ZFSVolumes(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ZfsV1().ZFSVolumes(namespace).Watch(options)
+				return client.ZfsV1().ZFSVolumes(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&zfsv1.ZFSVolume{},

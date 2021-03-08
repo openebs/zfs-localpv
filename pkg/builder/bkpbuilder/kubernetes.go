@@ -15,6 +15,7 @@
 package bkpbuilder
 
 import (
+	"context"
 	"encoding/json"
 
 	client "github.com/openebs/lib-csi/pkg/common/kubernetes/client"
@@ -142,7 +143,7 @@ func defaultGet(
 ) (*apis.ZFSBackup, error) {
 	return cli.ZfsV1().
 		ZFSBackups(namespace).
-		Get(name, opts)
+		Get(context.TODO(), name, opts)
 }
 
 // defaultList is the default implementation to list
@@ -154,7 +155,7 @@ func defaultList(
 ) (*apis.ZFSBackupList, error) {
 	return cli.ZfsV1().
 		ZFSBackups(namespace).
-		List(opts)
+		List(context.TODO(), opts)
 }
 
 // defaultCreate is the default implementation to delete
@@ -168,7 +169,7 @@ func defaultDel(
 	opts.PropagationPolicy = &deletePropagation
 	err := cli.ZfsV1().
 		ZFSBackups(namespace).
-		Delete(name, opts)
+		Delete(context.TODO(), name, *opts)
 	return err
 }
 
@@ -181,7 +182,7 @@ func defaultCreate(
 ) (*apis.ZFSBackup, error) {
 	return cli.ZfsV1().
 		ZFSBackups(namespace).
-		Create(bkp)
+		Create(context.TODO(), bkp, metav1.CreateOptions{})
 }
 
 // defaultUpdate is the default implementation to update
@@ -193,7 +194,7 @@ func defaultUpdate(
 ) (*apis.ZFSBackup, error) {
 	return cli.ZfsV1().
 		ZFSBackups(namespace).
-		Update(bkp)
+		Update(context.TODO(), bkp, metav1.UpdateOptions{})
 }
 
 // withDefaults sets the default options

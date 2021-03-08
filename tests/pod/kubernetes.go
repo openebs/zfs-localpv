@@ -16,6 +16,7 @@ package pod
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 
 	"github.com/openebs/lib-csi/pkg/common/errors"
@@ -182,31 +183,31 @@ func (k *KubeClient) withDefaults() {
 	if k.create == nil {
 		k.create = func(cli *clientset.Clientset,
 			namespace string, pod *corev1.Pod) (*corev1.Pod, error) {
-			return cli.CoreV1().Pods(namespace).Create(pod)
+			return cli.CoreV1().Pods(namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
 		}
 	}
 	if k.list == nil {
 		k.list = func(cli *clientset.Clientset,
 			namespace string, opts metav1.ListOptions) (*corev1.PodList, error) {
-			return cli.CoreV1().Pods(namespace).List(opts)
+			return cli.CoreV1().Pods(namespace).List(context.TODO(), opts)
 		}
 	}
 	if k.del == nil {
 		k.del = func(cli *clientset.Clientset, namespace,
 			name string, opts *metav1.DeleteOptions) error {
-			return cli.CoreV1().Pods(namespace).Delete(name, opts)
+			return cli.CoreV1().Pods(namespace).Delete(context.TODO(), name, *opts)
 		}
 	}
 	if k.get == nil {
 		k.get = func(cli *clientset.Clientset, namespace,
 			name string, opts metav1.GetOptions) (*corev1.Pod, error) {
-			return cli.CoreV1().Pods(namespace).Get(name, opts)
+			return cli.CoreV1().Pods(namespace).Get(context.TODO(), name, opts)
 		}
 	}
 	if k.delCollection == nil {
 		k.delCollection = func(cli *clientset.Clientset, namespace string,
 			listOpts metav1.ListOptions, deleteOpts *metav1.DeleteOptions) error {
-			return cli.CoreV1().Pods(namespace).DeleteCollection(deleteOpts, listOpts)
+			return cli.CoreV1().Pods(namespace).DeleteCollection(context.TODO(), *deleteOpts, listOpts)
 		}
 	}
 	if k.exec == nil {

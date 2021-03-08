@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	zfsv1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -39,7 +41,7 @@ var zfsrestoresResource = schema.GroupVersionResource{Group: "zfs.openebs.io", V
 var zfsrestoresKind = schema.GroupVersionKind{Group: "zfs.openebs.io", Version: "v1", Kind: "ZFSRestore"}
 
 // Get takes name of the zFSRestore, and returns the corresponding zFSRestore object, and an error if there is any.
-func (c *FakeZFSRestores) Get(name string, options v1.GetOptions) (result *zfsv1.ZFSRestore, err error) {
+func (c *FakeZFSRestores) Get(ctx context.Context, name string, options v1.GetOptions) (result *zfsv1.ZFSRestore, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(zfsrestoresResource, c.ns, name), &zfsv1.ZFSRestore{})
 
@@ -50,7 +52,7 @@ func (c *FakeZFSRestores) Get(name string, options v1.GetOptions) (result *zfsv1
 }
 
 // List takes label and field selectors, and returns the list of ZFSRestores that match those selectors.
-func (c *FakeZFSRestores) List(opts v1.ListOptions) (result *zfsv1.ZFSRestoreList, err error) {
+func (c *FakeZFSRestores) List(ctx context.Context, opts v1.ListOptions) (result *zfsv1.ZFSRestoreList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(zfsrestoresResource, zfsrestoresKind, c.ns, opts), &zfsv1.ZFSRestoreList{})
 
@@ -72,14 +74,14 @@ func (c *FakeZFSRestores) List(opts v1.ListOptions) (result *zfsv1.ZFSRestoreLis
 }
 
 // Watch returns a watch.Interface that watches the requested zFSRestores.
-func (c *FakeZFSRestores) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeZFSRestores) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(zfsrestoresResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a zFSRestore and creates it.  Returns the server's representation of the zFSRestore, and an error, if there is any.
-func (c *FakeZFSRestores) Create(zFSRestore *zfsv1.ZFSRestore) (result *zfsv1.ZFSRestore, err error) {
+func (c *FakeZFSRestores) Create(ctx context.Context, zFSRestore *zfsv1.ZFSRestore, opts v1.CreateOptions) (result *zfsv1.ZFSRestore, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(zfsrestoresResource, c.ns, zFSRestore), &zfsv1.ZFSRestore{})
 
@@ -90,7 +92,7 @@ func (c *FakeZFSRestores) Create(zFSRestore *zfsv1.ZFSRestore) (result *zfsv1.ZF
 }
 
 // Update takes the representation of a zFSRestore and updates it. Returns the server's representation of the zFSRestore, and an error, if there is any.
-func (c *FakeZFSRestores) Update(zFSRestore *zfsv1.ZFSRestore) (result *zfsv1.ZFSRestore, err error) {
+func (c *FakeZFSRestores) Update(ctx context.Context, zFSRestore *zfsv1.ZFSRestore, opts v1.UpdateOptions) (result *zfsv1.ZFSRestore, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(zfsrestoresResource, c.ns, zFSRestore), &zfsv1.ZFSRestore{})
 
@@ -102,7 +104,7 @@ func (c *FakeZFSRestores) Update(zFSRestore *zfsv1.ZFSRestore) (result *zfsv1.ZF
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeZFSRestores) UpdateStatus(zFSRestore *zfsv1.ZFSRestore) (*zfsv1.ZFSRestore, error) {
+func (c *FakeZFSRestores) UpdateStatus(ctx context.Context, zFSRestore *zfsv1.ZFSRestore, opts v1.UpdateOptions) (*zfsv1.ZFSRestore, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(zfsrestoresResource, "status", c.ns, zFSRestore), &zfsv1.ZFSRestore{})
 
@@ -113,7 +115,7 @@ func (c *FakeZFSRestores) UpdateStatus(zFSRestore *zfsv1.ZFSRestore) (*zfsv1.ZFS
 }
 
 // Delete takes name of the zFSRestore and deletes it. Returns an error if one occurs.
-func (c *FakeZFSRestores) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeZFSRestores) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(zfsrestoresResource, c.ns, name), &zfsv1.ZFSRestore{})
 
@@ -121,15 +123,15 @@ func (c *FakeZFSRestores) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeZFSRestores) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(zfsrestoresResource, c.ns, listOptions)
+func (c *FakeZFSRestores) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(zfsrestoresResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &zfsv1.ZFSRestoreList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched zFSRestore.
-func (c *FakeZFSRestores) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *zfsv1.ZFSRestore, err error) {
+func (c *FakeZFSRestores) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *zfsv1.ZFSRestore, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(zfsrestoresResource, c.ns, name, pt, data, subresources...), &zfsv1.ZFSRestore{})
 

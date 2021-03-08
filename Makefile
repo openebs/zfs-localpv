@@ -161,7 +161,7 @@ kubegendelete:
 
 .PHONY: deepcopy-install
 deepcopy-install:
-	@go install ./vendor/k8s.io/code-generator/cmd/deepcopy-gen
+	@go install -mod=vendor ./vendor/k8s.io/code-generator/cmd/deepcopy-gen
 
 .PHONY: deepcopy
 deepcopy:
@@ -173,7 +173,7 @@ deepcopy:
 
 .PHONY: clientset-install
 clientset-install:
-	@go install ./vendor/k8s.io/code-generator/cmd/client-gen
+	@go install -mod=vendor ./vendor/k8s.io/code-generator/cmd/client-gen
 
 .PHONY: clientset
 clientset:
@@ -187,7 +187,7 @@ clientset:
 
 .PHONY: lister-install
 lister-install:
-	@go install ./vendor/k8s.io/code-generator/cmd/lister-gen
+	@go install -mod=vendor ./vendor/k8s.io/code-generator/cmd/lister-gen
 
 .PHONY: lister
 lister:
@@ -199,7 +199,7 @@ lister:
 
 .PHONY: informer-install
 informer-install:
-	@go install ./vendor/k8s.io/code-generator/cmd/informer-gen
+	@go install -mod=vendor ./vendor/k8s.io/code-generator/cmd/informer-gen
 
 .PHONY: informer
 informer:
