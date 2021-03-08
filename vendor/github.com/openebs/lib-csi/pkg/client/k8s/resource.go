@@ -20,6 +20,7 @@ limitations under the License.
 package k8s
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -93,7 +94,7 @@ func (r *ResourceStruct) Create(obj *unstructured.Unstructured, subresources ...
 		err = errors.Wrapf(err, "failed to create resource '%s' '%s' at '%s'", r.gvr, obj.GetName(), r.namespace)
 		return
 	}
-	u, err = dynamic.Resource(r.gvr).Namespace(r.namespace).Create(obj, metav1.CreateOptions{}, subresources...)
+	u, err = dynamic.Resource(r.gvr).Namespace(r.namespace).Create(context.TODO(), obj, metav1.CreateOptions{}, subresources...)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create resource '%s' '%s' at '%s'", r.gvr, obj.GetName(), r.namespace)
 		return
@@ -110,7 +111,7 @@ func (r *ResourceStruct) Delete(obj *unstructured.Unstructured, subresources ...
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete resource '%s' '%s' at '%s'", r.gvr, obj.GetName(), r.namespace)
 	}
-	err = dynamic.Resource(r.gvr).Namespace(r.namespace).Delete(obj.GetName(), &metav1.DeleteOptions{})
+	err = dynamic.Resource(r.gvr).Namespace(r.namespace).Delete(context.TODO(), obj.GetName(), metav1.DeleteOptions{})
 	if err != nil {
 		return errors.Wrapf(err, "failed to delete resource '%s' '%s' at '%s'", r.gvr, obj.GetName(), r.namespace)
 	}
@@ -128,7 +129,7 @@ func (r *ResourceStruct) Get(name string, opts metav1.GetOptions, subresources .
 		err = errors.Wrapf(err, "failed to get resource '%s' '%s' at '%s'", r.gvr, name, r.namespace)
 		return
 	}
-	u, err = dynamic.Resource(r.gvr).Namespace(r.namespace).Get(name, opts, subresources...)
+	u, err = dynamic.Resource(r.gvr).Namespace(r.namespace).Get(context.TODO(), name, opts, subresources...)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get resource '%s' '%s' at '%s'", r.gvr, name, r.namespace)
 		return
@@ -155,7 +156,7 @@ func (r *ResourceStruct) Update(oldobj, newobj *unstructured.Unstructured, subre
 	resourceVersion := oldobj.GetResourceVersion()
 	newobj.SetResourceVersion(resourceVersion)
 
-	u, err = dynamic.Resource(r.gvr).Namespace(r.namespace).Update(newobj, metav1.UpdateOptions{}, subresources...)
+	u, err = dynamic.Resource(r.gvr).Namespace(r.namespace).Update(context.TODO(), newobj, metav1.UpdateOptions{}, subresources...)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to update resource '%s' '%s' at '%s'", r.gvr, oldobj.GetName(), r.namespace)
 		return
@@ -170,7 +171,7 @@ func (r *ResourceStruct) List(opts metav1.ListOptions) (u *unstructured.Unstruct
 		err = errors.Wrapf(err, "failed to list resource '%s'  at '%s'", r.gvr, r.namespace)
 		return
 	}
-	u, err = dynamic.Resource(r.gvr).Namespace(r.namespace).List(opts)
+	u, err = dynamic.Resource(r.gvr).Namespace(r.namespace).List(context.TODO(), opts)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to list resource '%s'  at '%s'", r.gvr, r.namespace)
 		return

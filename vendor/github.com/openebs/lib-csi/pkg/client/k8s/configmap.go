@@ -17,6 +17,7 @@ limitations under the License.
 package k8s
 
 import (
+	"context"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -50,5 +51,5 @@ func (c *Configmap) Get(options metav1.GetOptions) (cm *corev1.ConfigMap, err er
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get config map %s %s", c.namespace, c.name)
 	}
-	return cs.CoreV1().ConfigMaps(c.namespace).Get(c.name, options)
+	return cs.CoreV1().ConfigMaps(c.namespace).Get(context.TODO(), c.name, options)
 }
