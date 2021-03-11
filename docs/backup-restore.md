@@ -10,6 +10,11 @@ We should have installed the ZFS-LocalPV 1.0.0 or later version for the Backup a
 | Velero | 1.5+ |
 | Velero-Plugin | 2.2.0+ |
 
+### Note
+
+- To work with velero-plugin version 2.7.0 (adding support for restore on encrypted zpools) and above we have to update zfs-localpv driver version to at least 1.5.0
+- With velero version v1.5.2 and v1.5.3 there is an issue [see here](https://github.com/vmware-tanzu/velero/issues/3470) where PV's are not getting cleaned up for restored volume.
+
 ## Setup
 
 ### a. Install Velero Binary
