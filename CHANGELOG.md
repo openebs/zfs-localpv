@@ -1,3 +1,17 @@
+v1.5.0 / 2021-03-12
+========================
+* adding support to restore in an encrypted pool ([#292](https://github.com/openebs/zfs-localpv/pull/292),[@pawanpraka1](https://github.com/pawanpraka1))
+* move the bdd test cases to github action ([#293](https://github.com/openebs/zfs-localpv/pull/293),[@shubham14bajpai](https://github.com/shubham14bajpai))
+
+v1.5.0-RC2 / 2021-03-11
+========================
+
+v1.5.RC1 / 2021-03-09
+========================
+* adding support to restore in an encrypted pool ([#292](https://github.com/openebs/zfs-localpv/pull/292),[@pawanpraka1](https://github.com/pawanpraka1))
+* move the bdd test cases to github action ([#293](https://github.com/openebs/zfs-localpv/pull/293),[@shubham14bajpai](https://github.com/shubham14bajpai))
+
+
 v1.4.0 / 2021-02-13
 ========================
 
