@@ -1,0 +1,138 @@
+- name: Download velero binary
+  get_url:
+    url: "{{ velero_binary_url }}"
+    dest: "./"
+    force: yes
+  register: result
+  until:  "'OK' in result.msg"
+  delay: 3
+  retries: 5
+
+- name: Installing velero inside e2e-test container
+  shell: |
+    tar -xvf velero-{{ velero_version }}-linux-amd64.tar.gz
+    mv velero-{{ velero_version }}-linux-amd64/velero /usr/local/bin/
+
+- name: Checking the velero version
+  shell: velero version
+  register: velero
+  failed_when: "velero_version not in velero.stdout"
+
+- block:
+
+   - name: Installing velero server inside cluster
+     shell: >
+       velero install \
+         --provider aws \
+         --bucket velero \
+         --secret-file ./credentials_minio \
+         --plugins velero/velero-plugin-for-aws:v1.0.0 \
+         --use-volume-snapshots=false \
+         --use-restic \
+         --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000
+
+   - name: Check velero server pod status 
+     shell: kubectl get pod -n velero -l deploy=velero -o jsonpath='{.items[0].status.phase}'
+     register: velero_pod_status
+     until: "'Running' in velero_pod_status.stdout"
+     delay: 5
+     retries: 20
+
+   - name: Check velero server pod's container status 
+     shell: kubectl get pod -n velero -l deploy=velero -o jsonpath='{.items[0].status.containerStatuses[0].state}'
+     register: velero_container_status
+     until: "'running' in velero_container_status.stdout"
+     delay: 5
+     retries: 20
+
+   - name: Check that restic daemonset pods are running 
+     shell: kubectl get pods -n velero -l name=restic --no-headers -o custom-columns=:status.phase | sort | uniq
+     register: restic_pod_status
+     until: "restic_pod_status.stdout == 'Running'"
+     delay: 3
+     retries: 20
+
+   - name: Installing minio
+     shell: kubectl apply -f velero-{{ velero_version }}-linux-amd64/examples/minio/00-minio-deployment.yaml
+     args:
+       executable: /bin/bash
+
+   - name: Waiting for minio job to create bucket
+     shell: kubectl get pod -n velero -l job-name=minio-setup -o jsonpath='{.items[*].status.phase}'
+     register: minio_job_status
+     until: "'Succeeded' in minio_job_status.stdout"
+     delay: 5
+     retries: 20
+
+   - name: Checking for minio pod status
+     shell: kubectl get pod -n velero -l component=minio -ojsonpath='{.items[0].status.phase}'
+     register: minio_status
+     until: "'Running' in minio_status.stdout"
+     delay: 5
+     retries: 15
+   
+  when: bucket_type == "minio"
+
+- name: Get the velero server pod name
+  shell: kubectl get pod -n velero -l deploy=velero --no-headers -o custom-columns=:.metadata.name
+  args:
+    executable: /bin/bash
+  register: velero_pod
+
+- name: Check if the velero-plugin for zfs-localpv is already added
+  shell: >
+    kubectl get deploy velero -n velero 
+    -o jsonpath='{.spec.template.spec.initContainers[?(@.name=="velero-plugin")].name}'
+  args: 
+    executable: /bin/bash
+  register: zfs_localpv_velero_plugin
+
+# from velero version v1.6.0 velero plugin for openebs is renamed to openebs-velero-plugin
+- name: Check if the velero-plugin for zfs-localpv is already added
+  shell: >
+    kubectl get deploy velero -n velero 
+    -o jsonpath='{.spec.template.spec.initContainers[?(@.name=="openebs-velero-plugin")].name}'
+  args: 
+    executable: /bin/bash
+  register: zfs_localpv_velero_plugin_latest
+
+- name: Add velero-plugin for zfs-localpv
+  shell: velero plugin add {{ velero_plugin_name }}
+  args:
+    executable: /bin/bash
+  when: 
+    - zfs_localpv_velero_plugin.stdout != 'velero-plugin'
+    - zfs_localpv_velero_plugin_latest.stdout != 'openebs-velero-plugin'
+
+#After installing openebs velero plugin a new velero pod comes up in Running state and the older one will terminates.  
+
+- name: Wait until older velero pod terminates successfully
+  shell: kubectl get pods -n velero
+  args:
+    executable: /bin/bash
+  register: velero_pod_list
+  until: "'velero_pod.stdout' not in velero_pod_list.stdout"
+  delay: 3
+  retries: 30
+
+- name: Check velero server pod status 
+  shell: kubectl get pod -n velero -l deploy=velero -o jsonpath='{.items[0].status.phase}'
+  register: velero_pod_run
+  until: "'Running' in velero_pod_run.stdout"
+  delay: 5
+  retries: 20
+
+- name: Check velero server pod's container status 
+  shell: kubectl get pod -n velero -l deploy=velero -o jsonpath='{.items[0].status.containerStatuses[0].state}'
+  register: velero_container
+  until: "'running' in velero_container.stdout"
+  delay: 5
+  retries: 20
+
+- name: Check velero plugin for VolumeSnapshotter is present
+  shell: velero plugin get
+  register: snapshotter_plugin
+  until: "'zfspv-blockstore' in snapshotter_plugin.stdout"
+  delay: 2
+  retries: 40
+    

@@ -1,0 +1,29 @@
+test_name: zfs-localpv-provisioner
+
+zfs_branch: "{{ lookup('env','ZFS_BRANCH') }}"
+
+zfs_driver_image: "{{ lookup('env','ZFS_DRIVER_IMAGE') }}"
+
+zfs_operator_ns: "{{ lookup('env','ZFS_OPERATOR_NAMESPACE') }}"
+
+zpool_name: "{{ lookup('env','ZPOOL_NAME') }}"
+
+zpool_encryption: "{{ lookup('env','ZPOOL_ENCRYPTION') }}"
+
+enc_pwd: "{{ lookup('env','ZPOOL_ENCRYPTION_PASSWORD') }}"
+
+zpool_type: "{{ lookup('env','ZPOOL_TYPE') }}"
+
+zpool_disks: "{{ lookup('env','ZPOOL_DISKS') }}"
+
+node_names: "{{ lookup('env','ZPOOL_NODE_NAMES') }}"
+
+snapshot_class: "{{ lookup('env','SNAPSHOT_CLASS') }}"
+
+compress: "{{ lookup('env','COMPRESSION') }}"
+
+de_dup: "{{ lookup('env','DEDUP') }}"
+
+record_size: "{{ lookup('env','RECORDSIZE') }}"
+
+vol_block_size: "{{ lookup('env','VOLBLOCKSIZE') }}"

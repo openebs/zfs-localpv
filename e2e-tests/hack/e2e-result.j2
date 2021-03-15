@@ -1,0 +1,10 @@
+---
+apiVersion: e2e.io/v1alpha1
+kind: e2eResult
+metadata:
+  # name of the e2e testcase
+  name: {{ test }} 
+spec:
+  testStatus: 
+    phase: {{ phase }}  
+    result: {{ verdict }} 

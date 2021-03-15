@@ -1,0 +1,13 @@
+---
+#Fetching the details of the application pod
+- name: Getting the {{ application_name }} POD name
+  k8s_facts:
+    kind: Pod
+    namespace: "{{ app_ns }}" 
+    label_selectors:
+      - "{{ app_label }}"
+  register: pod_name
+
+- debug:
+    msg: "{{ pod_name | json_query('resources[*].metadata.name') }}"
+

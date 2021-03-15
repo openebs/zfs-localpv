@@ -1,0 +1,43 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: zfspv-block-volume-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      labels:
+        test: zfspv-block-volume
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+            # This is the namespace where raw block volume consuming application will be deployed
+          - name: APP_NAMESPACE
+            value: 'block-ns'
+            
+            # storage class name for raw block volume
+            # this storage class doesn't have any `fstype` parameter
+          - name: STORAGE_CLASS
+            value: 'zfspv-raw-block'
+   
+            # size of the pvc for `volumeMode: Block`
+          - name: PVC_SIZE
+            value: '5Gi'
+
+            # This is the namespace where zfs-driver creates all its resources.
+            # By default it is `openebs` namespace
+          - name: ZFS_OPERATOR_NAMESPACE
+            value: 'openebs'
+
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/functional/zfspv-raw-block-volume/test.yml -i /etc/ansible/hosts -vv; exit 0"]

@@ -1,0 +1,3 @@
+test_name: zfs-controller-high-availability
+
+zfs_operator_ns: "{{ lookup('env','ZFS_OPERATOR_NAMESPACE') }}"

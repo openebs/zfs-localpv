@@ -1,0 +1,41 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: upgrade-zfs-localpv-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      labels:
+        test: zfs-localpv-upgrade
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+            ## Give the versioned branch name for zfs_localpv provisioner from openebs/zfs-localpv repo
+            ## for e.g. (v1.4.x , v1.5.x  OR  master)
+          - name: TO_VERSION_ZFS_BRANCH
+            value: ''
+
+            ## Provide ZFS_DRIVER image to which upgrade is to done. To use ci images use ci tag.
+            ## Give full image name (for e.g. openebs/zfs-driver:<tag>)
+          - name: TO_VERSION_ZFS_DRIVER_IMAGE
+            value: ''
+
+            # This is the namespace where the zfs driver will create all its resources.
+            # By default it is in openebs namespace. If you have been using some different namespace
+            # provide that value. We should never attempt to modify this namespace as old resources will
+            # not be available under the new namespace.
+          - name: ZFS_OPERATOR_NAMESPACE
+            value: 'openebs'
+
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/upgrade-zfs-localpv/test.yml -i /etc/ansible/hosts -v; exit 0"]

@@ -1,0 +1,14 @@
+---
+test_name: csi-volume-resize
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+app_label: "{{ lookup('env','APP_LABEL') }}"
+
+app_pvc: "{{ lookup('env','APP_PVC') }}"
+
+vol_size: "{{ lookup('env','OLD_PV_CAPACITY') }}"
+
+desired_vol_size: "{{ lookup('env','NEW_PV_CAPACITY') }}"
+
+storage_class: "{{ lookup('env','STORAGE_CLASS') }}"

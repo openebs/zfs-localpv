@@ -1,0 +1,243 @@
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars_files:
+    - test_vars.yml
+    - /mnt/parameters.yml
+    
+  tasks:
+    - block:
+
+          ## Generating the testname for zfspv shared mount volume test
+        - include_tasks: /e2e-tests/hack/create_testname.yml
+    
+          ## Record SOT (start of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'SOT'
+        
+        - block: 
+           
+            - name: Create application namespace
+              shell: >
+                kubectl create ns {{ app_ns }}
+              args:
+                executable: /bin/bash
+
+            - name: Update the busybox application template with test specific values
+              template:
+                src: busybox_share.j2
+                dest: busybox_share.yml
+
+            - name: Deploy the busybox application using above storage-class
+              shell: >
+                kubectl apply -f busybox_share.yml
+              args:
+                executable: /bin/bash
+
+            - name: Check the pvc status
+              shell: >
+                kubectl get pvc -n {{ app_ns }} --no-headers -o custom-columns=:.status.phase
+              args:
+                executable: /bin/bash
+              register: pvc_status
+              until: pvc_status.stdout == 'Bound'
+              delay: 2
+              retries: 20
+
+            - name: Get the application deployment name
+              shell: >
+                kubectl get deploy -n {{ app_ns }} --no-headers -o custom-columns=:.metadata.name
+              args:
+                executable: /bin/bash
+              register: app_deploy_name
+
+            - name: Get the application pod name
+              shell: >
+                kubectl get pod -n {{ app_ns }} -l app=shared-mount --no-headers -o custom-columns=:.metadata.name
+              args:
+                executable: /bin/bash
+              register: app_pod_name
+
+            - name: Check if the application pod is running
+              shell: >
+                kubectl get pod {{ app_pod_name.stdout }} -n {{ app_ns }} --no-headers -o custom-columns=:.status.phase
+              args:
+                executable: /bin/bash
+              register: app_pod_status
+              until: "app_pod_status.stdout == 'Running'"
+              delay: 3
+              retries: 30
+
+            - name: Create some test data into the application pod
+              include_tasks: "/e2e-tests/utils/applications/busybox/busybox_data_persistence.yml"
+              vars:
+                status: 'LOAD'
+                ns: "{{ app_ns }}"
+                pod_name: "{{ app_pod_name.stdout }}"
+
+            - name: Scale the deployment replicas to use shared mount volume by multiple pods
+              shell: >
+                kubectl scale deploy/{{ app_deploy_name.stdout }} -n {{ app_ns }} --replicas=2
+              args:
+                executable: /bin/bash
+
+            - name: Check the no of replicas in deployment spec
+              shell: >
+                kubectl get deploy/{{ app_deploy_name.stdout }} -n {{ app_ns }} --no-headers
+                -o custom-columns=:.status.readyReplicas
+              args: 
+                executable: /bin/bash
+              register: replica_count
+              until: "replica_count.stdout == '2'"
+              delay: 2
+              retries: 20
+
+            - name: Get the new application pod name after scaling the deployment replicas
+              shell: >
+                kubectl get pod -n {{ app_ns }} -l app=shared-mount --no-headers
+                -o custom-columns=:.metadata.name | grep -v {{ app_pod_name.stdout }}
+              args:
+                executable: /bin/bash
+              register: scaled_app_pod_name
+
+            - name: Check the container status of the new application pod
+              shell: >
+                kubectl get pod {{ scaled_app_pod_name.stdout }} -n {{ app_ns }} --no-headers
+                -o jsonpath='{.status.containerStatuses[].state}' | grep running
+              args:
+                executable: /bin/bash
+              register: containerStatus
+              until: "'running' in containerStatus.stdout"
+              delay: 2
+              retries: 50
+
+            - name: Label the scaled application pod
+              shell: >
+                kubectl label pod {{ scaled_app_pod_name.stdout }} -n {{ app_ns }} name=share-pod
+              args:
+                executable: /bin/bash
+              register: status
+              failed_when: "status.rc != 0"
+
+            - name: Verify if the shared volume data is accessible from both the application pods
+              include_tasks: "/e2e-tests/utils/applications/busybox/busybox_data_persistence.yml"
+              vars:
+                status: 'VERIFY'
+                ns: "{{ app_ns }}"
+                label: name=share-pod
+                pod_name: "{{ app_pod_name.stdout }}"
+
+            - name: Delete the dumped data files from scaled application pod
+              shell: >
+                kubectl exec -ti {{ scaled_app_pod_name.stdout }} -n {{ app_ns }} -- sh -c
+                'rm -rf /busybox/*'
+              args:
+                executable: /bin/bash
+              register: status
+              failed_when: "status.rc != 0"
+
+            - name: Again dumping some dummy data, this time from scaled application pod
+              include_tasks: "/e2e-tests/utils/applications/busybox/busybox_data_persistence.yml"
+              vars:
+                status: 'LOAD'
+                ns: "{{ app_ns }}"
+                pod_name: "{{ scaled_app_pod_name.stdout }}"
+
+            - name: Get the application pod name
+              shell: >
+                kubectl get pod -n {{ app_ns }} --no-headers -o custom-columns=:.metadata.name | grep -v {{ scaled_app_pod_name.stdout }}
+              args:
+                executable: /bin/bash
+              register: app_pod_name
+              
+            - name: Label the application pod
+              shell: >
+                kubectl label pod {{ app_pod_name.stdout }} -n {{ app_ns }} name=previous-pod
+              args: 
+                executable: /bin/bash
+              register: status
+              failed_when: "status.rc != 0"
+             
+              ## To keep the application pod label and deployment label same we label the deployment as well
+              ## This will help in filtering while running volume-snapshot test.
+            - name: Label the application deployment
+              shell: >
+                kubectl label deploy/{{ app_deploy_name.stdout }} -n {{ app_ns }} name=previous-pod
+              args:
+                executable: /bin/bash
+              register: status
+              failed_when: "status.rc != 0"
+
+            - name: Verify the data consistency from the previous pod
+              include_tasks: "/e2e-tests/utils/applications/busybox/busybox_data_persistence.yml"
+              vars:
+                status: 'VERIFY'
+                ns: "{{ app_ns }}"
+                label: name=previous-pod
+                pod_name: "{{ scaled_app_pod_name.stdout }}"
+          
+          when: action == 'provision'
+
+        - block: 
+
+          - name: Get the zvolume name from the pvc name
+            shell: >
+              kubectl get pvc {{ app_pvc }} -n {{ app_ns }} -o jsonpath='{.spec.volumeName}'
+            args:
+              executable: /bin/bash
+            register: zvol_name
+
+          - name: Update the busybox deployment template with test specific values
+            template:
+              src: busybox_share.j2
+              dest: busybox_share.yml
+
+          - name: Delete the application deployment
+            shell: >
+              kubectl delete -f busybox_share.yml
+            args:
+              executable: /bin/bash
+            register: status
+            
+          - name: Verify that application pods have been deleted successfully
+            shell: >
+              kubectl get pods -n {{ app_ns }}
+            args:
+              executable: /bin/bash
+            register: app_pod_status
+            failed_when: "'No resources found' in app_pod_status.stdout"
+          
+          - name: Verify the successful deletion of pvc in {{ app_ns }} namespaces
+            shell: >
+              kubectl get pvc -n {{ app_ns }}
+            args: 
+              executable: /bin/bash
+            register: pvc_status
+            failed_when: "app_pvc in pvc_status.stdout"
+
+          - name: Verify the successful deletion of zvolume
+            shell: >
+              kubectl get zv -n {{ zfs_operator_ns }}
+            args:
+              executable: /bin/bash
+            register: zv_status
+            until: "zvol_name.stdout not in zv_status.stdout"
+            delay: 3
+            retries: 30
+
+          when: action == 'deprovision'
+                
+        - set_fact:
+            flag: "Pass"
+      
+      rescue:
+        - set_fact:
+            flag: "Fail"
+      
+      always:
+          ## RECORD END-OF-TEST IN e2e RESULT CR
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'EOT'

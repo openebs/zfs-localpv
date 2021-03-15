@@ -1,0 +1,17 @@
+test_name: zfspv-clone
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+storage_class: "{{ lookup('env','STORAGE_CLASS') }}"
+
+snapshot_name: "{{ lookup('env','SNAPSHOT_NAME') }}"
+
+clone_pvc_name: "{{ lookup('env','CLONE_PVC_NAME') }}"
+
+app_name: "{{ lookup('env','APP_NAME') }}"
+
+action: "{{ lookup('env','ACTION') }}"
+
+zfs_operator_ns: "{{ lookup('env','ZFS_OPERATOR_NAMESPACE') }}"
+
+data_persistence: "{{ lookup('env','DATA_PERSISTENCE') }}"

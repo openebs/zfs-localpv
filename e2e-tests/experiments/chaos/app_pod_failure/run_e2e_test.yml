@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-pod-failure
+  namespace: e2e
+data:
+  parameters.yml: |
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: application-pod-failure-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      labels:
+        name: application-pod-failure
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+            # This is the namespace where application pod is deployed
+            # on which we have to perform this pod-failure chaos
+          - name: APP_NAMESPACE
+            value: ''
+
+            # Application pod label
+          - name: APP_LABEL
+            value: ''
+
+          # Specify the container runtime used , to pick the relevant chaos util
+          - name: CONTAINER_RUNTIME
+            value: docker
+
+            #check if the data is consistent. Currently supported values are 'mysql' and 'busybox'
+          - name: DATA_PERSISTENCE
+            value: ""
+
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/chaos/app_pod_failure/test.yml -i /etc/ansible/hosts -vv; exit 0"]
+        volumeMounts:
+        - name: parameters
+          mountPath: /mnt/
+      volumes:
+        - name: parameters
+          configMap:
+            name: app-pod-failure

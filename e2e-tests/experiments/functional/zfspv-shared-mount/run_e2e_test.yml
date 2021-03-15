@@ -1,0 +1,59 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zfspv-shared-mount
+  namespace: e2e
+data:
+  parameters.yml: |
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: zfspv-shared-mount-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      labels:
+        test: shared-mount-volume
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+          - name: APP_NAMESPACE      ## Namespace in which application is deployed
+            value: '' 
+          
+          - name: APP_PVC            ## PVC name of the application
+            value: ''
+
+          - name: STORAGE_CLASS      ## Give the storage class supporting shared volume mount
+            value: ''
+
+          - name: ZFS_OPERATOR_NAMESPACE ## Namespace in which all the resources created by zfs driver will be present
+            value: ''                ## for e.g. zfsvolume (zv) will be in this namespace
+
+          - name: DATA_PERSISTENCE   ## Give values according to the application
+            value: ''                ## For `Busybox` : `busybox`
+
+          - name: ACTION             ## `provision` OR `deprovision`
+            value: ''
+
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/functional/zfspv-shared-mount/test.yml -i /etc/ansible/hosts -vv; exit 0"]
+
+        volumeMounts:
+        - name: parameters
+          mountPath: /mnt/
+      volumes:
+        - name: parameters
+          configMap:
+            name: zfspv-shared-mount

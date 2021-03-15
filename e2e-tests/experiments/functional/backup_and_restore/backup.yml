@@ -1,0 +1,68 @@
+---
+- block:
+
+    - name: Create the volume snapshot location which has the information about where the snapshot should be stored
+      shell: kubectl apply -f ./volume_snapshot_location.yml
+      args:
+        executable: /bin/bash
+
+    - name: Check that volume snapshot location class is present
+      shell: kubectl get volumesnapshotlocation -n velero
+      args:
+       executable: /bin/bash
+      register: vol_snapshot_location
+      until: "'zfspv-snaplocation' in vol_snapshot_location.stdout"
+      delay: 2
+      retries: 30
+
+    - name: Creating Backup 
+      shell: >
+        velero backup create {{ velero_backup_name }} --snapshot-volumes --include-namespaces={{ app_ns }} --volume-snapshot-locations=zfspv-snaplocation --storage-location=default
+      args:
+        executable: /bin/bash
+
+    - name: Get the state of Backup
+      shell: kubectl get backup {{ velero_backup_name }} -n velero -o jsonpath='{.status.phase}'
+      args:
+        executable: /bin/bash
+      register: backup_state
+      until: "'Completed' in backup_state.stdout"
+      delay: 5
+      retries: 100
+
+  when: action == "backup"
+  
+
+# Schedule creates a cron job for backup. Notation "--schedule=*/2 * * * *" applies same as kubernetes cron job here.
+
+- block:
+  
+  - name: Creating schedule backup 
+    shell: velero create schedule {{ schedule_name }} --schedule="*/1 * * * *" --snapshot-volumes --include-namespaces={{ app_ns }} --volume-snapshot-locations=zfspv-snaplocation --storage-location=default
+
+  when: action == "schedule_backup"
+
+- block:
+
+  - name: Create the volume snapshot location which has the information about where the snapshot should be stored
+    shell: kubectl apply -f ./incremental_backup_vsl.yml
+    args:
+      executable: /bin/bash
+
+  ## Incremental backups work with schedules. Following task will create one schedule which will create backups
+  ## Per minute (as per the cron job format). First backup will be full backup and after that incremental backups
+  ## and at last one will be full backup. This sequence will be repeated till the schedule is enabled.
+  - name: Creating incremental backup
+    shell: velero create schedule {{ schedule_name }} --schedule="*/1 * * * *" --snapshot-volumes --include-namespaces={{ app_ns }} --volume-snapshot-locations=incr --storage-location=default
+  
+  ## After creating schedule backup creation starts. so waiting for some time for dumping 
+  ## the data before creation of first incremental backup.
+  - name: sleep some time
+    shell: sleep 30
+
+  ## This task will create backups periodically after one minutes. Meanwhile this task will dump some dummy data
+  ## so that we can verify them after restoring the backups.
+  - name: Create backups incrementally after dumping data periodically
+    include_tasks: "./incremental_backup.yml"
+
+  when: action == "incremental_backup"

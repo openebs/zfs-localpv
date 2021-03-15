@@ -1,0 +1,5 @@
+{% if data_persistence is defined and data_persistence == 'mysql' %}
+   consistencyutil: /e2e-tests/utils/applications/mysql/mysql_data_persistence.yml
+  {% elif data_persistence is defined and data_persistence == 'busybox' %}
+   consistencyutil: /e2e-tests/utils/applications/busybox/busybox_data_persistence.yml
+{% endif %}

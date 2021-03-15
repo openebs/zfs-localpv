@@ -1,0 +1,17 @@
+test_name: zv-property-runtime-modify
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+app_label: "{{ lookup('env','APP_LABEL') }}"
+
+fs_type: "{{ lookup('env','FILE_SYSTEM_TYPE') }}"
+
+zfs_operator_ns: "{{ lookup('env','ZFS_OPERATOR_NAMESPACE') }}"
+
+pvc_name: "{{ lookup('env','APP_PVC') }}"
+
+new_compress_val: "{{ lookup('env','NEW_COMPRESSION_PARAMETER') }}"
+
+new_dedup_val: "{{ lookup('env','NEW_DEDUP_PARAMETER') }}"
+
+zpool_name: "{{ lookup('env','ZPOOL_NAME') }}"

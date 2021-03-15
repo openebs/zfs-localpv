@@ -1,0 +1,13 @@
+test_name: zfspv-shared-mount
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+app_pvc: "{{ lookup('env','APP_PVC') }}"
+
+data_persistence: "{{ lookup('env','DATA_PERSISTENCE') }}"
+
+storage_class: "{{ lookup('env','STORAGE_CLASS') }}"
+
+action: "{{ lookup('env','ACTION') }}"
+
+zfs_operator_ns: "{{ lookup('env', 'ZFS_OPERATOR_NAMESPACE') }}"

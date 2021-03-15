@@ -1,0 +1,248 @@
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars_files:
+    - test_vars.yml
+    
+  tasks:
+    - block:
+
+          ## Generating the testname for zfspv raw block volume test
+        - include_tasks: /e2e-tests/hack/create_testname.yml
+    
+          ## Record SOT (start of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'SOT'
+        
+        - name: Create the namespace for block-volume of zfspv
+          shell: >
+            kubectl create ns {{ app_ns }}
+          args:
+            executable: /bin/bash
+
+        - name: Update the busybox application template with the test specific values
+          template:
+            src: busybox.j2
+            dest: busybox.yml
+
+        - name: Deploy the application using block volume pvc
+          shell: >
+            kubectl create -f busybox.yml -n {{ app_ns }}
+          args:
+            executable: /bin/bash
+
+        - name: Check if the block volume PVC is bound
+          shell: >
+            kubectl get pvc block-vol-pvc -n {{ app_ns }} 
+            --no-headers -o custom-columns=:.status.phase
+          args:
+            executable: /bin/bash
+          register: pvc_status
+          until: "'Bound' in pvc_status.stdout"
+          delay: 5
+          retries: 30
+
+        - name: Get the zvolume name
+          shell: kubectl get pvc block-vol-pvc -n {{ app_ns }} -o custom-columns=:.spec.volumeName
+          args:
+            executable: /bin/bash
+          register: zv_name
+          
+        - name: Get the application pod name
+          shell: >
+            kubectl get pod -n {{ app_ns }} -l app=raw-block-vol
+            --no-headers -o custom-columns=:.metadata.name
+          args:
+            executable: /bin/bash
+          register: app_pod_name
+
+        - name: Check if the application pod is in running state
+          shell: >
+            kubectl get pod {{ app_pod_name.stdout }} -n {{ app_ns }}
+            --no-headers -o custom-columns=:.status.phase
+          register: pod_status
+          until: "'Running' in pod_status.stdout"
+          delay: 5
+          retries: 50
+
+        - name: Create some test data into the raw block device and take the md5sum of data
+          shell: >
+            kubectl exec -ti {{ app_pod_name.stdout }} -n {{ app_ns }}
+            -- sh -c "{{ item }}"
+          args:
+            executable: /bin/bash
+          register: result
+          failed_when: "result.rc != 0"
+          with_items:
+            - "dd if=/dev/urandom of=/dev/sdc bs=4k count=262144"
+            - "md5sum /dev/sdc > /busybox/pre-md5"
+
+        - name: Restart the busybox application
+          shell: kubectl delete pod {{ app_pod_name.stdout }} -n {{ app_ns }}
+          args:
+            executable: /bin/bash
+
+        - name: Get the application pod name after restart
+          shell: >
+            kubectl get pod -n {{ app_ns }} -l app=raw-block-vol
+            --no-headers -o custom-columns=:.metadata.name 
+          args:
+            executable: /bin/bash
+          register: new_pod_name
+
+        - name: Check if the application pod is in running state
+          shell: >
+            kubectl get pod {{ new_pod_name.stdout }} -n {{ app_ns }}
+            --no-headers -o custom-columns=:.status.phase
+          register: pod_status
+          until: "'Running' in pod_status.stdout"
+          delay: 5
+          retries: 50
+
+        - name: Again take the md5sum of the data after restarting the application pod 
+          shell: >
+            kubectl exec -ti {{ new_pod_name.stdout }} -n {{ app_ns }}
+            -- sh -c "md5sum /dev/sdc > /busybox/post-md5"
+          args:
+            executable: /bin/bash
+          register: result
+          failed_when: "result.rc != 0"
+
+        - name: Verify whether data is consistence after restarting the application pod
+          shell: >
+            kubectl exec -ti {{ new_pod_name.stdout }} -n {{ app_ns }}
+            -- sh -c "diff /busybox/pre-md5 /busybox/post-md5"
+          args: 
+            executable: /bin/bash
+          register: result 
+          failed_when: "result.rc != 0 or result.stdout != ''"
+
+        - name: Obtain the mount path for the application
+          shell: > 
+              kubectl get pod {{ new_pod_name.stdout }} -n {{ app_ns }}
+              -o custom-columns=:.spec.containers[].volumeMounts[].mountPath --no-headers
+          args: 
+              executable: /bin/bash
+          register: mount
+
+        - name: Fetch the Storage from PVC using namespace
+          shell: kubectl get pvc -n {{ app_ns }} -o jsonpath={.items[0].spec.resources.requests.storage}
+          args:
+            executable: /bin/bash
+          register: storage_capacity
+
+        - name: Fetch the alphabet(G,M,m,g) from storage capacity
+          shell: echo "{{ storage_capacity.stdout }}" | grep -o -E '[0-9]+'
+          args:
+            executable: /bin/bash
+          register: value_pvc
+
+        ## Here we will resize the volume to double value of present pvc size
+        - set_fact:
+            desired_vol_size: '{{ (value_pvc.stdout | int * 2 | int) |  int }}'
+
+        - name: Obtain the PVC spec
+          shell: >
+            kubectl get pvc block-vol-pvc -n {{ app_ns }}
+            --no-headers -o yaml > pvc.yml
+          args:
+            executable: /bin/bash
+
+        - name: Update the desired capacity in PVC spec
+          replace:
+            path: pvc.yml
+            before: 'storageClassName: {{ storage_class }}'
+            regexp: "storage: {{ pvc_size }}"
+            replace: "storage: {{ desired_vol_size }}Gi"
+
+        - name: Configure PVC with the new capacity
+          shell: kubectl apply -f pvc.yml
+          args:
+            executable: /bin/bash
+          register: result
+          failed_when: "result.rc != 0"
+
+        - name: Check if the desired PVC is bound
+          shell: >
+            kubectl get pvc block-vol-pvc -n {{ app_ns }} --no-headers
+            -o custom-columns=:.status.phase
+          args:
+            executable: /bin/bash
+          register: pvc_status
+          failed_when: "'Bound' not in pvc_status.stdout"
+
+        - name: Check if the storage capacity is updated in PVC
+          shell: >
+              kubectl get pvc block-vol-pvc -n {{ app_ns }} --no-headers 
+              -o custom-columns=:status.capacity.storage
+          args:
+            executable: /bin/bash
+          register: capacity
+          until: "desired_vol_size in capacity.stdout"
+          delay: 10
+          retries: 50
+
+          ## Here we will dump +1Gi data than to previous pvc size
+        - set_fact:
+            value_num: '{{ ( (value_pvc.stdout | int + 1 | int) * 1024) |  int }}'
+
+        - name: Dump some more dummy data in the application mount point for using resized volume
+          shell: >
+              kubectl exec -it "{{ new_pod_name.stdout }}" -n "{{ app_ns }}" 
+              -- sh -c "cd {{ mount.stdout }} && dd if=/dev/urandom of=volume.txt bs=1024k count={{ value_num }}"
+          args:
+              executable: /bin/bash
+          register: load
+          failed_when: "load.rc != 0"
+
+        - name: Deprovision the busybox application
+          shell: kubectl delete -f busybox.yml -n {{ app_ns }}
+          args:
+            executable: /bin/bash
+
+        - name: Verify that busybox application is successfully deprovisioned
+          shell: kubectl get pods -n {{ app_ns }}
+          args:
+            executable: /bin/bash
+          register: app_pod_status
+          until: "'new_app_pod.stdout' not in app_pod_status.stdout"
+          delay: 5
+          retries:
+
+        - name: Verify that pvc is deleted successfully
+          shell: kubectl get pvc -n {{ app_ns }}
+          args:
+            executable: /bin/bash
+          register: pvc_status
+          until: "'block-vol-pvc' not in pvc_status.stdout"
+          delay: 3
+          retries: 30
+
+        - name: Verify the zvolume is deleted successfully
+          shell: kubectl get zv -n {{ zfs_operator_ns }}
+          args:
+            executable: /bin/bash
+          register: zvol_list
+          until: "'zv_name.stdout' not in zvol_list.stdout"
+          delay: 3
+          retries: 30
+
+        - name: Delete the application namespace
+          shell: kubectl delete ns {{ app_ns }}
+          args:
+            executable: /bin/bash
+
+        - set_fact:
+            flag: "Pass"
+        
+      rescue:
+      - set_fact:
+          flag: "Fail"
+        
+      always:
+          ## RECORD END-OF-TEST IN e2e RESULT CR
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'EOT'

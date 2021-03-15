@@ -1,0 +1,15 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+    name: {{ clone_pvc_name }}
+    namespace: {{ app_ns }}
+spec:
+    storageClassName: {{ storage_class }}
+    dataSource:
+      name: {{ parent_pvc_name }}
+      kind: PersistentVolumeClaim
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: {{ clone_pvc_size }}  ## clone PVC size should match the size of the snapshot

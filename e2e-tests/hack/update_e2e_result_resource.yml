@@ -1,0 +1,45 @@
+---
+- block:
+   - name: Generate the e2e result CR to reflect SOT (Start of Test)
+     template:
+       src: e2e-result.j2
+       dest: e2e-result.yaml
+     vars:
+       test: "{{ test_name }}"
+       phase: in-progress
+       verdict: none
+
+   - name: Analyze the e2e cr yaml
+     shell: cat e2e-result.yaml
+
+   - name: Apply the e2e result CR
+     k8s:
+       state: present
+       src: e2e-result.yaml
+     register: e2er_status
+     failed_when: "e2er_status is failed"
+
+  when: status == "SOT"
+
+- block:
+   - name: Generate the e2e result CR to reflect EOT (End of Test)
+     template:
+       src: e2e-result.j2
+       dest: e2e-result.yaml
+     vars:
+       test: "{{ test_name }}"
+       phase: completed
+       verdict: "{{ flag }}"
+
+   - name: Analyze the e2e cr yaml
+     shell: cat e2e-result.yaml
+
+   - name: Apply the e2e result CR
+     k8s:
+       state: present
+       src: e2e-result.yaml
+       merge_type: merge
+     register: e2er_status
+     failed_when: "e2er_status is failed"
+
+  when: status == "EOT"

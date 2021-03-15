@@ -1,0 +1,86 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zfspv-backup-store
+  namespace: e2e
+data:
+  parameters.yml: |
+    
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: zfspv-velero-backup-restore-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      name: e2e
+      labels:
+        test: velero-backup-restore
+
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+          - name: APP_NAMESPACE  ## Namespace where application is deployed
+            value: '' 
+
+          - name: APP_LABEL  ## Application label
+            value: ''
+
+          - name: APP_PVC  ## PVC name for application
+            value: ''
+
+          - name: ACTION  ## On basis of the value of this env, this playbook will perform tasks.
+            value: ''     ## Supported values: (backup, restore, schedule_backup, incremental_backup, incremental_restore)
+          
+          - name: VELERO_BACKUP_NAME  ## Velero backup will be created with name of this value.
+            value: ''
+
+          - name: VELERO_PLUGIN_NAME  ## Velero plugin name. For zfs-localpv plugin name is `openebs/velero-plugin:2.1.0`
+            value: ''                 ## you can use ci image also. 
+
+          - name: VELERO_SCHEDULE_BACKUP_NAME  ## If you want to create scheduled backup (based on ACTION env) give the name for it.
+            value: ''
+
+          - name: VELERO_VERSION   ## Velero version (for e.g. v1.4.0)
+            value: ''
+
+          - name: STORAGE_BUCKET  ## Supported values: minio
+            value: ''
+            
+          - name: RESTORE_IN_DIFF_NAMESPACE  ## For restoring the backup in different namespace provide value accordingly.
+            value: ''                        ## Supported values: ( true, false )
+
+          - name: RESTORE_NAMESPACE  ## If `RESTORE_IN_DIFF_NAMESPACE: true` provide the namespace in which you want to restore the backup
+            value: ''
+
+          - name: RESTORE_IN_DIFF_NODE  ## For restoring the backup on different nodes provide value accordingly.
+            value: ''                   ## Supported values: ( true, false)
+            
+          - name: DATA_PERSISTENCE  ## Supported values: (busybox, mysql)
+            value: ''               ## To check data-consistency provide values accordingly. When value is set; some dummy test data will be 
+                                    ## dumped in application mount point and will verify that data in restored application.
+
+
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/functional/backup_and_restore/test.yml -i /etc/ansible/hosts -vv; exit 0"]
+
+        volumeMounts:
+        - name: parameters
+          mountPath: /mnt/
+      volumes:
+        - name: parameters
+          configMap:
+            name: zfspv-backup-store

@@ -1,0 +1,52 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: percona-deploy-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      name: percona-deploy
+      labels:
+        app: percona-deployment
+
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+            # Name of the storage class to use for volume provisioning
+          - name: STORAGE_CLASS  
+            value: 'zfspv-sc'
+           
+            # This is the namespace where percona application will be deployed 
+          - name: APP_NAMESPACE
+            value: 'percona'
+
+            # Application label for percona deployment in `key=value` format
+          - name: APP_LABEL
+            value: 'app=percona'
+
+            # Application PVC name
+          - name: APP_PVC
+            value: 'percona-pvc'
+
+            # Persistent volume storage capacity (for e.g, 5Gi)
+          - name: PV_CAPACITY
+            value: '5Gi'
+
+            # Use: `provision` to deploy the application
+            # Use: `deprovision` to deprovision the application
+          - name: ACTION
+            value: 'provision'
+            
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/apps/percona/deployers/test.yml -i /etc/ansible/hosts -v; exit 0"]

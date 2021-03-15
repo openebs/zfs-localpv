@@ -1,0 +1,142 @@
+- block:
+
+    - name: Identify the node on which application pod is scheduled
+      shell: >
+        kubectl get pod {{ app_pod }} -n {{ app_ns }}
+        --no-headers -o custom-columns=:spec.nodeName
+      args: 
+        executable: /bin/bash
+      register: node_name 
+               
+    - name: Record the node name on which application pod is scheduled
+      set_fact:
+        app_node: "{{ node_name.stdout }}"
+
+    - name: Get the IP Address of the node on which application pod is scheduled
+      shell: >
+        kubectl get nodes {{ app_node }} --no-headers -o jsonpath='{.status.addresses[0].address}'
+      args:
+        executable: /bin/bash
+      register: node_ip_address
+
+    - name: Record the IP Address of the node on which application pod is scheduled
+      set_fact:
+        node_ip_add: "{{ node_ip_address.stdout }}"
+    
+    - block:
+       
+       - name: stop the {{ svc_type }} service on node where application pod is scheduled
+         shell: > 
+           sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
+           "echo {{ node_pwd }} | sudo -S su -c 'systemctl stop {{ svc_type }}.service'"
+         args:
+           executable: /bin/bash
+
+       - name: Check for the {{ svc_type }} service status
+         shell: >
+           sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }} 
+           "echo {{ node_pwd }} | sudo -S su -c 'systemctl status {{ svc_type }}.service'" | grep 'inactive'
+         args:
+          executable: /bin/bash
+         register: svc_status
+         until: "'inactive' in svc_status.stdout"
+         delay: 5
+         retries: 15
+
+       - name: Check the node {{ app_node }} status on which {{ svc_type }} failure chaos is induced
+         shell:
+           kubectl get nodes {{ app_node }}
+         args: 
+           executable: /bin/bash
+         register: node_status
+         until: "'NotReady' in node_status.stdout"
+         delay: 10
+         retries: 30
+
+       - name: Check if the new application pod is scheduled after {{ svc_type }} failure
+         shell: >
+           kubectl get pods -n {{ app_ns }} -l {{ app_label }} --no-headers | wc -l
+         args:
+           executable: /bin/bash
+         register: app_pod_count
+         until: "'2' in app_pod_count.stdout"
+         delay: 15
+         retries: 30
+
+       - name: Get the new application pod name
+         shell: > 
+           kubectl get pod -n {{ app_ns }} -l {{ app_label }} --no-headers | grep -v Terminating | awk '{print $1}'
+         args:
+           executable: /bin/bash
+         register: new_app_pod_name
+
+       - name: Record the new application pod name 
+         set_fact:
+           new_app_pod: "{{ new_app_pod_name.stdout }}"
+         
+       - name: Check for the newly created application pod status 
+         shell: >
+           kubectl get pod {{ new_app_pod }} -n {{ app_ns }} --no-headers -o custom-columns=:.status.phase
+         args:
+           executable: /bin/bash
+         register: new_app_pod_status
+         until: "'Pending' in new_app_pod_status.stdout"
+         delay: 5
+         retries: 20
+       
+      when: svc_type=="kubelet" or svc_type=="docker"
+
+  when: action == "svc_stop"
+
+  
+- block: 
+
+   - name: Start the {{ svc_type }} services
+     shell: > 
+       sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
+       "echo {{ node_pwd }} | sudo -S su -c 'systemctl start {{ svc_type }}.service'"    
+     args:
+       executable: /bin/bash
+
+   - name: Check for the {{ svc_type }} services status
+     shell: >
+       sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
+       "echo {{ node_pwd }} | sudo -S su -c 'systemctl status {{ svc_type }}.service'" | grep 'active (running)'
+     args: 
+       executable: /bin/bash
+     register: svc_status
+     until: "'active (running)' in svc_status.stdout"
+     delay: 5
+     retries: 15
+
+   - name: Check for the node status after starting {{ svc_type }} service
+     shell: >
+       kubectl get nodes {{ app_node }} --no-headers
+     args: 
+       executable: /bin/bash
+     register: node_status
+     until: "'NotReady' not in node_status.stdout"
+     delay: 10
+     retries: 30
+
+   - name: Verify that previous pods are deleted successfully after restart of {{ svc_type }}
+     shell: >
+       kubectl get pods -n {{ app_ns }} -l {{ app_label }} --no-headers | wc -l
+     args:
+       executable: /bin/bash
+     register: app_pod_count
+     until: "'1' in app_pod_count.stdout"
+     delay: 5
+     retries: 60
+     
+   - name: Get the status of newly created application pod
+     shell: >
+       kubectl get pod {{ new_app_pod }} -n {{ app_ns }} --no-headers -o custom-columns=:.status.phase
+     args:
+       executable: /bin/bash
+     register: application_pod
+     until: "'Running' in application_pod.stdout"
+     delay: 10
+     retries: 50
+
+  when: action == "svc_start"

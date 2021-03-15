@@ -1,0 +1,40 @@
+---
+- block:
+    - name: Check whether the provider storageclass is present
+      shell: kubectl get sc "{{ lookup('env','STORAGE_CLASS') }}"
+      args:
+        executable: /bin/bash
+      register: result
+      failed_when: "result.rc != 0"
+
+    - name: Replace the storageclass placeholder with test specific value
+      replace:
+        path: "{{ application }}"
+        regexp: "testclass"
+        replace: "{{ lookup('env','STORAGE_CLASS') }}"
+      
+    - name: Replace the application pvc placeholder with test specific value
+      replace:
+        path: "{{ application }}"
+        regexp: "testclaim"
+        replace: "{{ lookup('env','APP_PVC') }}"
+
+    - name: Replace the persistent volume capcity placeholder with test specific value
+      replace:
+        path: "{{ application }}"
+        regexp: "teststorage"
+        replace: "{{ lookup('env','PV_CAPACITY') }}"
+
+    - name: Get the application label value from env
+      set_fact:
+         app_lkey: "{{ app_label.split('=')[0] }}"
+         app_lvalue: "{{ app_label.split('=')[1] }}"
+
+    - name: Replace the application label placeholder in deployment spec
+      replace:
+        path: "{{ application }}"
+        regexp: "lkey: lvalue"
+        replace: "{{ app_lkey }}: {{ app_lvalue }}"
+
+      # Create test specific namespace
+    - include_tasks: /e2e-tests/utils/k8s/create_ns.yml

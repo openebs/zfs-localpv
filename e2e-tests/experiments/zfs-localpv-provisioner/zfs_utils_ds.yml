@@ -1,0 +1,68 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: e2e-zfspv-bin
+  namespace: e2e
+data:
+  zfs: |
+    #!/bin/sh
+    if [ -x /host/sbin/zfs ]; then
+      chroot /host /sbin/zfs "$@"
+    elif [ -x /host/usr/sbin/zfs ]; then
+      chroot /host /usr/sbin/zfs "$@"
+    else
+      chroot /host zfs "$@"
+    fi
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: zpool-creation
+spec:
+  selector:
+    matchLabels:
+      app: zfs-utils
+  template:
+    metadata:
+      labels:
+        app: zfs-utils
+    spec:
+      #nodeSelector:
+        #test: zfs-utils
+      containers:
+      - name: zfsutils
+        image: quay.io/w3aman/zfsutils:ci
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'echo Hello! && sleep 1800']
+        volumeMounts:
+          - name: udev
+            mountPath: /run/udev
+          - name: device
+            mountPath: /dev
+          - name: chroot-zfs
+            mountPath: /sbin/zfs
+            subPath: zfs
+          - name: host-root
+            mountPath: /host
+            mountPropagation: "HostToContainer"
+            readOnly: true
+        securityContext:
+          privileged: true
+        tty: true
+      volumes:
+        - hostPath:
+            path: /run/udev
+          name: udev
+        - hostPath:
+            path: /dev
+          name: device
+        - name: chroot-zfs
+          configMap:
+            defaultMode: 0555
+            name: e2e-zfspv-bin
+        - name: host-root
+          hostPath:
+            path: /
+            type: Directory

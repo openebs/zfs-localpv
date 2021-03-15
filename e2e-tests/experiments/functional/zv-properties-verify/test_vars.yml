@@ -1,0 +1,7 @@
+test_name: zv-properties-verify
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+pvc_name: "{{ lookup('env','APP_PVC') }}"
+
+zfs_operator_ns: "{{ lookup('env','ZFS_OPERATOR_NAMESPACE') }}"

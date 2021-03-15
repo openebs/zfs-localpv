@@ -1,0 +1,15 @@
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: zfspv-snaplocation
+  namespace: velero
+spec:
+  provider: openebs.io/zfspv-blockstore
+  config:
+    bucket: velero
+    prefix: zfs
+    namespace: openebs # this is namespace where ZFS-LocalPV creates all the CRs, passed as OPENEBS_NAMESPACE env in the ZFS-LocalPV deployment
+    provider: aws
+    region: minio
+    s3ForcePathStyle: "true"
+    s3Url: http://minio.velero.svc:9000

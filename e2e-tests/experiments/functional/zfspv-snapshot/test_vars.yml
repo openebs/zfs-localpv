@@ -1,0 +1,17 @@
+test_name: zfspv-snapshot
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+pvc_name: "{{ lookup('env','APP_PVC') }}"
+
+snapshot_class: "{{ lookup('env','SNAPSHOT_CLASS') }}"
+
+snapshot_name: "{{ lookup('env','SNAPSHOT_NAME') }}"
+
+data_persistence: "{{ lookup('env','DATA_PERSISTENCE') }}"
+
+zfs_operator_ns: "{{ lookup('env','ZFS_OPERATOR_NAMESPACE') }}"
+
+action: "{{ lookup('env','ACTION') }}"
+
+app_label: "{{ lookup('env','APP_LABEL') }}"

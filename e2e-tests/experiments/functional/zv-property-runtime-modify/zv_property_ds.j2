@@ -1,0 +1,34 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  generateName: zv-property-modify-{{ fs_type }}-
+spec:
+  selector:
+    matchLabels:
+      test: zv-property-modify-{{ fs_type }}
+  template:
+    metadata:
+      labels:
+        test: zv-property-modify-{{ fs_type }}
+    spec:
+      containers:
+      - name: zfsutils
+        image: quay.io/w3aman/zfsutils:ci
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'echo Hello! && sleep 1800']
+        volumeMounts:
+          - name: udev
+            mountPath: /run/udev
+          - name: device
+            mountPath: /dev
+        securityContext:
+          privileged: true
+        tty: true
+      volumes:
+        - hostPath:
+            path: /run/udev
+          name: udev
+        - hostPath:
+            path: /dev
+          name: device

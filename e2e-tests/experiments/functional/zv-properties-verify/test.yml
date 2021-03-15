@@ -1,0 +1,152 @@
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars_files:
+    - test_vars.yml
+    
+  tasks:
+    - block:
+
+          ## Generating the testname for zfs volume properties verify test
+        - include_tasks: /e2e-tests/hack/create_testname.yml
+    
+          ## Record SOT (start of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'SOT'
+        
+        - block:
+
+          - name: Get the zvolume name
+            shell: >
+              kubectl get pvc {{ pvc_name }} -n {{ app_ns }} --no-headers
+              -o custom-columns=:.spec.volumeName
+            args: 
+              executable: /bin/bash
+            register: zvol_name
+
+          - name: Record the zvolume name
+            set_fact:
+              zv_name: "{{ zvol_name.stdout }}"
+
+          - name: Get the storage class name used to create volume
+            shell: >
+              kubectl get pvc {{ pvc_name }} -n {{ app_ns }} --no-headers
+              -o custom-columns=:.spec.storageClassName
+            args: 
+              executable: /bin/bash
+            register: stg_class_name
+
+          - name: Record the storage class name
+            set_fact:
+              sc_name: "{{ stg_class_name.stdout }}"
+
+          - name: Get the value of compression parameter from the storage class
+            shell: >
+              kubectl get sc {{ sc_name }} --no-headers 
+              -o custom-columns=:.parameters.compression
+            args:
+              executable: /bin/bash
+            register: compression_parameter
+
+          - name: Compare this value with the compression field in zvolume
+            shell: > 
+              kubectl get zv {{ zv_name }} -n {{ zfs_operator_ns }} --no-headers
+              -o custom-columns=:.spec.compression
+            args: 
+              executable: /bin/bash
+            register: result
+            failed_when: compression_parameter.stdout != result.stdout
+            
+          - name: Get the value of dedup parameter from the storage class
+            shell: >
+              kubectl get sc {{ sc_name }} --no-headers
+              -o custom-columns=:.parameters.dedup
+            args:
+              executable: /bin/bash
+            register: dedup_parameter
+
+          - name: Compare this value with the dedup field in zvolume
+            shell: > 
+              kubectl get zv {{ zv_name }} -n {{ zfs_operator_ns }} --no-headers
+              -o custom-columns=:.spec.dedup
+            args: 
+              executable: /bin/bash
+            register: result
+            failed_when: dedup_parameter.stdout != result.stdout
+
+          - name: Get the file system type to be created on application mount from the storage class
+            shell: >
+              kubectl get sc {{ sc_name }} --no-headers
+              -o custom-columns=:.parameters.fstype
+            args:
+              executable: /bin/bash
+            register: fstype_parameter
+
+          - name: Compare this value with the fstype field in zvolume
+            shell: > 
+              kubectl get zv {{ zv_name }} -n {{ zfs_operator_ns }} --no-headers
+              -o custom-columns=:.spec.fsType
+            args: 
+              executable: /bin/bash
+            register: result  
+            failed_when: fstype_parameter.stdout != result.stdout          
+         
+          - block:
+
+            - name: Get the value of recordsize from the storage class when fstype is zfs
+              shell: >
+                kubectl get sc {{ sc_name }} --no-headers
+                -o custom-columns=:.parameters.recordsize
+              args:
+                executable: /bin/bash
+              register: recordsize_parameter
+
+            - name: Compare this value with the recordsize field in zvolume
+              shell: >
+                kubectl get zv {{ zv_name }} -n {{ zfs_operator_ns }} --no-headers
+                -o custom-columns=:.spec.recordsize
+              args: 
+                executable: /bin/bash
+              register: result
+              failed_when: recordsize_parameter.stdout != result.stdout
+
+            when: fstype_parameter.stdout == "zfs"
+
+          - block:
+
+            - name: Get the value of volblocksize from the storage class when fstype is xfs or ext
+              shell: >
+                kubectl get sc {{ sc_name }} --no-headers
+                -o custom-columns=:.parameters.volblocksize
+              args:
+                executable: /bin/bash
+              register: volblocksize_parameter
+
+            - name: Compare this value with the volblocksize field in the zvolume
+              shell: >
+                kubectl get zv {{ zv_name }} -n {{ zfs_operator_ns }} --no-headers
+                -o custom-columns=:.spec.volblocksize
+              args:
+                executable: /bin/bash
+              register: result
+              failed_when: volblocksize_parameter.stdout != result.stdout
+
+            when: 
+            - fstype_parameter.stdout == "xfs" or fstype_parameter.stdout == "ext4" or
+              fstype_parameter.stdout == "ext3" or fstype_parameter.stdout == "ext2" or
+              fstype_parameter.stdout == "btrfs"
+              
+          - set_fact:
+              flag: "Pass"
+        
+      rescue:
+        - set_fact:
+            flag: "Fail"
+        
+      always:
+          # RECORD END-OF-TEST IN e2e RESULT CR
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'EOT'           

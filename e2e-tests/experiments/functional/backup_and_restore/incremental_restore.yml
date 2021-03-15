@@ -1,0 +1,83 @@
+- name: Obtain the mount path for the application
+  shell: > 
+      kubectl get pods -n {{ app_ns }} -l {{ app_label }} 
+      -o custom-columns=:.spec.containers[].volumeMounts[].mountPath --no-headers
+  args: 
+      executable: /bin/bash
+  register: mount
+
+- name: Record the mount path for the application
+  set_fact:
+    mount_path: "{{ mount.stdout }}"
+    
+- name: Get the first backup name which is full backup by default
+  shell: velero get backup | grep {{ schedule_name }} | tail -n1 | awk '{print $1}'
+  args:
+    executable: /bin/bash
+  register: first_full_bkp
+
+- name: Record the first full backup name
+  set_fact:
+    first_full_backup: "{{ first_full_bkp.stdout }}"
+
+- name: Get the first incremental backup name
+  shell: velero get backup | grep {{ schedule_name }} | tail -n2 | head -n1 | awk '{print $1}'
+  args:
+    executable: /bin/bash
+  register: first_incr_bkp
+
+- name: Record the first incremental backup name
+  set_fact:
+    first_incremental_backup: "{{ first_incr_bkp.stdout }}"
+
+- name: Get the second incremental backup name
+  shell: velero get backup | grep {{ schedule_name }} | tail -n3 | head -n1 | awk '{print $1}'
+  args:
+    executable: /bin/bash
+  register: second_incr_bkp
+  
+- name: Record the second incremental backup name
+  set_fact:
+    second_incremental_backup: "{{ second_incr_bkp.stdout }}"
+
+- name: Get the last full backup name which is after two incremental backups
+  shell: velero get backup | grep {{ schedule_name }} | tail -n4 | head -n1 | awk '{print $1}'
+  args:
+    executable: /bin/bash
+  register: last_full_bkp
+
+- name: Record the last full backup name
+  set_fact:
+    last_full_backup: "{{ last_full_bkp.stdout }}"
+
+- name: Restore the first incremental backup
+  include: "./restore.yml"
+  vars:
+    velero_backup_name: "{{ first_incremental_backup }}"
+    app_ns_new: "first-incr-restore-ns"
+
+- name: Check the data consistency
+  shell: >
+    kubectl exec -ti {{ restore_app_pod }} -n first-incr-restore-ns 
+    -- sh -c "cd {{ mount_path }} && ls"
+  args:
+    executable: /bin/bash
+  register: data_status
+  failed_when: "'incr-file1' not in data_status.stdout"
+
+- name: Restore the second incremental backup
+  include: "./restore.yml"
+  vars:
+    velero_backup_name: "{{ second_incremental_backup }}"
+    app_ns_new: "second-incr-restore-ns"
+
+- name: Check the data consistency
+  shell: >
+    kubectl exec -ti {{ restore_app_pod }} -n second-incr-restore-ns
+    -- sh -c "cd {{ mount_path }} && ls"
+  args:
+    executable: /bin/bash
+  register: data_status
+  failed_when: 
+    - "'incr-file1' not in data_status.stdout"
+    - "'incr-file2' not in data_status.stdout"

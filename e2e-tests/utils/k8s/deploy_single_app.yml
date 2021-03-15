@@ -1,0 +1,12 @@
+---
+#Deploying application on k8's cluster and cross checking whether the
+#application is deployed successfully.
+- name: Deploying {{ application_name }}
+  k8s:
+    state: present
+    src: "{{ application }}"
+    namespace: "{{ app_ns }}"
+    merge_type: merge  
+  register: result
+
+- include_tasks: /e2e-tests/utils/k8s/status_app_pod.yml

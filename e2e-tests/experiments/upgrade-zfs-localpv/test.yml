@@ -1,0 +1,213 @@
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars_files:
+  - test_vars.yml
+    
+  tasks:
+
+    - block:
+    
+          ## Generating the testname for zfs localpv upgrade test
+        - include_tasks: /e2e-tests/hack/create_testname.yml
+
+          ## Record SOT (start of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'SOT'
+
+        - name: Get the list of pods of zfs-localpv components (zfs-controller and zfs-node agent deamonset)
+          shell: >
+            kubectl get pods -n kube-system -l role=openebs-zfs 
+            --no-headers -o custom-columns=:.metadata.name
+          args:
+            executable: /bin/bash
+          register: zfs_localpv_components
+
+        - name: Verify that the zfs-localpv components are in running state
+          shell: >
+            kubectl get pods {{ item }} -n kube-system --no-headers -o custom-columns=:status.phase
+          args: 
+            executable: /bin/bash
+          register: ZFS_driver_components
+          failed_when: "ZFS_driver_components.stdout != 'Running'"
+          with_items: "{{ zfs_localpv_components.stdout_lines }}"
+          ignore_errors: true
+
+        - name: Get the version tag for zfs-driver
+          shell: >
+            kubectl get sts openebs-zfs-controller -n kube-system 
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="openebs-zfs-plugin")].image}' | cut -d ":" -f2
+          args:
+            executable: /bin/bash
+          register: zfs_driver_tag
+
+        - name: Get the replica count for zfs-controller statefulset
+          shell: >
+            kubectl get sts openebs-zfs-controller -n kube-system -o jsonpath='{.status.replicas}'
+          args: 
+            executable: /bin/bash
+          register: no_of_zfs_ctrl_replicas
+
+        - name: Record the number of zfs-controller replicas
+          set_fact:
+            zfs_ctrl_replicas: "{{ no_of_zfs_ctrl_replicas.stdout }}"
+
+        - name: Get the list of node-agent pods in openebs-zfs-node daemonset
+          shell: >
+            kubectl get po -n kube-system -l app=openebs-zfs-node --no-headers -o custom-columns=:.metadata.name
+          args:
+            executable: /bin/bash
+          register: ds_pods
+            
+        - block:
+            ## This task creates new CRDs as zfs-LocalPV related CRs are now grouped 
+            ## under `zfs.openebs.io` from v0.6 release.
+          - name: Apply the new CRDs for zfs-LocalPV 
+            shell: >
+              kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/master/upgrade/crd.yaml
+            args:
+              executable: /bin/bash
+            register: new_crds
+            failed_when: "new_crds.rc != 0"
+
+            ## This task create new CRs for zfs-volume and zfs-snapshot with updated
+            ## apiversion to `zfs.openebs.io`. Previously this was `openebs.io`.
+          - name: Download the Upgrade script for creating new CRs with apiversion as `zfs.openebs.io`
+            get_url:  
+              url: https://raw.githubusercontent.com/openebs/zfs-localpv/master/upgrade/upgrade.sh
+              dest: ./upgrade.sh
+              force: yes
+            register: result
+            until: "'OK' in result.msg"
+            delay: 5
+            retries: 3
+
+          - name: Apply the upgrade script
+            shell: sh ./upgrade.sh {{ zfs_operator_ns }}
+            args:
+              executable: /bin/bash
+
+          when: 
+          - zfs_driver_tag.stdout == "v0.4" or zfs_driver_tag.stdout == "0.4.1" or zfs_driver_tag.stdout == "v0.5"
+          - "'v0.4.x' not in to_version_zfs_branch" 
+          - "'v0.5.x' not in to_version_zfs_branch"
+
+        - name: Download the zfs-operator file
+          get_url:
+            url: https://raw.githubusercontent.com/openebs/zfs-localpv/{{ to_version_zfs_branch }}/deploy/zfs-operator.yaml
+            dest: ./new_zfs_operator.yml
+            force: yes
+          register: result
+          until: "'OK' in result.msg"
+          delay: 5
+          retries: 3
+                
+        - name: Update the openebs zfs-driver image 
+          replace:
+            path: ./new_zfs_operator.yml
+            regexp: openebs/zfs-driver:ci
+            replace: "{{ lookup('env','TO_VERSION_ZFS_DRIVER_IMAGE') }}"
+          when: lookup('env','TO_VERSION_ZFS_DRIVER_IMAGE') | length > 0
+
+        - name: Update the number of zfs-controller statefulset replicas
+          replace:
+            path: ./new_zfs_operator.yml
+            regexp: "replicas: 1"
+            replace: "replicas: {{ zfs_ctrl_replicas }}"
+
+        - name: Apply the zfs_operator file to deploy zfs-driver components to the newer version
+          shell: 
+            kubectl apply -f ./new_zfs_operator.yml
+          args:
+              executable: /bin/bash
+
+        - name: Wait for some time to old zfs-driver components to go into Terminating state.
+          shell: >
+            sleep 30
+
+        - name: Verify zfs-node agent previous pods are not present in kube-system namespace
+          shell: >
+            kubectl get pods -n kube-system -l app=openebs-zfs-node --no-headers
+          args: 
+            executable: /bin/bash
+          register: new_ds_pods
+          until: "'{{ item }}' not in new_ds_pods.stdout"
+          delay: 5
+          retries: 40
+          with_items: "{{ ds_pods.stdout_lines }}"
+
+        - name: Verify zfs-node agent newer pods are in running status
+          shell: >
+            kubectl get pods -n kube-system -l app=openebs-zfs-node
+            --no-headers -o custom-columns=:status.phase | sort | uniq
+          args: 
+            executable: /bin/bash
+          register: new_ds_pods
+          until: "new_ds_pods.stdout == 'Running'"
+          delay: 5
+          retries: 30
+
+        - name: Verify that zfs-node agent daemonset image is upgraded
+          shell: >
+            kubectl get ds openebs-zfs-node -n kube-system 
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="openebs-zfs-plugin")].image}'
+          args: 
+            executable: /bin/bash
+          register: ds_image
+          failed_when: ds_image.stdout != to_version_zfs_driver_image
+
+        - name: Check for the count of zfs-controller ready replicas
+          shell: >
+            kubectl get sts openebs-zfs-controller -n kube-system -o jsonpath='{.status.readyReplicas}'
+          args:
+            executable: /bin/bash
+          register: ready_replicas
+          until: "ready_replicas.stdout|int == zfs_ctrl_replicas|int"
+          delay: 5
+          retries: 20
+
+        - name: Verify that zfs-driver version from the zfs-controller statefulset image is upgraded
+          shell: >
+            kubectl get sts openebs-zfs-controller -n kube-system
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="openebs-zfs-plugin")].image}'
+          args:
+            executable: /bin/bash
+          register: zfs_ctrl_image
+          failed_when: zfs_ctrl_image.stdout != to_version_zfs_driver_image
+
+        - block:
+
+          - name: Download the cleanup script for removing the resources with old CRs and delete old CRDs
+            get_url:  
+              url: https://raw.githubusercontent.com/openebs/zfs-localpv/master/upgrade/cleanup.sh
+              dest: ./cleanup.sh
+              force: yes
+            register: result
+            until: "'OK' in result.msg"
+            delay: 5
+            retries: 3
+
+          - name: Apply the cleanup script
+            shell: sh ./cleanup.sh {{ zfs_operator_ns }}
+            args:
+              executable: /bin/bash
+
+          when: 
+          - zfs_driver_tag.stdout == "v0.4" or zfs_driver_tag.stdout == "0.4.1" or zfs_driver_tag.stdout == "v0.5"
+          - "'v0.4.x' not in to_version_zfs_branch" 
+          - "'v0.5.x' not in to_version_zfs_branch"
+
+        - set_fact:
+            flag: "Pass"
+
+      rescue:
+      - set_fact:
+          flag: "Fail"
+
+      always:
+        ## Record SOT (start of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'EOT' 
