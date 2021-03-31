@@ -1,0 +1,1 @@
+With k8s v1.22 the v1beta1 for various resources will no longer be supported. Updating the storage and apiexention version to v1 for better support.

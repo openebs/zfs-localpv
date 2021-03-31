@@ -11,39 +11,14 @@
 # to generate the CRD definition
 
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.8
+    controller-gen.kubebuilder.io/version: v0.4.0
   creationTimestamp: null
   name: zfsvolumes.zfs.openebs.io
 spec:
-  additionalPrinterColumns:
-  - JSONPath: .spec.poolName
-    description: ZFS Pool where the volume is created
-    name: ZPool
-    type: string
-  - JSONPath: .spec.ownerNodeID
-    description: Node where the volume is created
-    name: Node
-    type: string
-  - JSONPath: .spec.capacity
-    description: Size of the volume
-    name: Size
-    type: string
-  - JSONPath: .status.state
-    description: Status of the volume
-    name: Status
-    type: string
-  - JSONPath: .spec.fsType
-    description: filesystem created on the volume
-    name: Filesystem
-    type: string
-  - JSONPath: .metadata.creationTimestamp
-    description: Age of the volume
-    name: Age
-    type: date
   group: zfs.openebs.io
   names:
     kind: ZFSVolume
@@ -53,12 +28,34 @@ spec:
     - zfsvol
     - zv
     singular: zfsvolume
-  preserveUnknownFields: false
   scope: Namespaced
-  subresources: {}
-  version: v1
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - description: ZFS Pool where the volume is created
+      jsonPath: .spec.poolName
+      name: ZPool
+      type: string
+    - description: Node where the volume is created
+      jsonPath: .spec.ownerNodeID
+      name: Node
+      type: string
+    - description: Size of the volume
+      jsonPath: .spec.capacity
+      name: Size
+      type: string
+    - description: Status of the volume
+      jsonPath: .status.state
+      name: Status
+      type: string
+    - description: filesystem created on the volume
+      jsonPath: .spec.fsType
+      name: Filesystem
+      type: string
+    - description: Age of the volume
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: ZFSVolume represents a ZFS based volume
@@ -241,7 +238,33 @@ spec:
         type: object
     served: true
     storage: true
-  - name: v1alpha1
+    subresources: {}
+  - additionalPrinterColumns:
+    - description: ZFS Pool where the volume is created
+      jsonPath: .spec.poolName
+      name: ZPool
+      type: string
+    - description: Node where the volume is created
+      jsonPath: .spec.ownerNodeID
+      name: Node
+      type: string
+    - description: Size of the volume
+      jsonPath: .spec.capacity
+      name: Size
+      type: string
+    - description: Status of the volume
+      jsonPath: .status.state
+      name: Status
+      type: string
+    - description: filesystem created on the volume
+      jsonPath: .spec.fsType
+      name: Filesystem
+      type: string
+    - description: Age of the volume
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ZFSVolume represents a ZFS based volume
@@ -416,6 +439,7 @@ spec:
         type: object
     served: true
     storage: false
+    subresources: {}
 status:
   acceptedNames:
     kind: ""
