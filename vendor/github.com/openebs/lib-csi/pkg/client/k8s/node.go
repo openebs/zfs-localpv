@@ -17,6 +17,8 @@ limitations under the License.
 package k8s
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,7 +48,7 @@ func (n *NodeStruct) Get(name string, options metav1.GetOptions) (*corev1.Node, 
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get node: %s", name)
 	}
-	return cs.CoreV1().Nodes().Get(name, options)
+	return cs.CoreV1().Nodes().Get(context.TODO(), name, options)
 }
 
 // List returns a slice of Nodes registered in a Kubernetes cluster
@@ -55,7 +57,7 @@ func (n *NodeStruct) List(options metav1.ListOptions) (*corev1.NodeList, error) 
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get nodes")
 	}
-	return cs.CoreV1().Nodes().List(options)
+	return cs.CoreV1().Nodes().List(context.TODO(), options)
 }
 
 // NumberOfNodes returns the number of nodes registered in a Kubernetes cluster

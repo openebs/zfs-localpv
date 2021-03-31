@@ -19,6 +19,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	"time"
 
 	v1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
@@ -37,15 +38,15 @@ type ZFSVolumesGetter interface {
 
 // ZFSVolumeInterface has methods to work with ZFSVolume resources.
 type ZFSVolumeInterface interface {
-	Create(*v1.ZFSVolume) (*v1.ZFSVolume, error)
-	Update(*v1.ZFSVolume) (*v1.ZFSVolume, error)
-	UpdateStatus(*v1.ZFSVolume) (*v1.ZFSVolume, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.ZFSVolume, error)
-	List(opts metav1.ListOptions) (*v1.ZFSVolumeList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.ZFSVolume, err error)
+	Create(ctx context.Context, zFSVolume *v1.ZFSVolume, opts metav1.CreateOptions) (*v1.ZFSVolume, error)
+	Update(ctx context.Context, zFSVolume *v1.ZFSVolume, opts metav1.UpdateOptions) (*v1.ZFSVolume, error)
+	UpdateStatus(ctx context.Context, zFSVolume *v1.ZFSVolume, opts metav1.UpdateOptions) (*v1.ZFSVolume, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.ZFSVolume, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.ZFSVolumeList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ZFSVolume, err error)
 	ZFSVolumeExpansion
 }
 
@@ -64,20 +65,20 @@ func newZFSVolumes(c *ZfsV1Client, namespace string) *zFSVolumes {
 }
 
 // Get takes name of the zFSVolume, and returns the corresponding zFSVolume object, and an error if there is any.
-func (c *zFSVolumes) Get(name string, options metav1.GetOptions) (result *v1.ZFSVolume, err error) {
+func (c *zFSVolumes) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.ZFSVolume, err error) {
 	result = &v1.ZFSVolume{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("zfsvolumes").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of ZFSVolumes that match those selectors.
-func (c *zFSVolumes) List(opts metav1.ListOptions) (result *v1.ZFSVolumeList, err error) {
+func (c *zFSVolumes) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ZFSVolumeList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -88,13 +89,13 @@ func (c *zFSVolumes) List(opts metav1.ListOptions) (result *v1.ZFSVolumeList, er
 		Resource("zfsvolumes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested zFSVolumes.
-func (c *zFSVolumes) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *zFSVolumes) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -105,87 +106,90 @@ func (c *zFSVolumes) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("zfsvolumes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a zFSVolume and creates it.  Returns the server's representation of the zFSVolume, and an error, if there is any.
-func (c *zFSVolumes) Create(zFSVolume *v1.ZFSVolume) (result *v1.ZFSVolume, err error) {
+func (c *zFSVolumes) Create(ctx context.Context, zFSVolume *v1.ZFSVolume, opts metav1.CreateOptions) (result *v1.ZFSVolume, err error) {
 	result = &v1.ZFSVolume{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("zfsvolumes").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(zFSVolume).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a zFSVolume and updates it. Returns the server's representation of the zFSVolume, and an error, if there is any.
-func (c *zFSVolumes) Update(zFSVolume *v1.ZFSVolume) (result *v1.ZFSVolume, err error) {
+func (c *zFSVolumes) Update(ctx context.Context, zFSVolume *v1.ZFSVolume, opts metav1.UpdateOptions) (result *v1.ZFSVolume, err error) {
 	result = &v1.ZFSVolume{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("zfsvolumes").
 		Name(zFSVolume.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(zFSVolume).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *zFSVolumes) UpdateStatus(zFSVolume *v1.ZFSVolume) (result *v1.ZFSVolume, err error) {
+func (c *zFSVolumes) UpdateStatus(ctx context.Context, zFSVolume *v1.ZFSVolume, opts metav1.UpdateOptions) (result *v1.ZFSVolume, err error) {
 	result = &v1.ZFSVolume{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("zfsvolumes").
 		Name(zFSVolume.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(zFSVolume).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the zFSVolume and deletes it. Returns an error if one occurs.
-func (c *zFSVolumes) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *zFSVolumes) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("zfsvolumes").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *zFSVolumes) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (c *zFSVolumes) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("zfsvolumes").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched zFSVolume.
-func (c *zFSVolumes) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.ZFSVolume, err error) {
+func (c *zFSVolumes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ZFSVolume, err error) {
 	result = &v1.ZFSVolume{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("zfsvolumes").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

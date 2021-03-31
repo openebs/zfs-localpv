@@ -26,8 +26,10 @@ import (
 )
 
 // ZFSSnapshotLister helps list ZFSSnapshots.
+// All objects returned here must be treated as read-only.
 type ZFSSnapshotLister interface {
 	// List lists all ZFSSnapshots in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ZFSSnapshot, err error)
 	// ZFSSnapshots returns an object that can list and get ZFSSnapshots.
 	ZFSSnapshots(namespace string) ZFSSnapshotNamespaceLister
@@ -58,10 +60,13 @@ func (s *zFSSnapshotLister) ZFSSnapshots(namespace string) ZFSSnapshotNamespaceL
 }
 
 // ZFSSnapshotNamespaceLister helps list and get ZFSSnapshots.
+// All objects returned here must be treated as read-only.
 type ZFSSnapshotNamespaceLister interface {
 	// List lists all ZFSSnapshots in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ZFSSnapshot, err error)
 	// Get retrieves the ZFSSnapshot from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.ZFSSnapshot, error)
 	ZFSSnapshotNamespaceListerExpansion
 }

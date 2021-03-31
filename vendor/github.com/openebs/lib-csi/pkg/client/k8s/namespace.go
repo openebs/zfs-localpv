@@ -17,6 +17,8 @@ limitations under the License.
 package k8s
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,7 +48,7 @@ func (ns *NamespaceStruct) Get(name string, options metav1.GetOptions) (*corev1.
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get namespace: %s", name)
 	}
-	return cs.CoreV1().Namespaces().Get(name, options)
+	return cs.CoreV1().Namespaces().Get(context.TODO(), name, options)
 }
 
 // List returns a slice of namespaces defined in a Kubernetes cluster
@@ -55,5 +57,5 @@ func (ns *NamespaceStruct) List(options metav1.ListOptions) (*corev1.NamespaceLi
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get namespaces")
 	}
-	return cs.CoreV1().Namespaces().List(options)
+	return cs.CoreV1().Namespaces().List(context.TODO(), options)
 }

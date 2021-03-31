@@ -200,9 +200,12 @@ func CreateZFSVolume(req *csi.CreateVolumeRequest) (string, error) {
 		return "", status.Errorf(codes.Internal, "get node map failed : %s", err.Error())
 	}
 
-	// run the scheduler
-	selected := schd.Scheduler(req, nmap)
-
+	// run the scheduler get the preferred nodelist
+	var selected string
+	nodelist := schd.Scheduler(req, nmap)
+	if len(nodelist) != 0 {
+		selected = nodelist[0]
+	}
 	if len(selected) == 0 {
 		// (hack): CSI Sanity test does not pass topology information
 		selected = parameters["node"]

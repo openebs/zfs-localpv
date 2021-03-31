@@ -26,8 +26,10 @@ import (
 )
 
 // ZFSBackupLister helps list ZFSBackups.
+// All objects returned here must be treated as read-only.
 type ZFSBackupLister interface {
 	// List lists all ZFSBackups in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ZFSBackup, err error)
 	// ZFSBackups returns an object that can list and get ZFSBackups.
 	ZFSBackups(namespace string) ZFSBackupNamespaceLister
@@ -58,10 +60,13 @@ func (s *zFSBackupLister) ZFSBackups(namespace string) ZFSBackupNamespaceLister 
 }
 
 // ZFSBackupNamespaceLister helps list and get ZFSBackups.
+// All objects returned here must be treated as read-only.
 type ZFSBackupNamespaceLister interface {
 	// List lists all ZFSBackups in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ZFSBackup, err error)
 	// Get retrieves the ZFSBackup from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.ZFSBackup, error)
 	ZFSBackupNamespaceListerExpansion
 }
