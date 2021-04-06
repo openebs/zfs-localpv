@@ -78,15 +78,20 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 	var err error
 	// ZFS Volume should be deleted. Check if deletion timestamp is set
 	if c.isDeletionCandidate(zv) {
-		err = zfs.DestroyVolume(zv)
-		if err == nil {
-			zfs.RemoveZvolFinalizer(zv)
+		userFin := zfs.GetUserFinalizers(zv.Finalizers)
+		if len(userFin) == 0 {
+			// destroy only if other finalizers have been removed
+			err = zfs.DestroyVolume(zv)
+			if err == nil {
+				err = zfs.RemoveVolumeFinalizer(zv)
+			}
+		} else {
+			return fmt.Errorf("volume: can not destroy, waiting for finalizers to be removed %v", userFin)
 		}
 	} else {
-		// if finalizer is not set then it means we are creating
-		// the volume. And if it is set then volume has already been
-		// created and this event is for property change only.
-		if zv.Finalizers != nil {
+		// if volume has already been created and its state is Ready
+		// then this event is for property change only.
+		if zfs.IsVolumeReady(zv) {
 			err = zfs.SetVolumeProp(zv)
 		} else {
 			if len(zv.Spec.SnapName) > 0 {
