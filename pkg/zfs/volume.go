@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"time"
 
+	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/bkpbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/restorebuilder"
@@ -65,22 +66,63 @@ var (
 	// NodeID is the NodeID of the node on which the pod is present
 	NodeID string
 
+	// ZFSAffinityKey is the key for setting the node affinity on the PV
+	ZFSAffinityKey string
+
 	// GoogleAnalyticsEnabled should send google analytics or not
 	GoogleAnalyticsEnabled string
 )
 
 func init() {
+	var err error
 
 	OpenEBSNamespace = os.Getenv(OpenEBSNamespaceKey)
-	if OpenEBSNamespace == "" && os.Getenv("OPENEBS_NODE_DRIVER") != "" {
-		klog.Fatalf("OPENEBS_NAMESPACE environment variable not set")
-	}
-	NodeID = os.Getenv("OPENEBS_NODE_ID")
-	if NodeID == "" && os.Getenv("OPENEBS_NODE_DRIVER") != "" {
-		klog.Fatalf("NodeID environment variable not set")
+	ZFSAffinityKey = os.Getenv("NODE_AFFINITY_KEY")
+
+	if os.Getenv("OPENEBS_NODE_DRIVER") != "" {
+		if OpenEBSNamespace == "" {
+			klog.Fatalf("OPENEBS_NAMESPACE environment variable not set for daemonset")
+		}
+		nodename := os.Getenv("OPENEBS_NODE_NAME")
+		if nodename == "" {
+			klog.Fatalf("OPENEBS_NODE_NAME environment variable not set")
+		}
+		if len(ZFSAffinityKey) > 0 {
+			// if affinity key is provided, the node should be labelled with that key
+			if NodeID, err = GetNodeID(nodename); err != nil {
+				klog.Fatalf("GetNodeID failed for node=%s key=%s, err: %s", nodename, ZFSAffinityKey, err.Error())
+			}
+		} else {
+			// if key is not provided use the Driver's topology key and value
+			ZFSAffinityKey = ZFSTopologyKey
+			NodeID = nodename
+		}
+		klog.Infof("zfs: node(%s) affinity key=%s nodeid=%s", nodename, ZFSAffinityKey, NodeID)
+	} else if os.Getenv("OPENEBS_CONTROLLER_DRIVER") != "" {
+		if OpenEBSNamespace == "" {
+			klog.Fatalf("OPENEBS_NAMESPACE environment variable not set for controller")
+		}
+
+		if ZFSAffinityKey == "" {
+			ZFSAffinityKey = ZFSTopologyKey
+		}
+		klog.Infof("zfs: controller will use affinity key=%s", ZFSAffinityKey)
 	}
 
 	GoogleAnalyticsEnabled = os.Getenv(GoogleAnalyticsKey)
+}
+
+func GetNodeID(nodename string) (string, error) {
+	node, err := k8sapi.GetNode(nodename)
+	if err != nil {
+		return "", fmt.Errorf("failed to get the node %s", nodename)
+	}
+
+	nodeid, ok := node.Labels[ZFSAffinityKey]
+	if !ok {
+		return "", fmt.Errorf("node %s is not labelled with the key %s", nodename, ZFSAffinityKey)
+	}
+	return nodeid, nil
 }
 
 func checkVolCreation(ctx context.Context, volname string) (bool, error) {
@@ -104,7 +146,7 @@ func checkVolCreation(ctx context.Context, volname string) (bool, error) {
 				return false, fmt.Errorf("zfs: volume creation failed")
 			}
 
-			klog.Infof("zfs: waiting for volume %s/%s to be created on node %s",
+			klog.Infof("zfs: waiting for volume %s/%s to be created on nodeid %s",
 				vol.Spec.PoolName, volname, vol.Spec.OwnerNodeID)
 
 			time.Sleep(time.Second)

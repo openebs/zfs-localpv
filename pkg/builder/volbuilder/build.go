@@ -136,9 +136,9 @@ func (b *Builder) WithThinProv(thinprov string) *Builder {
 	return b
 }
 
-// WithOwnerNode sets owner node for the ZFSVolume where the volume should be provisioned
-func (b *Builder) WithOwnerNode(host string) *Builder {
-	b.volume.Object.Spec.OwnerNodeID = host
+// WithOwnerNodeID sets owner nodeid for the ZFSVolume where the volume should be provisioned
+func (b *Builder) WithOwnerNodeID(nodeid string) *Builder {
+	b.volume.Object.Spec.OwnerNodeID = nodeid
 	return b
 }
 

@@ -88,7 +88,7 @@ func run(config *config.Config) {
 
 	klog.Infof("ZFS Driver Version :- %s - commit :- %s", version.Current(), version.GetGitCommit())
 	klog.Infof(
-		"DriverName: %s Plugin: %s EndPoint: %s NodeID: %s",
+		"DriverName: %s Plugin: %s EndPoint: %s Node Name: %s",
 		config.DriverName,
 		config.PluginType,
 		config.Endpoint,

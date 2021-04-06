@@ -805,6 +805,8 @@ spec:
               value: "zfs-operator"
             - name: OPENEBS_IO_ENABLE_ANALYTICS
               value: "true"
+            - name: NODE_AFFINITY_KEY
+              value: kubernetes.io/hostname
           args :
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_CONTROLLER_DRIVER)"
@@ -997,11 +999,11 @@ spec:
           image: openebs/zfs-driver:ci
           imagePullPolicy: IfNotPresent
           args:
-            - "--nodeid=$(OPENEBS_NODE_ID)"
+            - "--nodeid=$(OPENEBS_NODE_NAME)"
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_NODE_DRIVER)"
           env:
-            - name: OPENEBS_NODE_ID
+            - name: OPENEBS_NODE_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
@@ -1011,6 +1013,8 @@ spec:
               value: agent
             - name: OPENEBS_NAMESPACE
               value: openebs
+            - name: NODE_AFFINITY_KEY
+              value: kubernetes.io/hostname
           volumeMounts:
             - name: plugin-dir
               mountPath: /plugin
