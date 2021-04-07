@@ -17,7 +17,9 @@ name: ci
 on:
   pull_request:
     paths-ignore:
+      - 'docs/**'
       - 'deploy/helm/**'
+      - 'changelogs/**'
     branches:
       # on pull requests to master and release branches
       - master

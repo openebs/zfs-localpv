@@ -13,7 +13,12 @@
 # limitations under the License.
 name: build
 
-on: ['push']
+on:
+  push:
+    paths-ignore:
+    - 'docs/**'
+    - 'deploy/helm/**'
+    - 'changelogs/**'
 
 jobs:
   lint:
