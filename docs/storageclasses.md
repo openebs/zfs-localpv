@@ -140,7 +140,16 @@ Here, we have to note that all the Pods using that volume will come to the same 
 
 ### StorageClass With k8s Scheduler
 
-The ZFS-LocalPV Driver has its own scheduling logic, where it creates the volume where the ZFS Pool is less loaded with the volumes. Here, it just checks the volume count and creates the volume where less volume is configured in a given ZFS Pool. It does not account for other factors like available CPU or memory while making scheduling decisions. So if you want to use node selector/affinity rules on the application pod or have CPU/Memory constraints, the Kubernetes scheduler should be used. To make use of Kubernetes scheduler, we can set the volumeBindingMode as WaitForFirstConsumer in the storage class:
+The ZFS-LocalPV Driver has two types of its own scheduling logic, VolumeWeighted and CapacityWeighted (Supported from zfs-driver:1.3.0+). To choose any one of the scheduler add scheduler parameter in storage class and give its value accordingly.
+```
+parameters:
+ scheduler: "VolumeWeighted"
+ fstype: "zfs"
+ poolname: "zfspv-pool"
+```
+CapacityWeighted is the default scheduler in zfs-localpv driver, so even if we don't use scheduler parameter in storage-class, driver will pick the node where total provisioned volumes have occupied less capacity from the given pool. On the other hand for using VolumeWeighted scheduler, we have to specify it under scheduler parameter in storage-class. Then driver will pick the node to create volume where ZFS Pool is less loaded with the volumes. Here, it just checks the volume count and creates the volume where less volume is configured in a given ZFS Pool. It does not account for other factors like available CPU or memory while making scheduling decisions.
+
+In case where you want to use node selector/affinity rules on the application pod or have CPU/Memory constraints, the Kubernetes scheduler should be used. To make use of Kubernetes scheduler, we can set the volumeBindingMode as WaitForFirstConsumer in the storage class:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -157,6 +166,7 @@ volumeBindingMode: WaitForFirstConsumer
 
 Here, in this case, the Kubernetes scheduler will select a node for the POD and then ask the ZFS-LocalPV driver to create the volume on the selected node. The driver will create the volume where the POD has been scheduled.
 
+From zfs-driver version 1.6.0+, pvc will not be bound till the provisioner succesfully creates the volume on node. Previously, pvc gets bound even if zfs volume creation on nodes keeps failing because scheduler used to return only a single node and provisioner keeps trying to provision the volume on that node only. Now onwards scheduler will return the list of nodes that satisfies the provided topology constraints. Then csi controller will continuosly attempt the volume creation on all these nodes and till volume is created on any of the node or volume creation gets failed on all the nodes. PVC will be bound to a PV only if volume creation succeeds on any one of the nodes.
 
 ### StorageClass With Custom Node Labels
 
@@ -181,7 +191,7 @@ allowedTopologies:
 
 Here we can have ZFS Pool of name “zfspv-pool” created on the nvme disks and want to use this high performing ZFS Pool for the applications that need higher IOPS. We can use the above SorageClass to create the PVC and deploy the application using that.
 
-The ZFS-LocalPV driver will create the Volume in the Pool “zfspv-pool” present on the node with fewer of volumes provisioned among the given node list. In the above StorageClass, if there provisioned volumes on node-1 are less, it will create the volume on node-1 only. Alternatively, we can use `volumeBindingMode: WaitForFirstConsumer` to let the k8s select the node where the volume should be provisioned.
+The ZFS-LocalPV driver will create the Volume in the Pool “zfspv-pool” present on the node  which will be seleted based on scheduler we chose in storage-class. In the above StorageClass, if total capacity of provisioned volumes on node-1 is less, it will create the volume on node-1 only. Alternatively, we can use `volumeBindingMode: WaitForFirstConsumer` to let the k8s select the node where the volume should be provisioned.
 
 The problem with the above StorageClass is that it works fine if the number of nodes is less, but if the number of nodes is huge, it is cumbersome to list all the nodes like this. In that case, what we can do is, we can label all the similar nodes using the same key value and use that label to create the StorageClass.
 
