@@ -95,7 +95,7 @@ $ kubectl apply -f https://openebs.github.io/charts/zfs-operator.yaml
 
 We can also install it via kustomize using `kubectl apply -k deploy/yamls`, check the [kustomize yaml](deploy/yamls/kustomization.yaml).
 
-**NOTE** For some Kubernetes distributions, the `kubelet` directory must be changed at all relevant places in the YAML powering the operator (both the `openebs-zfs-controller` and `openebs-zfs-node`). 
+**NOTE:** For some Kubernetes distributions, the `kubelet` directory must be changed at all relevant places in the YAML powering the operator (both the `openebs-zfs-controller` and `openebs-zfs-node`). 
 
 For `microk8s`, we need to change the kubelet directory to `/var/snap/microk8s/common/var/lib/kubelet/`, we need to replace `/var/lib/kubelet/` with `/var/snap/microk8s/common/var/lib/kubelet/` at all the places in the operator yaml and then we can apply it on microk8s.
 
