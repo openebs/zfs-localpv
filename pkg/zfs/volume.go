@@ -177,7 +177,7 @@ func ProvisionVolume(
 	}
 
 	if err != nil {
-		klog.Infof("zfs: volume %s/%s provisioning failed on node %s err: %s",
+		klog.Infof("zfs: volume %s/%s provisioning failed on nodeid %s err: %s",
 			vol.Spec.PoolName, vol.Name, vol.Spec.OwnerNodeID, err.Error())
 	}
 
