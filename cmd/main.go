@@ -55,7 +55,7 @@ func main() {
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 
 	cmd.PersistentFlags().StringVar(
-		&config.NodeID, "nodeid", zfs.NodeID, "NodeID to identify the node running this driver",
+		&config.Nodename, "nodename", zfs.NodeID, "Nodename to identify the node running this driver",
 	)
 
 	cmd.PersistentFlags().StringVar(
@@ -92,7 +92,7 @@ func run(config *config.Config) {
 		config.DriverName,
 		config.PluginType,
 		config.Endpoint,
-		config.NodeID,
+		config.Nodename,
 	)
 
 	err := driver.New(config).Run()

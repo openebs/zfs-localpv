@@ -37,11 +37,10 @@ type Config struct {
 	//  - This will be a unix based socket
 	Endpoint string
 
-	// NodeID helps in differentiating the nodes on
-	// which node drivers are running. This is useful
-	// in case of topologies and publishing or
-	// unpublishing volumes on nodes
-	NodeID string
+	// Nodename helps in differentiating the nodes on
+	// which node drivers are running. This is used
+	// to set the topologies for the driver
+	Nodename string
 }
 
 // Default returns a new instance of config

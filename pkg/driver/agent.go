@@ -204,9 +204,9 @@ func (ns *node) NodeGetInfo(
 	req *csi.NodeGetInfoRequest,
 ) (*csi.NodeGetInfoResponse, error) {
 
-	node, err := k8sapi.GetNode(ns.driver.config.NodeID)
+	node, err := k8sapi.GetNode(ns.driver.config.Nodename)
 	if err != nil {
-		klog.Errorf("failed to get the node %s", ns.driver.config.NodeID)
+		klog.Errorf("failed to get the node %s", ns.driver.config.Nodename)
 		return nil, err
 	}
 	/*
@@ -230,10 +230,10 @@ func (ns *node) NodeGetInfo(
 	topology := node.Labels
 
 	// add driver's topology key
-	topology[zfs.ZFSTopologyKey] = ns.driver.config.NodeID
+	topology[zfs.ZFSTopologyKey] = ns.driver.config.Nodename
 
 	return &csi.NodeGetInfoResponse{
-		NodeId: ns.driver.config.NodeID,
+		NodeId: ns.driver.config.Nodename,
 		AccessibleTopology: &csi.Topology{
 			Segments: topology,
 		},

@@ -999,7 +999,7 @@ spec:
           image: openebs/zfs-driver:ci
           imagePullPolicy: IfNotPresent
           args:
-            - "--nodeid=$(OPENEBS_NODE_NAME)"
+            - "--nodename=$(OPENEBS_NODE_NAME)"
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_NODE_DRIVER)"
           env:
