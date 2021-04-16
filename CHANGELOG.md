@@ -1,3 +1,21 @@
+v1.6.0 / 2021-04-14
+========================
+* refact(deps): bump k8s and client-go deps to version v0.20.2 ([#294](https://github.com/openebs/zfs-localpv/pull/294),[@prateekpandey14](https://github.com/prateekpandey14))
+* remove finalizer that is owned by ZFS-LocalPV ([#303](https://github.com/openebs/zfs-localpv/pull/303),[@pawanpraka1](https://github.com/pawanpraka1))
+* try volume creation on all the nodes that satisfy topology contraints ([#270](https://github.com/openebs/zfs-localpv/pull/270),[@pawanpraka1](https://github.com/pawanpraka1))
+* With k8s v1.22 the v1beta1 for various resources will no longer be supported. Updating the storage and apiexention version to v1 for better support. ([#299](https://github.com/openebs/zfs-localpv/pull/299),[@shubham14bajpai](https://github.com/shubham14bajpai))
+
+v1.6.0-RC2 / 2021-04-12
+========================
+
+v1.6.0-RC1 / 2021-04-06
+========================
+* refact(deps): bump k8s and client-go deps to version v0.20.2 ([#294](https://github.com/openebs/zfs-localpv/pull/294),[@prateekpandey14](https://github.com/prateekpandey14))
+* remove finalizer that is owned by ZFS-LocalPV ([#303](https://github.com/openebs/zfs-localpv/pull/303),[@pawanpraka1](https://github.com/pawanpraka1))
+* try volume creation on all the nodes that satisfy topology contraints ([#270](https://github.com/openebs/zfs-localpv/pull/270),[@pawanpraka1](https://github.com/pawanpraka1))
+* With k8s v1.22 the v1beta1 for various resources will no longer be supported. Updating the storage and apiexention version to v1 for better support. ([#299](https://github.com/openebs/zfs-localpv/pull/299),[@shubham14bajpai](https://github.com/shubham14bajpai))
+
+
 v1.5.0 / 2021-03-12
 ========================
 * adding support to restore in an encrypted pool ([#292](https://github.com/openebs/zfs-localpv/pull/292),[@pawanpraka1](https://github.com/pawanpraka1))
