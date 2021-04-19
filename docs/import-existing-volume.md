@@ -162,9 +162,9 @@ Modify the parameters :-
 - ownerNodeID which is node where the pool is present.
 - volumeType should be DATASET if fstype is "zfs" otherwise it should be "ZVOL"
 
-Now volume has been imported to ZFS-LocalPV CSI driver. Please note that since in the above yaml, we have added a finalizer `zfs.openebs.io/finalizer`, which says that the volume is managed by ZFS-LocalPV Driver and if you delete the above object, the corresponding volume(dataset or zvol) will also be deleted from the zfs pool. If you don't want the volume to be managed by the ZFS-LocalPV then please remove the finalizer from the above yaml. In this case if you delete the ZFSVolume object, the dataset/zvol will not be deleted from the ZFS Pool.
+The volume has now been imported to the cluster using the ZFS-LocalPV CSI driver. Please note that in the YAML above, we have added a finalizer `zfs.openebs.io/finalizer`. This says that the volume is managed by the ZFS-LocalPV Driver. If you delete the ZFSVolume object, the corresponding volume (dataset or zvol) will also be deleted from the ZFS pool. If you don't want the volume to be managed by ZFS-LocalPV, please remove the finalizer from the YAML above. In this case, if you delete the ZFSVolume object, the dataset/zvol will not be deleted from the ZFS pool.
 
-You can also add the your own finalizer if you want along with or without `zfs.openebs.io/finalizer`. The driver will wait for your finalizer to be removed before it goes ahead and try to delete the volume from the ZFS pool. So, if you are setting your own finalizer on the ZFSVolume object then remove the finalizer first and then try to delete it.
+If you want, you can also add your own finalizer with or without `zfs.openebs.io/finalizer`. The driver will wait for your finalizer to be removed before it tries to delete the volume from the ZFS pool. If you are setting your own finalizer on the ZFSVolume object, be sure to remove the finalizer first before trying to delete it.
 
 ### Deploy Application
 
