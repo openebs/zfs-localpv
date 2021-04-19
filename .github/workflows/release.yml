@@ -14,7 +14,9 @@
 name: release
 
 on:
-  push:
+  release:
+    types:
+      - "created"
     tags:
       - 'v*'
 
@@ -24,6 +26,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v1
+      
+      - name: Set Image Org
+        # sets the default IMAGE_ORG to openebs
+        run: |
+          [ -z "${{ secrets.IMAGE_ORG }}" ] && IMAGE_ORG=openebs || IMAGE_ORG=${{ secrets.IMAGE_ORG}}
+          echo "IMAGE_ORG=${IMAGE_ORG}" >> $GITHUB_ENV
 
       - name: Set Tag
         run: |
@@ -31,8 +39,26 @@ jobs:
           echo "TAG=${TAG}" >> $GITHUB_ENV
           echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
 
+      - name: Set Build Date
+        id: date
+        run: |
+          echo "::set-output name=DATE::$(date -u +'%Y-%m-%dT%H:%M:%S%Z')"
+      
+      - name: Docker meta
+        id: docker_meta
+        uses: crazy-max/ghaction-docker-meta@v1
+        with:
+          # add each registry to which the image needs to be pushed here
+          images: |
+            ${{ env.IMAGE_ORG }}/zfs-driver
+            quay.io/${{ env.IMAGE_ORG }}/zfs-driver
+          tag-latest: true
+          tag-semver: |
+            {{version}}
+      
       - name: Print Tag info
         run: |
+          echo "${{ steps.docker_meta.outputs.tags }}"
           echo "RELEASE TAG: ${RELEASE_TAG}"
 
       - name: Set up QEMU
@@ -51,10 +77,25 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Login to Quay
+        uses: docker/login-action@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Build & Push Image
-        env:
-          IMAGE_ORG: ${{ secrets.IMAGE_ORG}}
-        run: |
-          make docker.buildx.csi-driver
-          make buildx.push.csi-driver
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./buildscripts/zfs-driver/zfs-driver.Dockerfile
+          push: true
+          platforms: linux/amd64, linux/arm64
+          tags: |
+            ${{ steps.docker_meta.outputs.tags }}
+          build-args: |
+            DBUILD_DATE=${{ steps.date.outputs.DATE }}
+            DBUILD_REPO_URL=https://github.com/openebs/zfs-localpv
+            DBUILD_SITE_URL=https://openebs.io
+            RELEASE_TAG=${{ env.RELEASE_TAG }}

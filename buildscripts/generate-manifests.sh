@@ -46,6 +46,7 @@ echo '
 
 cat deploy/yamls/zfs.openebs.io_zfsvolumes.yaml >> deploy/yamls/zfsvolume-crd.yaml
 rm deploy/yamls/zfs.openebs.io_zfsvolumes.yaml
+cp deploy/yamls/zfsvolume-crd.yaml deploy/helm/charts/crds/zfsvolume.yaml
 
 echo '
 
@@ -61,7 +62,7 @@ echo '
 
 cat deploy/yamls/zfs.openebs.io_zfssnapshots.yaml >> deploy/yamls/zfssnapshot-crd.yaml
 rm deploy/yamls/zfs.openebs.io_zfssnapshots.yaml
-
+cp deploy/yamls/zfssnapshot-crd.yaml deploy/helm/charts/crds/zfssnapshot.yaml
 
 echo '
 
@@ -77,7 +78,7 @@ echo '
 
 cat deploy/yamls/zfs.openebs.io_zfsbackups.yaml >> deploy/yamls/zfsbackup-crd.yaml
 rm deploy/yamls/zfs.openebs.io_zfsbackups.yaml
-
+cp deploy/yamls/zfsbackup-crd.yaml deploy/helm/charts/crds/zfsbackup.yaml
 
 echo '
 
@@ -93,6 +94,7 @@ echo '
 
 cat deploy/yamls/zfs.openebs.io_zfsrestores.yaml >> deploy/yamls/zfsrestore-crd.yaml
 rm deploy/yamls/zfs.openebs.io_zfsrestores.yaml
+cp deploy/yamls/zfsrestore-crd.yaml deploy/helm/charts/crds/zfsrestore.yaml
 
 ## create the operator file using all the yamls
 
