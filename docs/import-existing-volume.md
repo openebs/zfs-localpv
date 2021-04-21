@@ -12,7 +12,7 @@ Here, I will walk through the steps to attach the existing volumes to the ZFS-Lo
 ### Prerequisites
 
 - We should have ZFS-LocalPV Driver(version 0.6 or later) installed.
-- volumes ready to be imported
+- volume should be present which you want to import
 
 ### Setup
 
@@ -152,7 +152,7 @@ spec:
   poolName: zfspv-pool # poolname where the volume is present
   volumeType: DATASET # whether it is a DATASET or ZVOL
 Status:
-  State: Ready
+  State: Ready # state should be Ready as volume is already present
 ```
 
 Modify the parameters :-
@@ -162,7 +162,9 @@ Modify the parameters :-
 - ownerNodeID which is node where the pool is present.
 - volumeType should be DATASET if fstype is "zfs" otherwise it should be "ZVOL"
 
-Now volume has been imported to ZFS-LocalPV CSI driver.
+The volume has now been imported to the cluster using the ZFS-LocalPV CSI driver. Please note that in the YAML above, we have added a finalizer `zfs.openebs.io/finalizer`. This says that the volume is managed by the ZFS-LocalPV Driver. If you delete the ZFSVolume object, the corresponding volume (dataset or zvol) will also be deleted from the ZFS pool. If you don't want the volume to be managed by ZFS-LocalPV, please remove the finalizer from the YAML above. In this case, if you delete the ZFSVolume object, the dataset/zvol will not be deleted from the ZFS pool.
+
+If you want, you can also add your own finalizer with or without `zfs.openebs.io/finalizer`. The driver will wait for your finalizer to be removed before it tries to delete the volume from the ZFS pool. If you are setting your own finalizer on the ZFSVolume object, be sure to remove the finalizer first before trying to delete it.
 
 ### Deploy Application
 
