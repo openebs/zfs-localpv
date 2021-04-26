@@ -402,7 +402,7 @@ func (cs *controller) CreateVolume(
 		return nil, status.Errorf(codes.Internal, "GetNodeID failed : %s", err.Error())
 	}
 
-	topology := map[string]string{zfs.ZFSAffinityKey: nodeid}
+	topology := map[string]string{zfs.ZFSTopologyKey: nodeid}
 	cntx := map[string]string{zfs.PoolNameKey: pool}
 
 	return csipayload.NewCreateVolumeResponseBuilder().

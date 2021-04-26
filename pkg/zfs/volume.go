@@ -50,7 +50,7 @@ const (
 	// ZFSNodeKey will be used to insert Label in ZfsVolume CR
 	ZFSNodeKey string = "kubernetes.io/nodename"
 	// ZFSTopologyKey is supported topology key for the zfs driver
-	ZFSTopologyKey string = "openebs.io/nodename"
+	ZFSTopologyKey string = "openebs.io/nodeid"
 	// ZFSStatusPending shows object has not handled yet
 	ZFSStatusPending string = "Pending"
 	// ZFSStatusFailed shows object operation has failed
@@ -66,9 +66,6 @@ var (
 	// NodeID is the NodeID of the node on which the pod is present
 	NodeID string
 
-	// ZFSAffinityKey is the key for setting the node affinity on the PV
-	ZFSAffinityKey string
-
 	// GoogleAnalyticsEnabled should send google analytics or not
 	GoogleAnalyticsEnabled string
 )
@@ -77,7 +74,6 @@ func init() {
 	var err error
 
 	OpenEBSNamespace = os.Getenv(OpenEBSNamespaceKey)
-	ZFSAffinityKey = os.Getenv("NODE_AFFINITY_KEY")
 
 	if os.Getenv("OPENEBS_NODE_DRIVER") != "" {
 		if OpenEBSNamespace == "" {
@@ -87,26 +83,14 @@ func init() {
 		if nodename == "" {
 			klog.Fatalf("OPENEBS_NODE_NAME environment variable not set")
 		}
-		if len(ZFSAffinityKey) > 0 {
-			// if affinity key is provided, the node should be labelled with that key
-			if NodeID, err = GetNodeID(nodename); err != nil {
-				klog.Fatalf("GetNodeID failed for node=%s key=%s, err: %s", nodename, ZFSAffinityKey, err.Error())
-			}
-		} else {
-			// if key is not provided use the Driver's topology key and value
-			ZFSAffinityKey = ZFSTopologyKey
-			NodeID = nodename
+		if NodeID, err = GetNodeID(nodename); err != nil {
+			klog.Fatalf("GetNodeID failed for node=%s err: %s", nodename, err.Error())
 		}
-		klog.Infof("zfs: node(%s) affinity key=%s nodeid=%s", nodename, ZFSAffinityKey, NodeID)
+		klog.Infof("zfs: node(%s) has node affinity %s=%s", nodename, ZFSTopologyKey, NodeID)
 	} else if os.Getenv("OPENEBS_CONTROLLER_DRIVER") != "" {
 		if OpenEBSNamespace == "" {
 			klog.Fatalf("OPENEBS_NAMESPACE environment variable not set for controller")
 		}
-
-		if ZFSAffinityKey == "" {
-			ZFSAffinityKey = ZFSTopologyKey
-		}
-		klog.Infof("zfs: controller will use affinity key=%s", ZFSAffinityKey)
 	}
 
 	GoogleAnalyticsEnabled = os.Getenv(GoogleAnalyticsKey)
@@ -118,9 +102,10 @@ func GetNodeID(nodename string) (string, error) {
 		return "", fmt.Errorf("failed to get the node %s", nodename)
 	}
 
-	nodeid, ok := node.Labels[ZFSAffinityKey]
+	nodeid, ok := node.Labels[ZFSTopologyKey]
 	if !ok {
-		return "", fmt.Errorf("node %s is not labelled with the key %s", nodename, ZFSAffinityKey)
+		// node is not labelled, use node name as nodeid
+		return nodename, nil
 	}
 	return nodeid, nil
 }

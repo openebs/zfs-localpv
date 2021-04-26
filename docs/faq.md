@@ -226,24 +226,21 @@ PVC size as zero in not a valid capacity. The minimum allocatable size for the Z
 
 ### 8. How to migrate PVs to the new node in case old node is not accessible
 
-The ZFS-LocalPV driver will set affinity on the PV to make the volume stick to the node so that pod gets scheduled to that node only where the volume is present. Now the problem here is when that node is not accesible due to some reason and we moved the disks to a new node and imported the pool there, the pods will not be scheduled to this node as k8s scheduler will be looking for that node only to schedule the pod.
+The ZFS-LocalPV driver will set affinity on the PV to make the volume stick to the node so that pod gets scheduled to that node only where the volume is present. Now, the problem here is, when that node is not accesible due to some reason and we move the disks to a new node and import the pool there, the pods will not be scheduled to this node as k8s scheduler will be looking for that node only to schedule the pod.
 
-Now with the release of 1.7.0, ZFS-LocalPV driver has the ability to pass the affinity key at the deployment time. So, now the driver will use the provided key(default kubernetes.io/hostname) to set the affinity on the PV.
-
-While deploying the ZFS-LocalPV driver, we should label the node first using some custom key and some unique value
+Now, with the release of 1.7.0, ZFS-LocalPV driver has the ability to use the user defined affinity for creating the PV. While deploying the ZFS-LocalPV driver, we should label all the nodes first using the key `openebs.io/nodeid` with some unique value
 ```
-$ kubectl label node node-1 custom.openebs.io/nodeid=custom-node-1
+$ kubectl label node node-1 openebs.io/nodeid=custom-value-1
 ```
 
-In the above command the custom key is `custom.openebs.io/nodeid` and value is `custom-node-1`. You can pick your own key and value, just make sure that the value is unique for each node. We have to label all the nodes in the cluster with the unique value. For example node-2 and node-3 can be labelled as below:
+In the above command, we have labelled the node `node-1` using the key `openebs.io/nodeid` and the value we have used here is `custom-value-1`. You can pick your own value, just make sure that the value is unique for all the nodes. We have to label all the nodes in the cluster with the unique value. For example, `node-2` and `node-3` can be labelled as below:
 
 ```
-$ kubectl label node node-2 custom.openebs.io/nodeid=custom-node-2
-$ kubectl label node node-3 custom.openebs.io/nodeid=custom-node-3
+$ kubectl label node node-2 openebs.io/nodeid=custom-value-2
+$ kubectl label node node-3 openebs.io/nodeid=custom-value-3
 ```
 
-Now, we need to pass the above custom key to ZFS-LocalPV driver, we can update the `NODE_AFFINITY_KEY` env in the zfs-operator yaml (total 2 places, controller and agent both needs this info) with the above key. By default, the driver uses `kubernetes.io/hostname` as the affinity key.
-
+Now, the Driver will use `openebs.io/nodeid` as the key and the corresponding value to set the affinity on the PV and k8s scheduler will consider this affinity label while scheduling the pods.
 
 Now, when a node is not accesible, we need to do below steps
 
@@ -251,6 +248,10 @@ Now, when a node is not accesible, we need to do below steps
 2. add a new node in the cluster
 3. move the disks to this new node
 4. import the zfs pools on the new nodes
-5. label the new node with same custom key and value.
+5. label the new node with same key and value. For example, if we have removed the node-3 from the cluster and added node-4 as new node, we have to label the node `node-4` and set the value to `custom-value-3` as shown below
+
+```
+$ kubectl label node node-4 openebs.io/nodeid=custom-value-3
+```
 
 Once the above steps are done, the pod should be able to run on this new node with all the data it has on the old node. Here, there is one limitation that we can only move the PVs to the new node, we can not move the PVs to the node which was already used in the cluster as there is only one allowed value for the custom key for setting the node label.

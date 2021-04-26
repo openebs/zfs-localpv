@@ -229,8 +229,10 @@ func (ns *node) NodeGetInfo(
 	// support all the keys that node has
 	topology := node.Labels
 
-	// add driver's topology key
-	topology[zfs.ZFSTopologyKey] = ns.driver.config.Nodename
+	// add driver's topology key if not labelled already
+	if _, ok := topology[zfs.ZFSTopologyKey]; !ok {
+		topology[zfs.ZFSTopologyKey] = ns.driver.config.Nodename
+	}
 
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.driver.config.Nodename,
