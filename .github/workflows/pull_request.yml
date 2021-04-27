@@ -18,6 +18,9 @@ on:
   pull_request:
     paths-ignore:
       - 'deploy/helm/**'
+      - 'docs/**'
+      - 'changelogs/**'
+      - 'CHANGELOG.md'
     branches:
       # on pull requests to master and release branches
       - master
@@ -116,7 +119,12 @@ jobs:
         with:
           version: v0.4.2
 
-      - name: Build Image
-        env:
-          IMG_RESULT: cache
-        run: make docker.buildx.csi-driver
+      - name: Build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./buildscripts/zfs-driver/zfs-driver.Dockerfile
+          push: false
+          platforms: linux/amd64, linux/arm64
+          tags: |
+            openebs/zfs-driver:ci
