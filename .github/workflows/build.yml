@@ -27,7 +27,7 @@ on:
 
 jobs:
   lint:
-    if: ${{ (github.event.ref_type == 'branch') }} # to ignore builds on release
+    if: ${{ (github.event.ref_type != 'tag') }} # to ignore builds on release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -44,7 +44,7 @@ jobs:
 
 
   unit-test:
-    if: ${{ (github.event.ref_type == 'branch') }} # to ignore builds on release
+    if: ${{ (github.event.ref_type != 'tag') }} # to ignore builds on release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
