@@ -228,7 +228,7 @@ PVC size as zero in not a valid capacity. The minimum allocatable size for the Z
 
 The ZFS-LocalPV driver will set affinity on the PV to make the volume stick to the node so that pod gets scheduled to that node only where the volume is present. Now, the problem here is, when that node is not accesible due to some reason and we move the disks to a new node and import the pool there, the pods will not be scheduled to this node as k8s scheduler will be looking for that node only to schedule the pod.
 
-Now, with the release of 1.7.0, ZFS-LocalPV driver has the ability to use the user defined affinity for creating the PV. While deploying the ZFS-LocalPV driver, we should label all the nodes first using the key `openebs.io/nodeid` with some unique value
+From release 1.7.0 of ZFS-LocalPV, the driver has the ability to use the user defined affinity for creating the PV. While deploying the ZFS-LocalPV driver, first we should label all the nodes using the key `openebs.io/nodeid` with some unique value.
 ```
 $ kubectl label node node-1 openebs.io/nodeid=custom-value-1
 ```
