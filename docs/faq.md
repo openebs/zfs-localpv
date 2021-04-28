@@ -254,4 +254,4 @@ Now, when a node is not accesible, we need to do below steps
 $ kubectl label node node-4 openebs.io/nodeid=custom-value-3
 ```
 
-Once the above steps are done, the pod should be able to run on this new node with all the data it has on the old node. Here, there is one limitation that we can only move the PVs to the new node, we can not move the PVs to the node which was already used in the cluster as there is only one allowed value for the custom key for setting the node label.
+Once the above steps are done, the pod should be able to run on this new node with all the data it has on the old node. Here, there is one limitation that we can only move the PVs to the new node, we can not move the PVs to the node which were already used in the cluster as there is only one allowed value for the custom key for setting the node label.
