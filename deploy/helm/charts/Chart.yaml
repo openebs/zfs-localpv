@@ -1,7 +1,7 @@
 apiVersion: v2
 name: zfs-localpv
 description: CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes.
-version: 1.6.1
+version: 1.6.4
 appVersion: 1.6.0
 icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
 home: http://www.openebs.io/

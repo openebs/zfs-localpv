@@ -216,7 +216,7 @@ manifests:
 	$(PWD)/buildscripts/generate-manifests.sh
 
 helm:
-	@echo "+ Copying generated CRDs to helm/deploy/crds/"
+	@echo "+ Copying generated CRDs to helm charts"
 	@cp deploy/yamls/zfsbackup-crd.yaml deploy/helm/charts/crds/zfsbackup.yaml
 	@cp deploy/yamls/zfsrestore-crd.yaml deploy/helm/charts/crds/zfsrestore.yaml
 	@cp deploy/yamls/zfssnapshot-crd.yaml deploy/helm/charts/crds/zfssnapshot.yaml
