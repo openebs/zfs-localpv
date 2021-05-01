@@ -29,7 +29,7 @@ import (
 // +kubebuilder:storageversion
 // +kubebuilder:resource:scope=Namespaced,shortName=zfsvol;zv
 // +kubebuilder:printcolumn:name="ZPool",type=string,JSONPath=`.spec.poolName`,description="ZFS Pool where the volume is created"
-// +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.ownerNodeID`,description="Node where the volume is created"
+// +kubebuilder:printcolumn:name="NodeID",type=string,JSONPath=`.spec.ownerNodeID`,description="Node where the volume is created"
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.spec.capacity`,description="Size of the volume"
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.state`,description="Status of the volume"
 // +kubebuilder:printcolumn:name="Filesystem",type=string,JSONPath=`.spec.fsType`,description="filesystem created on the volume"

@@ -227,7 +227,12 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 
 	// try volume creation sequentially on all nodes
 	for _, node := range prfList {
-		vol, _ := volbuilder.BuildFrom(volObj).WithOwnerNode(node).WithVolumeStatus(zfs.ZFSStatusPending).Build()
+		nodeid, err := zfs.GetNodeID(node)
+		if err != nil {
+			continue
+		}
+
+		vol, _ := volbuilder.BuildFrom(volObj).WithOwnerNodeID(nodeid).WithVolumeStatus(zfs.ZFSStatusPending).Build()
 
 		timeout := false
 
@@ -392,7 +397,12 @@ func (cs *controller) CreateVolume(
 
 	sendEventOrIgnore(pvcName, volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
 
-	topology := map[string]string{zfs.ZFSTopologyKey: selected}
+	nodeid, err := zfs.GetNodeID(selected)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "GetNodeID failed : %s", err.Error())
+	}
+
+	topology := map[string]string{zfs.ZFSTopologyKey: nodeid}
 	cntx := map[string]string{zfs.PoolNameKey: pool}
 
 	return csipayload.NewCreateVolumeResponseBuilder().

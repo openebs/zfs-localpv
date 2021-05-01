@@ -37,7 +37,7 @@ spec:
       type: string
     - description: Node where the volume is created
       jsonPath: .spec.ownerNodeID
-      name: Node
+      name: NodeID
       type: string
     - description: Size of the volume
       jsonPath: .spec.capacity

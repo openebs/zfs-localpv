@@ -55,7 +55,7 @@ func main() {
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 
 	cmd.PersistentFlags().StringVar(
-		&config.NodeID, "nodeid", zfs.NodeID, "NodeID to identify the node running this driver",
+		&config.Nodename, "nodename", zfs.NodeID, "Nodename to identify the node running this driver",
 	)
 
 	cmd.PersistentFlags().StringVar(
@@ -88,11 +88,11 @@ func run(config *config.Config) {
 
 	klog.Infof("ZFS Driver Version :- %s - commit :- %s", version.Current(), version.GetGitCommit())
 	klog.Infof(
-		"DriverName: %s Plugin: %s EndPoint: %s NodeID: %s",
+		"DriverName: %s Plugin: %s EndPoint: %s Node Name: %s",
 		config.DriverName,
 		config.PluginType,
 		config.Endpoint,
-		config.NodeID,
+		config.Nodename,
 	)
 
 	err := driver.New(config).Run()

@@ -224,3 +224,34 @@ Then driver will find the nearest size in Mi, the size allocated will be ((1G + 
 
 PVC size as zero in not a valid capacity. The minimum allocatable size for the ZFS-LocalPV driver is 1Mi, which means that if we are requesting 1 byte of storage space then 1Mi will be allocated for the volume.
 
+### 8. How to migrate PVs to the new node in case old node is not accessible
+
+The ZFS-LocalPV driver will set affinity on the PV to make the volume stick to the node so that pod gets scheduled to that node only where the volume is present. Now, the problem here is, when that node is not accesible due to some reason and we move the disks to a new node and import the pool there, the pods will not be scheduled to this node as k8s scheduler will be looking for that node only to schedule the pod.
+
+From release 1.7.0 of ZFS-LocalPV, the driver has the ability to use the user defined affinity for creating the PV. While deploying the ZFS-LocalPV driver, first we should label all the nodes using the key `openebs.io/nodeid` with some unique value.
+```
+$ kubectl label node node-1 openebs.io/nodeid=custom-value-1
+```
+
+In the above command, we have labelled the node `node-1` using the key `openebs.io/nodeid` and the value we have used here is `custom-value-1`. You can pick your own value, just make sure that the value is unique for all the nodes. We have to label all the nodes in the cluster with the unique value. For example, `node-2` and `node-3` can be labelled as below:
+
+```
+$ kubectl label node node-2 openebs.io/nodeid=custom-value-2
+$ kubectl label node node-3 openebs.io/nodeid=custom-value-3
+```
+
+Now, the Driver will use `openebs.io/nodeid` as the key and the corresponding value to set the affinity on the PV and k8s scheduler will consider this affinity label while scheduling the pods.
+
+Now, when a node is not accesible, we need to do below steps
+
+1. remove the old node from the cluster or we can just remove the above node label from the node which we want to remove.
+2. add a new node in the cluster
+3. move the disks to this new node
+4. import the zfs pools on the new nodes
+5. label the new node with same key and value. For example, if we have removed the node-3 from the cluster and added node-4 as new node, we have to label the node `node-4` and set the value to `custom-value-3` as shown below
+
+```
+$ kubectl label node node-4 openebs.io/nodeid=custom-value-3
+```
+
+Once the above steps are done, the pod should be able to run on this new node with all the data it has on the old node. Here, there is one limitation that we can only move the PVs to the new node, we can not move the PVs to the node which was already used in the cluster as there is only one allowed value for the custom key for setting the node label.

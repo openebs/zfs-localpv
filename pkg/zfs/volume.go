@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"time"
 
+	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/bkpbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/restorebuilder"
@@ -49,7 +50,7 @@ const (
 	// ZFSNodeKey will be used to insert Label in ZfsVolume CR
 	ZFSNodeKey string = "kubernetes.io/nodename"
 	// ZFSTopologyKey is supported topology key for the zfs driver
-	ZFSTopologyKey string = "openebs.io/nodename"
+	ZFSTopologyKey string = "openebs.io/nodeid"
 	// ZFSStatusPending shows object has not handled yet
 	ZFSStatusPending string = "Pending"
 	// ZFSStatusFailed shows object operation has failed
@@ -70,17 +71,43 @@ var (
 )
 
 func init() {
+	var err error
 
 	OpenEBSNamespace = os.Getenv(OpenEBSNamespaceKey)
-	if OpenEBSNamespace == "" && os.Getenv("OPENEBS_NODE_DRIVER") != "" {
-		klog.Fatalf("OPENEBS_NAMESPACE environment variable not set")
-	}
-	NodeID = os.Getenv("OPENEBS_NODE_ID")
-	if NodeID == "" && os.Getenv("OPENEBS_NODE_DRIVER") != "" {
-		klog.Fatalf("NodeID environment variable not set")
+
+	if os.Getenv("OPENEBS_NODE_DRIVER") != "" {
+		if OpenEBSNamespace == "" {
+			klog.Fatalf("OPENEBS_NAMESPACE environment variable not set for daemonset")
+		}
+		nodename := os.Getenv("OPENEBS_NODE_NAME")
+		if nodename == "" {
+			klog.Fatalf("OPENEBS_NODE_NAME environment variable not set")
+		}
+		if NodeID, err = GetNodeID(nodename); err != nil {
+			klog.Fatalf("GetNodeID failed for node=%s err: %s", nodename, err.Error())
+		}
+		klog.Infof("zfs: node(%s) has node affinity %s=%s", nodename, ZFSTopologyKey, NodeID)
+	} else if os.Getenv("OPENEBS_CONTROLLER_DRIVER") != "" {
+		if OpenEBSNamespace == "" {
+			klog.Fatalf("OPENEBS_NAMESPACE environment variable not set for controller")
+		}
 	}
 
 	GoogleAnalyticsEnabled = os.Getenv(GoogleAnalyticsKey)
+}
+
+func GetNodeID(nodename string) (string, error) {
+	node, err := k8sapi.GetNode(nodename)
+	if err != nil {
+		return "", fmt.Errorf("failed to get the node %s", nodename)
+	}
+
+	nodeid, ok := node.Labels[ZFSTopologyKey]
+	if !ok {
+		// node is not labelled, use node name as nodeid
+		return nodename, nil
+	}
+	return nodeid, nil
 }
 
 func checkVolCreation(ctx context.Context, volname string) (bool, error) {
@@ -104,7 +131,7 @@ func checkVolCreation(ctx context.Context, volname string) (bool, error) {
 				return false, fmt.Errorf("zfs: volume creation failed")
 			}
 
-			klog.Infof("zfs: waiting for volume %s/%s to be created on node %s",
+			klog.Infof("zfs: waiting for volume %s/%s to be created on nodeid %s",
 				vol.Spec.PoolName, volname, vol.Spec.OwnerNodeID)
 
 			time.Sleep(time.Second)
@@ -135,7 +162,7 @@ func ProvisionVolume(
 	}
 
 	if err != nil {
-		klog.Infof("zfs: volume %s/%s provisioning failed on node %s err: %s",
+		klog.Infof("zfs: volume %s/%s provisioning failed on nodeid %s err: %s",
 			vol.Spec.PoolName, vol.Name, vol.Spec.OwnerNodeID, err.Error())
 	}
 

@@ -58,7 +58,7 @@ spec:
       type: string
     - description: Node where the volume is created
       jsonPath: .spec.ownerNodeID
-      name: Node
+      name: NodeID
       type: string
     - description: Size of the volume
       jsonPath: .spec.capacity
@@ -2204,11 +2204,11 @@ spec:
           image: openebs/zfs-driver:ci
           imagePullPolicy: IfNotPresent
           args:
-            - "--nodeid=$(OPENEBS_NODE_ID)"
+            - "--nodename=$(OPENEBS_NODE_NAME)"
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_NODE_DRIVER)"
           env:
-            - name: OPENEBS_NODE_ID
+            - name: OPENEBS_NODE_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
