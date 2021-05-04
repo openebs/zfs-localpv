@@ -51,6 +51,8 @@ const (
 	ZFSNodeKey string = "kubernetes.io/nodename"
 	// ZFSTopologyKey is supported topology key for the zfs driver
 	ZFSTopologyKey string = "openebs.io/nodeid"
+	// ZFSTopoNodenameKey is supported topology key for the zfs driver
+	ZFSTopoNodenameKey string = "openebs.io/nodename"
 	// ZFSStatusPending shows object has not handled yet
 	ZFSStatusPending string = "Pending"
 	// ZFSStatusFailed shows object operation has failed
