@@ -802,18 +802,6 @@ func (cs *controller) ListVolumes(
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-// validateCapabilities validates if provided capabilities
-// are supported by this driver
-func validateCapabilities(caps []*csi.VolumeCapability) bool {
-
-	for _, cap := range caps {
-		if !IsSupportedVolumeCapabilityAccessMode(cap.AccessMode.Mode) {
-			return false
-		}
-	}
-	return true
-}
-
 func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) error {
 	volumeID := req.GetVolumeId()
 	if volumeID == "" {

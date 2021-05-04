@@ -57,15 +57,3 @@ func IsNil() Predicate {
 
 // PredicateList holds a list of predicate
 type PredicateList []Predicate
-
-// all returns true if all the predicates
-// succeed against the provided pvc
-// instance
-func (l PredicateList) all(v *Volume) bool {
-	for _, pred := range l {
-		if !pred(v) {
-			return false
-		}
-	}
-	return true
-}

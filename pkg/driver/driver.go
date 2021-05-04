@@ -22,13 +22,6 @@ import (
 	"k8s.io/klog"
 )
 
-// volume can only be published once as
-// read/write on a single node, at any
-// given time
-var supportedAccessMode = &csi.VolumeCapability_AccessMode{
-	Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER,
-}
-
 // CSIDriver defines a common data structure
 // for drivers
 // TODO check if this can be renamed to Base
