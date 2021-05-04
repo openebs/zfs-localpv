@@ -47,7 +47,6 @@ var (
 	PVCClient      *pvc.Kubeclient
 	DeployClient   *deploy.Kubeclient
 	PodClient      *pod.KubeClient
-	nsName         = "zfspv-provision"
 	scName         = "zfspv-sc"
 	ZFSProvisioner = "zfs.csi.openebs.io"
 	pvcName        = "zfspv-pvc"
@@ -56,7 +55,6 @@ var (
 	clonePvcName   = "zfspv-pvc-clone"
 	cloneAppName   = "busybox-zfspv-clone"
 
-	nsObj            *corev1.Namespace
 	scObj            *storagev1.StorageClass
 	deployObj        *appsv1.Deployment
 	pvcObj           *corev1.PersistentVolumeClaim

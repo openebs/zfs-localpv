@@ -457,8 +457,7 @@ func CreateClone(vol *apis.ZFSVolume) error {
 	}
 
 	if err := getVolume(volume); err != nil {
-		var args []string
-		args = buildCloneCreateArgs(vol)
+		args := buildCloneCreateArgs(vol)
 		cmd := exec.Command(ZFSVolCmd, args...)
 		out, err := cmd.CombinedOutput()
 
@@ -749,7 +748,7 @@ func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string, resizefs bool) error
 		return err
 	}
 
-	if resizefs == true {
+	if resizefs {
 		// resize the filesystem so that applications can use the expanded space
 		err = handleVolResize(vol, mountpath)
 	}
