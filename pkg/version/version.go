@@ -62,7 +62,7 @@ func Get() string {
 	}
 
 	path := filepath.Join(os.Getenv("GOPATH") + versionFile)
-	vBytes, err := ioutil.ReadFile(path)
+	vBytes, err := ioutil.ReadFile(filepath.Clean(path))
 	if err != nil {
 		klog.Errorf("failed to get version: %s", err.Error())
 		return ""
@@ -81,7 +81,7 @@ func GetBuildMeta() string {
 	}
 
 	path := filepath.Join(os.Getenv("GOPATH") + buildMetaFile)
-	vBytes, err := ioutil.ReadFile(path)
+	vBytes, err := ioutil.ReadFile(filepath.Clean(path))
 	if err != nil {
 		klog.Errorf("failed to get build version: %s", err.Error())
 		return ""
