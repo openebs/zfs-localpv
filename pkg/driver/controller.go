@@ -102,7 +102,7 @@ func getRoundedCapacity(size int64) int64 {
 }
 
 func waitForVolDestroy(volname string) error {
-	for true {
+	for {
 		_, err := zfs.GetZFSVolume(volname)
 		if err != nil {
 			if k8serror.IsNotFound(err) {
@@ -118,7 +118,7 @@ func waitForVolDestroy(volname string) error {
 }
 
 func waitForReadySnapshot(snapname string) error {
-	for true {
+	for {
 		snap, err := zfs.GetZFSSnapshot(snapname)
 		if err != nil {
 			return status.Errorf(codes.Internal,

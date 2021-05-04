@@ -47,7 +47,6 @@ var (
 	PVCClient      *pvc.Kubeclient
 	DeployClient   *deploy.Kubeclient
 	PodClient      *pod.KubeClient
-	nsName         = "zfspv-provision"
 	scName         = "zfspv-sc"
 	ZFSProvisioner = "zfs.csi.openebs.io"
 	pvcName        = "zfspv-pvc"

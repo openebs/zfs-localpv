@@ -126,8 +126,6 @@ func (s *nonBlockingGRPCServer) Start() {
 	s.wg.Add(1)
 
 	go s.serve(s.endpoint, s.idntyServer, s.ctrlServer, s.agentServer)
-
-	return
 }
 
 // Wait for the service to stop
