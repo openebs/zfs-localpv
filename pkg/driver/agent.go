@@ -233,6 +233,8 @@ func (ns *node) NodeGetInfo(
 	if _, ok := topology[zfs.ZFSTopologyKey]; !ok {
 		topology[zfs.ZFSTopologyKey] = ns.driver.config.Nodename
 	}
+	// add old topology key to support backward compatibility for velero
+	topology[zfs.ZFSTopoNodenameKey] = ns.driver.config.Nodename
 
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.driver.config.Nodename,
