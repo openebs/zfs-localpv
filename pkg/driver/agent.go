@@ -382,7 +382,7 @@ func (ns *node) NodeGetVolumeStats(
 		return nil, status.Error(codes.InvalidArgument, "path is not provided")
 	}
 
-	if mount.IsMountPath(path) == false {
+	if !mount.IsMountPath(path) {
 		return nil, status.Error(codes.NotFound, "path is not a mount path")
 	}
 
