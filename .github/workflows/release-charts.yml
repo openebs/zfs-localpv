@@ -26,6 +26,19 @@ jobs:
         with:
           version: v3.4.0
 
+      - name: Copy generated CRDs
+        run: make helm
+
+      - name: Check diff, commit and push
+        run: |
+          git diff --quiet deploy/helm/charts/crds || CHANGED=$?
+          if [[ $CHANGED -ne 0 ]]; then
+            echo "Commiting changes to deploy/helm/charts/crds"
+            git add deploy/helm/charts/crds
+            git commit -s -m 'chore(crd): add auto generated crds to helm release'
+            git push origin master
+          fi
+
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.1.0
         env:

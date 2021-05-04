@@ -215,6 +215,13 @@ manifests:
 	@echo "+ Generating zfs localPV crds"
 	$(PWD)/buildscripts/generate-manifests.sh
 
+helm:
+	@echo "+ Copying generated CRDs to helm charts"
+	@cp deploy/yamls/zfsbackup-crd.yaml deploy/helm/charts/crds/zfsbackup.yaml
+	@cp deploy/yamls/zfsrestore-crd.yaml deploy/helm/charts/crds/zfsrestore.yaml
+	@cp deploy/yamls/zfssnapshot-crd.yaml deploy/helm/charts/crds/zfssnapshot.yaml
+	@cp deploy/yamls/zfsvolume-crd.yaml deploy/helm/charts/crds/zfsvolume.yaml
+
 .PHONY: zfs-driver
 zfs-driver: format
 	@echo "--------------------------------"
