@@ -55,7 +55,6 @@ var (
 	clonePvcName   = "zfspv-pvc-clone"
 	cloneAppName   = "busybox-zfspv-clone"
 
-	nsObj            *corev1.Namespace
 	scObj            *storagev1.StorageClass
 	deployObj        *appsv1.Deployment
 	pvcObj           *corev1.PersistentVolumeClaim

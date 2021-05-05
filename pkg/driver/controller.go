@@ -66,7 +66,7 @@ func NewController(d *CSIDriver) csi.ControllerServer {
 // SupportedVolumeCapabilityAccessModes contains the list of supported access
 // modes for the volume
 var SupportedVolumeCapabilityAccessModes = []*csi.VolumeCapability_AccessMode{
-	&csi.VolumeCapability_AccessMode{
+	{
 		Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER,
 	},
 }
@@ -114,7 +114,6 @@ func waitForVolDestroy(volname string) error {
 		time.Sleep(time.Second)
 		klog.Infof("waiting for volume to be destroyed %s", volname)
 	}
-	return nil
 }
 
 func waitForReadySnapshot(snapname string) error {
@@ -131,7 +130,6 @@ func waitForReadySnapshot(snapname string) error {
 		}
 		time.Sleep(time.Second)
 	}
-	return nil
 }
 
 // CreateZFSVolume create new zfs volume from csi volume request
@@ -800,18 +798,6 @@ func (cs *controller) ListVolumes(
 ) (*csi.ListVolumesResponse, error) {
 
 	return nil, status.Error(codes.Unimplemented, "")
-}
-
-// validateCapabilities validates if provided capabilities
-// are supported by this driver
-func validateCapabilities(caps []*csi.VolumeCapability) bool {
-
-	for _, cap := range caps {
-		if !IsSupportedVolumeCapabilityAccessMode(cap.AccessMode.Mode) {
-			return false
-		}
-	}
-	return true
 }
 
 func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) error {
