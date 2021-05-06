@@ -290,6 +290,9 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 		WithName(volName).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		WithLabels(labels).Build()
+	if err != nil {
+		return "", err
+	}
 
 	volObj.Spec = vol.Spec
 	// use the snapshot name same as new volname
@@ -344,6 +347,9 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 		WithName(volName).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		Build()
+	if err != nil {
+		return "", err
+	}
 
 	volObj.Spec = snap.Spec
 	volObj.Spec.SnapName = strings.ToLower(snapshot)
