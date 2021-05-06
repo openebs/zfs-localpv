@@ -57,7 +57,11 @@ func (v *VersionSet) fetchAndSetVersion() error {
 	if err != nil {
 		return err
 	}
-	env.Set(clusterUUID, v.id)
+
+	err = env.Set(clusterUUID, v.id)
+	if err != nil {
+		return err
+	}
 
 	k8s, err := k8sapi.GetServerVersion()
 	if err != nil {
@@ -66,16 +70,30 @@ func (v *VersionSet) fetchAndSetVersion() error {
 	// eg. linux/amd64
 	v.k8sArch = k8s.Platform
 	v.k8sVersion = k8s.GitVersion
-	env.Set(clusterArch, v.k8sArch)
-	env.Set(clusterVersion, v.k8sVersion)
+
+	err = env.Set(clusterArch, v.k8sArch)
+	if err != nil {
+		return err
+	}
+
+	err = env.Set(clusterVersion, v.k8sVersion)
+	if err != nil {
+		return err
+	}
+
 	v.nodeType, err = k8sapi.GetOSAndKernelVersion()
+	if err != nil {
+		return err
+	}
+
 	env.Set(nodeType, v.nodeType)
 	if err != nil {
 		return err
 	}
 	v.openebsVersion = openebsversion.GetVersionDetails()
-	env.Set(openEBSversion, v.openebsVersion)
-	return nil
+
+	err = env.Set(openEBSversion, v.openebsVersion)
+	return err
 }
 
 // getVersion is a wrapper over fetchAndSetVersion
