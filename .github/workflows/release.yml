@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       
       - name: Set Image Org
         # sets the default IMAGE_ORG to openebs
@@ -33,11 +33,13 @@ jobs:
           [ -z "${{ secrets.IMAGE_ORG }}" ] && IMAGE_ORG=openebs || IMAGE_ORG=${{ secrets.IMAGE_ORG}}
           echo "IMAGE_ORG=${IMAGE_ORG}" >> $GITHUB_ENV
 
-      - name: Set Tag
+      - name: Set Tag and Branch
         run: |
           TAG="${GITHUB_REF#refs/*/v}"
           echo "TAG=${TAG}" >> $GITHUB_ENV
           echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
+          BRANCH="v${TAG%.*}.x"
+          echo "BRANCH=${BRANCH}" >> $GITHUB_ENV
 
       - name: Set Build Date
         id: date
@@ -56,10 +58,31 @@ jobs:
           tag-semver: |
             {{version}}
       
-      - name: Print Tag info
+      - name: Print Build info
         run: |
           echo "${{ steps.docker_meta.outputs.tags }}"
           echo "RELEASE TAG: ${RELEASE_TAG}"
+          echo "RELEASE BRANCH: ${BRANCH}"
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Update Operator YAML
+        run: |
+          echo "update the operator yaml with the image tag"
+          sed -i "s/zfs-driver:ci/zfs-driver:${RELEASE_TAG}/" deploy/yamls/zfs-driver.yaml
+          sed -i "s/zfs-driver:ci/zfs-driver:${RELEASE_TAG}/" deploy/zfs-operator.yaml
+          sed -i "s/newTag: ci/newTag: ${RELEASE_TAG}/" deploy/yamls/kustomization.yaml
+
+          git diff --quiet deploy/ || CHANGED=$?
+          if [[ $CHANGED -ne 0 ]]; then
+            echo "Commiting operator yaml changes"
+            git add deploy/
+            git commit -s -m 'chore(yaml): updating operator yaml with the image tag'
+            git push origin HEAD:"${BRANCH}"
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
