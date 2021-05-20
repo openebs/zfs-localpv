@@ -914,6 +914,12 @@ func ListZFSPool() ([]apis.Pool, error) {
 	return decodeListOutput(output)
 }
 
+// The `zfs list` command will list down all the resources including
+// pools and volumes and as the pool names cannot have "/" in the name
+// the function below filters out the pools. Sample output of command:
+// $ zfs list -s name -o name,guid,available -H -p
+// zfspv-pool	4734063099997348493	103498467328
+// zfspv-pool/pvc-be02d230-3738-4de9-8968-70f5d10d86dd	3380225606535803752	4294942720
 func decodeListOutput(raw []byte) ([]apis.Pool, error) {
 	scanner := bufio.NewScanner(strings.NewReader(string(raw)))
 	pools := []apis.Pool{}
