@@ -54,7 +54,6 @@ const (
 	ZFSSnapshotArg = "snapshot"
 	ZFSSendArg     = "send"
 	ZFSRecvArg     = "recv"
-	ZFSPoolCmd     = "zpool"
 )
 
 // constants to define volume type
@@ -898,10 +897,9 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 	return nil
 }
 
-// ListZFSPool invokes `pools` to list all the available volume
-// groups in the node.
+// ListZFSPool invokes `zfs list` to list all the available
+// pools in the node.
 func ListZFSPool() ([]apis.Pool, error) {
-
 	args := []string{
 		ZFSListArg, "-s", "name",
 		"-o", "name,guid,available",
@@ -929,6 +927,7 @@ func decodeListOutput(raw []byte) ([]apis.Pool, error) {
 				10, 64)
 			if err != nil {
 				err = fmt.Errorf("cannot get free size for pool %v: %v", pool.Name, err)
+				return pools, err
 			}
 			pool.Free = *resource.NewQuantity(sizeBytes, resource.BinarySI)
 			pools = append(pools, pool)

@@ -108,7 +108,7 @@ func (c *NodeController) syncNode(namespace string, name string) error {
 	}
 
 	klog.Infof("zfs node controller: updating node object with %+v", node)
-	if node, err = nodebuilder.NewKubeclient().WithNamespace(namespace).Update(node); err != nil {
+	if _, err = nodebuilder.NewKubeclient().WithNamespace(namespace).Update(node); err != nil {
 		return fmt.Errorf("update zfs node %s/%s: %v", namespace, name, err)
 	}
 	klog.Infof("zfs node controller: updated node object %s/%s", namespace, name)
