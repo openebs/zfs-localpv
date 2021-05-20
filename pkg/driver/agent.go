@@ -30,6 +30,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/mgmt/restore"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/snapshot"
 	"github.com/openebs/zfs-localpv/pkg/mgmt/volume"
+	"github.com/openebs/zfs-localpv/pkg/mgmt/zfsnode"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
 	"golang.org/x/net/context"
 	"golang.org/x/sys/unix"
@@ -53,6 +54,14 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
+
+	// start the zfsnode resource watcher
+	go func() {
+		err := zfsnode.Start(&ControllerMutex, stopCh)
+		if err != nil {
+			klog.Fatalf("Failed to start LVM node controller: %s", err.Error())
+		}
+	}()
 
 	// start the zfsvolume watcher
 	go func() {
