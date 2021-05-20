@@ -20,6 +20,8 @@ package v1
 
 type ZFSBackupExpansion interface{}
 
+type ZFSNodeExpansion interface{}
+
 type ZFSRestoreExpansion interface{}
 
 type ZFSSnapshotExpansion interface{}

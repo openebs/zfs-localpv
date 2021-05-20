@@ -26,6 +26,14 @@ type ZFSBackupListerExpansion interface{}
 // ZFSBackupNamespaceLister.
 type ZFSBackupNamespaceListerExpansion interface{}
 
+// ZFSNodeListerExpansion allows custom methods to be added to
+// ZFSNodeLister.
+type ZFSNodeListerExpansion interface{}
+
+// ZFSNodeNamespaceListerExpansion allows custom methods to be added to
+// ZFSNodeNamespaceLister.
+type ZFSNodeNamespaceListerExpansion interface{}
+
 // ZFSRestoreListerExpansion allows custom methods to be added to
 // ZFSRestoreLister.
 type ZFSRestoreListerExpansion interface{}

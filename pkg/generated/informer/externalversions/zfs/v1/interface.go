@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// ZFSBackups returns a ZFSBackupInformer.
 	ZFSBackups() ZFSBackupInformer
+	// ZFSNodes returns a ZFSNodeInformer.
+	ZFSNodes() ZFSNodeInformer
 	// ZFSRestores returns a ZFSRestoreInformer.
 	ZFSRestores() ZFSRestoreInformer
 	// ZFSSnapshots returns a ZFSSnapshotInformer.
@@ -48,6 +50,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // ZFSBackups returns a ZFSBackupInformer.
 func (v *version) ZFSBackups() ZFSBackupInformer {
 	return &zFSBackupInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ZFSNodes returns a ZFSNodeInformer.
+func (v *version) ZFSNodes() ZFSNodeInformer {
+	return &zFSNodeInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // ZFSRestores returns a ZFSRestoreInformer.
