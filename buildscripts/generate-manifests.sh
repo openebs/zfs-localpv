@@ -103,8 +103,8 @@ echo '
 # Do the modification in the code and run the `make manifests` command
 # to generate the CRD definition' > deploy/yamls/zfsnode-crd.yaml
 
-cat deploy/yamls/local.openebs.io_zfsnodes.yaml >> deploy/yamls/zfsnode-crd.yaml
-rm deploy/yamls/local.openebs.io_zfsnodes.yaml
+cat deploy/yamls/zfs.openebs.io_zfsnodes.yaml >> deploy/yamls/zfsnode-crd.yaml
+rm deploy/yamls/zfs.openebs.io_zfsnodes.yaml
 
 ## create the operator file using all the yamls
 
@@ -131,11 +131,11 @@ cat deploy/yamls/zfsbackup-crd.yaml >> deploy/zfs-operator.yaml
 # Add ZFSRestore v1 CRDs to the Operator yaml
 cat deploy/yamls/zfsrestore-crd.yaml >> deploy/zfs-operator.yaml
 
-# Add the driver deployment to the Operator yaml
-cat deploy/yamls/zfs-driver.yaml >> deploy/zfs-operator.yaml
-
 # Add ZFSNode v1alpha1 CRDs to the Operator yaml
 cat deploy/yamls/zfsnode-crd.yaml >> deploy/zfs-operator.yaml
+
+# Add the driver deployment to the Operator yaml
+cat deploy/yamls/zfs-driver.yaml >> deploy/zfs-operator.yaml
 
 # To use your own boilerplate text use:
 #   --go-header-file ${SCRIPT_ROOT}/hack/custom-boilerplate.go.txt
