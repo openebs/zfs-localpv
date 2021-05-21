@@ -868,7 +868,7 @@ func (cs *controller) GetCapacity(
 
 	zfsNodesCache := cs.zfsNodeInformer.GetIndexer()
 	params := req.GetParameters()
-	vgParam := helpers.GetInsensitiveParameter(&params, "volgroup")
+	poolParam := helpers.GetInsensitiveParameter(&params, "poolname")
 
 	var availableCapacity int64
 	for _, nodeName := range nodeNames {
@@ -882,14 +882,14 @@ func (cs *controller) GetCapacity(
 		}
 		zfsNode := v.(*zfsapi.ZFSNode)
 		// rather than summing all free capacity, we are calculating maximum
-		// lv size that gets fit in given vg.
+		// zv size that gets fit in given pool.
 		// See https://github.com/kubernetes/enhancements/tree/master/keps/sig-storage/1472-storage-capacity-tracking#available-capacity-vs-maximum-volume-size &
 		// https://github.com/container-storage-interface/spec/issues/432 for more details
-		for _, vg := range zfsNode.Pools {
-			if vg.Name != vgParam {
+		for _, zpool := range zfsNode.Pools {
+			if zpool.Name != poolParam {
 				continue
 			}
-			freeCapacity := vg.Free.Value()
+			freeCapacity := zpool.Free.Value()
 			if availableCapacity < freeCapacity {
 				availableCapacity = freeCapacity
 			}

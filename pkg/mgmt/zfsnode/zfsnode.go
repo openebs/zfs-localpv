@@ -33,7 +33,7 @@ import (
 	"k8s.io/klog"
 )
 
-func (c *NodeController) listZFSVolumeGroup() ([]apis.Pool, error) {
+func (c *NodeController) listZFSPool() ([]apis.Pool, error) {
 	return zfs.ListZFSPool()
 }
 
@@ -63,7 +63,7 @@ func (c *NodeController) syncNode(namespace string, name string) error {
 		node = cachedNode.DeepCopy()
 	}
 
-	pools, err := c.listZFSVolumeGroup()
+	pools, err := c.listZFSPool()
 	if err != nil {
 		return err
 	}

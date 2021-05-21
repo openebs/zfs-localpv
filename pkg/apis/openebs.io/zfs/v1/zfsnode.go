@@ -38,9 +38,9 @@ type ZFSNode struct {
 	Pools []Pool `json:"pools"`
 }
 
-// Pool specifies attributes of a given zfs pool exists on node.
+// Pool specifies attributes of a given zfs pool that exists on the node.
 type Pool struct {
-	// Name of the zfs zfs pool.
+	// Name of the zfs pool.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`

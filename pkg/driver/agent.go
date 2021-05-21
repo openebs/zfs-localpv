@@ -59,7 +59,7 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 	go func() {
 		err := zfsnode.Start(&ControllerMutex, stopCh)
 		if err != nil {
-			klog.Fatalf("Failed to start LVM node controller: %s", err.Error())
+			klog.Fatalf("Failed to start ZFS node controller: %s", err.Error())
 		}
 	}()
 
