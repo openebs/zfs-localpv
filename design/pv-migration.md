@@ -49,7 +49,7 @@ ZFS POOL name should be same across all the nodes for ZFS-LocalPV. So, we have t
 
 **Note:** We can not edit PV volumeAttributes with the new pool name as it is immutable field.
 
-The migrator will look for all the volumes start with the name "pvc-" and will look for corresponding ZFSVolume object and will update it. In case of admin has imported the existing volumes where it is possible that volume name might not start with the name "pvc-", the PoolName needs to be updated manually as the volume was created manually by the admin.
+The migrator will look for all the volumes for all the pools present on the node and will look for corresponding ZFSVolume object and will update it with the correct poolname and ownernodeId field.
 
 ### Workflow
 
