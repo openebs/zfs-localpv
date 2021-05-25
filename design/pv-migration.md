@@ -72,7 +72,7 @@ node-1   Ready    worker   351d   v1.17.4   beta.kubernetes.io/arch=amd64,beta.k
 
 #### 2. if node2 is existing node and Pool of the same name is present there
 
-- here we need import the pool with the different name and restart the ZFS-LocalPV driver to make it aware of that pool to set the corresponding node topology
+- here we need to import the pool with the different name and restart the ZFS-LocalPV driver to make it aware of that pool to set the corresponding node topology
 - the ZFS-LocalPV driver will look for `guid.openebs.io/14820954593456176137=true` and will remove the label from the nodes where the pool is not present
 - the ZFS-LocalPV driver will update the new node with `guid.openebs.io/14820954593456176137=true` label
 - the migrator will look for ZFSVolume resource and update the PoolName and OwnerNodeID for all the volumes.
