@@ -32,6 +32,10 @@ func (c *FakeZfsV1) ZFSBackups(namespace string) v1.ZFSBackupInterface {
 	return &FakeZFSBackups{c, namespace}
 }
 
+func (c *FakeZfsV1) ZFSNodes(namespace string) v1.ZFSNodeInterface {
+	return &FakeZFSNodes{c, namespace}
+}
+
 func (c *FakeZfsV1) ZFSRestores(namespace string) v1.ZFSRestoreInterface {
 	return &FakeZFSRestores{c, namespace}
 }

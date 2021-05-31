@@ -55,6 +55,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=zfs.openebs.io, Version=v1
 	case v1.SchemeGroupVersion.WithResource("zfsbackups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Zfs().V1().ZFSBackups().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("zfsnodes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Zfs().V1().ZFSNodes().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("zfsrestores"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Zfs().V1().ZFSRestores().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("zfssnapshots"):

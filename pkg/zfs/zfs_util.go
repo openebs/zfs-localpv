@@ -17,8 +17,10 @@ limitations under the License.
 package zfs
 
 import (
+	"bufio"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 
 	"fmt"
 	"os"
@@ -30,6 +32,7 @@ import (
 	"github.com/openebs/lib-csi/pkg/xfs"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog"
 )
 
@@ -892,4 +895,49 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 	}
 
 	return nil
+}
+
+// ListZFSPool invokes `zfs list` to list all the available
+// pools in the node.
+func ListZFSPool() ([]apis.Pool, error) {
+	args := []string{
+		ZFSListArg, "-s", "name",
+		"-o", "name,guid,available",
+		"-H", "-p",
+	}
+	cmd := exec.Command(ZFSVolCmd, args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		klog.Errorf("zfs: could not list zpool cmd %v: %v", args, err)
+		return nil, err
+	}
+	return decodeListOutput(output)
+}
+
+// The `zfs list` command will list down all the resources including
+// pools and volumes and as the pool names cannot have "/" in the name
+// the function below filters out the pools. Sample output of command:
+// $ zfs list -s name -o name,guid,available -H -p
+// zfspv-pool	4734063099997348493	103498467328
+// zfspv-pool/pvc-be02d230-3738-4de9-8968-70f5d10d86dd	3380225606535803752	4294942720
+func decodeListOutput(raw []byte) ([]apis.Pool, error) {
+	scanner := bufio.NewScanner(strings.NewReader(string(raw)))
+	pools := []apis.Pool{}
+	for scanner.Scan() {
+		items := strings.Split(strings.TrimSpace(scanner.Text()), "\t")
+		if !strings.Contains(items[0], "/") {
+			var pool apis.Pool
+			pool.Name = items[0]
+			pool.UUID = items[1]
+			sizeBytes, err := strconv.ParseInt(items[2],
+				10, 64)
+			if err != nil {
+				err = fmt.Errorf("cannot get free size for pool %v: %v", pool.Name, err)
+				return pools, err
+			}
+			pool.Free = *resource.NewQuantity(sizeBytes, resource.BinarySI)
+			pools = append(pools, pool)
+		}
+	}
+	return pools, nil
 }

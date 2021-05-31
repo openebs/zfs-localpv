@@ -27,6 +27,7 @@ import (
 type ZfsV1Interface interface {
 	RESTClient() rest.Interface
 	ZFSBackupsGetter
+	ZFSNodesGetter
 	ZFSRestoresGetter
 	ZFSSnapshotsGetter
 	ZFSVolumesGetter
@@ -39,6 +40,10 @@ type ZfsV1Client struct {
 
 func (c *ZfsV1Client) ZFSBackups(namespace string) ZFSBackupInterface {
 	return newZFSBackups(c, namespace)
+}
+
+func (c *ZfsV1Client) ZFSNodes(namespace string) ZFSNodeInterface {
+	return newZFSNodes(c, namespace)
 }
 
 func (c *ZfsV1Client) ZFSRestores(namespace string) ZFSRestoreInterface {
