@@ -58,6 +58,10 @@ const (
 	ZFSStatusFailed string = "Failed"
 	// ZFSStatusReady shows object has been processed
 	ZFSStatusReady string = "Ready"
+	// OpenEBSCasTypeKey for the cas-type label
+	OpenEBSCasTypeKey string = "openebs.io/cas-type"
+	// ZFSCasTypeName for the name of the cas-type
+	ZFSCasTypeName string = "localpv-zfs"
 )
 
 var (

@@ -472,7 +472,7 @@ func (cs *controller) CreateVolume(
 	}
 
 	topology := map[string]string{zfs.ZFSTopologyKey: nodeid}
-	cntx := map[string]string{zfs.PoolNameKey: pool}
+	cntx := map[string]string{zfs.PoolNameKey: pool, zfs.OpenEBSCasTypeKey: zfs.ZFSCasTypeName}
 
 	return csipayload.NewCreateVolumeResponseBuilder().
 		WithName(volName).
