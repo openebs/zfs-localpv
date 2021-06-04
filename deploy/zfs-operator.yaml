@@ -2082,6 +2082,7 @@ spec:
             - "--strict-topology"
             - "--leader-election"
             - "--extra-create-metadata=true"
+            - "--default-fstype=ext4"
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
