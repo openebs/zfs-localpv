@@ -20,7 +20,10 @@ last-updated: 2021-05-21
     * [Keys Per ZPOOL](#keys-per-zpool)
     * [Migrator](#migrator)
     * [Workflow](#workflow)
+* [Upgrade](#upgrade)
 * [Implementation Plan](#implementation-plan)
+* [Test Plan](#test-plan)
+* [GA Criteria](#ga-criteria)
 
 ## Summary
 
@@ -41,7 +44,7 @@ The problem with the above approach is we can not move the volumes to any existi
 
 ### Keys Per ZPOOL
 
-We are proposing to have a key dedicated to ZFS POOL. This key will be used by the ZFS-LocalPV driver to set the label on the nodes where it is present. In this way we can allow the ZFS POOLs to move from any node to any other node as the key is tied to the ZFS POOL as opposed to keeping it per node. We are proposing to have a `guid.openebs.io/<pool-guid>=true` label on the node where the pool is present. Assuming admins do not have large number of pools on a node, there will be not much label set on a node.
+We are proposing to have a key dedicated to ZFS POOL. This key will be used by the ZFS-LocalPV driver to set the label on the nodes where it is present. In this way we can allow the ZFS POOLs to move from any node to any other node as the key is tied to the ZFS POOL as opposed to keeping it per node. We are proposing to have a `guid.zfs.openebs.io/<pool-guid>=true` label on the node where the pool is present. Assuming admins do not have large number of pools on a node, there will be not much label set on a node.
 
 ### Migrator
 
@@ -54,29 +57,38 @@ The migrator will look for all the volumes for all the pools present on the node
 ### Workflow
 
 - user will setup all the nodes and setup the ZFS pool on each of those nodes.
-- the ZFS-LocalPV CSI driver will look for all the pools on the node and will set the `guid.openebs.io/<pool-guid>=true` label for all ZFS POOLs that is present on that node. Let's say node-1 has two pools(say pool1 with guid as 14820954593456176137 and pool2 with guid as 16291571091328403547) present then the labels will be like this :
+- the ZFS-LocalPV CSI driver will look for all the pools on the node and will set the `guid.zfs.openebs.io/<pool-guid>=true` label for all ZFS POOLs that is present on that node. Let's say node-1 has two pools(say pool1 with guid as 14820954593456176137 and pool2 with guid as 16291571091328403547) present then the labels will be like this :
 ```
 $ kubectl get node pawan-node-1 --show-labels
 NAME           STATUS   ROLES    AGE    VERSION   LABELS
-node-1   Ready    worker   351d   v1.17.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=node-1,kubernetes.io/os=linux,node-role.kubernetes.io/worker=true,openebs.io/nodeid=node1,openebs.io/nodename=node-1,guid.openebs.io/14820954593456176137=true,guid.openebs.io/16291571091328403547=true
+node-1   Ready    worker   351d   v1.17.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=node-1,kubernetes.io/os=linux,node-role.kubernetes.io/worker=true,openebs.io/nodeid=node1,openebs.io/nodename=node-1,guid.zfs.openebs.io/14820954593456176137=true,guid.zfs.openebs.io/16291571091328403547=true
 ```
 - If we are moving the pool1 from node1 to node2, then there are two cases here :-
 
 #### 1. if node2 is a fresh node
 
 - we can simply import the pool and restart the ZFS-LocalPV driver to make it aware of that pool to set the corresponding node topology
-- the ZFS-LocalPV driver will look for `guid.openebs.io/14820954593456176137=true` and will remove the label from the nodes where pool is not present
-- the ZFS-LocalPV driver will update the new node with `guid.openebs.io/14820954593456176137=true` label
+- the ZFS-LocalPV driver will look for `guid.zfs.openebs.io/14820954593456176137=true` and will remove the label from the nodes where pool is not present
+- the ZFS-LocalPV driver will update the new node with `guid.zfs.openebs.io/14820954593456176137=true` label
 - the migrator will look for ZFSVolume resource and update the OwnerNodeID with the new node id for all the volumes.
 - the k8s scheduler will be able to see the new label and should schedule the pods to this new node.
 
 #### 2. if node2 is existing node and Pool of the same name is present there
 
 - here we need to import the pool with the different name and restart the ZFS-LocalPV driver to make it aware of that pool to set the corresponding node topology
-- the ZFS-LocalPV driver will look for `guid.openebs.io/14820954593456176137=true` and will remove the label from the nodes where the pool is not present
-- the ZFS-LocalPV driver will update the new node with `guid.openebs.io/14820954593456176137=true` label
+- the ZFS-LocalPV driver will look for `guid.zfs.openebs.io/14820954593456176137=true` and will remove the label from the nodes where the pool is not present
+- the ZFS-LocalPV driver will update the new node with `guid.zfs.openebs.io/14820954593456176137=true` label
 - the migrator will look for ZFSVolume resource and update the PoolName and OwnerNodeID for all the volumes.
 - the k8s scheduler will be able to see the new label and should schedule the pods to this new node.
+
+## Upgrade
+
+With this feature, the ZFS driver will start using the new key (for e.g. `guid.zfs.openebs.io/<pool name>=true`) to set the affinity on the PV. This should not impact the old volumes, the old pods should be running without any issues. Here, we need to make sure that nodes should have the old labels. The ZFS node driver should support the old topology keys in order to make the upgrade seamless. The driver needs to support following topology keys along with the `guid.zfs.openebs.io/<pool guid>=true`
+
+1. openebs.io/nodename
+2. openebs.io/nodeid
+
+`openebs.io/nodename` should be same as nodename and for `openebs.io/nodeid`, if user has labelled the node using this key, then it should have the same value, otherwise it should be nodename only.
 
 ## Implementation Plan
 
@@ -85,3 +97,17 @@ node-1   Ready    worker   351d   v1.17.4   beta.kubernetes.io/arch=amd64,beta.k
 
 ### Phase 2
 1. Implement replacement with exisitng node (implement Migrator).
+
+## Test Plan
+
+- move the disks to new node and restart the ZFS Driver node daemon set running on that node if already running, the application pods should move to this node.
+- move the disks to any existing node and restart the node daemon set running on that node, the pods using this zfs pool should move to this node.
+- have 2 pools on a node and move one pool to the other node, only the pod using that pool should move to other node.
+- verify the node labels are set accordingly where the pool is present.
+- verify the ZFS volume CR has the updated OwnerNodeId and ZFS Pool information once migration is done.
+- verify the snapshot CR has the updated OwnerNodeId and ZFS Pool information once migration is done.
+- verify that PV affinity has the key `guid.zfs.openebs.io/<pool guid>`.
+
+## GA Criteria
+
+Once all the test cases are part of e2e pipeline and running without any failure, this feature can be released as GA.
