@@ -1,0 +1,130 @@
+---
+- block:
+    - name: Get the list of nodes from the value of env's for zpool creation
+      set_fact:
+        node_list: "{{ node_names.split(',') }}"
+      when: "node_names != ''"
+
+    - name: Get the list of all those nodes which are in Ready state and having no taints in cluster
+      shell: > 
+        kubectl get nodes -o json | jq -r 'try .items[] | select(.spec.taints|not)
+        | select(.status.conditions[].reason=="KubeletReady" and .status.conditions[].status=="True")
+        | .metadata.name'
+      register: schedulabel_nodes
+      when: "node_names == ''"
+
+      # zpool creation command is `zpool create <zpool_name> <zpool_type> <disks>`
+      # if it is striped pool then <zpool_type> will be replace by empty because 
+      # command for striped pool is `zpool create <pool_name> <disks>` and for other 
+      # type like mirror or raidz it will be replace by `zpool_type` env value.
+    - name: Record the pool type value from env's
+      set_fact:
+        zpool_type_val: "{% if zpool_type == '' or zpool_type == 'stripe' %}{% else %} '{{ zpool_type }}' {% endif %}"
+
+    - block:
+    
+        - name: Label the nodes for privileged DaemonSet pods to schedule on it
+          shell: >
+            kubectl label node {{ item }} test=zfs-utils
+          args:
+            executable: /bin/bash
+          register: label_status
+          failed_when: "label_status.rc != 0"
+          with_items: "{{ node_list }}"
+
+        - name: Update the DaemonSet yaml to use nodes label selector
+          shell: >
+            sed -i -e "s|#nodeSelector|nodeSelector|g" \
+            -e "s|#test: zfs-utils|test: zfs-utils|g" /e2e-tests/experiments/zfs-localpv-provisioner/zfs_utils_ds.yml
+          args:
+            executable: /bin/bash
+          register: status
+          failed_when: "status.rc != 0"
+
+      when: "node_names != ''"
+
+    - name: Create a DaemonSet with privileged access for volume group creation on nodes
+      shell: >
+        kubectl apply -f /e2e-tests/experiments/zfs-localpv-provisioner/zfs_utils_ds.yml
+      args:
+        executable: /bin/bash
+      register: status
+      failed_when: "status.rc != 0"
+
+    - name: Check if DaemonSet pods are in running state on all desired nodes
+      shell: >
+        kubectl get pods -n e2e -l app=zfs-utils
+        --no-headers -o custom-columns=:.status.phase | sort | uniq
+      args:
+        executable: /bin/bash
+      register: result
+      until: "result.stdout == 'Running'"
+      delay: 3
+      retries: 40
+
+    - name: Get the list of DaemonSet pods
+      shell: >
+        kubectl get pods -n e2e -l app=zfs-utils --no-headers
+        -o custom-columns=:.metadata.name
+      args:
+        executable: /bin/bash
+      register: ds_pods_list
+
+    - name: Create non-encrypted zpool on desired worker nodes
+      shell: >
+        kubectl exec -ti {{ item }} -- bash -c 'zpool create {{ zpool_name }} {{ zpool_type_val }} {{ zpool_disks }}'
+      args:
+        executable: /bin/bash
+      register: zpool_status
+      failed_when: "zpool_status.rc != 0"
+      with_items: "{{ ds_pods_list.stdout_lines }}"
+      when: zpool_encryption == 'off' or zpool_encryption == ''
+
+    - name: Create encrypted zpool on desired worker nodes
+      shell: >
+        kubectl exec -ti {{ item }} -- bash -c "echo {{ enc_pwd }} | sudo -S su -c
+        'zpool create -O encryption=on -O keyformat=passphrase -O keylocation=prompt {{ zpool_name }} {{ zpool_type_val }} {{ zpool_disks }}'"
+      args:
+        executable: /bin/bash
+      register: enc_zpool_status
+      failed_when: "enc_zpool_status.rc != 0"
+      with_items: "{{ ds_pods_list.stdout_lines }}"
+      when: "zpool_encryption == 'on'"
+
+  always:
+
+    # Here always block tasks will execute everytime irrespective of previous tasks result
+    # so here we will delete daemonset pods and remove label which were created on nodes.
+    # Here purpose for using `ignore_errors: true` is that if this test fails even before
+    # creating daemonset or labeling the node then deleting them will fail as they don't exist.
+    
+  - name: Delete the DaemonSet
+    shell: >
+      kubectl delete -f /e2e-tests/experiments/zfs-localpv-provisioner/zfs_utils_ds.yml
+    args:
+      executable: /bin/bash
+    register: status
+    failed_when: "status.rc != 0"
+    ignore_errors: true
+
+  - name: Remove the label from nodes
+    shell: >
+      kubectl label node {{ item }} test-
+    args:
+      executable: /bin/bash
+    register: label_status
+    failed_when: "label_status.rc != 0"
+    with_items: "{{ node_list }}"
+    when: "node_names != ''"
+    ignore_errors: true
+
+  - name: Remove the label from nodes
+    shell: >
+      kubectl label node {{ item }} test-
+    args:
+      executable: /bin/bash
+    register: label_status
+    failed_when: "label_status.rc != 0"
+    with_items: "{{ schedulabel_nodes.stdout_lines }}"
+    when: "node_names == ''"
+    ignore_errors: true

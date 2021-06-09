@@ -1,0 +1,7 @@
+test_name: zfspv-custom-topology
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+zpool_name: "{{ lookup('env','ZPOOL_NAME') }}"
+
+node_label: "{{ lookup('env','NODE_LABEL') }}"

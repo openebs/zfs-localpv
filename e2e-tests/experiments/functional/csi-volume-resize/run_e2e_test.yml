@@ -1,0 +1,43 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: csi-volume-resize-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      name: csi-volume-resize
+      labels:
+        test: csi-volume-resize
+
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+            # This is the namespace where application pod is running
+          - name: APP_NAMESPACE
+            value: ''
+
+            # Name of the application pvc
+          - name: APP_PVC
+            value: '' 
+
+            # Application pod label in `key=value` format
+          - name: APP_LABEL
+            value: ''
+
+            # Resized PVC size (for eg. 10Gi)
+          - name: NEW_PV_CAPACITY
+            value: ''
+
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/functional/csi-volume-resize/test.yml -i /etc/ansible/hosts -vv; exit 0"]

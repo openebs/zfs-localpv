@@ -1,0 +1,24 @@
+---
+# Test specific parameters
+
+test_name: node-failure
+
+namespace: "{{ lookup('env','APP_NAMESPACE') }}"
+
+pvc: "{{ lookup('env','APP_PVC') }}"
+
+label: "{{ lookup('env','APP_LABEL') }}"
+
+host_ip: "{{ lookup('env','ESX_HOST_IP') }}"
+
+esx_pwd: "{{ lookup('env','ESX_PASSWORD') }}"
+
+data_persistence: "{{ lookup('env','DATA_PERSISTENCE') }}"
+
+zfs_operator_ns: "{{ lookup('env','ZFS_OPERATOR_NAMESPACE') }}"
+
+user: "{{ lookup('env','USERNAME') }}"
+
+zpool_name: "{{ lookup('env','ZPOOL_NAME') }}"
+
+node_pwd: "{{ lookup('env','NODE_PASSWORD') }}"

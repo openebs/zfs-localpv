@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-busybox-ha
+  labels:
+    app: test_ha
+spec:
+  selector:
+    matchLabels:
+      app: test_ha
+  template:
+    metadata:
+      labels:
+        app: test_ha
+    spec:
+      tolerations:
+      - key: "key"
+        operator: "Equal"
+        value: "value"
+        effect: "NoSchedule"
+      containers:
+      - name: app-busybox
+        imagePullPolicy: IfNotPresent
+        image: gcr.io/google-containers/busybox
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do sleep 10;done"]
+        env:
+        volumeMounts:
+        - name: data-vol
+          mountPath: /busybox
+      volumes:
+      - name: data-vol
+        persistentVolumeClaim:
+          claimName: pvcha
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvcha
+spec:
+  storageClassName: zfspv-sc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

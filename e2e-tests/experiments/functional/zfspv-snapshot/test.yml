@@ -1,0 +1,228 @@
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars_files:
+    - test_vars.yml
+    - /mnt/parameters.yml
+    
+  tasks:
+    - block:
+
+          ## Generating the testname for zfspv snapshot e2e-test
+        - include_tasks: /e2e-tests/hack/create_testname.yml
+    
+          ## Record SOT (start of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'SOT'
+        
+        - block:
+            - name: Get the name of application pod
+              shell: >
+                kubectl get pod -n {{ app_ns }} -l {{ app_label }} 
+                --no-headers -o custom-columns=:.metadata.name | shuf -n1
+              args:
+                executable: /bin/bash
+              register: app_pod_name
+
+            - name: Check if the application pod are in running state
+              shell: >
+                kubectl get pods {{ app_pod_name.stdout }} -n {{ app_ns }}
+                --no-headers -o custom-columns=:.status.phase
+              args:
+                executable: /bin/bash
+              register: app_pod_status
+              failed_when: "'Running' not in app_pod_status.stdout"
+
+            - block:
+              - name: Create some test data into the application
+                include_tasks: "/e2e-tests/utils/applications/busybox/busybox_data_persistence.yml"
+                vars:
+                  status: 'LOAD'
+                  ns: "{{ app_ns }}"
+                  pod_name: "{{ app_pod_name.stdout }}"  
+              when: data_persistence == 'busybox'
+            
+            - block:
+              - name: Create some test data into the application
+                include_tasks: "/e2e-tests/utils/applications/mysql/mysql_data_persistence.yml"
+                vars:
+                  status: 'LOAD'
+                  ns: "{{ app_ns }}"
+                  pod_name: "{{ app_pod_name.stdout }}"  
+              when: data_persistence == 'mysql'
+                    
+            - name: Update the snapshot template with the test specific variables
+              template: 
+                src: volume_snapshot.j2
+                dest: volume_snapshot.yml
+
+            - name: Check if the volume snapshot class is present
+              shell: >
+                kubectl get volumesnapshotclass
+              args:
+                executable: /bin/bash
+              register: snapshot_class_status
+              failed_when: "snapshot_class not in snapshot_class_status.stdout"
+            
+            - name: Get the application deployment name
+              shell: >
+                 kubectl get deployment -n {{ app_ns }} -l {{ app_label }} --no-headers
+                 -o custom-columns=:.metadata.name
+              args:
+                executable: /bin/bash
+              register: app_deployment_name
+
+            - name: Get the replica count for application deployment
+              shell: >
+                kubectl get deployment {{ app_deployment_name.stdout }} -n {{ app_ns }} --no-headers
+                -o custom-columns=:.spec.replicas
+              args:
+                executable: /bin/bash
+              register: replica_count
+
+            - name: Scale down the application before taking the zfs vol-snapshot
+              shell: >
+                kubectl scale deployment/{{ app_deployment_name.stdout }} -n {{ app_ns }} --replicas=0
+              args:
+                executable: /bin/bash
+              
+            - name: Verify that modified replica count is zero
+              shell: >
+                kubectl get deployment {{ app_deployment_name.stdout }} -n {{ app_ns }} --no-headers
+                -o custom-columns=:.spec.replicas
+              args:
+                executable: /bin/bash
+              register: modify_replica_count
+              until: "modify_replica_count.stdout == \"0\""
+              delay: 3
+              retries: 60
+
+            - name: Verify that the application pod is not present after scaling down the deployment
+              shell: >
+                kubectl get pods -n {{ app_ns }} 
+              args:
+                executable: /bin/bash
+              register: app_pod_status
+              until: "app_pod_name.stdout not in app_pod_status.stdout"
+              delay: 3
+              retries: 60
+
+              ## As we are checking the status of only one pod if is terminated successfully
+              ## but in case of shared mount support other pods may not be terminate at the same time
+              ## to avoid such condition here we have manual wait for 30 seconds.
+            - name: Manual wait for some time
+              shell: sleep 30
+
+            - name: create zfspv volumes snapshot   
+              shell: >
+                kubectl create -f volume_snapshot.yml
+              args:
+               executable: /bin/bash
+              register: status
+              failed_when: "status.rc != 0"
+
+            - name: Get the uid of the snapshot taken
+              shell: >
+                kubectl get volumesnapshot.snapshot {{ snapshot_name }} -n {{ app_ns }} 
+                --no-headers -o custom-columns=:.metadata.uid
+              args:
+                executable: /bin/bash
+              register: snap_uid
+              
+            - set_fact:
+                snapshot_uid: "{{ snap_uid.stdout }}"
+                
+            - name: Confirm that volumesnapshot {{ snapshot_name }} is ready to use
+              shell: >
+                kubectl get volumesnapshot.snapshot {{ snapshot_name }} -n {{ app_ns }} 
+                -o jsonpath='{.status.readyToUse}'
+              args:
+                executable: /bin/bash
+              register: isSnapshotReady
+              until: "isSnapshotReady.stdout == 'true'"
+              delay: 3
+              retries: 50
+
+            - name: Check the status for openebs resource for the created snapshot {{ snapshot_name }}
+              shell: >
+                kubectl get zfssnap -n {{ zfs_operator_ns }} 
+                -o jsonpath='{.items[?(@.metadata.name=="snapshot-{{ snapshot_uid }}")].status.state}'
+              args:
+                executable: /bin/bash
+              register: zfssnap_status
+              until: "zfssnap_status.stdout == 'Ready'"
+              delay: 3
+              retries: 50
+
+            - name: Scale up the application deployment after taking zfs-volume-snapshot
+              shell: >
+                kubectl scale deployment/{{ app_deployment_name.stdout }} -n {{ app_ns }} --replicas={{ replica_count.stdout}}
+              args: 
+                executable: /bin/bash
+              
+            - name: Verify that all the replicas are ready of application deployment
+              shell: > 
+                kubectl get deployment {{ app_deployment_name.stdout }} -n {{ app_ns }} --no-headers
+                -o custom-columns=:.status.readyReplicas
+              args:
+                executable: /bin/bash
+              register: ready_replica_count
+              until: ready_replica_count.stdout == replica_count.stdout
+              delay: 3
+              retries: 50
+
+          when: action == 'provision' 
+           
+        - block:
+
+            - name: Obtain the SnapshotContent of the snapshot
+              shell: >
+                kubectl get volumesnapshot.snapshot {{ snapshot_name }} -n {{ app_ns }} 
+                --no-headers -o custom-columns=:.spec.snapshotContentName
+              args:
+                executable: /bin/bash
+              register: snapshot_content
+
+            - set_fact:
+                snapshotcontent: "{{ snapshot_content.stdout }}"
+                                       
+            - name: Delete the volume snapshot
+              shell: >
+                kubectl delete volumesnapshot.snapshot {{ snapshot_name }} -n {{ app_ns }}
+              args:
+                executable: /bin/bash
+              register: status
+              failed_when: "status.rc != 0"
+          
+            - name: Verify if the volume snapshot is deleted successfully
+              shell: >
+                kubectl get volumesnapshot.snapshot -n {{ app_ns }}
+              args:
+                executable: /bin/bash
+              register: ss_name
+              failed_when: "snapshot_name in ss_name.stdout"
+            
+            - name: Verify if the volumesnapshotcontent is deleted
+              shell: >
+                kubectl get volumesnapshotcontent -n {{ app_ns }}
+              args:
+                executable: /bin/bash
+              register: ss_content
+              failed_when: "snapshotcontent in ss_content.stdout"  
+            
+          when: action == 'deprovision'
+
+        - set_fact:
+            flag: "Pass"
+    
+      rescue:
+        - set_fact:
+            flag: "Fail"
+    
+      always:
+          ## RECORD END-OF-TEST IN e2e RESULT CR
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'EOT'

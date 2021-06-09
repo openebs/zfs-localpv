@@ -1,0 +1,106 @@
+---
+# This Utility task file can delete the application and its underlying resources such as pvc and service from K8s cluster
+# This accepts application namespace, application label and application manifest file as input parameters.
+# The parameters used are
+#         - app_deployer ( Deployment spec yaml file )
+#         - app_ns       ( application namespace )
+#         - app_label    ( application label)
+#
+- block:
+
+    - name: Check if the application to be deleted is available.
+      k8s_facts:
+        kind: Pod
+        label_selectors:
+          - "{{ app_label }}"
+        namespace: "{{ app_ns }}"
+      register: po_name
+      until: "{{ po_name | json_query('resources[*].status.phase') | unique | length==1}}"
+      delay: 5
+      retries: 60
+
+    - name: Obtaining the PVC name using application label.
+      set_fact:
+        pvc_name: "{{ po_name.resources.0.spec.volumes.0.persistentVolumeClaim.claimName }}"
+        pod_name: "{{ po_name.resources.0.metadata.name }}"
+
+    - name: Obtaining the PV name from PVC name. 
+      k8s_facts:
+        kind: PersistentVolumeClaim
+        namespace: "{{ app_ns }}"
+        name: "{{ pvc_name }}"
+      register: pv_name
+
+    - set_fact:
+        pvname: "{{ pv_name | json_query('resources[0].spec.volumeName') }}"
+
+    ## Replacing the item names in the respective deployer spec file.
+    - name: Replace the PVC name in application deployer spec.
+      replace:
+        path: "{{ app_deployer }}"
+        regexp: "testclaim"
+        replace: "{{ lookup('env','APP_PVC') }}"
+      when: app_pvc is defined
+ 
+    - name: Replace the storageclass placeholder with provider
+      replace:
+        path: "{{ app_deployer }}"
+        regexp: "testclass"
+        replace: "{{ lookup('env','PROVIDER_STORAGE_CLASS') }}"
+      when: storage_class is defined
+    
+    - block:
+
+        - name: Get the application label values from env
+          set_fact:
+            app_lkey: "{{ app_label.split('=')[0] }}"
+            app_lvalue: "{{ app_label.split('=')[1] }}"
+    
+        - name: Replace the application label placeholder 
+          replace:
+            path: "{{ app_deployer }}"
+            regexp: "lkey: lvalue"
+            replace: "{{ app_lkey }}: {{ app_lvalue }}"
+      when: app_label is defined
+    
+    - name: Delete the application deployment.
+      shell: kubectl delete -f {{ app_deployer }} -n {{ app_ns }}
+      args:
+        executable: /bin/bash
+      ignore_errors: true
+    
+    - name: Check if the PVC is deleted.
+      k8s_facts:
+        kind: PersistentVolumeClaim
+        namespace: "{{ app_ns }}"
+        label_selectors:
+          - "{{ app_label }}"
+      register: resource_list
+      until: resource_list.resources | length < 1
+      delay: 5
+      retries: 120
+    
+- name: Check if the pods are deleted in the namespaces
+  shell: >
+    kubectl get pods -n {{ app_ns }} 
+  args:
+    executable: /bin/bash
+  register: result
+  until: "pod_name not in result.stdout"
+  delay: 5
+  retries: 60
+
+- name: Delete the namespace.
+  k8s:
+    state: absent
+    kind: Namespace
+    name: "{{ app_ns }}"
+
+- name: Check if the PV is deleted.
+  k8s_facts:
+    kind: PersistentVolume
+    name: "{{ pvname }}"
+    label_selectors:
+      - "{{ app_label }}"
+  register: pv_result
+  failed_when: "pv_result.resources | length > 1"

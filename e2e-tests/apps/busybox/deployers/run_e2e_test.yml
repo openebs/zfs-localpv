@@ -1,0 +1,55 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: busybox-deploy-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      name: busybox-deploy
+      labels:
+        app: busybox
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+            # Name of the storage class to use for volume provisioning
+          - name: STORAGE_CLASS  
+            value: 'zfspv-sc'
+           
+            # This is the namespace where busybox application will be deployed 
+          - name: APP_NAMESPACE
+            value: 'busybox'
+
+            # Application label for busybox deployment/statefulset in `key=value` format
+          - name: APP_LABEL
+            value: 'app=busybox'
+
+            # Application PVC name
+          - name: APP_PVC
+            value: 'busybox-pvc'
+
+            # Persistent volume storage capacity (for e.g, 5Gi)
+          - name: PV_CAPACITY
+            value: '5Gi'
+
+            # Use: `statefuleset` to deploy busybox application as statefulset
+            # Use: `deployment` to deploy busybox application as deployment
+          - name: DEPLOY_TYPE
+            value: 'deployment'
+                      
+            # Use: `provision` to deploy the application
+            # Use: `deprovision` to deprovision the application
+          - name: ACTION
+            value: 'provision'
+
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/apps/busybox/deployers/test.yml -i /etc/ansible/hosts -v; exit 0"]

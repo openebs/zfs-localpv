@@ -1,0 +1,9 @@
+test_name: application-pod-failure
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+app_label: "{{ lookup('env','APP_LABEL') }}"
+
+cri: "{{ lookup('env','CONTAINER_RUNTIME') }}"
+
+data_persistence: "{{ lookup('env','DATA_PERSISTENCE') }}"

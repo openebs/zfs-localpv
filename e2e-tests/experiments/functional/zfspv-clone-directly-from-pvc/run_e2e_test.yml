@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zfspv-clone-from-pvc
+  namespace: e2e
+data:
+  parameters.yml: |
+  
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: zfspv-clone-from-pvc-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      labels:
+        test: zfspv-clone-from-pvc
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+          - name: APP_NAMESPACE           ## Namespace in which application is deployed
+            value: '' 
+
+          - name: APP_LABEL               ## Parent application label
+            value: ''                     ## Give value in format (key=value)
+
+          - name: ZFS_OPERATOR_NAMESPACE      ## Namespace in which all the resources created by zfs driver will be present
+            value: ''                     ## for e.g. zfsvolume (zv) will be in this namespace
+            
+          - name: PARENT_PVC_NAME         ## Give value of parent pvc name which is using by the application
+            value: '' 
+
+          - name: CLONE_PVC_NAME         ## Cloned pvc will be created by this name in the same namespace where spapshot is present
+            value: ''
+      
+          - name: APP_NAME                ## Provide the application name which will be deployed using cloned PVC
+            value: ''                     ## Supported values are: `busybox` and `percona`
+                                      
+          - name: ACTION                  ## Use 'deprovision' for clone cleanup
+            value: 'provision'
+             
+          - name: DATA_PERSISTENCE        ## Give values according to the application
+            value: ""                     ## For `Busybox` : `busybox`  &  For `Percona` : `mysql`
+       
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/functional/zfspv-clone-directly-from-pvc/test.yml -i /etc/ansible/hosts -vv; exit 0"]
+
+        volumeMounts:
+        - name: parameters
+          mountPath: /mnt/
+      volumes:
+        - name: parameters
+          configMap:
+            name: zfspv-clone-from-pvc

@@ -1,0 +1,105 @@
+- block:
+
+  - name: Restoring application 
+    shell: >
+        velero restore create --from-backup {{ velero_backup_name }} --restore-volumes=true --namespace-mappings {{ app_ns }}:{{ app_ns_new }}
+    args:
+        executable: /bin/bash
+
+  when: lookup('env','RESTORE_IN_DIFF_NAMESPACE') == "true"
+
+- block:
+
+  - name: Delete all the resources in application namespace
+    shell: | 
+      kubectl delete deploy,pvc,svc --all -n {{ app_ns }}
+      kubectl delete ns {{ app_ns }}
+    
+  - name: Verify that application namespace is deleted successfully
+    shell: kubectl get ns --no-headers -o custom-columns=:metadata.name
+    args: 
+      executable: /bin/bash
+    register: ns_list
+    until: "'{{ app_ns }}' not in ns_list.stdout_lines"
+    delay: 5
+    retries: 30
+
+  - name: Verify that PV is successfully deleted
+    shell: >
+      kubectl get pv -o json | jq -r '.items[] | 
+      select(.spec.claimRef.name == "{{ app_pvc }}" and .spec.claimRef.namespace == "{{ app_ns }}" )
+      | .metadata.name'
+    args:
+      executable: /bin/bash
+    register: pv_list
+    until: "'' in pv_list.stdout"
+    delay: 3
+    retries: 30
+
+  - name: Restoring application
+    shell: >
+      velero restore create --from-backup {{ velero_backup_name }} --restore-volumes=true
+    args:
+      executable: /bin/bash
+
+  when: lookup('env','RESTORE_IN_DIFF_NAMESPACE') == "false"
+
+- name: Getting latest restore name
+  shell: velero get restore | grep {{ velero_backup_name }} | awk '{print $1}' | tail -n 1
+  register: restore_name
+
+- name: Checking the restore status
+  shell: kubectl get restore {{ restore_name.stdout }} -n velero -o jsonpath='{.status.phase}'
+  register: restore_state
+  until: "'Completed' in restore_state.stdout"
+  delay: 5
+  retries: 60
+
+- name: Check the new namespace is created and in Active state
+  shell: kubectl get namespace {{ app_ns_new }} -o jsonpath='{.status.phase}'
+  args:
+    executable: /bin/bash
+  register: app_ns_new_status
+  failed_when: "'Active' not in app_ns_new_status.stdout"
+
+- name: Check that pods in {{ app_ns_new }} are in running state
+  shell: kubectl get pods -n {{ app_ns_new }} --no-headers -o custom-columns=:status.phase | sort | uniq
+  args:
+    executable: /bin/bash
+  register: pod_status
+  until: "pod_status.stdout == 'Running'"
+  delay: 3
+  retries: 50
+
+- name: Get the application pod name in {{ app_ns_new }} namespace
+  shell: kubectl get pod -n {{ app_ns_new }} -l {{ app_label }} --no-headers -o custom-columns=:.metadata.name
+  args:
+    executable: /bin/bash
+  register: restore_application_pod
+
+- name: Record the application pod name in {{ app_ns_new }} namespace
+  set_fact:
+    restore_app_pod: "{{ restore_application_pod.stdout }}"
+
+- block:
+
+  - name: Check if the restore has done on different node
+    shell: >
+      kubectl get pod -n {{ app_ns_new }} -l {{ app_label }} --no-headers -o custom-columns=:.spec.nodeName
+    args:
+      executable: /bin/bash
+    register: restore_node_name
+    failed_when: "'{{ destination_node }}' != '{{ restore_node_name.stdout }}'"
+
+  when: lookup('env','RESTORE_IN_DIFF_NODE') == "true"
+
+
+
+- name: Verify the data consistency
+  include: "{{ data_consistency_util_path }}"
+  vars:
+    status: 'VERIFY'
+    ns: "{{ app_ns_new }}"
+    label: "{{ app_label }}"
+    pod_name: "{{ restore_app_pod }}"
+  when: data_persistence != ''

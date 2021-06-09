@@ -1,0 +1,31 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: zfspv-custom-topology-wfc
+allowVolumeExpansion: true
+parameters:
+  fstype: "zfs"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+volumeBindingMode: WaitForFirstConsumer
+allowedTopologies:
+- matchLabelExpressions:
+  - key: {{ lkey }} 
+    values:
+      - {{ lvalue }}
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: zfspv-custom-topology-immediate
+allowVolumeExpansion: true
+parameters:
+  fstype: "zfs"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+allowedTopologies:
+- matchLabelExpressions:
+  - key: {{ lkey }} 
+    values:
+      - {{ lvalue }}

@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-busybox
+  labels:
+    app: raw-block-vol
+spec:
+  selector:
+    matchLabels:
+      app: raw-block-vol
+  template:
+    metadata:
+      labels:
+        app: raw-block-vol
+    spec:
+      containers:
+      - name: app-busybox
+        imagePullPolicy: IfNotPresent
+        image: gcr.io/google-containers/busybox
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do sleep 10;done"]
+        env:
+        volumeDevices:
+        - name: data-raw-block-vol
+          devicePath: /dev/sdc
+
+        volumeMounts:
+        - name: data-mount-vol
+          mountPath: /busybox
+
+      volumes:
+      - name: data-raw-block-vol
+        persistentVolumeClaim:
+          claimName: block-vol-pvc
+
+      - name: data-mount-vol
+        hostPath:
+          path: /raw_block_volume
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: block-vol-pvc
+spec:
+  volumeMode: Block
+  storageClassName: {{ storage_class }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ pvc_size }}

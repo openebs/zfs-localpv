@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-deploy-custom-topology
+  labels:
+    test: zfspv-custom-topology
+spec:
+  selector:
+    matchLabels:
+      test: zfspv-custom-topology
+  template:
+    metadata:
+      labels:
+        test: zfspv-custom-topology
+    spec:
+      containers:
+      - name: app-busybox
+        imagePullPolicy: IfNotPresent
+        image: gcr.io/google-containers/busybox
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do sleep 10;done"]
+        env:
+        volumeMounts:
+        - name: data-vol
+          mountPath: /busybox
+      volumes:
+      - name: data-vol
+        persistentVolumeClaim:
+          claimName: pvc-custom-topology
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvc-custom-topology
+spec:
+  storageClassName: zfspv-custom-topology
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi

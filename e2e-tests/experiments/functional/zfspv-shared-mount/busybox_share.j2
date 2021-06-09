@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-shared-mount
+  namespace: "{{ app_ns }}"
+  labels:
+    app: shared-mount
+spec:
+  selector:
+    matchLabels:
+      app: shared-mount
+  template:
+    metadata:
+      labels:
+        app: shared-mount
+    spec:
+      containers:
+      - name: app-busybox
+        imagePullPolicy: IfNotPresent
+        image: gcr.io/google-containers/busybox
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do sleep 10;done"]
+        env:
+        volumeMounts:
+        - name: data-vol
+          mountPath: /busybox
+      volumes:
+      - name: data-vol
+        persistentVolumeClaim:
+          claimName: "{{ app_pvc }}"
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  namespace: "{{ app_ns }}"
+  name: "{{ app_pvc }}"
+spec:
+  storageClassName: "{{ storage_class }}"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi

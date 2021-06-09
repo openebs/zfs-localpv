@@ -1,0 +1,251 @@
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars_files:
+    - test_vars.yml
+    - /mnt/parameters.yml
+    
+  tasks:
+    - block:
+
+          ## Generating the testname for zfspv clone test
+        - include_tasks: /e2e-tests/hack/create_testname.yml
+    
+          ## Record SOT (start of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'SOT'
+        
+        - block:
+            - name: Check if the snapshot {{ snapshot_name }} is present to create clone
+              shell: >
+                kubectl get volumesnapshot.snapshot -n {{ app_ns }}
+              args:
+                executable: /bin/bash
+              register: snapshot_status
+              failed_when: snapshot_name not in snapshot_status.stdout
+
+            - name: Get the source pvc name of snapshot {{ snapshot_name }}
+              shell: >
+                kubectl get volumesnapshot.snapshot {{ snapshot_name }} -n {{ app_ns }}
+                --no-headers -o custom-columns=:spec.source.persistentVolumeClaimName
+              args:
+                executable: /bin/bash
+              register: source_pvc
+
+              # clone pvc size should be same as of source pvc
+            - name: Get the capacity size of source pvc
+              shell: >
+                kubectl get pvc {{ source_pvc.stdout }} -n {{ app_ns }}
+                --no-headers -o custom-columns=:.status.capacity.storage
+              args:
+                executable: /bin/bash
+              register: source_pvc_size
+
+            - name: Record clone pvc size same as of source pvc size
+              set_fact:
+                clone_pvc_size: "{{ source_pvc_size.stdout }}"
+
+            - name: Update the clone_pvc template with the test specific values to create clone
+              template:
+                src: clone_pvc.j2
+                dest: clone_pvc.yml
+            
+            - name: Create the clone
+              shell: >
+                kubectl create -f clone_pvc.yml
+              args:
+                executable: /bin/bash
+              register: status
+              failed_when: "status.rc != 0"
+
+            - block:
+              - name: Update the {{ app_name }} deployment yaml with test specific values
+                template:
+                  src: busybox.j2
+                  dest: busybox.yml
+
+              - name: Deploy the {{ app_name }} application using cloned PVC
+                shell: >
+                  kubectl create -f busybox.yml 
+                args:
+                  executable: /bin/bash
+              when: app_name == "busybox"
+
+            - block:
+              - name: Update the {{ app_name }} deployment yaml with test specific values
+                template:
+                  src: percona.j2
+                  dest: percona.yml
+
+              - name: Deploy the {{ app_name }} application using cloned PVC
+                shell: >
+                  kubectl create -f percona.yml 
+                args:
+                  executable: /bin/bash
+              when: app_name == "percona"
+           
+            - name: Check if the clone PVC is bound
+              shell: >
+                kubectl get pvc {{ clone_pvc_name }} -n {{ app_ns }} 
+                --no-headers -o custom-columns=:.status.phase
+              args:
+                executable: /bin/bash
+              register: clone_pvc_status
+              until: "'Bound' in clone_pvc_status.stdout"
+              delay: 5
+              retries: 30
+
+            - name: Get clone {{ app_name }} application pod name
+              shell: >
+                kubectl get pods -n {{ app_ns }} -l name=clone-app --no-headers
+                -o=custom-columns=NAME:".metadata.name"
+              args:
+                executable: /bin/bash
+              register: pod_name
+
+            - name: Record the clone {{ app_name }} application pod name
+              set_fact:
+                app_pod_name: "{{ pod_name.stdout }}"
+
+            - name: Checking clone {{ app_name }} application pod is in running state
+              shell: >
+                kubectl get pods {{app_pod_name}} -n {{ app_ns }} 
+                -o jsonpath='{.status.phase}'
+              register: pod_status
+              until: "'Running' in pod_status.stdout"
+              delay: 5
+              retries: 50
+        
+            - name: Get the container status of clone {{ app_name }} application pod
+              shell: >
+                kubectl get pods {{ app_pod_name }} -n {{ app_ns }} 
+                -o jsonpath='{.status.containerStatuses[].state}' | grep running
+              args:
+                executable: /bin/bash
+              register: containerStatus
+              until: "'running' in containerStatus.stdout"
+              delay: 2
+              retries: 50
+                        
+            - block:
+                - name: Verify the data persistency
+                  include_tasks: "/e2e-tests/utils/applications/mysql/mysql_data_persistence.yml"
+                  vars:
+                    status: 'VERIFY'
+                    ns: "{{ app_ns }}"
+                    label: name=clone-app
+                    pod_name: "{{ app_pod_name }}"
+              when: data_persistence == 'mysql'
+
+            - block: 
+                - name: Verify the data persistency
+                  include_tasks: "/e2e-tests/utils/applications/busybox/busybox_data_persistence.yml"
+                  vars:
+                    status: 'VERIFY'
+                    ns: "{{ app_ns }}"
+                    label: name=clone-app
+                    pod_name: "{{ app_pod_name }}"
+              when: data_persistence == 'busybox'
+
+          when: lookup('env','ACTION') == 'provision'    
+
+        - block:  
+            - name: Get the ZV name for the cloned PVC
+              shell: >
+                kubectl get pvc {{ clone_pvc_name }} -n {{ app_ns }} -o jsonpath='{.spec.volumeName}'
+              args:
+                executable: /bin/bash
+              register: zv_name
+
+            - name: Get {{ app_name }} application pod name which is using cloned pvc
+              shell: >
+                kubectl get pods -n {{ app_ns }} -l name=clone-app --no-headers
+                -o=custom-columns=NAME:".metadata.name"
+              args:
+                executable: /bin/bash
+              register: pod_name
+            
+            - block:
+                - name: Update the {{ app_name }} deployment yaml with test specific values
+                  template:
+                    src: busybox.j2
+                    dest: busybox.yml
+
+                - name: delete the {{ app_name }} application which is using cloned pvc
+                  shell: >
+                    kubectl delete -f busybox.yml 
+                  args:
+                    executable: /bin/bash
+                  register: status
+                  failed_when: "status.rc != 0"
+              when: app_name == 'busybox'
+
+            - block:
+                - name: Update the {{ app_name }} deployment yaml with test specific values
+                  template:
+                    src: percona.j2
+                    dest: percona.yml
+
+                - name: delete the {{ app_name }} application which is using cloned pvc
+                  shell: >
+                    kubectl delete -f percona.yml 
+                  args:
+                    executable: /bin/bash
+                  register: status
+                  failed_when: "status.rc != 0"
+              when: app_name == 'percona'
+
+            - name: Check if the {{ app_name }} application pod which is using cloned pvc is deleted successfully
+              shell: >
+                kubectl get pods -n {{ app_ns }} 
+              args:
+                executable: /bin/bash
+              register: app_status
+              until: "pod_name.stdout not in app_status.stdout"
+              delay: 15
+              retries: 30   
+
+            - name: Delete the cloned pvc
+              shell: >
+                kubectl delete pvc {{ clone_pvc_name }} -n {{ app_ns }} 
+              args:
+                 executable: /bin/bash
+              register: pvc_status
+              failed_when: "pvc_status.rc != 0"
+
+            - name: Check if the cloned pvc is deleted
+              shell: >
+                kubectl get pvc -n {{ app_ns }}
+              args:
+                executable: /bin/bash
+              register: clone_pvc_status
+              until: "clone_pvc_name not in clone_pvc_status.stdout"
+              delay: 5
+              retries: 30
+
+            - name: Check if the ZV for cloned pvc is deleted
+              shell: >
+                kubectl get zv -n {{ zfs_operator_ns }} 
+              args:
+                executable: /bin/bash
+              register: zv_status
+              until: "zv_name.stdout not in zv_status.stdout"
+              delay: 5
+              retries: 15
+
+          when: lookup('env','ACTION') == 'deprovision'
+            
+        - set_fact:
+            flag: "Pass"
+
+      rescue:
+        - set_fact:
+            flag: "Fail"
+
+      always:
+          ## RECORD END-OF-TEST IN e2e RESULT CR
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'EOT'

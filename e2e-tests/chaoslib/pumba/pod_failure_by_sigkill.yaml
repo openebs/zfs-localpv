@@ -1,0 +1,132 @@
+--- 
+- block:
+
+    - name: Setup pumba chaos infrastructure
+      shell: >
+        kubectl apply -f /e2e-tests/chaoslib/pumba/pumba.yml -n {{ namespace }}
+      args:
+        executable: /bin/bash
+      register: result
+
+    - name: Confirm that the pumba ds is running on all desired nodes
+      shell: >
+        kubectl get pod -l app=pumba --no-headers -o custom-columns=:status.phase
+        -n {{ namespace }} | sort | uniq
+      args:
+        executable: /bin/bash
+      register: result
+      until: "result.stdout == 'Running'"
+      delay: 1
+      retries: 60
+      ignore_errors: true
+
+    - name: Get the application pod name
+      shell: >
+        kubectl get pod -l {{ label }} -n {{ namespace }}
+        -o=custom-columns=NAME:".metadata.name" --no-headers | shuf | head -1 
+      args:
+        executable: /bin/bash
+      register: pod_name
+
+    - name: Record application pod name
+      set_fact:
+        app_pod: "{{ pod_name.stdout }}"     
+
+    - name: Identify the node name where application pod is scheduled
+      shell: >
+        kubectl get pod {{ app_pod }} -n {{ namespace }}
+        --no-headers -o custom-columns=:spec.nodeName
+      args:
+        executable: /bin/bash
+      register: result
+
+    - name: Record the node name
+      set_fact:
+        app_node: "{{ result.stdout }}"
+
+    - name: Get application container name
+      shell: >
+        kubectl get pods -l {{ label }} -n {{ namespace }} 
+        -o jsonpath='{.items[0].spec.containers[0].name}'
+      args:
+        executable: /bin/bash
+      register: container
+
+    - name: Record the app_container
+      set_fact:
+        app_container: "{{ container.stdout }}"
+
+    - name: Record the pumba pod scheduled on same node as of application pod
+      shell: >
+        kubectl get pod -l app=pumba -o wide -n {{ namespace }}
+        | grep {{ app_node }} | awk '{print $1}'
+      args:
+        executable: /bin/bash
+      register: pumba_pod
+
+    - name: Record container restartCount
+      shell: >
+        kubectl get pod {{ app_pod }} -n {{ namespace }}
+        -o=jsonpath='{.status.containerStatuses[?(@.name=="{{ app_container }}")].restartCount}'
+      args:
+        executable: /bin/bash
+      register: restartCnt_prev
+
+    - name: Force kill the application pod container using pumba
+      shell: >
+        kubectl exec {{ pumba_pod.stdout}} -n {{ namespace }}
+        -- pumba kill --signal SIGKILL re2:k8s_{{ app_container }}_{{ app_pod }};
+      args:
+        executable: /bin/bash
+      ignore_errors: true
+      register: result
+
+    - name: Verify container restartCount
+      shell: >
+        kubectl get pod {{ app_pod }} -n {{ namespace }}
+        -o=jsonpath='{.status.containerStatuses[?(@.name=="{{ app_container }}")].restartCount}'
+      args:
+        executable: /bin/bash
+      register: restartCnt
+      until: "restartCnt.stdout|int > restartCnt_prev.stdout|int"
+      delay: 2
+      retries: 30
+
+  when: action == "killapp"
+
+- block:
+
+    - name: Check if pumba pod is indeed running
+      shell: >
+        kubectl get pod -l app=pumba --no-headers -o custom-columns=:status.phase
+        -n {{ namespace }} | sort | uniq
+      args:
+        executable: /bin/bash
+      register: result
+      until: "result.stdout == 'Running'"
+      delay: 1
+      retries: 60
+      ignore_errors: true
+
+    - block: 
+
+        - name: Delete the pumba daemonset
+          shell: >
+            kubectl delete -f /e2e-tests/chaoslib/pumba/pumba.yml -n {{ namespace }}
+          args:
+            executable: /bin/bash
+          register: result
+
+        - name: Confirm that the pumba ds is deleted successfully
+          shell: >
+            kubectl get pod -l app=pumba --no-headers -n {{ namespace }}
+          args:
+            executable: /bin/bash
+          register: result
+          until: "'Running' not in result.stdout"
+          delay: 1
+          retries: 150
+
+      when: result.stdout is defined and result.stdout == "Running"
+
+  when: action == "deletepumba"

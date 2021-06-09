@@ -1,0 +1,15 @@
+test_name: "percona-{{ action }}-{{ app_ns }}"
+
+application_deployment: percona.yml
+
+application_name: "percona"
+
+storage_class: "{{ lookup('env','STORAGE_CLASS') }}"
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+app_label: "{{ lookup('env','APP_LABEL') }}"
+
+app_pvc: "{{ lookup('env','APP_PVC') }}"
+
+action: "{{ lookup('env','ACTION') }}"

@@ -1,0 +1,105 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars_files:
+    - test_vars.yml
+    - /mnt/parameters.yml
+
+  tasks:
+    - block:
+
+          ## Generating the testname for application pod failure chaos test
+        - include_tasks: /e2e-tests/hack/create_testname.yml
+    
+          ## Record SOT (start of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'SOT'
+
+        - name: Identify the data consistency util to be invoked
+          template:
+            src: data_persistence.j2
+            dest: data_persistence.yml
+
+        - include_vars:
+            file: data_persistence.yml
+
+        - name: Record the data consistency util path
+          set_fact:
+            data_consistency_util_path: "{{ consistencyutil }}"
+          when: data_persistence != ''
+
+        - name: Display the app information passed via the test job
+          debug:
+            msg:
+              - "The application info is as follows:"
+              - "Namespace    : {{ app_ns }}"
+              - "Label        : {{ app_label }}"
+
+        - block:
+
+            - name: Get application pod name
+              shell: >
+                kubectl get pods -n {{ app_ns }} -l {{ app_label }} --no-headers
+                -o=custom-columns=NAME:".metadata.name" | shuf -n 1
+              args:
+                executable: /bin/bash
+              register: app_pod_name
+
+            - name: Check that application pod is in running state
+              shell: >
+                kubectl get pod {{ app_pod_name.stdout }} -n {{ app_ns }}
+                --no-headers -o custom-columns=:.status.phase
+              args:
+                executable: /bin/bash
+              register: pod_status
+              failed_when: "pod_status.stdout != 'Running'"
+
+            - name: Create some test data
+              include: "{{ data_consistency_util_path }}"
+              vars:
+                status: 'LOAD'
+                ns: "{{ app_ns }}"
+                pod_name: "{{ app_pod_name.stdout }}"
+              when: data_persistence != ''
+
+             ## APPLICATION FAULT INJECTION
+
+            - include_tasks: /e2e-tests/chaoslib/pumba/pod_failure_by_sigkill.yaml
+              vars:
+                action: "killapp"
+                app_pod: "{{ app_pod_name.stdout }}"
+                namespace: "{{ app_ns }}"
+                label: "{{ app_label }}"
+
+            - name: Verify application data persistence
+              include: "{{ data_consistency_util_path }}"
+              vars:
+                status: 'VERIFY'
+                ns: "{{ app_ns }}"
+                label: "{{ app_label }}"
+                pod_name: "{{ app_pod_name.stdout }}"                 
+              when: data_persistence != ''
+
+        - set_fact:
+            flag: "Pass"
+
+      rescue:
+        - set_fact:
+            flag: "Fail"
+
+      always:
+
+        ## RECORD END-OF-TEST IN e2e RESULT CR
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'EOT'
+            chaostype: ""
+            app: ""
+
+        - include_tasks: /e2e-tests/chaoslib/pumba/pod_failure_by_sigkill.yaml
+          vars:
+            action: "deletepumba"
+            namespace: "{{ app_ns }}"

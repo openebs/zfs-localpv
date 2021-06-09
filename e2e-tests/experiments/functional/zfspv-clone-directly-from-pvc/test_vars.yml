@@ -1,0 +1,17 @@
+test_name: zfspv-clone-from-pvc
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+parent_pvc_name: "{{ lookup('env', 'PARENT_PVC_NAME') }}"
+
+clone_pvc_name: "{{ lookup('env','CLONE_PVC_NAME') }}"
+
+app_name: "{{ lookup('env','APP_NAME') }}"
+
+app_label: "{{ lookup('env','APP_LABEL') }}"
+
+action: "{{ lookup('env','ACTION') }}"
+
+zfs_operator_ns: "{{ lookup('env','ZFS_OPERATOR_NAMESPACE') }}"
+
+data_persistence: "{{ lookup('env','DATA_PERSISTENCE') }}"

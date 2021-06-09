@@ -1,0 +1,110 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+    
+  vars_files:
+    - test_vars.yml
+    
+  tasks:
+    - block:
+    
+          ## Generating the testname for zfs localpv provisioner test
+        - include_tasks: /e2e-tests/hack/create_testname.yml
+    
+          ## Record SOT (start of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'SOT'
+        
+        - name: Create zpool on each desired worker node
+          include_tasks: /e2e-tests/experiments/zfs-localpv-provisioner/zpool_creation.yml
+          when: lookup('env','ZPOOL_CREATION') == 'true'
+    
+        - name: Download OpenEBS zfs-localpv operator file
+          get_url:
+            url: https://raw.githubusercontent.com/openebs/zfs-localpv/{{ zfs_branch }}/deploy/zfs-operator.yaml
+            dest: ./zfs_operator.yml
+            force: yes
+          register: result
+          until: "'OK' in result.msg"
+          delay: 5
+          retries: 3
+
+        - name: Update the openebs zfs-driver image tag
+          replace:
+            path: ./zfs_operator.yml
+            regexp: openebs/zfs-driver:ci
+            replace: "{{ lookup('env','ZFS_DRIVER_IMAGE') }}"
+          when: lookup('env','ZFS_DRIVER_IMAGE') | length > 0
+
+        - name: Update the namespace where we want to create zfs-localpv driver resources
+          shell: >
+            sed -i -e "/name: OPENEBS_NAMESPACE/{n;s/value: openebs/value: {{ zfs_operator_ns }}/g}" zfs_operator.yml &&
+            sed -z "s/kind: Namespace\nmetadata:\n  name: openebs/kind: Namespace\nmetadata:\n  name: {{ zfs_operator_ns }}/" -i zfs_operator.yml 
+          args:
+            executable: /bin/bash
+          register: update_status
+          failed_when: "update_status.rc != 0"
+          when: "zfs_operator_ns != 'openebs'"
+
+        - name: Apply the zfs_operator file to deploy zfs-driver components
+          shell: 
+            kubectl apply -f ./zfs_operator.yml
+          args:
+            executable: /bin/bash
+          register: status
+          failed_when: "status.rc != 0"
+
+        - name: Verify that the zfs-controller pod and zfs-node daemonset pods are running
+          shell: >
+            kubectl get pods -n kube-system -l role=openebs-zfs
+            --no-headers -o custom-columns=:status.phase | sort | uniq
+          args: 
+            executable: /bin/bash
+          register: zfs_driver_components
+          until: "zfs_driver_components.stdout == 'Running'"
+          delay: 5
+          retries: 30
+
+        - block:
+
+            - name: Update the storage class template with test specific values.
+              template:
+                src: openebs-zfspv-sc.j2
+                dest: openebs-zfspv-sc.yml
+
+            - name: Create Storageclasses
+              shell: kubectl apply -f openebs-zfspv-sc.yml
+              args:
+                executable: /bin/bash
+              register: sc_result
+              failed_when: "sc_result.rc != 0"
+
+            - name: Update volume snapshot class template with the test specific variables.
+              template:
+                src: snapshot-class.j2
+                dest: snapshot-class.yml
+                
+            - name: Create VolumeSnapshotClass
+              shell: kubectl apply -f snapshot-class.yml
+              args:
+                executable: /bin/bash
+              register: volsc_result
+              failed_when: "volsc_result.rc != 0"
+        
+          when: "{{ lookup('env','STORAGE_CLASS_CREATION') }} == true"
+              
+        - set_fact:
+            flag: "Pass"
+
+      rescue:
+        - name: Setting fail flag
+          set_fact:
+            flag: "Fail"
+
+      always:
+          ## Record EOT (end of test) in e2e result e2e-cr (e2e-custom-resource)
+        - include_tasks: /e2e-tests/hack/update_e2e_result_resource.yml
+          vars:
+            status: 'EOT'

@@ -1,0 +1,7 @@
+test_name: upgrade-zfs-localpv
+
+to_version_zfs_branch: "{{ lookup('env','TO_VERSION_ZFS_BRANCH') }}"
+
+to_version_zfs_driver_image: "{{ lookup('env','TO_VERSION_ZFS_DRIVER_IMAGE') }}"
+
+zfs_operator_ns: "{{ lookup('env','ZFS_OPERATOR_NAMESPACE') }}"

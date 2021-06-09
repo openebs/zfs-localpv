@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: zv-property-runtime-modify-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      labels:
+        test: zv-property-runtime-modify
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+          - name: APP_NAMESPACE  ## Namespace in which application is deployed
+            value: ''
+
+          - name: APP_LABEL  ## Application label
+            value: ''
+
+          - name: FILE_SYSTEM_TYPE ## Give the file_system_name (values: zfs, ext4 or xfs)
+            value: ''
+
+          - name: ZFS_OPERATOR_NAMESPACE ## Namespace in which all the resources created by zfs driver will be present
+            value: ''                ## for e.g. zfsvolume (zv) will be in this namespace         
+         
+          - name: APP_PVC            ## PersistentVolumeClaim Name for the application
+            value: ''
+
+            ## Give values to modify the zvolume parameters value at runtime
+            ## Supported values ("on", "off", "lzjb", "gzip", "gzip-[1-9]", "zle" and "lz4")
+          - name: NEW_COMPRESSION_PARAMETER 
+            value: ''
+        
+            ## supported values ("on" and "off")
+          - name: NEW_DEDUP_PARAMETER 
+            value: ''
+           
+            ## Provide value of zpool name from which desired dataset/zvolume is provisioned
+          - name: ZPOOL_NAME
+            value: ''
+          
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/functional/zv-property-runtime-modify/test.yml -i /etc/ansible/hosts -vv; exit 0"]

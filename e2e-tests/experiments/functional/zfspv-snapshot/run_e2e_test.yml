@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zfspv-snapshot-clone
+  namespace: e2e
+data:
+  parameters.yml: |
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: zfspv-snapshot-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      labels:
+        test: zfspv-snapshot
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            value: default
+
+          - name: APP_NAMESPACE      ## Namespace in which application is deployed
+            value: '' 
+            
+          - name: APP_PVC            ## PersistentVolumeClaim Name for the application
+            value: ''
+
+          - name: APP_LABEL          ## Label value of the application
+            value: ''
+
+          - name: ZFS_OPERATOR_NAMESPACE  ## Namespace in which all the resources created by zfs driver will be present
+            value: ''                     ## for e.g. zfsvolume (zv) will be in this namespace
+           
+          - name: SNAPSHOT_CLASS     ## Name of zfspv volumesnapshotclass
+            value: ''
+
+          - name: SNAPSHOT_NAME      ## Snapshot will be created with this name in application namespace
+            value: ''
+           
+          - name: ACTION             ## Use 'deprovision' for snapshot cleanup
+            value: 'provision'  
+
+          - name: DATA_PERSISTENCE   ## Give values according to the application
+            value: ''                ## For `Busybox` : `busybox`  &  For `Percona` : `mysql`
+
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/functional/zfspv-snapshot/test.yml -i /etc/ansible/hosts -vv; exit 0"]
+
+        volumeMounts:
+        - name: parameters
+          mountPath: /mnt/
+      volumes:
+        - name: parameters
+          configMap:
+            name: zfspv-snapshot-clone

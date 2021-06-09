@@ -1,0 +1,19 @@
+test_name: "busybox-{{ action }}-{{ app_ns }}"
+
+application_name: "busybox"
+
+application_statefulset: busybox_statefulset.yml
+
+application_deployment: busybox_deployment.yml
+
+storage_class: "{{ lookup('env','STORAGE_CLASS') }}"
+
+app_ns: "{{ lookup('env','APP_NAMESPACE') }}"
+
+app_label: "{{ lookup('env','APP_LABEL') }}"
+
+app_pvc: "{{ lookup('env','APP_PVC') }}"
+
+deploy_type: "{{ lookup('env','DEPLOY_TYPE') }}"
+
+action: "{{ lookup('env','ACTION') }}"

@@ -1,0 +1,57 @@
+- name: Replace the label in loadgen job spec.
+  replace:
+    path: "{{ percona_loadgen }}"
+    regexp: "loadgen_lkey: loadgen_lvalue"
+    replace: "{{ loadgen_lkey }}: {{ loadgen_lvalue }}"
+
+- name: Replace the db-user placeholder in tpcc-config file
+  replace:
+    path: "{{ tpcc_conf }}"
+    regexp: "test_user"
+    replace: "{{ db_user }}"
+
+- name: Replace the password placeholder in tpcc-config file
+  replace:
+    path: "{{ tpcc_conf }}"
+    regexp: "test_password"
+    replace: "{{ db_password }}"
+
+- name: Replace the duration placeholder in tpcc-config file
+  replace:
+    path: "{{ tpcc_conf }}"
+    regexp: "test_duration"
+    replace: "{{ load_duration }}"
+
+- name: Replace the warehouse placeholder in tpcc-config file
+  replace:
+    path: "{{ tpcc_conf }}"
+    regexp: "test_warehouse"
+    replace: "{{ test_warehouse }}"
+
+- name: Replace the test connections placeholder in tpcc-config file
+  replace:
+    path: "{{ tpcc_conf }}"
+    regexp: "test_connections"
+    replace: "{{ test_connections }}"
+
+- name: Replace the test warmup-period placeholder in tpcc-config file
+  replace:
+    path: "{{ tpcc_conf }}"
+    regexp: "test_warmup_period"
+    replace: "{{ test_warmup_period }}"
+
+- name: Replace the test interval placeholder in tpcc-config file
+  replace:
+    path: "{{ tpcc_conf }}"
+    regexp: "test_interval"
+    replace: "{{ test_interval }}"            
+
+- name: Getting the Service IP of Application
+  shell: kubectl get svc -n {{ app_ns }} -l {{ app_service_label }} -o jsonpath='{.items[0].spec.clusterIP}'
+  register: ip
+
+- name: Replace the Service IP placeholder
+  replace:
+    path: "{{ percona_loadgen }}"
+    regexp: "service_ip"
+    replace: "{{ ip.stdout }}"

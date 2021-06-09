@@ -1,0 +1,9 @@
+---
+- name: Checking the status  of test specific namespace.
+  k8s_facts:
+    kind: Namespace
+    name: "{{ app_ns }}"
+  register: npstatus
+  until: "'Active' in npstatus.resources.0.status.phase"
+  delay: 30
+  retries: 10

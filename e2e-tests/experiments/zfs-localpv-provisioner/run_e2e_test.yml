@@ -1,0 +1,129 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: zfs-localpv-provisioner-
+  namespace: e2e
+spec:
+  template:
+    metadata:
+      labels:
+        test: zfs-localpv-provisioner
+    spec:
+      serviceAccountName: e2e
+      restartPolicy: Never
+      containers:
+      - name: ansibletest
+        image: openebs/zfs-localpv-e2e:ci
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: ANSIBLE_STDOUT_CALLBACK
+            #value: log_plays
+            value: default
+
+            # This test will download the zfs-localpv operator file from this branch.
+            # Change the env value according to versioned branch name for zfs-localpv provisioner
+            # from openebs/zfs-localpv repo. for e.g. (v1.4.x , v1.5.x  OR  master)
+            # by default test-specific value of `ZFS_BRANCH` is master.
+          - name: ZFS_BRANCH  
+            value: 'master'
+
+            # After v1.5.0 in each branch of openebs/zfs-localpv repo zfs-localpv driver image is set to
+            # `ci` tag `openebs/zfs-driver:ci`. Give the full image name here with desired image tag to replace
+            # it with `ci` tag. for e.g. (openebs/zfs-driver:1.5.0). Leaving this env empty will 
+            # apply the operator yaml with by default present `ci` tag i.e. `openebs/zfs-driver:ci`
+          - name: ZFS_DRIVER_IMAGE
+            value: ''
+
+            # This is the namespace where the zfs driver will create all its resources.
+            # By default it is in openebs namespace. If we want to change it to use a different
+            # namespace change the value of this env with desired namespace name.
+          - name: ZFS_OPERATOR_NAMESPACE
+            value: 'openebs'
+
+            # In addition to provisioning of zfs-localpv driver if we want to create zpool on worker nodes,
+            # use `true` as the value for this env else leave it blank or false. If zpool is already present and no need of zpool
+            # creation via this test script then then set this value as `false`.
+            # by default this `env` value is `false` and will skip zpool creation on nodes.
+          - name: ZPOOL_CREATION
+            value: ''
+
+            # In case if we have use value as `true` in `ZPOOL_CREATION` env, provide here
+            # the name for zpool by which name it will be created via this test script else leave blank.
+            # If we don't want to create volume group on nodes via this test but still 
+            # wants to create some generally used storage_classes for provisioning of zfs volumes
+            # provide here the zpool name which you have already setted up and it will be 
+            # used in storage class template.
+            # by default test-specific value of zpool name is `zfs-test-pool`. 
+          - name: ZPOOL_NAME
+            value: 'zfs-test-pool'
+
+            # If we want to create encrypted zpool provide value `on` else `off`
+            # by default value is `off`
+          - name: ZPOOL_ENCRYPTION
+            value: 'off'
+
+            # For creating encrypted zpool this test uses the keyformat as passphrase.
+            # to create one such passphrase provide here a character string of minimum length as 8 (for e.g. test1234)
+            # which will be used in automatically when zpool create command promts for passphrase.
+            # by default this test will use password as `test1234` for zpool encryption
+            # you can use a different one for your zpools.
+          - name: ZPOOL_ENCRYPTION_PASSWORD
+            value: 'test1234'
+
+            # This is the env to decide which type of zpool we want to create, or we have already set up
+            # this type of zpool. by default test specific value for this env is `striped`.
+            # supported values are (stripe, mirror, raidz, raidz2 and raidz3)
+          - name: ZPOOL_TYPE
+            value: 'stripe'
+
+            # In case if we have use value as `true` in `ZPOOL_CREATION` env, provide here
+            # the name of the disks to use them for creation of zpool, else leave blank. for e.g. `/dev/sdb`
+            # If we want to use more than one disk (when mirrored or raidz pools) give the names in space seperated format
+            # for e.g. "/dev/sdb /dev/sdc"
+          - name: ZPOOL_DISKS
+            value: ''
+
+            # In case if we have use value as `true` in `ZPOOL_CREATION` env, provide here
+            # the name of nodes on which we want zpools to be created. Leaving this blank
+            # will create zpools on all the schedulabel nodes.
+            # Provide node names in comma seperated format for e.g. ('node-1,node-2,node-3')
+          - name: ZPOOL_NODE_NAMES
+            value: ''
+
+            # If we want to create some generally used storage_classes and snapshot class for provisioning
+            # of zfs volumes and taking zfs snapshots provide `true` as the value for this env. Leaving this value
+            # blank will consider as false. by default test-specific value for this env is `true`.
+          - name: STORAGE_CLASS_CREATION
+            value: 'true'
+
+            # Snapshot class will be created with name which will be provided here
+            # by default test specific value is 
+          - name: SNAPSHOT_CLASS
+            value: 'zfs-snapshot-class'
+
+            # If data compression is needed use value: 'on' else 'off'
+            # by default test-specific value is `off`
+          - name: COMPRESSION 
+            value: 'off'
+
+            # If data duplication is needed give value: 'on' else 'off'
+            # by default test-specific value is `off`
+          - name: DEDUP
+            value: 'off'
+
+            # This env value will be used in storage classes templates in case of xfs and ext or btrfs file system,
+            # where we create a ZVOL a raw block device carved out of ZFS Pool.
+            # provide the blocksize with which you want to create the block devices. by default test-specific value
+            # will be `4k`. Supported values: Any power of 2 from 512 bytes to 128 Kbytes
+          - name: VOLBLOCKSIZE 
+            value: '4k'
+
+            # This env value will be used in storage classes templates in case of zfs file system
+            # provide recordsize which is the maximum block size for files and will be used to create ZFS datasets
+            # by default test-specific value will be `4k`. Supported values: Any power of 2 from 512 bytes to 128 Kbytes
+          - name: RECORDSIZE
+            value: '4k'
+
+        command: ["/bin/bash"]
+        args: ["-c", "ansible-playbook ./e2e-tests/experiments/zfs-localpv-provisioner/test.yml -i /etc/ansible/hosts -v; exit 0"]

@@ -1,0 +1,138 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "zfspv-sc-ext4"
+allowVolumeExpansion: true
+parameters:
+  volblocksize: "{{ record_size }}"
+  compression: "{{ compress }}" 
+  dedup: "{{ de_dup }}"
+  fstype: "ext4"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+volumeBindingMode: WaitForFirstConsumer
+## To create ZPOOL on only some of the node then mention node names in values with allowedTopologies 
+##allowedTopologies:
+##- matchLabelExpressions:
+##  - key: kubernetes.io/hostname
+##    values:
+
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "zfspv-sc-xfs"
+allowVolumeExpansion: true
+parameters:
+  volblocksize: "{{ vol_block_size }}"
+  compression: "{{ compress }}" 
+  dedup: "{{ de_dup }}"
+  fstype: "xfs"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+volumeBindingMode: WaitForFirstConsumer
+## To create ZPOOL on only some of the node then mention node names in values with allowedTopologies 
+##allowedTopologies:
+##- matchLabelExpressions:
+##  - key: kubernetes.io/hostname
+##    values:
+
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "zfspv-sc"
+allowVolumeExpansion: true
+parameters:
+  recordsize: "{{ record_size }}"
+  compression: "{{ compress }}" 
+  dedup: "{{ de_dup }}"
+  fstype: "zfs"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+volumeBindingMode: WaitForFirstConsumer
+## To create ZPOOL on only some of the node then mention node names in values with allowedTopologies 
+##allowedTopologies:
+##- matchLabelExpressions:
+##  - key: kubernetes.io/hostname
+##    values:
+
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "zfspv-sc-btrfs"
+parameters:
+  volblocksize: "{{ record_size }}"
+  compression: "{{ compress }}" 
+  dedup: "{{ de_dup }}"
+  fstype: "btrfs"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+volumeBindingMode: WaitForFirstConsumer
+## To create ZPOOL on only some of the node then mention node names in values with allowedTopologies 
+##allowedTopologies:
+##- matchLabelExpressions:
+##  - key: kubernetes.io/hostname
+##    values:
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "zfspv-raw-block"
+allowVolumeExpansion: true
+parameters:
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "zfspv-shared"
+allowVolumeExpansion: true
+parameters:
+  shared: "yes"
+  fstype: "zfs"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "zfspv-xfs-shared"
+allowVolumeExpansion: true
+parameters:
+  shared: "yes"
+  fstype: "xfs"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "zfspv-ext4-shared"
+allowVolumeExpansion: true
+parameters:
+  shared: "yes"
+  fstype: "ext4"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "zfspv-btrfs-shared"
+parameters:
+  shared: "yes"
+  fstype: "btrfs"
+  poolname: "{{ zpool_name }}"
+provisioner: zfs.csi.openebs.io
