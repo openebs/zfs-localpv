@@ -66,17 +66,17 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@openebs.io"
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
 
       - name: Update Operator YAML
         run: |
           echo "update the operator yaml with the image tag"
-          sed -i "s/zfs-driver:ci/zfs-driver:${RELEASE_TAG}/" deploy/yamls/zfs-driver.yaml
-          sed -i "s/openebs.io\/version: ci/openebs.io\/version: ${RELEASE_TAG}/" deploy/yamls/zfs-driver.yaml
-          sed -i "s/zfs-driver:ci/zfs-driver:${RELEASE_TAG}/" deploy/zfs-operator.yaml
-          sed -i "s/openebs.io\/version: ci/openebs.io\/version: ${RELEASE_TAG}/" deploy/zfs-operator.yaml
-          sed -i "s/newTag: ci/newTag: ${RELEASE_TAG}/" deploy/yamls/kustomization.yaml
+          sed -i "s/zfs-driver:.*/zfs-driver:${RELEASE_TAG}/" deploy/yamls/zfs-driver.yaml
+          sed -i "s/openebs.io\/version:.*/openebs.io\/version: ${RELEASE_TAG}/" deploy/yamls/zfs-driver.yaml
+          sed -i "s/zfs-driver:.*/zfs-driver:${RELEASE_TAG}/" deploy/zfs-operator.yaml
+          sed -i "s/openebs.io\/version:.*/openebs.io\/version: ${RELEASE_TAG}/" deploy/zfs-operator.yaml
+          sed -i "s/newTag:.*/newTag: ${RELEASE_TAG}/" deploy/yamls/kustomization.yaml
 
           git diff --quiet deploy/ || CHANGED=$?
           if [[ $CHANGED -ne 0 ]]; then
