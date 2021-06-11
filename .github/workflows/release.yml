@@ -70,6 +70,7 @@ jobs:
           git config user.email "actions@github.com"
 
       - name: Update Operator YAML
+        if: "!github.event.release.prerelease"
         run: |
           echo "update the operator yaml with the image tag"
           sed -i "s/zfs-driver:.*/zfs-driver:${RELEASE_TAG}/" deploy/yamls/zfs-driver.yaml
