@@ -1,6 +1,6 @@
 images:
   - name: openebs/zfs-driver
-    newTag: 1.8.0-RC1
+    newTag: 1.8.0
 resources:
 - namespace.yaml
 - zfsvolume-crd.yaml
