@@ -1257,8 +1257,8 @@ spec:
             type: object
           pools:
             items:
-              description: Pool specifies attributes of a given zfs pool exists on
-                node.
+              description: Pool specifies attributes of a given zfs pool that exists
+                on the node.
               properties:
                 free:
                   anyOf:
@@ -1268,7 +1268,7 @@ spec:
                   pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                   x-kubernetes-int-or-string: true
                 name:
-                  description: Name of the zfs zfs pool.
+                  description: Name of the zfs pool.
                   minLength: 1
                   type: string
                 uuid:
