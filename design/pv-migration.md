@@ -81,6 +81,9 @@ node-1   Ready    worker   351d   v1.17.4   beta.kubernetes.io/arch=amd64,beta.k
 - the migrator will look for ZFSVolume resource and update the PoolName and OwnerNodeID for all the volumes.
 - the k8s scheduler will be able to see the new label and should schedule the pods to this new node.
 
+Below is workflow for volume migration
+![PV Migration Workflow](./images/pv-migration.jpeg)
+
 ## Upgrade
 
 With this feature, the ZFS driver will start using the new key (for e.g. `guid.zfs.openebs.io/<pool name>=true`) to set the affinity on the PV. This should not impact the old volumes, the old pods should be running without any issues. Here, we need to make sure that nodes should have the old labels. The ZFS node driver should support the old topology keys in order to make the upgrade seamless. The driver needs to support following topology keys along with the `guid.zfs.openebs.io/<pool guid>=true`
