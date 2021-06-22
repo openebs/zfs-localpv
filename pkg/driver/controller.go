@@ -954,7 +954,7 @@ func (cs *controller) ListVolumes(
 }
 
 func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) error {
-	volumeID := req.GetVolumeId()
+	volumeID := strings.ToLower(req.GetVolumeId())
 	if volumeID == "" {
 		return status.Error(
 			codes.InvalidArgument,
@@ -962,7 +962,29 @@ func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) erro
 		)
 	}
 
-	err := cs.validateRequest(
+	// volume should not be deleted if there are snapshots present for the volume
+	snapList, err := zfs.GetSnapshotForVolume(volumeID)
+	if err != nil {
+		return status.Errorf(
+			codes.NotFound,
+			"failed to handle delete volume request for {%s}, "+
+				"validation failed checking for snapshots. Error: %s",
+			req.VolumeId,
+			err.Error(),
+		)
+	}
+
+	// delete is not supported if there are any snapshots present for the volume
+	if len(snapList.Items) != 0 {
+		return status.Errorf(
+			codes.Internal,
+			"failed to handle delete volume request for {%s} with %d snapshots",
+			req.VolumeId,
+			len(snapList.Items),
+		)
+	}
+
+	err = cs.validateRequest(
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
 	)
 	if err != nil {
