@@ -19,8 +19,9 @@ on:
     paths-ignore:
       - 'deploy/helm/**'
       - 'docs/**'
+      - 'design/**'
       - 'changelogs/**'
-      - 'CHANGELOG.md'
+      - '*.md'
     branches:
       # on pull requests to master and release branches
       - master
