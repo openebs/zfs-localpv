@@ -12,7 +12,8 @@ CSI driver for provisioning Local PVs backed by ZFS and more.
 
 ## Project Status
 
-With the release of version 1.2.0, the ZFS-LocalPV is promoted to GA. It is ready for the production, see our [adopters](./Adopters.md).
+ZFS-LocalPV was declared GA in Dec 2020. Many users are running ZFS-LocalPV in production, see what our [adopters](./Adopters.md) are saying.
+
 
 ## Project Tracker
 
