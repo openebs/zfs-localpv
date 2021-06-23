@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/openebs/zfs-localpv.svg?branch=master)](https://travis-ci.org/openebs/zfs-localpv)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_shield)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3523/badge)](https://bestpractices.coreinfrastructure.org/en/projects/3523)
-[![Slack](https://img.shields.io/badge/chat!!!-slack-ff1493.svg?style=flat-square)](https://openebsslacksignup.herokuapp.com/)
+[![Slack](https://img.shields.io/badge/chat!!!-slack-ff1493.svg?style=flat-square)](https://kubernetes.slack.com/messages/openebs/)
 [![Community Meetings](https://img.shields.io/badge/Community-Meetings-blue)](https://hackmd.io/yJb407JWRyiwLU-XDndOLA?view)
 [![Go Report](https://goreportcard.com/badge/github.com/openebs/zfs-localpv)](https://goreportcard.com/report/github.com/openebs/zfs-localpv)
 
@@ -12,7 +12,8 @@ CSI driver for provisioning Local PVs backed by ZFS and more.
 
 ## Project Status
 
-With the release of version 1.2.0, the ZFS-LocalPV is promoted to GA. It is ready for the production, see our [adopters](https://github.com/openebs/openebs/issues/2719).
+ZFS-LocalPV was declared GA in Dec 2020. Many users are running ZFS-LocalPV in production, see what our [adopters](./Adopters.md) are saying.
+
 
 ## Project Tracker
 
