@@ -3,6 +3,33 @@ entries:
   zfs-localpv:
   - apiVersion: v2
     appVersion: 1.8.0
+    created: "2021-06-24T13:09:48.641993205Z"
+    description: CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes.
+    digest: 5432bea346de6cd05dfbd9ef70e6c7da89c8d565007632b72b2b2f50bebdd9a5
+    home: http://www.openebs.io/
+    icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
+    keywords:
+    - cloud-native-storage
+    - block-storage
+    - filesystem
+    - ZFS
+    - Local Persistent Volumes
+    - storage
+    maintainers:
+    - email: michaelfornaro@gmail.com
+      name: xUnholy
+    - email: prateek.pandey@mayadata.io
+      name: prateekpandey14
+    - email: pawan@mayadata.io
+      name: pawanpraka1
+    name: zfs-localpv
+    sources:
+    - https://github.com/openebs/zfs-localpv
+    urls:
+    - https://github.com/openebs/zfs-localpv/releases/download/zfs-localpv-1.8.2/zfs-localpv-1.8.2.tgz
+    version: 1.8.2
+  - apiVersion: v2
+    appVersion: 1.8.0
     created: "2021-06-15T14:29:53.033642223Z"
     description: CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes.
     digest: fdd84f2b1ef3227e79e31dfd1fef98a0a82e1dbbfbcfa1d58eefd58c9bcf438a
