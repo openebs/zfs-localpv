@@ -31,7 +31,7 @@ zfsNode:
   annotations: {}
   podAnnotations: {}
   resources: {}
-  # This can be configured to run on various different k8s ditributions like
+  # This can be configured to run on various different k8s distributions like
   # microk8s where kubelet dir is different
   kubeletDir: "/var/lib/kubelet/"
   # limits:
