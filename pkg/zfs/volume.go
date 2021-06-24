@@ -326,10 +326,7 @@ func GetClonesForSnapshot(snapID string) (*apis.ZFSVolumeList, error) {
 
 	listBuilder := volbuilder.ListBuilderFrom(*zfsVolList)
 	listBuilder.WithFilter(func(vol *volbuilder.ZFSVolume) bool {
-		if vol.Object.Spec.SnapName == snapID {
-			return true
-		}
-		return false
+		return vol.Object.Spec.SnapName == snapID
 	})
 
 	return listBuilder.List(), nil
