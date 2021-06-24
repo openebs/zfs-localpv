@@ -1040,7 +1040,7 @@ func (cs *controller) validateDeleteSnapshotReq(req *csi.DeleteSnapshotRequest) 
 	if len(cloneList.Items) != 0 {
 		return status.Errorf(
 			codes.Internal,
-			"failed to handle delete volume request for {%s} with %d clones",
+			"failed to handle delete snapshot request for {%s} with %d clones",
 			req.GetSnapshotId(),
 			len(cloneList.Items),
 		)
