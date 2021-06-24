@@ -788,11 +788,11 @@ func (cs *controller) DeleteSnapshot(
 	req *csi.DeleteSnapshotRequest,
 ) (*csi.DeleteSnapshotResponse, error) {
 
-	if req.SnapshotId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "DeleteSnapshot: empty snapshotID")
-	}
-
 	klog.Infof("DeleteSnapshot request for %s", req.SnapshotId)
+
+	if err := cs.validateDeleteSnapshotReq(req); err != nil {
+		return nil, err
+	}
 
 	// snapshodID is formed as <volname>@<snapname>
 	// parsing them here
@@ -963,13 +963,13 @@ func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) erro
 	}
 
 	// volume should not be deleted if there are snapshots present for the volume
-	snapList, err := zfs.GetSnapshotForVolume(volumeID)
+	snapList, err := zfs.GetSnapshotsForVolume(volumeID)
 	if err != nil {
 		return status.Errorf(
 			codes.NotFound,
 			"failed to handle delete volume request for {%s}, "+
 				"validation failed checking for snapshots. Error: %s",
-			req.VolumeId,
+			req.GetVolumeId(),
 			err.Error(),
 		)
 	}
@@ -979,8 +979,30 @@ func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) erro
 		return status.Errorf(
 			codes.Internal,
 			"failed to handle delete volume request for {%s} with %d snapshots",
-			req.VolumeId,
+			req.GetVolumeId(),
 			len(snapList.Items),
+		)
+	}
+
+	// volume should not be deleted if there are clones present for the volume
+	cloneList, err := zfs.GetClonesForVolume(volumeID)
+	if err != nil {
+		return status.Errorf(
+			codes.NotFound,
+			"failed to handle delete volume request for {%s}, "+
+				"validation failed checking for clones. Error: %s",
+			req.GetVolumeId(),
+			err.Error(),
+		)
+	}
+
+	// delete is not supported if there are any clones present for the volume
+	if len(cloneList.Items) != 0 {
+		return status.Errorf(
+			codes.Internal,
+			"failed to handle delete volume request for {%s} with %d clones",
+			req.GetVolumeId(),
+			len(cloneList.Items),
 		)
 	}
 
@@ -990,10 +1012,40 @@ func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) erro
 	if err != nil {
 		return errors.Wrapf(
 			err,
+
 			"failed to handle delete volume request for {%s} : validation failed",
 			volumeID,
 		)
 	}
+	return nil
+}
+
+func (cs *controller) validateDeleteSnapshotReq(req *csi.DeleteSnapshotRequest) error {
+	if req.GetSnapshotId() == "" {
+		return status.Errorf(codes.InvalidArgument, "DeleteSnapshot: empty snapshotID")
+	}
+
+	cloneList, err := zfs.GetClonesForSnapshot(req.SnapshotId)
+	if err != nil {
+		return status.Errorf(
+			codes.NotFound,
+			"failed to handle delete snapshot request for {%s}, "+
+				"validation failed checking for existing clones. Error: %s",
+			req.GetSnapshotId(),
+			err.Error(),
+		)
+	}
+
+	// snapshot delete is not supported if clones exist for this snapshot
+	if len(cloneList.Items) != 0 {
+		return status.Errorf(
+			codes.Internal,
+			"failed to handle delete volume request for {%s} with %d clones",
+			req.GetSnapshotId(),
+			len(cloneList.Items),
+		)
+	}
+
 	return nil
 }
 
