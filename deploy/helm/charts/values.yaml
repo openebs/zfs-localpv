@@ -41,8 +41,7 @@ zfsNode:
   #   cpu: 10m
   #   memory: 32Mi
   ## Labels to be added to openebs-zfs node pods
-  podLabels:
-    name: openebs-zfs-node
+  podLabels: {}
   nodeSelector: {}
   tolerations: []
   securityContext: {}
