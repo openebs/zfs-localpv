@@ -290,7 +290,8 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 
 	// try volume creation sequentially on all nodes
 	for _, node := range prfList {
-		nodeid, err := zfs.GetNodeID(node)
+		var nodeid string
+		nodeid, err = zfs.GetNodeID(node)
 		if err != nil {
 			continue
 		}
