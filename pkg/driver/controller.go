@@ -181,6 +181,21 @@ func waitForVolDestroy(volname string) error {
 	}
 }
 
+func waitForSnapDestroy(snapName string) error {
+	for {
+		_, err := zfs.GetZFSSnapshot(snapName)
+		if err != nil {
+			if k8serror.IsNotFound(err) {
+				return nil
+			}
+			return status.Errorf(codes.Internal,
+				"zfs: destroy wait failed, not able to get the snapshot %s %s", snapName, err.Error())
+		}
+		time.Sleep(time.Second)
+		klog.Infof("waiting for snapshot to be destroyed %s", snapName)
+	}
+}
+
 func waitForReadySnapshot(snapname string) error {
 	for {
 		snap, err := zfs.GetZFSSnapshot(snapname)
@@ -801,7 +816,9 @@ func (cs *controller) DeleteSnapshot(
 		// should succeed when an invalid snapshot id is used
 		return &csi.DeleteSnapshotResponse{}, nil
 	}
-	if err := zfs.DeleteSnapshot(snapshotID[1]); err != nil {
+
+	snapName := snapshotID[1]
+	if err := zfs.DeleteSnapshot(snapName); err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
 			"failed to handle DeleteSnapshot for %s, {%s}",
@@ -809,6 +826,11 @@ func (cs *controller) DeleteSnapshot(
 			err.Error(),
 		)
 	}
+
+	if err := waitForSnapDestroy(snapName); err != nil {
+		return nil, err
+	}
+
 	return &csi.DeleteSnapshotResponse{}, nil
 }
 
