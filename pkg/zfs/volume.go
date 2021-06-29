@@ -308,30 +308,6 @@ func GetSnapshotsForVolume(volumeID string) (*apis.ZFSSnapshotList, error) {
 	return snapList, err
 }
 
-// GetClonesForVolume lists all the clone volumes for the given volume
-func GetClonesForVolume(volumeName string) (*apis.ZFSVolumeList, error) {
-	listOptions := metav1.ListOptions{
-		LabelSelector: ZFSSrcVolKey + "=" + volumeName,
-	}
-	cloneList, err := volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).List(listOptions)
-	return cloneList, err
-}
-
-// GetClonesForSnapshot lists all the clone volumes for the given snapshot
-func GetClonesForSnapshot(snapID string) (*apis.ZFSVolumeList, error) {
-	zfsVolList, err := volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	listBuilder := volbuilder.ListBuilderFrom(*zfsVolList)
-	listBuilder.WithFilter(func(vol *volbuilder.ZFSVolume) bool {
-		return vol.Object.Spec.SnapName == snapID
-	})
-
-	return listBuilder.List(), nil
-}
-
 // GetZFSSnapshotStatus returns ZFSSnapshot status
 func GetZFSSnapshotStatus(snapID string) (string, error) {
 	getOptions := metav1.GetOptions{}
