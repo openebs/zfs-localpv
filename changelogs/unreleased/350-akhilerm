@@ -1,1 +1,1 @@
-add validation to prevent volume/snapshot deletion if there is a dependent snapshot/clone
+add validation to prevent volume deletion if there is a dependent snapshot
