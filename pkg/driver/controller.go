@@ -811,7 +811,6 @@ func (cs *controller) DeleteSnapshot(
 			err.Error(),
 		)
 	}
-
 	return &csi.DeleteSnapshotResponse{}, nil
 }
 
