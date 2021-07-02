@@ -102,6 +102,8 @@ We can also install it via kustomize using `kubectl apply -k deploy/yamls`, chec
 
 - For `k0s`, the default directory (`/var/lib/kubelet`) should be changed to `/var/lib/k0s/kubelet`.
 
+- For `RancherOS`, the default directory (`/var/lib/kubelet`) should be changed to `/opt/rke/var/lib/kubelet`.
+
 Verify that the ZFS driver Components are installed and running using below command :
 
 ```
