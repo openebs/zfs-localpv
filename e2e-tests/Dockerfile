@@ -26,6 +26,8 @@ RUN rm -rf /var/lib/apt/lists/* && \
 #Installing ansible
 RUN pip install ansible==2.7.3
 
+RUN pip install ruamel.yaml.clib==0.1.2
+
 #Installing openshift
 RUN pip install openshift==0.11.2
 
