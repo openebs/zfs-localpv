@@ -3,6 +3,33 @@ entries:
   zfs-localpv:
   - apiVersion: v2
     appVersion: 1.9.0
+    created: "2021-07-19T07:38:00.257654644Z"
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    digest: a6a1567907d61893a8d012fba7567ad1fd4897923c2e8f9cfb6779e34db41921
+    home: http://www.openebs.io/
+    icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
+    keywords:
+    - cloud-native-storage
+    - block-storage
+    - filesystem
+    - ZFS
+    - Local Persistent Volumes
+    - storage
+    maintainers:
+    - email: michaelfornaro@gmail.com
+      name: xUnholy
+    - email: prateek.pandey@mayadata.io
+      name: prateekpandey14
+    - email: pawan@mayadata.io
+      name: pawanpraka1
+    name: zfs-localpv
+    sources:
+    - https://github.com/openebs/zfs-localpv
+    urls:
+    - https://github.com/openebs/zfs-localpv/releases/download/zfs-localpv-1.9.1/zfs-localpv-1.9.1.tgz
+    version: 1.9.1
+  - apiVersion: v2
+    appVersion: 1.9.0
     created: "2021-07-16T07:00:38.768482625Z"
     description: CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes.
     digest: 2fc9ebe33fac14913b2fef19b67b9f9177d10395017845a48af27115a00884af
