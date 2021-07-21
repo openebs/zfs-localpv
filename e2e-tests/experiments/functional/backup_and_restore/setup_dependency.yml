@@ -31,6 +31,28 @@
          --use-restic \
          --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000
 
+   - name: Get the velero deployment name
+     shell: kubectl get deploy -n velero -l component=velero -o custom-columns=:.metadata.name --no-headers
+     args: 
+       executable: /bin/bash
+     register: velero_deployment
+
+   - name: Patch velero deployment to enable `debug` log-level
+     shell: >
+       kubectl patch deployment \
+       {{ velero_deployment.stdout }} \
+       --namespace velero \
+       --type='json' \
+       -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/args", "value": [
+       "server",
+       "--features=",
+       "--log-level=debug"
+       ]}]'
+     args:
+       executable: /bin/bash
+     register: debug_patch_status
+     failed_when: "debug_patch_status.rc != 0"
+ 
    - name: Check velero server pod status 
      shell: kubectl get pod -n velero -l deploy=velero -o jsonpath='{.items[0].status.phase}'
      register: velero_pod_status
