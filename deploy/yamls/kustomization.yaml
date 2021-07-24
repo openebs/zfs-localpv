@@ -8,3 +8,4 @@ resources:
 - zfsbackup-crd.yaml
 - zfsrestore-crd.yaml
 - zfs-driver.yaml
+- zfsnode-crd.yaml
