@@ -194,6 +194,24 @@
           delay: 10
           retries: 30
 
+        - name: Check encryption keystatus on node
+          shell: >
+            sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }} "zfs get keystatus | grep {{ zpool_name }}"
+          args:
+            executable: /bin/bash
+          register: keystatus
+          failed_when: "keystatus.rc != 0"
+
+        - name: Load key's passphrase into datasets on the node
+          shell: >
+            sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
+            "echo {{ node_pwd }} | sudo -S su -c 'echo {{ enc_pwd }} | zfs load-key -L prompt {{ zpool_name }}'"
+          args:
+            executable: /bin/bash
+          register: key_load_status
+          failed_when: "key_load_status.rc != 0"
+          when: "'unavailable' in keystatus.stdout"
+
         - name: check the newly scheduled application pod status
           shell: kubectl get pod {{ new_app_pod }} -n {{ namespace }} --no-headers -o custom-columns=:.status.phase
           args:
