@@ -114,3 +114,25 @@ Create labels for openebs zfs-localpv node daemon
 {{ include "zfslocalpv.zfsNode.matchLabels" . }}
 {{ include "zfslocalpv.zfsNode.componentLabels" . }}
 {{- end -}}
+
+{{/*
+Create the name of the priority class for csi node plugin
+*/}}
+{{- define "zfslocalpv.zfsNode.priorityClassName" -}}
+{{- if .Values.zfsNode.priorityClass.create }}
+{{- printf "%s-%s" .Release.Name .Values.zfsNode.priorityClass.name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s" .Values.zfsNode.priorityClass.name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create the name of the priority class for csi controller plugin
+*/}}
+{{- define "zfslocalpv.zfsController.priorityClassName" -}}
+{{- if .Values.zfsController.priorityClass.create }}
+{{- printf "%s-%s" .Release.Name .Values.zfsController.priorityClass.name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s" .Values.zfsController.priorityClass.name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
