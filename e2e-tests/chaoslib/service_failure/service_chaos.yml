@@ -25,12 +25,29 @@
     
     - block:
        
-       - name: stop the {{ svc_type }} service on node where application pod is scheduled
+       - name: stop the docker service on node where application pod is scheduled
          shell: > 
            sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
-           "echo {{ node_pwd }} | sudo -S su -c 'systemctl stop {{ svc_type }}.service'"
+           "echo {{ node_pwd }} | sudo -S su -c 'systemctl stop docker.socket'"
          args:
            executable: /bin/bash
+         when: svc_type == "docker"
+
+       - name: stop the container runtime (if containerd, or crio) services on the application node
+         shell: > 
+           sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
+           "echo {{ node_pwd }} | sudo -S su -c 'systemctl stop {{ svc_type }}.service'"    
+         args:
+           executable: /bin/bash
+         when: svc_type == "containerd" or svc_type == "crio"
+
+       - name: stop the kubelet service on node where application pod is scheduled
+         shell: > 
+           sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
+           "echo {{ node_pwd }} | sudo -S su -c 'systemctl stop kubelet.service'"
+         args:
+           executable: /bin/bash
+         when: svc_type == "kubelet"
 
        - name: Check for the {{ svc_type }} service status
          shell: >
@@ -91,12 +108,29 @@
   
 - block: 
 
-   - name: Start the {{ svc_type }} services
+   - name: Start the docker services
+     shell: > 
+       sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
+       "echo {{ node_pwd }} | sudo -S su -c 'systemctl start docker.socket'"    
+     args:
+       executable: /bin/bash
+     when: svc_type == "docker"
+
+   - name: Start the container runtime (if containerd, or crio) services
      shell: > 
        sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
        "echo {{ node_pwd }} | sudo -S su -c 'systemctl start {{ svc_type }}.service'"    
      args:
        executable: /bin/bash
+     when: svc_type == "containerd" or svc_type == "crio"
+
+   - name: Start the kubelet services
+     shell: > 
+       sshpass -p {{ node_pwd }} ssh -o StrictHostKeyChecking=no {{ user }}@{{ node_ip_add }}
+       "echo {{ node_pwd }} | sudo -S su -c 'systemctl start kubelet.service'"    
+     args:
+       executable: /bin/bash
+     when: svc_type == "kubelet"
 
    - name: Check for the {{ svc_type }} services status
      shell: >

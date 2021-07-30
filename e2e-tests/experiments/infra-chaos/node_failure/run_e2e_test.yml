@@ -82,6 +82,9 @@ spec:
           - name: ZPOOL_NAME
             value: ''
 
+          - name: ZPOOL_ENCRYPTION_PASSWORD
+            value: 'test1234'
+
           - name: ESX_PASSWORD
             valueFrom:
               secretKeyRef:
