@@ -1,23 +1,78 @@
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  # name must match the spec fields below, and be in the form: <plural>.<group>
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
   name: e2eresults.e2e.io
 spec:
-  # group name to use for REST API: /apis/<group>/<version>
   group: e2e.io
-  # version name to use for REST API: /apis/<group>/<version>
-  version: v1alpha1
-  # either Namespaced or Cluster
-  scope: Cluster
   names:
-    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    kind: E2eResult
+    listKind: E2eResultList
     plural: e2eresults
-    # singular name to be used as an alias on the CLI and for display
-    singular: e2eresult
-    # kind is normally the CamelCased singular type. Your resource manifests use this.
-    kind: e2eResult
-    # shortNames allow shorter string to match your resource name on the CLI
     shortNames:
     - e2er
+    singular: e2eresult
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: E2eResult represents an e2e result
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec i.e. specifications of the E2eResult
+            properties:
+              testMetadata:
+                description: TestMetadata holds information on the testcase
+                properties:
+                  app:
+                    description: App is the name of the application running
+                    nullable: true
+                    type: string
+                  chaostype:
+                    description: Chaostype is the type of test case
+                    nullable: true
+                    type: string
+                type: object
+              testStatus:
+                description: TestStatus holds the state of testcase,  manually updated
+                  by json merge patch result is the useful value today, but anticipate
+                  phase use in future
+                properties:
+                  phase:
+                    description: Phase tells whether the test case is running or completed
+                    nullable: true
+                    type: string
+                  result:
+                    description: Result tells whether the test case passed or failed
+                    nullable: true
+                    type: string
+                type: object
+            type: object
+          status:
+            description: Status of E2eResult
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
