@@ -711,6 +711,20 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 
 ---
+
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: openebs-zfs-csi-controller-critical
+# A PriorityClass object can have any 32-bit integer value smaller than or equal
+# to 1 billion. Larger numbers are reserved for critical system Pods that should
+# not normally be preempted or evicted. The higher the value, the higher the priority.
+value: 900000000
+globalDefault: false
+description: "This priority class should be used for the OpenEBS ZFS localPV CSI driver controller deployment only."
+
+---
+
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -744,7 +758,7 @@ spec:
                 values:
                 - openebs-zfs-controller
             topologyKey: "kubernetes.io/hostname"
-      priorityClassName: system-cluster-critical
+      priorityClassName: openebs-zfs-csi-controller-critical
       serviceAccount: openebs-zfs-controller-sa
       containers:
         - name: csi-resizer
@@ -939,6 +953,19 @@ data:
 
 ---
 
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: openebs-zfs-csi-node-critical
+# A PriorityClass object can have any 32-bit integer value smaller than or equal
+# to 1 billion. Larger numbers are reserved for critical system Pods that should
+# not normally be preempted or evicted. The higher the value, the higher the priority.
+value: 900001000
+globalDefault: false
+description: "This priority class should be used for the OpenEBS ZFS localPV CSI driver node deployment only."
+
+---
+
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
@@ -963,7 +990,7 @@ spec:
         openebs.io/component-name: openebs-zfs-node
         openebs.io/version: 1.9.0
     spec:
-      priorityClassName: system-node-critical
+      priorityClassName: openebs-zfs-csi-node-critical
       serviceAccount: openebs-zfs-node-sa
       hostNetwork: true
       containers:
