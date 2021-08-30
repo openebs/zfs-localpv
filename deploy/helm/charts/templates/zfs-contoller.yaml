@@ -34,7 +34,9 @@ spec:
                 values:
                 - openebs-zfs-controller
             topologyKey: "kubernetes.io/hostname"
-      priorityClassName: system-cluster-critical
+{{- if .Values.zfsController.priorityClass.create }}
+      priorityClassName: {{ template "zfslocalpv.zfsController.priorityClassName" . }}
+{{- end }}
       serviceAccount: {{ .Values.serviceAccount.zfsController.name }}
       containers:
         - name: {{ .Values.zfsController.resizer.name }}

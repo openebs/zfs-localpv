@@ -26,7 +26,9 @@ spec:
         {{ toYaml . | nindent 8 }}
         {{- end}}
     spec:
-      priorityClassName: system-node-critical
+{{- if .Values.zfsNode.priorityClass.create }}
+      priorityClassName: {{ template "zfslocalpv.zfsNode.priorityClassName" . }}
+{{- end }}
       serviceAccount: {{ .Values.serviceAccount.zfsNode.name }}
       hostNetwork: true
       containers:
