@@ -1304,6 +1304,8 @@ spec:
   # do not require volumeattachment
   attachRequired: false
   podInfoOnMount: false
+  storageCapacity: true
+
 ---
 
 apiVersion: apiextensions.k8s.io/v1
@@ -2055,7 +2057,7 @@ spec:
       serviceAccount: openebs-zfs-controller-sa
       containers:
         - name: csi-resizer
-          image: k8s.gcr.io/sig-storage/csi-resizer:v1.1.0
+          image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
@@ -2086,7 +2088,7 @@ spec:
             - "--leader-election=true"
           imagePullPolicy: IfNotPresent
         - name: csi-provisioner
-          image: k8s.gcr.io/sig-storage/csi-provisioner:v2.1.0
+          image: k8s.gcr.io/sig-storage/csi-provisioner:v3.0.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -2095,10 +2097,19 @@ spec:
             - "--strict-topology"
             - "--leader-election"
             - "--extra-create-metadata=true"
+            - "--enable-capacity=true"
             - "--default-fstype=ext4"
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
@@ -2288,7 +2299,7 @@ spec:
       hostNetwork: true
       containers:
         - name: csi-node-driver-registrar
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.1.0
+          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
