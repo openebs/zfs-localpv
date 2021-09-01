@@ -99,3 +99,15 @@ Please note that if you have modified the OPENEBS_NAMESPACE env in the driver's 
 5. *restart kube-controller [optional]*
 
 kube-controller-manager might be using stale volumeattachment resources, it might get flooded with the error logs. Restarting kube-controller will fix it.
+
+### *Note*
+
+While upgrading zfs-driver from v1.9.1 to later version by applying zfs-operator file, we may get this error.
+```
+The CSIDriver "zfs.csi.openebs.io" is invalid: spec.storageCapacity: Invalid value: true: field is immutable
+```
+It occurs due to newly added field `storageCapacity: true` in csi driver spec. In that case, first delete the csi-driver by running this command:
+```
+$ kubectl delete csidriver zfs.csi.openebs.io 
+```
+Now we can again apply the operator yaml file.
