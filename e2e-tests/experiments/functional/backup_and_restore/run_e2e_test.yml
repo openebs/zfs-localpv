@@ -42,6 +42,9 @@ spec:
           - name: APP_PVC  ## PVC name for application
             value: ''
 
+          - name: ZFS_OPERATOR_NAMESPACE  ## Namespace in which all the resources created by zfs driver will be present
+            value: ''                     ## for e.g. zfsvolume (zv) will be in this namespace
+
           - name: ACTION  ## On basis of the value of this env, this playbook will perform tasks.
             value: ''     ## Supported values: (backup, restore, schedule_backup, incremental_backup, incremental_restore)
           
