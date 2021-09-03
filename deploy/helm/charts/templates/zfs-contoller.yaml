@@ -79,11 +79,20 @@ spec:
             - "--feature-gates=Topology=true"
             - "--strict-topology"
             - "--leader-election"
+            - "--enable-capacity={{ .Values.feature.storageCapacity }}"
             - "--extra-create-metadata=true"
             - "--default-fstype=ext4"
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
