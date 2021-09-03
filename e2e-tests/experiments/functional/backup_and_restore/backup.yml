@@ -1,6 +1,11 @@
 ---
 - block:
 
+    - name: Update the volume snapshot location yaml with zfs-operator namespace
+      template:
+        src: volume_snapshot_location.j2
+        dest: volume_snapshot_location.yml
+
     - name: Create the volume snapshot location which has the information about where the snapshot should be stored
       shell: kubectl apply -f ./volume_snapshot_location.yml
       args:
@@ -43,6 +48,11 @@
   when: action == "schedule_backup"
 
 - block:
+
+  - name: Update the volume snapshot location yaml with zfs-operator namespace
+    template:
+      src: incremental_backup_vsl.j2
+      dest: incremental_backup_vsl.yml
 
   - name: Create the volume snapshot location which has the information about where the snapshot should be stored
     shell: kubectl apply -f ./incremental_backup_vsl.yml
