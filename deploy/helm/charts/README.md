@@ -82,7 +82,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsNode.driverRegistrar.image.registry`| Registry for csi-node-driver-registrar image| `k8s.gcr.io/`|
 | `zfsNode.driverRegistrar.image.repository`| Image repository for csi-node-driver-registrar| `sig-storage/csi-node-driver-registrar`|
 | `zfsNode.driverRegistrar.image.pullPolicy`| Image pull policy for csi-node-driver-registrar| `IfNotPresent`|
-| `zfsNode.driverRegistrar.image.tag`| Image tag for csi-node-driver-registrar| `v1.2.0`|
+| `zfsNode.driverRegistrar.image.tag`| Image tag for csi-node-driver-registrar| `v2.3.0`|
 | `zfsNode.updateStrategy.type`| Update strategy for zfsnode daemonset | `RollingUpdate` |
 | `zfsNode.kubeletDir`| Kubelet mount point for zfsnode daemonset| `"/var/lib/kubelet/"` |
 | `zfsNode.annotations` | Annotations for zfsnode daemonset metadata| `""`|
@@ -96,7 +96,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.resizer.image.registry`| Registry for csi-resizer image| `k8s.gcr.io/`|
 | `zfsController.resizer.image.repository`| Image repository for csi-resizer| `sig-storage/csi-resizer`|
 | `zfsController.resizer.image.pullPolicy`| Image pull policy for csi-resizer| `IfNotPresent`|
-| `zfsController.resizer.image.tag`| Image tag for csi-resizer| `v1.1.0`|
+| `zfsController.resizer.image.tag`| Image tag for csi-resizer| `v1.2.0`|
 | `zfsController.snapshotter.image.registry`| Registry for csi-snapshotter image| `k8s.gcr.io/`|
 | `zfsController.snapshotter.image.repository`| Image repository for csi-snapshotter| `sig-storage/csi-snapshotter`|
 | `zfsController.snapshotter.image.pullPolicy`| Image pull policy for csi-snapshotter| `IfNotPresent`|
@@ -108,7 +108,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.provisioner.image.registry`| Registry for csi-provisioner image| `k8s.gcr.io/`|
 | `zfsController.provisioner.image.repository`| Image repository for csi-provisioner| `sig-storage/csi-provisioner`|
 | `zfsController.provisioner.image.pullPolicy`| Image pull policy for csi-provisioner| `IfNotPresent`|
-| `zfsController.provisioner.image.tag`| Image tag for csi-provisioner| `v2.1.0`|
+| `zfsController.provisioner.image.tag`| Image tag for csi-provisioner| `v3.0.0`|
 | `zfsController.updateStrategy.type`| Update strategy for zfs localpv controller statefulset | `RollingUpdate` |
 | `zfsController.annotations` | Annotations for zfs localpv controller statefulset metadata| `""`|
 | `zfsController.podAnnotations`| Annotations for zfs localpv controller statefulset's pods metadata | `""`|

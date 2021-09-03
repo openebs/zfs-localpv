@@ -7,3 +7,4 @@ spec:
   # do not require volumeattachment
   attachRequired: false
   podInfoOnMount: false
+  storageCapacity: {{ .Values.feature.storageCapacity }}
