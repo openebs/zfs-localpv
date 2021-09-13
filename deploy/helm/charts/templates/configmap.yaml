@@ -13,5 +13,5 @@ data:
     elif [ -x /host/usr/sbin/zfs ]; then
       chroot /host /usr/sbin/zfs "$@"
     else
-      chroot /host zfs "$@"
+      chroot /host "{{ .Values.zfs.bin }}" "$@"
     fi
