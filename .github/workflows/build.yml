@@ -167,6 +167,7 @@ jobs:
           images: |
             ${{ env.IMAGE_ORG }}/zfs-driver
             quay.io/${{ env.IMAGE_ORG }}/zfs-driver
+            ghcr.io/${{ env.IMAGE_ORG }}/zfs-driver
           tag-latest: false
           tag-custom-only: true
           tag-custom: |
@@ -200,6 +201,13 @@ jobs:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & Push Image
         uses: docker/build-push-action@v2
