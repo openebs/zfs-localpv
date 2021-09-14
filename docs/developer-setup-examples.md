@@ -15,7 +15,7 @@ sudo dpkg -i minikube_1.9.2-0_amd64.deb
 sudo minikube start --driver=none
 sudo chown -R $USER $HOME/.kube $HOME/.minikube
 
-kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/zfs-operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/develop/deploy/zfs-operator.yaml
 kubectl get pods -n kube-system -l role=openebs-zfs
 
 export OPENEBS_NAMESPACE=openebs

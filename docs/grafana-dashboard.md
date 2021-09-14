@@ -105,7 +105,7 @@ prometheus-operator-prometheus-node-exporter   ClusterIP   10.98.128.115   <none
 - Paste the below json and Click on Load
 
   ```
-  https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/sample/grafana-dashboard.json
+  https://raw.githubusercontent.com/openebs/zfs-localpv/develop/deploy/sample/grafana-dashboard.json
   ```
 - Select datasource as Prometheus and Import it.
 
@@ -121,7 +121,7 @@ This dashboard exposes below metrics
 
 The "ZFS-LocalPV" dashboard will look like this :-
 
-![Grafana](https://github.com/openebs/zfs-localpv/blob/master/deploy/sample/vol-stats.png)
+![Grafana](https://github.com/openebs/zfs-localpv/blob/develop/deploy/sample/vol-stats.png)
 
 ## References:
 - https://helm.sh/docs/intro/install/
