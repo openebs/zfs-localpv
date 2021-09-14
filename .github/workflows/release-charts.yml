@@ -5,7 +5,7 @@ on:
     paths:
       - 'deploy/helm/**'
     branches:
-      - master
+      - develop
 
 jobs:
   release:
@@ -36,7 +36,7 @@ jobs:
             echo "Commiting changes to deploy/helm/charts/crds"
             git add deploy/helm/charts/crds
             git commit -s -m 'chore(crd): add auto generated crds to helm release'
-            git push origin master
+            git push origin develop
           fi
 
       - name: Run chart-releaser
