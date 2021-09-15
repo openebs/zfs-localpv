@@ -156,3 +156,7 @@ serviceAccount:
 
 analytics:
   enabled: true
+zfs:
+  # If you use a non-standard path to the zfs binary, specify it here
+  # bin: /run/current-system/sw/bin/zfs
+  bin: zfs
