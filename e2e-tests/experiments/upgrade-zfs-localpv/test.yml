@@ -66,7 +66,7 @@
             ## under `zfs.openebs.io` from v0.6 release.
           - name: Apply the new CRDs for zfs-LocalPV 
             shell: >
-              kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/master/upgrade/crd.yaml
+              kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/develop/upgrade/crd.yaml
             args:
               executable: /bin/bash
             register: new_crds
@@ -76,7 +76,7 @@
             ## apiversion to `zfs.openebs.io`. Previously this was `openebs.io`.
           - name: Download the Upgrade script for creating new CRs with apiversion as `zfs.openebs.io`
             get_url:  
-              url: https://raw.githubusercontent.com/openebs/zfs-localpv/master/upgrade/upgrade.sh
+              url: https://raw.githubusercontent.com/openebs/zfs-localpv/develop/upgrade/upgrade.sh
               dest: ./upgrade.sh
               force: yes
             register: result
@@ -190,7 +190,7 @@
 
           - name: Download the cleanup script for removing the resources with old CRs and delete old CRDs
             get_url:  
-              url: https://raw.githubusercontent.com/openebs/zfs-localpv/master/upgrade/cleanup.sh
+              url: https://raw.githubusercontent.com/openebs/zfs-localpv/develop/upgrade/cleanup.sh
               dest: ./cleanup.sh
               force: yes
             register: result

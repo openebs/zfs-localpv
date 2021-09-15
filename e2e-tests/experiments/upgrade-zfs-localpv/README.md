@@ -1,6 +1,6 @@
 ## About this experiment
 
-This experiment upgrades the zfs-localpv driver components from any previous version to the latest desired stable version or to the master branch ci images. 
+This experiment upgrades the zfs-localpv driver components from any previous version to the latest desired stable version or to the develop branch ci images. 
 
 ## Supported platforms:
 

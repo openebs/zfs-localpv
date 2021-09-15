@@ -14,7 +14,7 @@ Go to each node and create the ZFS Pool, which will be used for provisioning the
 Once ZFS POOL is created we can install OpenEBS ZFS driver by running the following command.
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/zfs-operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/develop/deploy/zfs-operator.yaml
 ```
 
 Verify that the ZFS driver Components are installed and running using below command :
@@ -37,7 +37,7 @@ openebs-zfs-node-twmx8     2/2     Running   0          5h28m
 
 ### 3. How to upgrade the driver to newer version
 
-Follow the instructions here https://github.com/openebs/zfs-localpv/tree/master/upgrade.
+Follow the instructions here https://github.com/openebs/zfs-localpv/tree/develop/upgrade.
 
 ### 4. ZFS Pools are there on certain nodes only, how can I create the storage class.
 
