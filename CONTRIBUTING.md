@@ -5,7 +5,7 @@ ZFS LocalPV uses the standard GitHub pull requests process to review and accept 
 * If you are a first-time contributor, please see [Steps to Contribute](#steps-to-contribute).
 * If you have documentation improvement ideas, go ahead and create a pull request. See [Pull Request checklist](#pull-request-checklist)
 * If you would like to make code contributions, please start with [Setting up the Development Environment](#setting-up-your-development-environment).
-* If you would like to work on something more involved, please connect with the OpenEBS Contributors. See [OpenEBS Community](https://github.com/openebs/openebs/tree/master/community)
+* If you would like to work on something more involved, please connect with the OpenEBS Contributors. See [OpenEBS Community](https://github.com/openebs/openebs/tree/HEAD/community)
 
 ## Steps to Contribute
 
@@ -14,7 +14,7 @@ ZFS-LocalPV is an Apache 2.0 Licensed project and all your commits should be sig
 * Find an issue to work on or create a new issue. The issues are maintained at [zfs-localpv/issues](https://github.com/openebs/zfs-localpv/issues). You can pick up from a list of [good-first-issues](https://github.com/openebs/zfs-localpv/labels/good%20first%20issue).
 * Claim your issue by commenting your intent to work on it to avoid duplication of efforts.
 * Fork the repository on GitHub and clone.
-* Create a branch from where you want to base your work (usually master).
+* Create a branch from where you want to base your work (usually develop).
 * Make your changes. If you are working on code contributions, please see [Setting up the Development Environment](#setting-up-your-development-environment).
 * Relevant coding style guidelines are the [Go Code Review Comments](https://code.google.com/p/go-wiki/wiki/CodeReviewComments) and the _Formatting and style_ section of Peter Bourgon's [Go: Best Practices for Production Environments](http://peter.bourgon.org/go-in-production/#formatting-and-style).
 * Commit your changes by making sure the commit messages convey the need and notes about the commit.
@@ -23,19 +23,19 @@ ZFS-LocalPV is an Apache 2.0 Licensed project and all your commits should be sig
 
 
 ## Pull Request Checklist
-* Rebase to the current master branch before submitting your pull request.
+* Rebase to the current develop branch before submitting your pull request.
 * Commits should be as small as possible. Each commit should follow the checklist below:
   - For code changes, add tests relevant to the fixed bug or new feature. 
   - Before committing your code, make sure you have run `make format` and `make manifests`, to format the code and autogenerate the CRDs yaml.
   - Pass the compile and tests - includes spell checks, formatting, etc.
-  - Commit header (first line) should convey what changed and it should follow the commit [guideline](https://github.com/openebs/openebs/blob/master/contribute/git-commit-message.md)
+  - Commit header (first line) should convey what changed and it should follow the commit [guideline](https://github.com/openebs/openebs/blob/HEAD/contribute/git-commit-message.md)
   - Commit body should include details such as why the changes are required and how the proposed changes help
   - DCO Signed  
-* If your PR is not getting reviewed or you need a specific person to review it, please reach out to the OpenEBS Contributors. See [OpenEBS Community](https://github.com/openebs/openebs/tree/master/community)
+* If your PR is not getting reviewed or you need a specific person to review it, please reach out to the OpenEBS Contributors. See [OpenEBS Community](https://github.com/openebs/openebs/tree/HEAD/community)
 
 ## Sign your work
 
-We use the Developer Certificate of Origin (DCO) as an additional safeguard for the OpenEBS projects. This is a well established and widely used mechanism to assure that contributors have confirmed their right to license their contribution under the project's license. Please read [dcofile](https://github.com/openebs/openebs/blob/master/contribute/developer-certificate-of-origin). If you can certify it, then just add a line to every git commit message:
+We use the Developer Certificate of Origin (DCO) as an additional safeguard for the OpenEBS projects. This is a well established and widely used mechanism to assure that contributors have confirmed their right to license their contribution under the project's license. Please read [dcofile](https://github.com/openebs/openebs/blob/HEAD/contribute/developer-certificate-of-origin). If you can certify it, then just add a line to every git commit message:
 
 ````
   Signed-off-by: Random J Developer <random@developer.example.org>
@@ -62,4 +62,4 @@ This project is implemented using Go and uses the standard golang tools for deve
 
 For setting up a Development environment on your local host, see the detailed instructions [here](./docs/developer-setup.md).
 
-The ZFS LocalPV design document is available [here](https://github.com/openebs/openebs/blob/master/contribute/design/1.x/csi/20190805-csi-zfspv-volume-provisioning.md).
+The ZFS LocalPV design document is available [here](https://github.com/openebs/openebs/blob/HEAD/contribute/design/1.x/csi/20190805-csi-zfspv-volume-provisioning.md).

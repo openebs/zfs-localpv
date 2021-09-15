@@ -23,10 +23,10 @@ spec:
 
             # This test will download the zfs-localpv operator file from this branch.
             # Change the env value according to versioned branch name for zfs-localpv provisioner
-            # from openebs/zfs-localpv repo. for e.g. (v1.4.x , v1.5.x  OR  master)
-            # by default test-specific value of `ZFS_BRANCH` is master.
+            # from openebs/zfs-localpv repo. for e.g. (v1.4.x , v1.5.x  OR  develop)
+            # by default test-specific value of `ZFS_BRANCH` is develop.
           - name: ZFS_BRANCH  
-            value: 'master'
+            value: 'develop'
 
             # After v1.5.0 in each branch of openebs/zfs-localpv repo zfs-localpv driver image is set to
             # `ci` tag `openebs/zfs-driver:ci`. Give the full image name here with desired image tag to replace

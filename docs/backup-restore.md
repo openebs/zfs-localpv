@@ -53,7 +53,7 @@ We have to install the velero 1.5 or later version for ZFS-LocalPV.
 Deploy the minio for storing the backup :-
 
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/master/deploy/sample/minio.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/develop/deploy/sample/minio.yaml
 ```
 
 The above minio uses tmp directory inside the pod to store the data, so when restart happens, the backed up data will be gone. We can change the above yaml to use persistence storage to store the data so that we can persist the data after restart.

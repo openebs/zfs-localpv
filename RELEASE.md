@@ -20,7 +20,7 @@ Once all the above tests are completed, a main release tagged image is published
 
 zfs-localpv is released as container image with versioned tag.
 
-Before creating a release, the repo owner needs to create a separate branch from the active branch, which is `master`. Name of the branch should follow the naming convention of `v.0.7.x` if release is for 0.7.0.
+Before creating a release, the repo owner needs to create a separate branch from the active branch, which is `develop`. Name of the branch should follow the naming convention of `v.0.7.x` if release is for 0.7.0.
 
 Once the release branch is created, changelog from `changelogs/unreleased` needs to be moved to release specific folder, if release branch is `v0.7.x` then folder will be `changelogs/v0.7.x`.
 
@@ -33,7 +33,7 @@ Images are published at following location :
 https://quay.io/repository/openebs/zfs-driver?tab=tags
 https://hub.docker.com/r/openebs/zfs-driver/tags
 
-Once a release is created, update the release description with the changelog mentioned in `changelog/v0.7.x`. Once the changelogs are updated in the release, the repo owner needs to create a PR to `master` with the following details:
+Once a release is created, update the release description with the changelog mentioned in `changelog/v0.7.x`. Once the changelogs are updated in the release, the repo owner needs to create a PR to `develop` with the following details:
 1. update the changelog from `changelog/v0.7.x` to `zfs-localpv/CHANGELOG.md`
 2. If a release is not an RC tag then PR should include the changes to remove `changelog/v0.7.x` folder.
 3. If a release is an RC tag then PR should include the changes to remove the changelog from `changelog/v0.7.x` which are already mentioned in `zfs-localpv/CHANGELOG.md` as part of step number 1.

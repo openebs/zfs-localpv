@@ -72,7 +72,7 @@ fi
 # set the tag CI (fixed) and build tags.
 BUILD_TAG="${CURRENT_BRANCH}-${BUILD_ID}"
 CI_TAG="${CURRENT_BRANCH}-ci"
-if [ ${CURRENT_BRANCH} = "master" ]; then
+if [ ${CURRENT_BRANCH} = "develop" ]; then
   CI_TAG="ci"
 fi
 
@@ -106,7 +106,7 @@ then
   # Push CI tagged image - :ci or :branch-ci
   TagAndPushImage "${DIMAGE}" "${CI_TAG}"
 
-  # Push unique tagged image - :master-<uuid> or :branch-<uuid>
+  # Push unique tagged image - :develop-<uuid> or :branch-<uuid>
   # This unique/build image will be pushed to corresponding ci repo.
   TagAndPushImage "${DIMAGE}-ci" "${BUILD_TAG}"
 

@@ -21,7 +21,7 @@ spec:
             value: default
 
             ## Give the versioned branch name for zfs_localpv provisioner from openebs/zfs-localpv repo
-            ## for e.g. (v1.4.x , v1.5.x  OR  master)
+            ## for e.g. (v1.4.x , v1.5.x  OR  develop)
           - name: TO_VERSION_ZFS_BRANCH
             value: ''
 

@@ -17,7 +17,7 @@ on:
   create:
   push:
     branches:
-    - master
+    - develop
     - 'v*'
     paths-ignore:
     - 'docs/**'
@@ -148,7 +148,7 @@ jobs:
         run: |
           BRANCH="${GITHUB_REF##*/}"
           CI_TAG=${BRANCH#v}-ci
-          if [ ${BRANCH} = "master" ]; then
+          if [ ${BRANCH} = "develop" ]; then
             CI_TAG="ci"
           fi
           echo "TAG=${CI_TAG}" >> $GITHUB_ENV
