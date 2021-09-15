@@ -156,7 +156,6 @@ serviceAccount:
 
 analytics:
   enabled: true
-```suggestion
  
 zfs:
   # If you use a non-standard path to the zfs binary, specify it here
