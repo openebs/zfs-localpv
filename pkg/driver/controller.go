@@ -119,6 +119,11 @@ func (cs *controller) init() error {
 	go cs.k8sNodeInformer.Run(stopCh)
 	go cs.zfsNodeInformer.Run(stopCh)
 
+	if zfs.GoogleAnalyticsEnabled == "true" {
+		analytics.New().Build().InstallBuilder(true).Send()
+		go analytics.PingCheck()
+	}
+
 	// wait for all the caches to be populated.
 	klog.Info("waiting for k8s & zfs node informer caches to be synced")
 	cache.WaitForCacheSync(stopCh,
