@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 release:
-  version: "1.9.1"
+  version: "1.9.3"
 
 imagePullSecrets:
 # - name: "image-pull-secret"
@@ -133,7 +133,7 @@ zfsPlugin:
     repository: openebs/zfs-driver
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 1.9.1
+    tag: 1.9.3
 
 role: openebs-zfs
 
