@@ -9,10 +9,10 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: zfspv-block
-  allowVolumeExpansion: true
-  parameters:
+provisioner: zfs.csi.openebs.io
+allowVolumeExpansion: true
+parameters:
     poolname: "zfspv-pool"
-    provisioner: zfs.csi.openebs.io
 ```
 
 Now we can create a pvc with volumeMode as Block to request for a Raw Block Volume :-
