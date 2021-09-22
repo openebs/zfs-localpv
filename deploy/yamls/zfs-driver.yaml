@@ -959,7 +959,7 @@ data:
     elif [ -x /host/usr/sbin/zfs ]; then
       chroot /host /usr/sbin/zfs "$@"
     else
-      chroot /host zfs "$@"
+      chroot /host /bin/sh -c ". /etc/profile && zfs $*"
     fi
 
 ---
