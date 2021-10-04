@@ -892,7 +892,7 @@ func (cs *controller) GetCapacity(
 	// ZFS pool names. This is why it always returns the capacitry of the whole
 	// pool, even if the child dataset given as the "poolname" parameter has a
 	// smaller capacity than the whole pool.
-	poolParamPool, _ := func() (string, string) {
+	poolname, _ := func() (string, string) {
 		poolParamSliced := strings.SplitN(poolParam, "/", 2)
 		if len(poolParamSliced) == 2 {
 			return poolParamSliced[0], poolParamSliced[1]
@@ -917,7 +917,7 @@ func (cs *controller) GetCapacity(
 		// See https://github.com/kubernetes/enhancements/tree/master/keps/sig-storage/1472-storage-capacity-tracking#available-capacity-vs-maximum-volume-size &
 		// https://github.com/container-storage-interface/spec/issues/432 for more details
 		for _, zpool := range zfsNode.Pools {
-			if zpool.Name != poolParamPool {
+			if zpool.Name != poolname {
 				continue
 			}
 			freeCapacity := zpool.Free.Value()
