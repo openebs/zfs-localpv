@@ -873,8 +873,33 @@ func (cs *controller) GetCapacity(
 	}
 
 	zfsNodesCache := cs.zfsNodeInformer.GetIndexer()
+
 	params := req.GetParameters()
+
 	poolParam := helpers.GetInsensitiveParameter(&params, "poolname")
+
+	// The "poolname" parameter can either be the name of a ZFS pool
+	// (e.g. "zpool"), or a path to a child dataset (e.g. "zpool/k8s/localpv").
+	//
+	// We parse the "poolname" parameter so the name of the ZFS pool and the
+	// path to the dataset is available separately.
+	//
+	// The dataset path is not used now. It could be used later to query the
+	// capacity of the child dataset, which could be smaller than the capacity
+	// of the whole pool.
+	//
+	// This is necessary because capacity calculation currently only works with
+	// ZFS pool names. This is why it always returns the capacitry of the whole
+	// pool, even if the child dataset given as the "poolname" parameter has a
+	// smaller capacity than the whole pool.
+	poolname, _ := func() (string, string) {
+		poolParamSliced := strings.SplitN(poolParam, "/", 2)
+		if len(poolParamSliced) == 2 {
+			return poolParamSliced[0], poolParamSliced[1]
+		} else {
+			return poolParamSliced[0], ""
+		}
+	}()
 
 	var availableCapacity int64
 	for _, nodeName := range nodeNames {
@@ -892,7 +917,7 @@ func (cs *controller) GetCapacity(
 		// See https://github.com/kubernetes/enhancements/tree/master/keps/sig-storage/1472-storage-capacity-tracking#available-capacity-vs-maximum-volume-size &
 		// https://github.com/container-storage-interface/spec/issues/432 for more details
 		for _, zpool := range zfsNode.Pools {
-			if zpool.Name != poolParam {
+			if zpool.Name != poolname {
 				continue
 			}
 			freeCapacity := zpool.Free.Value()
