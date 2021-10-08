@@ -235,8 +235,7 @@ func (ns *node) NodeGetInfo(
 	 * }
 	 */
 
-	// support all the keys that node has
-	topology := node.Labels
+	topology := map[string]string{}
 
 	// add driver's topology key if not labelled already
 	if _, ok := topology[zfs.ZFSTopologyKey]; !ok {
@@ -244,6 +243,20 @@ func (ns *node) NodeGetInfo(
 	}
 	// add old topology key to support backward compatibility for velero
 	topology[zfs.ZFSTopoNodenameKey] = ns.driver.config.Nodename
+
+	// support topologykeys from env ALLOWED_TOPOLOGIES
+	allowedTopologies := os.Getenv("ALLOWED_TOPOLOGIES")
+	allowedKeys := strings.Split(allowedTopologies, ",")
+
+	for _, key := range allowedKeys {
+		if key != "" {
+			if value, ok := node.Labels[key]; ok {
+				topology[key] = value
+			} else {
+				klog.Warningf("failed to get value for topology key: %s", key)
+			}
+		}
+	}
 
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.driver.config.Nodename,
