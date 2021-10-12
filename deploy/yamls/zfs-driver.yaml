@@ -1054,7 +1054,7 @@ spec:
             - name: OPENEBS_NAMESPACE
               value: openebs
             - name: ALLOWED_TOPOLOGIES
-              value: "kubernetes.io/hostname,"
+              value: "All"
           volumeMounts:
             - name: plugin-dir
               mountPath: /plugin
