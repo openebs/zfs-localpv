@@ -93,7 +93,7 @@ spec:
 
 To add custom topology key:
 * Label the nodes with the required key and value.
-* Set env variables in the ZFS driver daemonset yaml(openebs-zfs-node), if already deployed, you can edit the daemonSet directly.
+* Set env variables in the ZFS driver daemonset yaml(openebs-zfs-node), if already deployed, you can edit the daemonSet directly. By default the env is set to `All` which will take the node label keys as allowed topologies.
 * "openebs.io/nodename" and "openebs.io/nodeid" are added as default topology key. 
 * Create storageclass with above specific labels keys.
 
