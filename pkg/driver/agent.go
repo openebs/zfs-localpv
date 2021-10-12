@@ -235,8 +235,24 @@ func (ns *node) NodeGetInfo(
 	 * }
 	 */
 
-	// support all the keys that node has
-	topology := node.Labels
+	topology := map[string]string{}
+
+	// support topologykeys from env ALLOWED_TOPOLOGIES
+	allowedTopologies := strings.Trim(os.Getenv("ALLOWED_TOPOLOGIES"), " ")
+	if strings.ToLower(allowedTopologies) == "all" {
+		topology = node.Labels
+	} else {
+		allowedKeys := strings.Split(allowedTopologies, ",")
+		for _, key := range allowedKeys {
+			if key != "" {
+				if value, ok := node.Labels[key]; ok {
+					topology[key] = value
+				} else {
+					klog.Warningf("failed to get value for topology key: %s", key)
+				}
+			}
+		}
+	}
 
 	// add driver's topology key if not labelled already
 	if _, ok := topology[zfs.ZFSTopologyKey]; !ok {

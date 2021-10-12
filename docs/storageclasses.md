@@ -189,6 +189,57 @@ allowedTopologies:
      - node-2
 ```
 
+At the same time, you must set env variables in the ZFS-LocalPV CSI driver daemon sets (openebs-zfs-node) so that it can pick the node label as the supported topology. It adds "openebs.io/nodename" as default topology key. If the key doesn't exist in the node labels when the CSI ZFS driver register, the key will not add to the topologyKeys. Set more than one keys separated by commas.
+
+```yaml
+env:
+  - name: OPENEBS_NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: OPENEBS_CSI_ENDPOINT
+    value: unix:///plugin/csi.sock
+  - name: OPENEBS_NODE_DRIVER
+    value: agent
+  - name: OPENEBS_NAMESPACE
+    value: openebs
+  - name: ALLOWED_TOPOLOGIES
+    value: "test1,test2"
+```
+
+We can verify that key has been registered successfully with the ZFS LocalPV CSI Driver by checking the CSI node object yaml :-
+
+```yaml
+$ kubectl get csinodes pawan-node-1 -oyaml
+apiVersion: storage.k8s.io/v1
+kind: CSINode
+metadata:
+  creationTimestamp: "2020-04-13T14:49:59Z"
+  name: k8s-node-1
+  ownerReferences:
+  - apiVersion: v1
+    kind: Node
+    name: k8s-node-1
+    uid: fe268f4b-d9a9-490a-a999-8cde20c4dadb
+  resourceVersion: "4586341"
+  selfLink: /apis/storage.k8s.io/v1/csinodes/k8s-node-1
+  uid: 522c2110-9d75-4bca-9879-098eb8b44e5d
+spec:
+  drivers:
+  - name: zfs.csi.openebs.io
+    nodeID: k8s-node-1
+    topologyKeys:
+    - openebs.io/nodename
+    - test1
+    - test2
+```
+
+If you want to change topology keys, just set new env(ALLOWED_TOPOLOGIES) .Check [faq](./faq.md#6-how-to-add-custom-topology-key) for more details.
+
+```
+$ kubectl edit ds -n kube-system openebs-zfs-node
+```
+
 Here we can have ZFS Pool of name “zfspv-pool” created on the nvme disks and want to use this high performing ZFS Pool for the applications that need higher IOPS. We can use the above SorageClass to create the PVC and deploy the application using that.
 
 The ZFS-LocalPV driver will create the Volume in the Pool “zfspv-pool” present on the node  which will be seleted based on scheduler we chose in storage-class. In the above StorageClass, if total capacity of provisioned volumes on node-1 is less, it will create the volume on node-1 only. Alternatively, we can use `volumeBindingMode: WaitForFirstConsumer` to let the k8s select the node where the volume should be provisioned.
@@ -202,13 +253,7 @@ pawan@pawan-master:~/pawan$ kubectl label node pawan-node-1 openebs.io/zpool=nvm
 node/pawan-node-1 labeled
 ```
 
-Now, restart the ZFS-LocalPV Driver (if already deployed, otherwise please ignore) so that it can pick the new node label as the supported topology. Check [faq](./faq.md#6-how-to-add-custom-topology-key) for more details.
-
-```
-$ kubectl delete po -n kube-system -l role=openebs-zfs
-```
-
-Now, we can create the StorageClass like this:
+Add "openebs.io/zpool" to the ZFS-LocalPV CSI driver daemon sets env(ALLOWED_TOPOLOGIES). Now, we can create the StorageClass like this:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
