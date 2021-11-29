@@ -95,7 +95,7 @@ spec:
                   data. For instance, if the Volume was created with "off" and the
                   next day the compression was modified to "on", the data written
                   prior to setting "on" will not be compressed. Default Value: off.'
-                pattern: ^(on|off|lzjb|gzip|gzip-[1-9]|zle|lz4)$
+                pattern: ^(on|off|lzjb|zstd|gzip|gzip-[1-9]|zle|lz4)$
                 type: string
               dedup:
                 description: 'Deduplication is the process for removing redundant

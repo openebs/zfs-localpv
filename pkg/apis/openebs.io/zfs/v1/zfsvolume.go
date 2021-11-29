@@ -106,7 +106,7 @@ type VolumeInfo struct {
 	// the next day the compression was modified to "on", the data written prior to setting "on" will
 	// not be compressed.
 	// Default Value: off.
-	// +kubebuilder:validation:Pattern="^(on|off|lzjb|gzip|gzip-[1-9]|zle|lz4)$"
+	// +kubebuilder:validation:Pattern="^(on|off|lzjb|zstd|gzip|gzip-[1-9]|zle|lz4)$"
 	Compression string `json:"compression,omitempty"`
 
 	// Deduplication is the process for removing redundant data at the block level,
