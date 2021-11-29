@@ -33,7 +33,7 @@ allowed values: Any power of 2 from 512 bytes to 128 Kbytes
 
 Compression specifies the block-level compression algorithm to be applied to the ZFS Volume and datasets. The value "on" indicates ZFS to use the default compression algorithm.
 
-allowed values: "on", "off", "lzjb", "gzip", "gzip-1", "gzip-2", "gzip-3", "gzip-4", "gzip-5", "gzip-6", "gzip-7", "gzip-8", "gzip-9", "zle", "lz4"
+allowed values: "on", "off", "lzjb", "zstd", "gzip", "gzip-1", "gzip-2", "gzip-3", "gzip-4", "gzip-5", "gzip-6", "gzip-7", "gzip-8", "gzip-9", "zle", "lz4"
 
 ### dedup (*optional* parameter)
 
