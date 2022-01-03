@@ -734,7 +734,7 @@ metadata:
   namespace: kube-system
   labels:
     openebs.io/component-name: openebs-zfs-controller
-    openebs.io/version: ci
+    openebs.io/version: 2.0.0
 spec:
   selector:
     matchLabels:
@@ -748,7 +748,7 @@ spec:
         app: openebs-zfs-controller
         role: openebs-zfs
         openebs.io/component-name: openebs-zfs-controller
-        openebs.io/version: ci
+        openebs.io/version: 2.0.0
     spec:
       affinity:
         podAntiAffinity:
@@ -821,7 +821,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: openebs-zfs-plugin
-          image: openebs/zfs-driver:ci
+          image: openebs/zfs-driver:2.0.0
           imagePullPolicy: IfNotPresent
           env:
             - name: OPENEBS_CONTROLLER_DRIVER
@@ -984,7 +984,7 @@ metadata:
   namespace: kube-system
   labels:
     openebs.io/component-name: openebs-zfs-node
-    openebs.io/version: ci
+    openebs.io/version: 2.0.0
 spec:
   selector:
     matchLabels:
@@ -999,7 +999,7 @@ spec:
         app: openebs-zfs-node
         role: openebs-zfs
         openebs.io/component-name: openebs-zfs-node
-        openebs.io/version: ci
+        openebs.io/version: 2.0.0
     spec:
       priorityClassName: openebs-zfs-csi-node-critical
       serviceAccount: openebs-zfs-node-sa
@@ -1036,7 +1036,7 @@ spec:
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
-          image: openebs/zfs-driver:ci
+          image: openebs/zfs-driver:2.0.0
           imagePullPolicy: IfNotPresent
           args:
             - "--nodename=$(OPENEBS_NODE_NAME)"
