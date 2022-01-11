@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 release:
-  version: "1.9.3"
+  version: "2.0.0"
 
 imagePullSecrets:
 # - name: "image-pull-secret"
@@ -53,6 +53,12 @@ zfsNode:
   priorityClass:
     create: true
     name: zfs-csi-node-critical
+  # allowed topologykeys for csi driver
+  # The desired comma separated keys can be added here,
+  # by default all the node label keys are allowed.
+  # For example:
+  # allowedTopologyKeys: "kubernetes.io/hostname,openebs.io/rack"
+  allowedTopologyKeys: "All"
 
 # zfsController contains the configurables for
 # the zfs controller statefulset
@@ -133,7 +139,7 @@ zfsPlugin:
     repository: openebs/zfs-driver
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 1.9.3
+    tag: 2.0.0
 
 role: openebs-zfs
 

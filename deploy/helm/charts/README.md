@@ -78,7 +78,8 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsPlugin.image.registry`| Registry for openebs-zfs-plugin image| `""`|
 | `zfsPlugin.image.repository`| Image repository for openebs-zfs-plugin| `openebs/zfs-driver`|
 | `zfsPlugin.image.pullPolicy`| Image pull policy for openebs-zfs-plugin| `IfNotPresent`|
-| `zfsPlugin.image.tag`| Image tag for openebs-zfs-plugin| `1.9.1`|
+| `zfsPlugin.image.tag`| Image tag for openebs-zfs-plugin| `2.0.0`|
+| `zfsNode.allowedTopologyKeys`| Custom topology keys required for provisioning| `"kubernetes.io/hostname,"`|
 | `zfsNode.driverRegistrar.image.registry`| Registry for csi-node-driver-registrar image| `k8s.gcr.io/`|
 | `zfsNode.driverRegistrar.image.repository`| Image repository for csi-node-driver-registrar| `sig-storage/csi-node-driver-registrar`|
 | `zfsNode.driverRegistrar.image.pullPolicy`| Image pull policy for csi-node-driver-registrar| `IfNotPresent`|
