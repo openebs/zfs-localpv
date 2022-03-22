@@ -621,6 +621,15 @@ func SetVolumeProp(vol *apis.ZFSVolume) error {
 // DestroyVolume deletes the zfs volume
 func DestroyVolume(vol *apis.ZFSVolume) error {
 	volume := vol.Spec.PoolName + "/" + vol.Name
+	parentDataset := vol.Spec.PoolName
+
+	// check if parent dataset is present or not before attempting to delete the volume
+	if err := getVolume(parentDataset); err != nil {
+		klog.Errorf(
+			"destroy: parent dataset %v is not present, error: %s", parentDataset, err.Error(),
+		)
+		return err
+	}
 
 	if err := getVolume(volume); err != nil {
 		klog.Errorf(
@@ -696,6 +705,17 @@ func DestroySnapshot(snap *apis.ZFSSnapshot) error {
 
 	volume := snap.Labels[ZFSVolKey]
 	snapDataset := snap.Spec.PoolName + "/" + volume + "@" + snap.Name
+
+	parentDataset := snap.Spec.PoolName
+
+	// check if parent dataset is present or not before attempting to delete the snapshot
+	if err := getVolume(parentDataset); err != nil {
+		klog.Errorf(
+			"destroy: snapshot's(%v) parent dataset %v is not present, error: %s",
+			snapDataset, parentDataset, err.Error(),
+		)
+		return err
+	}
 
 	if err := getVolume(snapDataset); err != nil {
 		klog.Errorf(
