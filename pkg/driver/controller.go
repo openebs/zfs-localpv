@@ -719,12 +719,17 @@ func (cs *controller) CreateSnapshot(
 	}
 
 	snapTimeStamp := time.Now().Unix()
-	state, err := zfs.GetZFSSnapshotStatus(snapName)
-
-	if err == nil {
+	var state string
+	if snapObj, err := zfs.GetZFSSnapshot(snapName); err == nil {
+		state = snapObj.Status.State
+		size, err := zfs.GetZFSSnapshotCapacity(snapObj)
+		if err != nil {
+			return nil, fmt.Errorf("get zfssnapshot capacity failed: %v, capacity: %v", err, snapObj.Spec.Capacity)
+		}
 		return csipayload.NewCreateSnapshotResponseBuilder().
 			WithSourceVolumeID(volumeID).
 			WithSnapshotID(volumeID+"@"+snapName).
+			WithSize(size).
 			WithCreationTime(snapTimeStamp, 0).
 			WithReadyToUse(state == zfs.ZFSStatusReady).
 			Build(), nil
@@ -776,11 +781,20 @@ func (cs *controller) CreateSnapshot(
 		}
 	}
 
-	state, _ = zfs.GetZFSSnapshotStatus(snapName)
+	snapObj, err = zfs.GetZFSSnapshot(snapName)
+	if err != nil {
+		return nil, fmt.Errorf("get zfssnapshot failed, err: %v", err)
+	}
+	state = snapObj.Status.State
+	size, err := zfs.GetZFSSnapshotCapacity(snapObj)
+	if err != nil {
+		return nil, fmt.Errorf("get zfssnapshot capacity failed: %v, capacity: %v", err, snapObj.Spec.Capacity)
+	}
 
 	return csipayload.NewCreateSnapshotResponseBuilder().
 		WithSourceVolumeID(volumeID).
 		WithSnapshotID(volumeID+"@"+snapName).
+		WithSize(size).
 		WithCreationTime(snapTimeStamp, 0).
 		WithReadyToUse(state == zfs.ZFSStatusReady).
 		Build(), nil
