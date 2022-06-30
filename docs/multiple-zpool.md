@@ -24,7 +24,7 @@ last-updated: 2022-06-16
 
 ## Summary
 
-This is a design proposal to support multiple Zpools in a single stoorage class for ZFS Local PV. This design describes how we can provide multiple ZFS pools in a storageclass, how the ZFS Local PV driver will be pick the ZFS Pool. 
+This is a design proposal to support multiple Zpools in a single stoorage class for ZFS Local PV. This design describes how we can provide multiple ZFS pools in a storageclass, how the ZFS Local PV driver will pick the ZFS Pool. 
 
 Using the design/solution described in this document, users will be able to provide multiple ZFS Pools in single storage class.
 
@@ -103,7 +103,7 @@ spec:
 
 ### 1. CSI create volume
 At CSI, when we get a Create Volume request, it will first try to find a node where it can create the PV object. The driver will trigger the scheduler which will return a node where the PV should be created.
-In CreateVolume call, we will have the list of nodes where the ZFS pools are present and the volume should be created in anyone of the node present in the list.
+In CreateVolume call, we will have the list of nodes where the ZFS pools are present and the volume should be created in any one of the node present in the list.
 
 ### 2. Agent Volume Controller
 ZFS-LocalPV driver will create the PV object on scheduled node so that the applcation using that PV always comes to the same node and also it creates the ZFSVolume object for that volume in order to manage the creation of the ZFS dataset. There will be a watcher at each node which will be watching for the ZFSVolume resource which is aimed for them. The watcher is inbuilt into ZFS node-agent. As soon as ZFSVolume object is created for a node, the corresponding watcher will get the add event and it will check for the zpools present on that node whcih satisfies the poolpattern parameter. It will create a list of all the zfs pools matching the poolpattern regx and will pick the pool which has highest free space available which can accomodate the volume creation request. Once volume is created successfully, the node agent will update the ZFSVolume CR with poolname it has selected to create the volume
