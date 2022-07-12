@@ -33,9 +33,12 @@ ZFS-LocalPV is an Apache 2.0 Licensed project and all your commits should be sig
   - DCO Signed  
 * If your PR is not getting reviewed or you need a specific person to review it, please reach out to the OpenEBS Contributors. See [OpenEBS Community](https://github.com/openebs/openebs/tree/HEAD/community)
 
+---
 ## Sign your work
 
 We use the Developer Certificate of Origin (DCO) as an additional safeguard for the OpenEBS projects. This is a well established and widely used mechanism to assure that contributors have confirmed their right to license their contribution under the project's license. Please read [dcofile](https://github.com/openebs/openebs/blob/HEAD/contribute/developer-certificate-of-origin). If you can certify it, then just add a line to every git commit message:
+
+Please certify it by just adding a line to every git commit message. Any PR with Commits which does not have DCO Signoff will not be accepted:
 
 ````
   Signed-off-by: Random J Developer <random@developer.example.org>
@@ -46,6 +49,7 @@ If you set your `user.name` and `user.email` in git config, you can sign your co
 
 You can also use git [aliases](https://git-scm.com/book/tr/v2/Git-Basics-Git-Aliases) like `git config --global alias.ci 'commit -s'`. Now you can commit with `git ci` and the commit will be signed.
 
+---
 ## Adding a changelog
 If PR is about adding a new feature or bug fix then the Author of the PR is expected to add a changelog file with their pull request. This changelog file should be a new file created under the `changelogs/unreleased` folder. Name of this file must be in `pr_number-username` format and contents of the file should be the one-liner text which explains the feature or bug fix.
 
