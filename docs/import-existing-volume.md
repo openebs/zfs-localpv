@@ -60,7 +60,7 @@ zfspv-pool          11.6M   246G    20K  /zfspv-pool
 zfspv-pool/fio-vol    24K  4.00G    24K  /zfspv-pool/fio-vol
 ```
 
-Here in the above ZPOOL, a dataset of name "fio-vol" is present and we want to import that to the ZFS-LocalPV CSI driver. First if volume is mounted then we have to unmount it so that it can be mounted by ZFS-LocalPV driver. For ZFS dataset use `zfs umount` command and for zvol we use `umount` command to unmount the volume
+Here in the above ZPOOL, a dataset of name "fio-vol" is present and we want to import that to the ZFS-LocalPV CSI driver. First if volume is mounted then we have to unmount it so that it can be mounted by ZFS-LocalPV driver. For ZFS dataset use `zfs umount` command and for zvol we use `umount` command to unmount the volume. We also need to set the mount point for datasets to legacy, we can use `zfs set mountpoint=legacy <dataset>` command for that.
 
 Get the volume size :
 
