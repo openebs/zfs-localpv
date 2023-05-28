@@ -74,7 +74,10 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 	return c.tracker
 }
 
-var _ clientset.Interface = &Clientset{}
+var (
+	_ clientset.Interface = &Clientset{}
+	_ testing.FakeClient  = &Clientset{}
+)
 
 // ZfsV1 retrieves the ZfsV1Client
 func (c *Clientset) ZfsV1() zfsv1.ZfsV1Interface {

@@ -18,7 +18,7 @@ package v1alpha1
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	timestamp "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // CreateSnapshotResponseBuilder helps building an

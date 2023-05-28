@@ -126,10 +126,6 @@ verify-deps: deps
 		echo "go module files are out of date, please commit the changes to go.mod and go.sum"; exit 1; \
 	fi
 
-.PHONY: vendor
-vendor: go.mod go.sum deps
-	@go mod vendor
-
 # Bootstrap downloads tools required
 # during build
 .PHONY: bootstrap
