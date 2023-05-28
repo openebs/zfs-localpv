@@ -38,7 +38,7 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	errors "github.com/openebs/lib-csi/pkg/common/errors"
 	"github.com/openebs/lib-csi/pkg/common/helpers"

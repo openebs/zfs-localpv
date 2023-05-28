@@ -21,7 +21,7 @@ import (
 	env "github.com/openebs/lib-csi/pkg/common/env"
 	openebsversion "github.com/openebs/zfs-localpv/pkg/version"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 var (

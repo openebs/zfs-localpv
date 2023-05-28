@@ -30,7 +30,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	// auth plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"

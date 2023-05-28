@@ -18,7 +18,7 @@ package backup
 
 import (
 	"fmt"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"time"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
