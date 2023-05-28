@@ -13,9 +13,9 @@
 # limitations under the License.
 
 # list only csi source code directories
-PACKAGES = $(shell go list ./... | grep -v 'vendor\|pkg/generated')
+PACKAGES = $(shell go list ./... | grep -v 'pkg/generated')
 
-UNIT_TEST_PACKAGES = $(shell go list ./... | grep -v 'vendor\|pkg/generated\|tests')
+UNIT_TEST_PACKAGES = $(shell go list ./... | grep -v 'pkg/generated\|tests')
 
 # Lint our code. Reference: https://golang.org/cmd/vet/
 VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods \
@@ -30,7 +30,6 @@ EXTERNAL_TOOLS=\
 	gopkg.in/matm/v1/gocov-html \
 	github.com/onsi/ginkgo/ginkgo \
 	github.com/onsi/gomega/...
-
 
 # The images can be pushed to any docker/image registeries
 # like docker hub, quay. The registries are specified in
@@ -137,12 +136,12 @@ vendor: go.mod go.sum deps
 bootstrap: controller-gen
 	@for tool in  $(EXTERNAL_TOOLS) ; do \
 		echo "+ Installing $$tool" ; \
-		cd && GO111MODULE=on go get $$tool; \
+		cd && GO111MODULE=on go install -mod=mod $$tool@latest; \
 	done
 
 .PHONY: controller-gen
 controller-gen:
-	TMP_DIR=$(shell mktemp -d) && cd $$TMP_DIR && go mod init tmp && go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0 && rm -rf $$TMP_DIR;
+	TMP_DIR=$(shell mktemp -d) && cd $$TMP_DIR && go mod init tmp && go install -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0 && rm -rf $$TMP_DIR;
 
 # SRC_PKG is the path of code files
 SRC_PKG := github.com/openebs/zfs-localpv/pkg
@@ -161,7 +160,7 @@ kubegendelete:
 
 .PHONY: deepcopy-install
 deepcopy-install:
-	@go install -mod=vendor ./vendor/k8s.io/code-generator/cmd/deepcopy-gen
+	@go install -mod=mod k8s.io/code-generator/cmd/deepcopy-gen
 
 .PHONY: deepcopy
 deepcopy:
@@ -173,7 +172,7 @@ deepcopy:
 
 .PHONY: clientset-install
 clientset-install:
-	@go install -mod=vendor ./vendor/k8s.io/code-generator/cmd/client-gen
+	@go install -mod=mod k8s.io/code-generator/cmd/client-gen
 
 .PHONY: clientset
 clientset:
@@ -187,7 +186,7 @@ clientset:
 
 .PHONY: lister-install
 lister-install:
-	@go install -mod=vendor ./vendor/k8s.io/code-generator/cmd/lister-gen
+	@go install -mod=mod k8s.io/code-generator/cmd/lister-gen
 
 .PHONY: lister
 lister:
@@ -199,7 +198,7 @@ lister:
 
 .PHONY: informer-install
 informer-install:
-	@go install -mod=vendor ./vendor/k8s.io/code-generator/cmd/informer-gen
+	@go install -mod=mod k8s.io/code-generator/cmd/informer-gen
 
 .PHONY: informer
 informer:
@@ -263,7 +262,7 @@ golint:
 .PHONY: license-check
 license-check:
 	@echo "--> Checking license header..."
-	@licRes=$$(for file in $$(find . -type f -regex '.*\.sh\|.*\.go\|.*Docker.*\|.*\Makefile*' ! -path './vendor/*' ) ; do \
+	@licRes=$$(for file in $$(find . -type f -regex '.*\.sh\|.*\.go\|.*Docker.*\|.*\Makefile*') ; do \
                awk 'NR<=5' $$file | grep -Eq "(Copyright|generated|GENERATED)" || echo $$file; \
        done); \
        if [ -n "$${licRes}" ]; then \

@@ -25,22 +25,22 @@ DIR="$( cd -P "$( dirname "$SOURCE" )/../" && pwd )"
 cd "$DIR"
 
 # Get the git commit
-if [ -f $GOPATH/src/github.com/openebs/zfs-localpv/GITCOMMIT ];
+if [ -f "$GOPATH"/src/github.com/openebs/zfs-localpv/GITCOMMIT ];
 then
-    GIT_COMMIT="$(cat $GOPATH/src/github.com/openebs/zfs-localpv/GITCOMMIT)"
+    GIT_COMMIT=$(cat "$GOPATH"/src/github.com/openebs/zfs-localpv/GITCOMMIT)
 else
     GIT_COMMIT="$(git rev-parse HEAD)"
 fi
 
 # Set BUILDMETA based on travis tag
-if [[ -n "$RELEASE_TAG" ]] && [[ $RELEASE_TAG != *"RC"* ]]; then
+if [[ -n "$RELEASE_TAG" ]] && [[ "$RELEASE_TAG" != *"RC"* ]]; then
     echo "released" > BUILDMETA
 fi
 
 CURRENT_BRANCH=""
-if [ -z ${BRANCH} ];
+if [ -z "${BRANCH}" ];
 then
-  CURRENT_BRANCH=$(git branch | grep \* | cut -d ' ' -f2)
+  CURRENT_BRANCH=$(git branch | grep '\*' | cut -d ' ' -f2)
 else
   CURRENT_BRANCH=${BRANCH}
 fi
@@ -49,19 +49,18 @@ fi
 if [ -n "$RELEASE_TAG" ]; then
 	VERSION="$RELEASE_TAG"
 else
-	BUILDDATE=`date +%m-%d-%Y`
+	BUILDDATE="$(date +%m-%d-%Y)"
 	SHORT_COMMIT="$(git rev-parse --short HEAD)"
 	VERSION="$CURRENT_BRANCH-$SHORT_COMMIT:$BUILDDATE"
 fi
 
 echo -e "\nbuilding the ZFS Driver version :- $VERSION\n"
 
-VERSION_META="$(cat $PWD/BUILDMETA)"
+VERSION_META=$(cat "$PWD/BUILDMETA")
 
 # Determine the arch/os combos we're building for
 UNAME=$(uname)
-ARCH=$(uname -m)
-if [ "$UNAME" != "Linux" -a "$UNAME" != "Darwin" ] ; then
+if [ "$UNAME" != "Linux" ] && [ "$UNAME" != "Darwin" ] ; then
     echo "Sorry, this OS is not supported yet."
     exit 1
 fi
@@ -80,8 +79,8 @@ fi
 
 # Delete the old dir
 echo "==> Removing old directory..."
-rm -rf bin/${PNAME}/*
-mkdir -p bin/${PNAME}/
+rm -rf bin/"$PNAME"/*
+mkdir -p bin/"$PNAME"/
 
 XC_OS=$(go env GOOS)
 XC_ARCH=$(go env GOARCH)
@@ -91,17 +90,17 @@ echo "==> Building ${CTLNAME} using $(go version)... "
 
 GOOS="${XC_OS}"
 GOARCH="${XC_ARCH}"
-output_name="bin/${PNAME}/"$GOOS"_"$GOARCH"/"$CTLNAME
+output_name=bin/"$PNAME"/"$GOOS"_"$GOARCH"/$CTLNAME
 
-if [ $GOOS = "windows" ]; then
+if [ "$GOOS" = "windows" ]; then
     output_name+='.exe'
 fi
-env GOOS=$GOOS GOARCH=$GOARCH go build -ldflags \
+env GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build -mod=mod -ldflags \
     "-X github.com/openebs/zfs-localpv/pkg/version.GitCommit=${GIT_COMMIT} \
     -X main.CtlName='${CTLNAME}' \
     -X github.com/openebs/zfs-localpv/pkg/version.Version=${VERSION} \
     -X github.com/openebs/zfs-localpv/pkg/version.VersionMeta=${VERSION_META}"\
-    -o $output_name\
+    -o "$output_name"\
     ./cmd
 
 echo ""
@@ -110,24 +109,25 @@ echo ""
 GOPATH=${GOPATH:-$(go env GOPATH)}
 case $(uname) in
     CYGWIN*)
-        GOPATH="$(cygpath $GOPATH)"
+        GOPATH=$(cygpath "$GOPATH")
         ;;
 esac
 OLDIFS=$IFS
-IFS=: MAIN_GOPATH=($GOPATH)
+IFS=: MAIN_GOPATH="$GOPATH"
 IFS=$OLDIFS
 
 # Create the gopath bin if not already available
-mkdir -p ${MAIN_GOPATH}/bin/
+mkdir -p "${MAIN_GOPATH}"/bin/
 
 # Copy our OS/Arch to the bin/ directory
-DEV_PLATFORM="./bin/${PNAME}/$(go env GOOS)_$(go env GOARCH)"
-for F in $(find ${DEV_PLATFORM} -mindepth 1 -maxdepth 1 -type f); do
-    cp ${F} bin/${PNAME}/
-    cp ${F} ${MAIN_GOPATH}/bin/
+DEV_PLATFORM=./bin/"${PNAME}"/$(go env GOOS)_$(go env GOARCH)
+find "${DEV_PLATFORM}" -mindepth 1 -maxdepth 1 -type f -print0 | while IFS= read -r -d '' file
+do
+    cp "$file" bin/"${PNAME}"/
+    cp "$file" "${MAIN_GOPATH}"/bin/
 done
 
 # Done!
 echo
 echo "==> Results:"
-ls -hl bin/${PNAME}/
+ls -hl bin/"${PNAME}"/

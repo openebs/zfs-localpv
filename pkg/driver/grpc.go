@@ -28,7 +28,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 )
@@ -44,7 +44,7 @@ func parseEndpoint(ep string) (string, string, error) {
 	return "", "", fmt.Errorf("invalid endpoint: %v", ep)
 }
 
-//filters if the logd are informative or pollutant
+// filters if the logd are informative or pollutant
 func isInfotrmativeLog(info string) bool {
 
 	// add the messages that pollute logs to the array

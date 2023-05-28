@@ -69,7 +69,9 @@ func (b *Builder) WithNamespace(namespace string) *Builder {
 // WithContainerBuilder adds a container to this pod object.
 //
 // NOTE:
-//   container details are present in the provided container
+//
+//	container details are present in the provided container
+//
 // builder object
 func (b *Builder) WithContainerBuilder(
 	containerBuilder *container.Builder,

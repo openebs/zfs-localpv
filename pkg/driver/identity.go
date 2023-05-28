@@ -67,7 +67,7 @@ func (id *identity) GetPluginInfo(
 // TODO
 // Need to implement this
 //
-// Probe checks if the plugin is running or not
+// # Probe checks if the plugin is running or not
 //
 // This implements csi.IdentityServer
 func (id *identity) Probe(

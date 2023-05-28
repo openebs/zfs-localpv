@@ -41,7 +41,6 @@ jobs:
           reporter: github-pr-review
           path: '.'
           pattern: '*.sh'
-          exclude: './vendor/*'
 
 
   unit-test:
@@ -74,15 +73,15 @@ jobs:
           truncate -s 100G /tmp/disk.img
           sudo zpool create zfspv-pool `sudo losetup -f /tmp/disk.img --show`
 
-      - name: Set up Go 1.16
+      - name: Set up Go 1.19
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16.5
+          go-version: 1.19.9
 
       - name: Setup Minikube-Kubernetes
         uses: manusa/actions-setup-minikube@v2.7.2
         with:
-          minikube version: v1.30.1
+          minikube version: 'v1.26.1'
           kubernetes version: ${{ matrix.kubernetes }}
           github token: ${{ secrets.GITHUB_TOKEN }}
 

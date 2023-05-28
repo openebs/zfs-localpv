@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"

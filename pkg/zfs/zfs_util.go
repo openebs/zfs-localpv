@@ -33,7 +33,7 @@ import (
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // zfs related constants

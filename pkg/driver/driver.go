@@ -19,7 +19,7 @@ package driver
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	config "github.com/openebs/zfs-localpv/pkg/config"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // CSIDriver defines a common data structure

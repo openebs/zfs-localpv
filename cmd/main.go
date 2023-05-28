@@ -27,7 +27,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/version"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 	"github.com/spf13/cobra"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 /*

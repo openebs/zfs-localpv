@@ -17,7 +17,7 @@ limitations under the License.
 package backup
 
 import (
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/scheme"

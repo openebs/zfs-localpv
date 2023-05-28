@@ -26,7 +26,8 @@ import (
 // to register custom resources
 //
 // NOTE:
-//  This variable name should not be changed
+//
+//	This variable name should not be changed
 var SchemeGroupVersion = schema.GroupVersion{
 	Group:   "zfs.openebs.io",
 	Version: "v1alpha1",

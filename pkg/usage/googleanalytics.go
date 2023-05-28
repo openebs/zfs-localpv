@@ -18,7 +18,7 @@ package usage
 
 import (
 	analytics "github.com/jpillora/go-ogle-analytics"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // Send sends a single usage metric to Google Analytics with some
