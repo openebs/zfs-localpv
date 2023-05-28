@@ -21,10 +21,9 @@ package fake
 import (
 	"context"
 
-	zfsv1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,25 +35,25 @@ type FakeZFSBackups struct {
 	ns   string
 }
 
-var zfsbackupsResource = schema.GroupVersionResource{Group: "zfs.openebs.io", Version: "v1", Resource: "zfsbackups"}
+var zfsbackupsResource = v1.SchemeGroupVersion.WithResource("zfsbackups")
 
-var zfsbackupsKind = schema.GroupVersionKind{Group: "zfs.openebs.io", Version: "v1", Kind: "ZFSBackup"}
+var zfsbackupsKind = v1.SchemeGroupVersion.WithKind("ZFSBackup")
 
 // Get takes name of the zFSBackup, and returns the corresponding zFSBackup object, and an error if there is any.
-func (c *FakeZFSBackups) Get(ctx context.Context, name string, options v1.GetOptions) (result *zfsv1.ZFSBackup, err error) {
+func (c *FakeZFSBackups) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.ZFSBackup, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(zfsbackupsResource, c.ns, name), &zfsv1.ZFSBackup{})
+		Invokes(testing.NewGetAction(zfsbackupsResource, c.ns, name), &v1.ZFSBackup{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSBackup), err
+	return obj.(*v1.ZFSBackup), err
 }
 
 // List takes label and field selectors, and returns the list of ZFSBackups that match those selectors.
-func (c *FakeZFSBackups) List(ctx context.Context, opts v1.ListOptions) (result *zfsv1.ZFSBackupList, err error) {
+func (c *FakeZFSBackups) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ZFSBackupList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(zfsbackupsResource, zfsbackupsKind, c.ns, opts), &zfsv1.ZFSBackupList{})
+		Invokes(testing.NewListAction(zfsbackupsResource, zfsbackupsKind, c.ns, opts), &v1.ZFSBackupList{})
 
 	if obj == nil {
 		return nil, err
@@ -64,8 +63,8 @@ func (c *FakeZFSBackups) List(ctx context.Context, opts v1.ListOptions) (result 
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &zfsv1.ZFSBackupList{ListMeta: obj.(*zfsv1.ZFSBackupList).ListMeta}
-	for _, item := range obj.(*zfsv1.ZFSBackupList).Items {
+	list := &v1.ZFSBackupList{ListMeta: obj.(*v1.ZFSBackupList).ListMeta}
+	for _, item := range obj.(*v1.ZFSBackupList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -74,69 +73,69 @@ func (c *FakeZFSBackups) List(ctx context.Context, opts v1.ListOptions) (result 
 }
 
 // Watch returns a watch.Interface that watches the requested zFSBackups.
-func (c *FakeZFSBackups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeZFSBackups) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(zfsbackupsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a zFSBackup and creates it.  Returns the server's representation of the zFSBackup, and an error, if there is any.
-func (c *FakeZFSBackups) Create(ctx context.Context, zFSBackup *zfsv1.ZFSBackup, opts v1.CreateOptions) (result *zfsv1.ZFSBackup, err error) {
+func (c *FakeZFSBackups) Create(ctx context.Context, zFSBackup *v1.ZFSBackup, opts metav1.CreateOptions) (result *v1.ZFSBackup, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(zfsbackupsResource, c.ns, zFSBackup), &zfsv1.ZFSBackup{})
+		Invokes(testing.NewCreateAction(zfsbackupsResource, c.ns, zFSBackup), &v1.ZFSBackup{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSBackup), err
+	return obj.(*v1.ZFSBackup), err
 }
 
 // Update takes the representation of a zFSBackup and updates it. Returns the server's representation of the zFSBackup, and an error, if there is any.
-func (c *FakeZFSBackups) Update(ctx context.Context, zFSBackup *zfsv1.ZFSBackup, opts v1.UpdateOptions) (result *zfsv1.ZFSBackup, err error) {
+func (c *FakeZFSBackups) Update(ctx context.Context, zFSBackup *v1.ZFSBackup, opts metav1.UpdateOptions) (result *v1.ZFSBackup, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(zfsbackupsResource, c.ns, zFSBackup), &zfsv1.ZFSBackup{})
+		Invokes(testing.NewUpdateAction(zfsbackupsResource, c.ns, zFSBackup), &v1.ZFSBackup{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSBackup), err
+	return obj.(*v1.ZFSBackup), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeZFSBackups) UpdateStatus(ctx context.Context, zFSBackup *zfsv1.ZFSBackup, opts v1.UpdateOptions) (*zfsv1.ZFSBackup, error) {
+func (c *FakeZFSBackups) UpdateStatus(ctx context.Context, zFSBackup *v1.ZFSBackup, opts metav1.UpdateOptions) (*v1.ZFSBackup, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(zfsbackupsResource, "status", c.ns, zFSBackup), &zfsv1.ZFSBackup{})
+		Invokes(testing.NewUpdateSubresourceAction(zfsbackupsResource, "status", c.ns, zFSBackup), &v1.ZFSBackup{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSBackup), err
+	return obj.(*v1.ZFSBackup), err
 }
 
 // Delete takes name of the zFSBackup and deletes it. Returns an error if one occurs.
-func (c *FakeZFSBackups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+func (c *FakeZFSBackups) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(zfsbackupsResource, c.ns, name), &zfsv1.ZFSBackup{})
+		Invokes(testing.NewDeleteActionWithOptions(zfsbackupsResource, c.ns, name, opts), &v1.ZFSBackup{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeZFSBackups) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+func (c *FakeZFSBackups) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(zfsbackupsResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &zfsv1.ZFSBackupList{})
+	_, err := c.Fake.Invokes(action, &v1.ZFSBackupList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched zFSBackup.
-func (c *FakeZFSBackups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *zfsv1.ZFSBackup, err error) {
+func (c *FakeZFSBackups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ZFSBackup, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(zfsbackupsResource, c.ns, name, pt, data, subresources...), &zfsv1.ZFSBackup{})
+		Invokes(testing.NewPatchSubresourceAction(zfsbackupsResource, c.ns, name, pt, data, subresources...), &v1.ZFSBackup{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSBackup), err
+	return obj.(*v1.ZFSBackup), err
 }

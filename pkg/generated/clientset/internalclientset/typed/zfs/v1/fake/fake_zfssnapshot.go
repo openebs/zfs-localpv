@@ -21,10 +21,9 @@ package fake
 import (
 	"context"
 
-	zfsv1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -36,25 +35,25 @@ type FakeZFSSnapshots struct {
 	ns   string
 }
 
-var zfssnapshotsResource = schema.GroupVersionResource{Group: "zfs.openebs.io", Version: "v1", Resource: "zfssnapshots"}
+var zfssnapshotsResource = v1.SchemeGroupVersion.WithResource("zfssnapshots")
 
-var zfssnapshotsKind = schema.GroupVersionKind{Group: "zfs.openebs.io", Version: "v1", Kind: "ZFSSnapshot"}
+var zfssnapshotsKind = v1.SchemeGroupVersion.WithKind("ZFSSnapshot")
 
 // Get takes name of the zFSSnapshot, and returns the corresponding zFSSnapshot object, and an error if there is any.
-func (c *FakeZFSSnapshots) Get(ctx context.Context, name string, options v1.GetOptions) (result *zfsv1.ZFSSnapshot, err error) {
+func (c *FakeZFSSnapshots) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.ZFSSnapshot, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(zfssnapshotsResource, c.ns, name), &zfsv1.ZFSSnapshot{})
+		Invokes(testing.NewGetAction(zfssnapshotsResource, c.ns, name), &v1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSSnapshot), err
+	return obj.(*v1.ZFSSnapshot), err
 }
 
 // List takes label and field selectors, and returns the list of ZFSSnapshots that match those selectors.
-func (c *FakeZFSSnapshots) List(ctx context.Context, opts v1.ListOptions) (result *zfsv1.ZFSSnapshotList, err error) {
+func (c *FakeZFSSnapshots) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ZFSSnapshotList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(zfssnapshotsResource, zfssnapshotsKind, c.ns, opts), &zfsv1.ZFSSnapshotList{})
+		Invokes(testing.NewListAction(zfssnapshotsResource, zfssnapshotsKind, c.ns, opts), &v1.ZFSSnapshotList{})
 
 	if obj == nil {
 		return nil, err
@@ -64,8 +63,8 @@ func (c *FakeZFSSnapshots) List(ctx context.Context, opts v1.ListOptions) (resul
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &zfsv1.ZFSSnapshotList{ListMeta: obj.(*zfsv1.ZFSSnapshotList).ListMeta}
-	for _, item := range obj.(*zfsv1.ZFSSnapshotList).Items {
+	list := &v1.ZFSSnapshotList{ListMeta: obj.(*v1.ZFSSnapshotList).ListMeta}
+	for _, item := range obj.(*v1.ZFSSnapshotList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -74,69 +73,69 @@ func (c *FakeZFSSnapshots) List(ctx context.Context, opts v1.ListOptions) (resul
 }
 
 // Watch returns a watch.Interface that watches the requested zFSSnapshots.
-func (c *FakeZFSSnapshots) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeZFSSnapshots) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(zfssnapshotsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a zFSSnapshot and creates it.  Returns the server's representation of the zFSSnapshot, and an error, if there is any.
-func (c *FakeZFSSnapshots) Create(ctx context.Context, zFSSnapshot *zfsv1.ZFSSnapshot, opts v1.CreateOptions) (result *zfsv1.ZFSSnapshot, err error) {
+func (c *FakeZFSSnapshots) Create(ctx context.Context, zFSSnapshot *v1.ZFSSnapshot, opts metav1.CreateOptions) (result *v1.ZFSSnapshot, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(zfssnapshotsResource, c.ns, zFSSnapshot), &zfsv1.ZFSSnapshot{})
+		Invokes(testing.NewCreateAction(zfssnapshotsResource, c.ns, zFSSnapshot), &v1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSSnapshot), err
+	return obj.(*v1.ZFSSnapshot), err
 }
 
 // Update takes the representation of a zFSSnapshot and updates it. Returns the server's representation of the zFSSnapshot, and an error, if there is any.
-func (c *FakeZFSSnapshots) Update(ctx context.Context, zFSSnapshot *zfsv1.ZFSSnapshot, opts v1.UpdateOptions) (result *zfsv1.ZFSSnapshot, err error) {
+func (c *FakeZFSSnapshots) Update(ctx context.Context, zFSSnapshot *v1.ZFSSnapshot, opts metav1.UpdateOptions) (result *v1.ZFSSnapshot, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(zfssnapshotsResource, c.ns, zFSSnapshot), &zfsv1.ZFSSnapshot{})
+		Invokes(testing.NewUpdateAction(zfssnapshotsResource, c.ns, zFSSnapshot), &v1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSSnapshot), err
+	return obj.(*v1.ZFSSnapshot), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeZFSSnapshots) UpdateStatus(ctx context.Context, zFSSnapshot *zfsv1.ZFSSnapshot, opts v1.UpdateOptions) (*zfsv1.ZFSSnapshot, error) {
+func (c *FakeZFSSnapshots) UpdateStatus(ctx context.Context, zFSSnapshot *v1.ZFSSnapshot, opts metav1.UpdateOptions) (*v1.ZFSSnapshot, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(zfssnapshotsResource, "status", c.ns, zFSSnapshot), &zfsv1.ZFSSnapshot{})
+		Invokes(testing.NewUpdateSubresourceAction(zfssnapshotsResource, "status", c.ns, zFSSnapshot), &v1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSSnapshot), err
+	return obj.(*v1.ZFSSnapshot), err
 }
 
 // Delete takes name of the zFSSnapshot and deletes it. Returns an error if one occurs.
-func (c *FakeZFSSnapshots) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+func (c *FakeZFSSnapshots) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(zfssnapshotsResource, c.ns, name), &zfsv1.ZFSSnapshot{})
+		Invokes(testing.NewDeleteActionWithOptions(zfssnapshotsResource, c.ns, name, opts), &v1.ZFSSnapshot{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeZFSSnapshots) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+func (c *FakeZFSSnapshots) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(zfssnapshotsResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &zfsv1.ZFSSnapshotList{})
+	_, err := c.Fake.Invokes(action, &v1.ZFSSnapshotList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched zFSSnapshot.
-func (c *FakeZFSSnapshots) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *zfsv1.ZFSSnapshot, err error) {
+func (c *FakeZFSSnapshots) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ZFSSnapshot, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(zfssnapshotsResource, c.ns, name, pt, data, subresources...), &zfsv1.ZFSSnapshot{})
+		Invokes(testing.NewPatchSubresourceAction(zfssnapshotsResource, c.ns, name, pt, data, subresources...), &v1.ZFSSnapshot{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*zfsv1.ZFSSnapshot), err
+	return obj.(*v1.ZFSSnapshot), err
 }
