@@ -921,7 +921,7 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 // pools in the node.
 func ListZFSPool() ([]apis.Pool, error) {
 	args := []string{
-		ZFSListArg, "-s", "name",
+		ZFSListArg, "-d", "1", "-s", "name",
 		"-o", "name,guid,available",
 		"-H", "-p",
 	}
