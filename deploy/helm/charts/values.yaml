@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 release:
-  version: "2.1.0"
+  version: "2.2.0"
 
 imagePullSecrets:
 # - name: "image-pull-secret"
@@ -24,8 +24,8 @@ zfsNode:
     name: "csi-node-driver-registrar"
     image:
       # Make sure that registry name end with a '/'.
-      # For example : k8s.gcr.io/ is a correct value here and quay.io is incorrect
-      registry: k8s.gcr.io/
+      # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
+      registry: registry.k8s.io/
       repository: sig-storage/csi-node-driver-registrar
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
@@ -70,8 +70,8 @@ zfsController:
     name: "csi-resizer"
     image:
       # Make sure that registry name end with a '/'.
-      # For example : k8s.gcr.io/ is a correct value here and quay.io is incorrect
-      registry: k8s.gcr.io/
+      # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
+      registry: registry.k8s.io/
       repository: sig-storage/csi-resizer
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
@@ -80,8 +80,8 @@ zfsController:
     name: "csi-snapshotter"
     image:
       # Make sure that registry name end with a '/'.
-      # For example : k8s.gcr.io/ is a correct value here and quay.io is incorrect
-      registry: k8s.gcr.io/
+      # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
+      registry: registry.k8s.io/
       repository: sig-storage/csi-snapshotter
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
@@ -90,8 +90,8 @@ zfsController:
     name: "snapshot-controller"
     image:
       # Make sure that registry name end with a '/'.
-      # For example : k8s.gcr.io/ is a correct value here and quay.io is incorrect
-      registry: k8s.gcr.io/
+      # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
+      registry: registry.k8s.io/
       repository: sig-storage/snapshot-controller
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
@@ -100,8 +100,8 @@ zfsController:
     name: "csi-provisioner"
     image:
       # Make sure that registry name end with a '/'.
-      # For example : k8s.gcr.io/ is a correct value here and quay.io is incorrect
-      registry: k8s.gcr.io/
+      # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
+      registry: registry.k8s.io/
       repository: sig-storage/csi-provisioner
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
@@ -134,12 +134,12 @@ zfsPlugin:
   name: "openebs-zfs-plugin"
   image:
     # Make sure that registry name end with a '/'.
-    # For example : k8s.gcr.io/ is a correct value here and quay.io is incorrect
+    # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
     registry:
     repository: openebs/zfs-driver
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 2.1.0
+    tag: 2.2.0
 
 role: openebs-zfs
 

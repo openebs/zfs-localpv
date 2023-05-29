@@ -78,9 +78,9 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsPlugin.image.registry`| Registry for openebs-zfs-plugin image| `""`|
 | `zfsPlugin.image.repository`| Image repository for openebs-zfs-plugin| `openebs/zfs-driver`|
 | `zfsPlugin.image.pullPolicy`| Image pull policy for openebs-zfs-plugin| `IfNotPresent`|
-| `zfsPlugin.image.tag`| Image tag for openebs-zfs-plugin| `2.1.0`|
+| `zfsPlugin.image.tag`| Image tag for openebs-zfs-plugin| `2.2.0`|
 | `zfsNode.allowedTopologyKeys`| Custom topology keys required for provisioning| `"kubernetes.io/hostname,"`|
-| `zfsNode.driverRegistrar.image.registry`| Registry for csi-node-driver-registrar image| `k8s.gcr.io/`|
+| `zfsNode.driverRegistrar.image.registry`| Registry for csi-node-driver-registrar image| `registry.k8s.io/`|
 | `zfsNode.driverRegistrar.image.repository`| Image repository for csi-node-driver-registrar| `sig-storage/csi-node-driver-registrar`|
 | `zfsNode.driverRegistrar.image.pullPolicy`| Image pull policy for csi-node-driver-registrar| `IfNotPresent`|
 | `zfsNode.driverRegistrar.image.tag`| Image tag for csi-node-driver-registrar| `v2.3.0`|
@@ -94,19 +94,19 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsNode.nodeSelector`| Nodeselector for zfsnode daemonset pods| `""`|
 | `zfsNode.tolerations` | zfsnode daemonset's pod toleration values | `""`|
 | `zfsNode.securityContext` | Seurity context for zfsnode daemonset container | `""`|
-| `zfsController.resizer.image.registry`| Registry for csi-resizer image| `k8s.gcr.io/`|
+| `zfsController.resizer.image.registry`| Registry for csi-resizer image| `registry.k8s.io/`|
 | `zfsController.resizer.image.repository`| Image repository for csi-resizer| `sig-storage/csi-resizer`|
 | `zfsController.resizer.image.pullPolicy`| Image pull policy for csi-resizer| `IfNotPresent`|
 | `zfsController.resizer.image.tag`| Image tag for csi-resizer| `v1.2.0`|
-| `zfsController.snapshotter.image.registry`| Registry for csi-snapshotter image| `k8s.gcr.io/`|
+| `zfsController.snapshotter.image.registry`| Registry for csi-snapshotter image| `registry.k8s.io/`|
 | `zfsController.snapshotter.image.repository`| Image repository for csi-snapshotter| `sig-storage/csi-snapshotter`|
 | `zfsController.snapshotter.image.pullPolicy`| Image pull policy for csi-snapshotter| `IfNotPresent`|
 | `zfsController.snapshotter.image.tag`| Image tag for csi-snapshotter| `v4.0.0`|
-| `zfsController.snapshotController.image.registry`| Registry for snapshot-controller image| `k8s.gcr.io/`|
+| `zfsController.snapshotController.image.registry`| Registry for snapshot-controller image| `registry.k8s.io/`|
 | `zfsController.snapshotController.image.repository`| Image repository for snapshot-controller| `sig-storage/snapshot-controller`|
 | `zfsController.snapshotController.image.pullPolicy`| Image pull policy for snapshot-controller| `IfNotPresent`|
 | `zfsController.snapshotController.image.tag`| Image tag for snapshot-controller| `v4.0.0`|
-| `zfsController.provisioner.image.registry`| Registry for csi-provisioner image| `k8s.gcr.io/`|
+| `zfsController.provisioner.image.registry`| Registry for csi-provisioner image| `registry.k8s.io/`|
 | `zfsController.provisioner.image.repository`| Image repository for csi-provisioner| `sig-storage/csi-provisioner`|
 | `zfsController.provisioner.image.pullPolicy`| Image pull policy for csi-provisioner| `IfNotPresent`|
 | `zfsController.provisioner.image.tag`| Image tag for csi-provisioner| `v3.0.0`|
