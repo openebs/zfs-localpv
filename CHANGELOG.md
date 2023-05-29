@@ -1,3 +1,17 @@
+v2.0.0 / 2022-01-11
+========================
+* perf(zfs): optimise pool listing for pools with many datasets ([#440](https://github.com/openebs/zfs-localpv/pull/440),[@lowjoel](https://github.com/lowjoel))
+* feat(deps): Bump golang, k8s and lib-csi versions ([#444](https://github.com/openebs/zfs-localpv/pull/444),[@shubham14bajpai](https://github.com/shubham14bajpai))
+
+v2.0.0 / 2022-01-11
+========================
+* fix (localpv): fixing CSIStorageCapacity when "poolname" param has child dataset ([#393](https://github.com/openebs/zfs-localpv/pull/393),[@netom](https://github.com/netom))
+
+v1.7.0 / 2021-03-15
+========================
+* feat(migration): adding support to migrate the PV to a new node ([#304](https://github.com/openebs/zfs-localpv/pull/304),[@pawanpraka1](https://github.com/pawanpraka1))
+* fix(topo): support old topology key for backward compatibility ([#320](https://github.com/openebs/zfs-localpv/pull/320),[@pawanpraka1](https://github.com/pawanpraka1))
+
 v1.6.0 / 2021-04-14
 ========================
 * refact(deps): bump k8s and client-go deps to version v0.20.2 ([#294](https://github.com/openebs/zfs-localpv/pull/294),[@prateekpandey14](https://github.com/prateekpandey14))
