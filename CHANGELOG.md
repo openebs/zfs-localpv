@@ -1,4 +1,4 @@
-v2.0.0 / 2022-01-11
+v2.2.0 / 2023-05-29
 ========================
 * perf(zfs): optimise pool listing for pools with many datasets ([#440](https://github.com/openebs/zfs-localpv/pull/440),[@lowjoel](https://github.com/lowjoel))
 * feat(deps): Bump golang, k8s and lib-csi versions ([#444](https://github.com/openebs/zfs-localpv/pull/444),[@shubham14bajpai](https://github.com/shubham14bajpai))
