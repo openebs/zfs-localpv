@@ -22,7 +22,7 @@ import (
 	"log"
 	"os"
 
-	config "github.com/openebs/zfs-localpv/pkg/config"
+	configs "github.com/openebs/zfs-localpv/pkg/config"
 	"github.com/openebs/zfs-localpv/pkg/driver"
 	"github.com/openebs/zfs-localpv/pkg/version"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
@@ -40,7 +40,7 @@ import (
  */
 func main() {
 	_ = flag.CommandLine.Parse([]string{})
-	var config = config.Default()
+	var config = configs.Default()
 
 	cmd := &cobra.Command{
 		Use:   "zfs-driver",
@@ -74,6 +74,10 @@ func main() {
 		&config.PluginType, "plugin", "csi-plugin", "Type of this driver i.e. controller or node",
 	)
 
+	cmd.PersistentFlags().StringVar(
+		&configs.QuotaType, "quota-type", "quota", "quota type: refquota or quota",
+	)
+
 	err := cmd.Execute()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s", err.Error())
@@ -81,9 +85,13 @@ func main() {
 	}
 }
 
-func run(config *config.Config) {
+func run(config *configs.Config) {
 	if config.Version == "" {
 		config.Version = version.Current()
+	}
+
+	if configs.QuotaType != configs.Quota && configs.QuotaType != configs.RefQuota {
+		log.Fatalln(fmt.Errorf("quota-type should be quota or refquota"))
 	}
 
 	klog.Infof("ZFS Driver Version :- %s - commit :- %s", version.Current(), version.GetGitCommit())

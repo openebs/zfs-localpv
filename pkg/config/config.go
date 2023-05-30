@@ -43,6 +43,13 @@ type Config struct {
 	Nodename string
 }
 
+const (
+	Quota    = "quota"
+	RefQuota = "refquota"
+)
+
+var QuotaType string
+
 // Default returns a new instance of config
 // required to initialize a driver instance
 func Default() *Config {
