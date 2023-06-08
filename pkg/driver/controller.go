@@ -918,7 +918,12 @@ func (cs *controller) GetCapacity(
 
 	var availableCapacity int64
 	for _, nodeName := range nodeNames {
-		v, exists, err := zfsNodesCache.GetByKey(zfs.OpenEBSNamespace + "/" + nodeName)
+		mappedNodeId, mapErr := zfs.GetNodeID(nodeName)
+		if mapErr != nil {
+			klog.Warningf("Unable to find mapped node id for %s", nodeName)
+			mappedNodeId = nodeName
+		}
+		v, exists, err := zfsNodesCache.GetByKey(zfs.OpenEBSNamespace + "/" + mappedNodeId)
 		if err != nil {
 			klog.Warning("unexpected error after querying the zfsNode informer cache")
 			continue
