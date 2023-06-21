@@ -19,7 +19,6 @@ package zfsnode
 import (
 	"context"
 	"fmt"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -66,39 +65,33 @@ func Start(controllerMtx *sync.RWMutex, stopCh <-chan struct{}) error {
 			options.FieldSelector = fields.OneTermEqualSelector("metadata.name", zfs.NodeID).String()
 		}))
 
-	var k8sNode *v1.Node
 	nodeName := os.Getenv("OPENEBS_NODE_NAME")
-	if nodeName != zfs.NodeID {
-		topologyRequirement, requirementError := labels.NewRequirement(zfs.ZFSTopologyKey, selection.Equals, []string{zfs.NodeID})
-		if requirementError != nil {
-			return errors.Wrapf(requirementError, "Unable to retrieve node by %s for node id %s", zfs.ZFSTopologyKey, zfs.NodeID)
-		}
-		topologySelector := labels.NewSelector().Add(*topologyRequirement).String()
-		klog.Infof("The topology selector is %s", topologySelector)
-
-		k8sNodeCandidates, listError := kubeClient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
-			LabelSelector: topologySelector,
-		})
-
-		if listError != nil {
-			return errors.Wrapf(err, "fetch k8s node %s", zfs.NodeID)
-		}
-
-		if k8sNodeCandidates == nil || len(k8sNodeCandidates.Items) != 1 {
-			return fmt.Errorf("unable to retrieve a single node by %s for %s", zfs.ZFSTopologyKey, zfs.NodeID)
-		}
-
-		k8sNode = &k8sNodeCandidates.Items[0]
+	var searchLabel string
+	if nodeName == zfs.NodeID {
+		searchLabel = zfs.ZFSTopoNodenameKey
 	} else {
-		byName, byNameErr := kubeClient.CoreV1().Nodes().Get(context.TODO(), zfs.NodeID, metav1.GetOptions{})
+		searchLabel = zfs.ZFSTopologyKey
+	}
+	topologyRequirement, requirementError := labels.NewRequirement(searchLabel, selection.Equals, []string{zfs.NodeID})
+	if requirementError != nil {
+		return errors.Wrapf(requirementError, "Unable to retrieve node by %s for node id %s", zfs.ZFSTopologyKey, zfs.NodeID)
+	}
+	topologySelector := labels.NewSelector().Add(*topologyRequirement).String()
+	klog.Infof("The topology selector is %s", topologySelector)
 
-		if byNameErr != nil {
-			return errors.Wrapf(err, "fetch k8s node %s", zfs.NodeID)
-		}
+	k8sNodeCandidates, err := kubeClient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
+		LabelSelector: topologySelector,
+	})
 
-		k8sNode = byName
+	if err != nil {
+		return errors.Wrapf(err, "fetch k8s node %s", zfs.NodeID)
 	}
 
+	if k8sNodeCandidates == nil || len(k8sNodeCandidates.Items) != 1 {
+		return fmt.Errorf("unable to retrieve a single node by %s for %s", zfs.ZFSTopologyKey, zfs.NodeID)
+	}
+
+	k8sNode := k8sNodeCandidates.Items[0]
 	isTrue := true
 	// as object returned by client go clears all TypeMeta from it.
 	nodeGVK := &schema.GroupVersionKind{
