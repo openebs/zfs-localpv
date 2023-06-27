@@ -2089,7 +2089,7 @@ spec:
             - "--leader-election=true"
           imagePullPolicy: IfNotPresent
         - name: csi-provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.0.0
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.2.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"

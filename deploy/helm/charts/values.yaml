@@ -105,7 +105,7 @@ zfsController:
       repository: sig-storage/csi-provisioner
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v3.0.0
+      tag: v3.2.0
   updateStrategy:
     type: RollingUpdate
   annotations: {}
