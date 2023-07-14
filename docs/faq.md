@@ -44,7 +44,7 @@ Follow the instructions here https://github.com/openebs/zfs-localpv/tree/develop
 If ZFS pool is available on certain nodes only, then make use of topology to tell the list of nodes where we have the ZFS pool available.
 As shown in the below storage class, we can use allowedTopologies to describe ZFS pool availability on nodes.
 
-```
+```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -138,7 +138,7 @@ openebs-zfs-node-twmx8     2/2     Running   0          5h28m
 
 We can verify that key has been registered successfully with the ZFSPV CSI Driver by checking the CSI node object yaml :-
 
-```yaml
+```sh
 $ kubectl get csinodes pawan-node-1 -oyaml
 apiVersion: storage.k8s.io/v1
 kind: CSINode
@@ -186,7 +186,7 @@ The ZFSPV CSI driver will schedule the PV to the nodes where label "openebs.io/r
 
 Note that if storageclass is using Immediate binding mode and storageclass allowedTopologies is not mentioned then all the nodes should be labeled using "ALLOWED_TOPOLOGIES" keys, that means, "ALLOWED_TOPOLOGIES" keys should be present on all nodes, nodes can have different values for those keys. If some nodes don't have those keys, then ZFSPV's default scheduler can not effectively do the volume capacity based scheduling. Here, in this case the CSI provisioner will pick keys from any random node and then prepare the preferred topology list using the nodes which has those keys defined and ZFSPV scheduler will schedule the PV among those nodes only.
 
-### 7. Why the ZFS volume size is different than the reqeusted size in PVC
+### 7. Why the ZFS volume size is different than the requested size in PVC
 
 Here, we have to note that the size will be rounded off to the nearest Mi or Gi unit. Please note that M/G notation uses 1000 base and Mi/Gi notation uses 1024 base, so 1M will be 1000 * 1000 byte and 1Mi will be 1024 * 1024.
 
@@ -198,7 +198,7 @@ allocated = ((size + 1Gi - 1) / Gi) * Gi
 
 For example if the PVC is requesting 4G storage space :-
 
-```
+```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -220,7 +220,7 @@ allocated = ((size + 1Mi - 1) / Mi) * Mi
 
 For example if the PVC is requesting 1G (1000 * 1000 * 1000) storage space which is less than 1Gi (1024 * 1024 * 1024):-
 
-```
+```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
