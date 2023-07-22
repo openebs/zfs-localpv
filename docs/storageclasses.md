@@ -68,7 +68,7 @@ metadata:
  name: openebs-zfspv
 allowVolumeExpansion: true
 parameters:
- recordsize: "4k"
+ recordsize: "128k"
  thinprovision: "no"
  fstype: "zfs"
  poolname: "zfspv-pool"

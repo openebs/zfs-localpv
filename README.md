@@ -137,7 +137,7 @@ kind: StorageClass
 metadata:
   name: openebs-zfspv
 parameters:
-  recordsize: "4k"
+  recordsize: "128k"
   compression: "off"
   dedup: "off"
   fstype: "zfs"
@@ -194,7 +194,7 @@ kind: StorageClass
 metadata:
   name: openebs-zfspv
 parameters:
-  recordsize: "4k"
+  recordsize: "128k"
   compression: "off"
   dedup: "off"
   fstype: "zfs"
@@ -216,7 +216,7 @@ metadata:
   name: openebs-zfspv
 allowVolumeExpansion: true
 parameters:
-  recordsize: "4k"
+  recordsize: "128k"
   compression: "off"
   dedup: "off"
   fstype: "zfs"
@@ -253,7 +253,7 @@ metadata:
   name: openebs-zfspv
 allowVolumeExpansion: true
 parameters:
-  recordsize: "4k"
+  recordsize: "128k"
   compression: "off"
   dedup: "off"
   fstype: "zfs"
