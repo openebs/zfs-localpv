@@ -1,3 +1,7 @@
+v2.3.0 / 2023-07-23
+========================
+* feat(csi): bump up csi provisioner to v3.5.0 and other updates ([#457](https://github.com/openebs/zfs-localpv/pull/457),[@vharsh](https://github.com/vharsh))
+
 v2.2.0 / 2023-05-29
 ========================
 * perf(zfs): optimise pool listing for pools with many datasets ([#440](https://github.com/openebs/zfs-localpv/pull/440),[@lowjoel](https://github.com/lowjoel))
