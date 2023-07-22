@@ -37,7 +37,7 @@ spec:
 {{- if .Values.zfsController.priorityClass.create }}
       priorityClassName: {{ template "zfslocalpv.zfsController.priorityClassName" . }}
 {{- end }}
-      serviceAccount: {{ .Values.serviceAccount.zfsController.name }}
+      serviceAccountName: {{ .Values.serviceAccount.zfsController.name }}
 {{- if .Values.zfsController.initContainers }}
       initContainers:
 {{- range $key, $value := .Values.zfsController.initContainers }}
