@@ -29,8 +29,15 @@ spec:
 {{- if .Values.zfsNode.priorityClass.create }}
       priorityClassName: {{ template "zfslocalpv.zfsNode.priorityClassName" . }}
 {{- end }}
-      serviceAccount: {{ .Values.serviceAccount.zfsNode.name }}
+      serviceAccountName: {{ .Values.serviceAccount.zfsNode.name }}
       hostNetwork: true
+{{- if .Values.zfsNode.initContainers }}
+      initContainers:
+{{- range $key, $value := .Values.zfsNode.initContainers }}
+        - name: {{ $key }}
+{{ toYaml $value | indent 10 }}
+{{- end }}
+{{- end }}
       containers:
         - name: {{ .Values.zfsNode.driverRegistrar.name }}
           image: "{{ .Values.zfsNode.driverRegistrar.image.registry }}{{ .Values.zfsNode.driverRegistrar.image.repository }}:{{ .Values.zfsNode.driverRegistrar.image.tag }}"
@@ -132,6 +139,12 @@ spec:
           hostPath:
             path: {{ .Values.zfsNode.kubeletDir }}
             type: Directory
+{{- if .Values.zfsNode.additionalVolumes }}
+{{- range $name, $config := .Values.zfsNode.additionalVolumes }}
+        - name: {{ $name }}
+{{- tpl (toYaml $config) $ | nindent 10 }}
+{{- end }}
+{{- end }}
 {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
 {{ toYaml .Values.imagePullSecrets | indent 2 }}

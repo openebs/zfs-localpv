@@ -62,7 +62,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        kubernetes: [v1.25.10]
+        kubernetes: [v1.27.3]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -81,11 +81,14 @@ jobs:
           cache: false
 
       - name: Setup Minikube-Kubernetes
-        uses: manusa/actions-setup-minikube@v2.7.2
+        uses: medyagh/setup-minikube@latest
         with:
-          minikube version: 'v1.26.1'
-          kubernetes version: ${{ matrix.kubernetes }}
-          github token: ${{ secrets.GITHUB_TOKEN }}
+          cache: false
+          minikube-version: 1.31.1
+          driver: none
+          kubernetes-version: ${{ matrix.kubernetes }}
+          cni: calico
+          start-args: '--install-addons=false'
 
       - name: Setting environment variables
         run: |
@@ -117,7 +120,7 @@ jobs:
           echo "IMAGE_ORG=${IMAGE_ORG}" >> $GITHUB_ENV
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -191,20 +194,20 @@ jobs:
           version: v0.4.2
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Quay
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Login to GHCR
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
