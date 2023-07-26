@@ -85,6 +85,7 @@ func NewController(d *CSIDriver) csi.ControllerServer {
 }
 
 func (cs *controller) init() error {
+
 	cfg, err := k8sapi.Config().Get()
 	if err != nil {
 		return errors.Wrapf(err, "failed to build kubeconfig")

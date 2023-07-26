@@ -209,6 +209,7 @@ informer:
 manifests:
 	@echo "+ Generating zfs localPV crds"
 	$(PWD)/buildscripts/generate-manifests.sh
+	for file in volume snapshot restore;do cp ./deploy/yamls/zfs"$$file"-crd.yaml ./pkg/patcher/;done
 
 helm:
 	@echo "+ Copying generated CRDs to helm charts"

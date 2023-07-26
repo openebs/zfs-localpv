@@ -19,6 +19,8 @@ package driver
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	config "github.com/openebs/zfs-localpv/pkg/config"
+	"github.com/openebs/zfs-localpv/pkg/patcher"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 )
 
@@ -64,6 +66,39 @@ func New(config *config.Config) *CSIDriver {
 
 	switch config.PluginType {
 	case "controller":
+		// CRD upgrade
+		// Ref: https://github.com/openebs/zfs-localpv/pull/439
+		// Ref: https://github.com/openebs/zfs-localpv/pull/457
+		crdGvr := schema.GroupVersionResource{
+			Group:    "apiextensions.k8s.io",
+			Version:  "v1",
+			Resource: "CustomResourceDefinition",
+		}
+
+		oldCrd, _ := patcher.OldZfsVolumesCrd()
+		newCrd, _ := patcher.NewZfsVolumesCrd()
+		patcher.PatchCrdOrIgnore(crdGvr, "").WithMergePatchFrom(
+			"zfsvolumes.zfs.openebs.io",
+			oldCrd,
+			newCrd,
+		)
+
+		oldCrd, _ = patcher.OldZfsSnapshotsCrd()
+		newCrd, _ = patcher.NewZfsSnapshotsCrd()
+		patcher.PatchCrdOrIgnore(crdGvr, "").WithMergePatchFrom(
+			"zfssnapshots.zfs.openebs.io",
+			oldCrd,
+			newCrd,
+		)
+
+		oldCrd, _ = patcher.OldZfsRestoresCrd()
+		newCrd, _ = patcher.NewZfsRestoresCrd()
+		patcher.PatchCrdOrIgnore(crdGvr, "").WithMergePatchFrom(
+			"zfsrestores.zfs.openebs.io",
+			oldCrd,
+			newCrd,
+		)
+
 		driver.cs = NewController(driver)
 
 	case "agent":
