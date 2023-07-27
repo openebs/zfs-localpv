@@ -5,7 +5,7 @@ We can create a snapshot of a volume that can be used further for creating a clo
 ```yaml
 $ cat snapshotclass.yaml
 kind: VolumeSnapshotClass
-apiVersion: snapshot.storage.k8s.io/v1beta1
+apiVersion: snapshot.storage.k8s.io/v1
 metadata:
   name: zfspv-snapclass
   annotations:
@@ -33,7 +33,7 @@ Create the snapshot using the created SnapshotClass for the selected PVC
 
 ```
 $ cat snapshot.yaml
-apiVersion: snapshot.storage.k8s.io/v1beta1
+apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshot
 metadata:
   name: zfspv-snap
@@ -59,12 +59,14 @@ zfspv-snap   2m8s
 ```
 ```
 $ kubectl get volumesnapshot.snapshot zfspv-snap -o yaml
-apiVersion: snapshot.storage.k8s.io/v1beta1
+apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshot
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"snapshot.storage.k8s.io/v1beta1","kind":"VolumeSnapshot","metadata":{"annotations":{},"name":"zfspv-snap","namespace":"default"},"spec":{"source":{"persistentVolumeClaimName":"csi-zfspv"},"volumeSnapshotClassName":"zfspv-snapclass"}}
+      {"apiVersion":"snapshot.storage.k8s.io/v1","kind":
+      "VolumeSnapshot","metadata":{"annotations":{},"name":
+      "zfspv-snap","namespace":"default"},"spec":{"source":{"persistentVolumeClaimName":"csi-zfspv"},"volumeSnapshotClassName":"zfspv-snapclass"}}
   creationTimestamp: "2020-02-25T08:25:51Z"
   finalizers:
   - snapshot.storage.kubernetes.io/volumesnapshot-as-source-protection
@@ -73,7 +75,7 @@ metadata:
   name: zfspv-snap
   namespace: default
   resourceVersion: "447494"
-  selfLink: /apis/snapshot.storage.k8s.io/v1beta1/namespaces/default/volumesnapshots/zfspv-snap
+  selfLink: /apis/snapshot.storage.k8s.io/v1/namespaces/default/volumesnapshots/zfspv-snap
   uid: 3cbd5e59-4c6f-4bd6-95ba-7f72c9f12fcd
 spec:
   source:
