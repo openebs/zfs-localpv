@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ template "zfslocalpv.fullname" . }}-controller
+  namespace: {{ .Release.Namespace }}
   {{- with .Values.zfsController.annotations }}
   annotations: {{ toYaml . | nindent 4 }}
   {{- end }}
