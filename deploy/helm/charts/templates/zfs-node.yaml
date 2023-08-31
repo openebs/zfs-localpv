@@ -2,6 +2,7 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: {{ template "zfslocalpv.fullname" . }}-node
+  namespace: {{ .Release.Namespace }}
   {{- with .Values.zfsNode.annotations }}
   annotations: {{ toYaml . | nindent 4 }}
   {{- end }}
