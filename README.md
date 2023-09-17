@@ -22,7 +22,7 @@ See [roadmap](https://github.com/orgs/openebs/projects/10), [e2e-wiki](https://g
 
 ### Prerequisites
 
-Before installing the ZFS-LocalPV driver please make sure your Kubernetes Cluster meets the following prerequisites :
+Before installing the ZFS-LocalPV driver please make sure your Kubernetes Cluster meets the following prerequisites:
 
 1. all the nodes must have zfs utils installed
 2. ZPOOL has been setup for provisioning the volume
