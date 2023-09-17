@@ -83,7 +83,7 @@ https://github.com/openebs/zfs-localpv/blob/HEAD/docs/faq.md#6-how-to-add-custom
 
 ### Installation
 
-We can install the latest release of OpenEBS ZFS driver by running the following command :
+We can install the latest release of OpenEBS ZFS driver by running the following command:
 ```bash
 $ kubectl apply -f https://openebs.github.io/charts/zfs-operator.yaml
 ```
