@@ -922,7 +922,7 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 func ListZFSPool() ([]apis.Pool, error) {
 	args := []string{
 		ZFSListArg, "-d", "1", "-s", "name",
-		"-o", "name,guid,available",
+		"-o", "name,guid,available,used",
 		"-H", "-p",
 	}
 	cmd := exec.Command(ZFSVolCmd, args...)
@@ -956,6 +956,13 @@ func decodeListOutput(raw []byte) ([]apis.Pool, error) {
 				return pools, err
 			}
 			pool.Free = *resource.NewQuantity(sizeBytes, resource.BinarySI)
+			sizeBytes1, err1 := strconv.ParseInt(items[3],
+				10, 64)
+			if err1 != nil {
+				err1 = fmt.Errorf("cannot get free size for pool %v: %v", pool.Name, err1)
+				return pools, err1
+			}
+			pool.Used = *resource.NewQuantity(sizeBytes1, resource.BinarySI)
 			pools = append(pools, pool)
 		}
 	}
