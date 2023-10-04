@@ -313,6 +313,24 @@ func GetZFSSnapshotStatus(snapID string) (string, error) {
 	return snap.Status.State, nil
 }
 
+// GetZFSSnapshotCapacity return capacity converted to int64
+func GetZFSSnapshotCapacity(snap *apis.ZFSSnapshot) (int64, error) {
+	if snap == nil {
+		return 0, fmt.Errorf("expect non-nil snapshot")
+	}
+
+	if snap.Spec.Capacity == "" {
+		return 0, nil
+	}
+
+	capacity, err := strconv.ParseInt(snap.Spec.Capacity, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("convert %s to integer failed", snap.Spec.Capacity)
+	}
+
+	return capacity, nil
+}
+
 // UpdateSnapInfo updates ZFSSnapshot CR with node id and finalizer
 func UpdateSnapInfo(snap *apis.ZFSSnapshot) error {
 	finalizers := []string{ZFSFinalizer}
