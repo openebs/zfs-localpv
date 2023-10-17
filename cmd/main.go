@@ -39,6 +39,7 @@ import (
  * to pass --plugin=agent.
  */
 func main() {
+	// Parse CLI flags.
 	_ = flag.CommandLine.Parse([]string{})
 	var config = config.Default()
 
