@@ -90,11 +90,11 @@ func Start(controllerMtx *sync.RWMutex, stopCh <-chan struct{}) error {
 		k8sNodeCandidate, err := kubeClient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
 			LabelSelector: topologySelector,
 		})
-		if k8sNodeCandidate == nil || len(k8sNodeCandidate.Items) != 1 {
-			return fmt.Errorf("unable to retrieve a single node by %s for %s", zfs.ZFSTopologyKey, zfs.NodeID)
-		}
 		if err != nil {
 			return errors.Wrapf(err, "error trying to find node with label %s having value %s", zfs.ZFSTopologyKey, zfs.NodeID)
+		}
+		if k8sNodeCandidate == nil || len(k8sNodeCandidate.Items) != 1 {
+			return fmt.Errorf("unable to retrieve a single node by %s for %s", zfs.ZFSTopologyKey, zfs.NodeID)
 		}
 		k8sNode = k8sNodeCandidate.Items[0]
 	}
