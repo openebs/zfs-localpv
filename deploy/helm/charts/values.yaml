@@ -38,6 +38,7 @@ zfsNode:
   # This can be configured to run on various different k8s distributions like
   # microk8s where kubelet dir is different
   kubeletDir: "/var/lib/kubelet/"
+  encrKeysDir: "/home/keys"
   # limits:
   #   cpu: 10m
   #   memory: 32Mi

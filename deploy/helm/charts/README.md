@@ -86,6 +86,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsNode.driverRegistrar.image.tag`| Image tag for csi-node-driver-registrar| `v2.8.0`|
 | `zfsNode.updateStrategy.type`| Update strategy for zfsnode daemonset | `RollingUpdate` |
 | `zfsNode.kubeletDir`| Kubelet mount point for zfsnode daemonset| `"/var/lib/kubelet/"` |
+| `zfsNode.encrKeysDir` | Zfs encryption key directory| `"/home/keys"` |
 | `zfsNode.annotations` | Annotations for zfsnode daemonset metadata| `""`|
 | `zfsNode.podAnnotations`| Annotations for zfsnode daemonset's pods metadata | `""`|
 | `zfsNode.resources`| Resource and request and limit for zfsnode daemonset containers | `""`|
