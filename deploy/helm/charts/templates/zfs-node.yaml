@@ -118,7 +118,7 @@ spec:
             type: Directory
         - name: encr-keys
           hostPath:
-            path: /home/keys
+            path: {{ .Values.zfsNode.encrKeysDir }}
             type: DirectoryOrCreate
         - name: chroot-zfs
           configMap:
