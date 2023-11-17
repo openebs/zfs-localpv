@@ -58,6 +58,7 @@ const (
 	Mi = 1024 * 1024
 	Gi = 1024 * 1024 * 1024
 
+	// Ping event is sent periodically
 	Ping string = "zfs-ping"
 
 	// DefaultCASType Event application name constant for volume event
