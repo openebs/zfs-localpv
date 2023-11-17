@@ -26,6 +26,7 @@ import (
 	zfsapi "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
+	"github.com/openebs/zfs-localpv/pkg/version"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
@@ -40,13 +41,13 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
+	analytics "github.com/openebs/google-analytics-4/usage"
 	errors "github.com/openebs/lib-csi/pkg/common/errors"
 	"github.com/openebs/lib-csi/pkg/common/helpers"
 	schd "github.com/openebs/lib-csi/pkg/scheduler"
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
-	analytics "github.com/openebs/zfs-localpv/pkg/usage"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
 )
 
@@ -56,6 +57,15 @@ const (
 	GB = 1000 * 1000 * 1000
 	Mi = 1024 * 1024
 	Gi = 1024 * 1024 * 1024
+
+	Ping string = "zfs-ping"
+
+	// DefaultCASType Event application name constant for volume event
+	DefaultCASType string = "zfs-localpv"
+
+	// LocalPVReplicaCount is the constant used by usage to represent
+	// replication factor in LocalPV
+	LocalPVReplicaCount string = "1"
 )
 
 // controller is the server implementation
@@ -120,8 +130,9 @@ func (cs *controller) init() error {
 	go cs.zfsNodeInformer.Run(stopCh)
 
 	if zfs.GoogleAnalyticsEnabled == "true" {
-		analytics.New().Build().InstallBuilder(true).Send()
-		go analytics.PingCheck()
+		analytics.RegisterVersionGetter(version.GetVersionDetails)
+		analytics.New().CommonBuild(DefaultCASType).InstallBuilder(true).Send()
+		go analytics.PingCheck(DefaultCASType, Ping)
 	}
 
 	// wait for all the caches to be populated.
@@ -142,14 +153,13 @@ var SupportedVolumeCapabilityAccessModes = []*csi.VolumeCapability_AccessMode{
 }
 
 // sendEventOrIgnore sends anonymous local-pv provision/delete events
-func sendEventOrIgnore(pvcName, pvName, capacity, stgType, method string) {
+func sendEventOrIgnore(pvcName, pvName, capacity, method string) {
 	if zfs.GoogleAnalyticsEnabled == "true" {
-		analytics.New().Build().ApplicationBuilder().
-			SetVolumeType(stgType, method).
-			SetDocumentTitle(pvName).
-			SetCampaignName(pvcName).
+		analytics.New().CommonBuild(DefaultCASType).ApplicationBuilder().
+			SetVolumeName(pvName).
+			SetVolumeClaimName(pvcName).
 			SetLabel(analytics.EventLabelCapacity).
-			SetReplicaCount(analytics.LocalPVReplicaCount, method).
+			SetReplicaCount(LocalPVReplicaCount, method).
 			SetCategory(method).
 			SetVolumeCapacity(capacity).Send()
 	}
@@ -470,7 +480,7 @@ func (cs *controller) CreateVolume(
 
 	klog.Infof("created the volume %s/%s on node %s", pool, volName, selected)
 
-	sendEventOrIgnore(pvcName, volName, strconv.FormatInt(int64(size), 10), "zfs-localpv", analytics.VolumeProvision)
+	sendEventOrIgnore(pvcName, volName, strconv.FormatInt(int64(size), 10), analytics.VolumeProvision)
 
 	nodeid, err := zfs.GetNodeID(selected)
 	if err != nil {
@@ -534,7 +544,7 @@ func (cs *controller) DeleteVolume(
 		)
 	}
 
-	sendEventOrIgnore("", volumeID, vol.Spec.Capacity, "zfs-localpv", analytics.VolumeDeprovision)
+	sendEventOrIgnore("", volumeID, vol.Spec.Capacity, analytics.VolumeDeprovision)
 
 deleteResponse:
 	return csipayload.NewDeleteVolumeResponseBuilder().Build(), nil
