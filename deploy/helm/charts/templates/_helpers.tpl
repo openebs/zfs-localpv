@@ -136,3 +136,14 @@ Create the name of the priority class for csi controller plugin
 {{- printf "%s" .Values.zfsController.priorityClass.name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
+
+{{/*
+Enable zfsController containers leader election if replicas > 1
+*/}}
+{{- define "zfslocalpv.zfsController.leaderElection" -}}
+{{- with .Values.zfsController.replicas | int }}
+{{- if gt . 1 }}
+- "--leader-election"
+{{- end }}
+{{- end }}
+{{- end }}

@@ -81,6 +81,7 @@ zfsController:
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
       tag: v1.8.0
+    extraArgs: []
   snapshotter:
     name: "csi-snapshotter"
     image:
@@ -91,6 +92,7 @@ zfsController:
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
       tag: v6.2.2
+    extraArgs: []
   snapshotController:
     name: "snapshot-controller"
     image:
@@ -101,6 +103,7 @@ zfsController:
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
       tag: v6.2.2
+    extraArgs: []
   provisioner:
     name: "csi-provisioner"
     image:
@@ -111,6 +114,7 @@ zfsController:
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
       tag: v3.5.0
+    extraArgs: []
   updateStrategy:
     type: RollingUpdate
   annotations: {}
