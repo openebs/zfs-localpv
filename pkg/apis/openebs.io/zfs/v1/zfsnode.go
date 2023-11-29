@@ -53,6 +53,10 @@ type Pool struct {
 	// Free specifies the available capacity of zfs pool.
 	// +kubebuilder:validation:Required
 	Free resource.Quantity `json:"free"`
+
+	// Used specifies the used capacity of zfs pool.
+	// +kubebuilder:validation:Required
+	Used resource.Quantity `json:"used"`
 }
 
 // ZFSNodeList is a collection of ZFSNode resources
