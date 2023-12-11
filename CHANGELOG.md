@@ -1,6 +1,14 @@
+v2.4.0 / 2023-12-12
+========================
+* fix(localpv): restore size to return as part of snapshot create response ([#480](https://github.com/openebs/zfs-localpv/pull/480),[@hrudaya21](https://github.com/hrudaya21))
+* feat(usedcapcity): kubectl describe zfsnode should show the used capacity information ([#485](https://github.com/openebs/zfs-localpv/pull/485),[@hrudaya21](https://github.com/hrudaya21))
+* feat(event): update ua to ga4 analytics ([#490](https://github.com/openebs/zfs-localpv/pull/490),[@Abhinandan-Purkait](https://github.com/Abhinandan-Purkait))
+
 v2.3.0 / 2023-07-23
 ========================
 * feat(csi): bump up csi provisioner to v3.5.0 and other updates ([#457](https://github.com/openebs/zfs-localpv/pull/457),[@vharsh](https://github.com/vharsh))
+* feat(helm): add support for providing additional volumes and adding init containers ([#455](https://github.com/openebs/zfs-localpv/pull/455),[@jnels124](https://github.com/jnels124))
+* fix(helm): Possibility to override zfs encryption keys directory ([#487](https://github.com/openebs/zfs-localpv/pull/487),[@trunet](https://github.com/trunet))
 
 v2.2.0 / 2023-05-29
 ========================
@@ -9,7 +17,7 @@ v2.2.0 / 2023-05-29
 
 v2.0.0 / 2022-01-11
 ========================
-* fix (localpv): fixing CSIStorageCapacity when "poolname" param has child dataset ([#393](https://github.com/openebs/zfs-localpv/pull/393),[@netom](https://github.com/netom))
+* fix(localpv): fixing CSIStorageCapacity when "poolname" param has child dataset ([#393](https://github.com/openebs/zfs-localpv/pull/393),[@netom](https://github.com/netom))
 
 v1.7.0 / 2021-03-15
 ========================
