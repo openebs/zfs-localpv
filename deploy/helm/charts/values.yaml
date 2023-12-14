@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 release:
-  version: "2.3.1"
+  version: "2.4.0"
 
 imagePullSecrets:
 # - name: "image-pull-secret"
@@ -144,13 +144,15 @@ zfsPlugin:
     repository: openebs/zfs-driver
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 2.3.0
+    tag: 2.4.0
 
 role: openebs-zfs
 
 crd:
   enableInstall: true
-
+  # Specify installation of the kubernetes-csi volume snapshot CRDs if your Kubernetes distribution
+  # or another storage operator already manages them.
+  volumeSnapshot: true
 serviceAccount:
   zfsController:
     # Specifies whether a service account should be created
