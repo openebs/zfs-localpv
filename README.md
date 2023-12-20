@@ -82,6 +82,8 @@ Configure the custom topology keys (if needed). This can be used for many purpos
 https://github.com/openebs/zfs-localpv/blob/HEAD/docs/faq.md#6-how-to-add-custom-topology-key
 
 ### Installation
+In order to support moving data to a new node later on, you must label each node with a unique value for `openebs.io/nodeid`.
+For more information on migrating data, please [see here](docs/faq.md#8-how-to-migrate-pvs-to-the-new-node-in-case-old-node-is-not-accessible)
 
 We can install the latest release of OpenEBS ZFS driver by running the following command:
 ```bash
