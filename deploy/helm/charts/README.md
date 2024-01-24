@@ -99,21 +99,26 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.resizer.image.repository`| Image repository for csi-resizer| `sig-storage/csi-resizer`|
 | `zfsController.resizer.image.pullPolicy`| Image pull policy for csi-resizer| `IfNotPresent`|
 | `zfsController.resizer.image.tag`| Image tag for csi-resizer| `v1.8.0`|
+| `zfsController.resizer.extraArgs`| Extra command line arguments| `[]`|
 | `zfsController.snapshotter.image.registry`| Registry for csi-snapshotter image| `registry.k8s.io/`|
 | `zfsController.snapshotter.image.repository`| Image repository for csi-snapshotter| `sig-storage/csi-snapshotter`|
 | `zfsController.snapshotter.image.pullPolicy`| Image pull policy for csi-snapshotter| `IfNotPresent`|
 | `zfsController.snapshotter.image.tag`| Image tag for csi-snapshotter| `v6.2.2`|
+| `zfsController.snapshotter.extraArgs`| Extra command line arguments| `[]`|
 | `zfsController.snapshotController.image.registry`| Registry for snapshot-controller image| `registry.k8s.io/`|
 | `zfsController.snapshotController.image.repository`| Image repository for snapshot-controller| `sig-storage/snapshot-controller`|
 | `zfsController.snapshotController.image.pullPolicy`| Image pull policy for snapshot-controller| `IfNotPresent`|
 | `zfsController.snapshotController.image.tag`| Image tag for snapshot-controller| `v6.2.2`|
+| `zfsController.snapshotController.extraArgs`| Extra command line arguments| `[]`|
 | `zfsController.provisioner.image.registry`| Registry for csi-provisioner image| `registry.k8s.io/`|
 | `zfsController.provisioner.image.repository`| Image repository for csi-provisioner| `sig-storage/csi-provisioner`|
 | `zfsController.provisioner.image.pullPolicy`| Image pull policy for csi-provisioner| `IfNotPresent`|
 | `zfsController.provisioner.image.tag`| Image tag for csi-provisioner| `v3.5.0`|
+| `zfsController.provisioner.extraArgs`| Extra command line arguments| `[]`|
 | `zfsController.updateStrategy.type`| Update strategy for zfs localpv controller statefulset | `RollingUpdate` |
 | `zfsController.annotations` | Annotations for zfs localpv controller statefulset metadata| `""`|
 | `zfsController.podAnnotations`| Annotations for zfs localpv controller statefulset's pods metadata | `""`|
+| `zfsController.replicas` | Number of zfs localpv controller replicas | `1` |
 | `zfsController.resources`| Resource and request and limit for zfs localpv controller statefulset containers | `""`|
 | `zfsController.labels`| Labels for zfs localpv controller statefulset metadata | `""`|
 | `zfsController.podLabels`| Appends labels to the zfs localpv controller statefulset pods| `""`|

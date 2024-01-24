@@ -52,7 +52,10 @@ spec:
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
-            - "--leader-election"
+            {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
+          {{- range .Values.zfsController.resizer.extraArgs }}
+            - {{ tpl . $ | quote }}
+          {{- end }}
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
@@ -65,7 +68,10 @@ spec:
           imagePullPolicy: {{ .Values.zfsController.snapshotter.image.pullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
-            - "--leader-election"
+            {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
+          {{- range .Values.zfsController.snapshotter.extraArgs }}
+            - {{ tpl . $ | quote }}
+          {{- end }}
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
@@ -76,7 +82,10 @@ spec:
           image: "{{ .Values.zfsController.snapshotController.image.registry }}{{ .Values.zfsController.snapshotController.image.repository }}:{{ .Values.zfsController.snapshotController.image.tag }}"
           args:
             - "--v=5"
-            - "--leader-election=true"
+            {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
+          {{- range .Values.zfsController.snapshotController.extraArgs }}
+            - {{ tpl . $ | quote }}
+          {{- end }}
           imagePullPolicy: {{ .Values.zfsController.snapshotController.image.pullPolicy }}
         - name: {{ .Values.zfsController.provisioner.name }}
           image: "{{ .Values.zfsController.provisioner.image.registry }}{{ .Values.zfsController.provisioner.image.repository }}:{{ .Values.zfsController.provisioner.image.tag }}"
@@ -86,10 +95,13 @@ spec:
             - "--v=5"
             - "--feature-gates=Topology=true"
             - "--strict-topology"
-            - "--leader-election"
             - "--enable-capacity={{ .Values.feature.storageCapacity }}"
             - "--extra-create-metadata=true"
             - "--default-fstype=ext4"
+            {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
+          {{- range .Values.zfsController.provisioner.extraArgs }}
+            - {{ tpl . $ | quote }}
+          {{- end }}
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
