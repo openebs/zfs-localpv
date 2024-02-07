@@ -94,6 +94,7 @@ zfsController:
       tag: v6.2.2
     extraArgs: []
   snapshotController:
+    enabled: true
     name: "snapshot-controller"
     image:
       # Make sure that registry name end with a '/'.

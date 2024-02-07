@@ -78,6 +78,7 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+        {{- if .Values.zfsController.snapshotController.enabled }}
         - name: {{ .Values.zfsController.snapshotController.name }}
           image: "{{ .Values.zfsController.snapshotController.image.registry }}{{ .Values.zfsController.snapshotController.image.repository }}:{{ .Values.zfsController.snapshotController.image.tag }}"
           args:
@@ -87,6 +88,7 @@ spec:
             - {{ tpl . $ | quote }}
           {{- end }}
           imagePullPolicy: {{ .Values.zfsController.snapshotController.image.pullPolicy }}
+        {{- end }}
         - name: {{ .Values.zfsController.provisioner.name }}
           image: "{{ .Values.zfsController.provisioner.image.registry }}{{ .Values.zfsController.provisioner.image.repository }}:{{ .Values.zfsController.provisioner.image.tag }}"
           imagePullPolicy: {{ .Values.zfsController.provisioner.image.pullPolicy }}
