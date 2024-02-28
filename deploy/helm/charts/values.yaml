@@ -60,15 +60,15 @@ zfsNode:
   # For example:
   # allowedTopologyKeys: "kubernetes.io/hostname,openebs.io/rack"
   allowedTopologyKeys: "All"
-  initContainers: []
-  additionalVolumes: []
+  initContainers: {}
+  additionalVolumes: {}
 
 # zfsController contains the configurables for
 # the zfs controller statefulset
 zfsController:
   componentName: openebs-zfs-controller
-  initContainers: []
-  additionalVolumes: []
+  initContainers: {}
+  additionalVolumes: {}
   replicas: 1
   serviceName: openebs-zfs
   resizer:
