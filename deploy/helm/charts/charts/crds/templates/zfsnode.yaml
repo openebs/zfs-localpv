@@ -1,4 +1,6 @@
-
+{{- if .Values.zfsNodes.enabled -}}
+{{- $crdName := "zfsnodes.zfs.openebs.io" -}}
+{{- if (include "crdIsAbsent" (list $crdName)) -}}
 ##############################################
 ###########                       ############
 ###########     ZFSNode CRD       ############
@@ -93,3 +95,5 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
+{{- end -}}
+{{- end -}}
