@@ -152,11 +152,6 @@ zfsPlugin:
 
 role: openebs-zfs
 
-crd:
-  enableInstall: true
-  # Specify installation of the kubernetes-csi volume snapshot CRDs if your Kubernetes distribution
-  # or another storage operator already manages them.
-  volumeSnapshot: true
 serviceAccount:
   zfsController:
     # Specifies whether a service account should be created
@@ -177,3 +172,25 @@ zfs:
   # If you use a non-standard path to the zfs binary, specify it here
   # bin: /run/current-system/sw/bin/zfs
   bin: zfs
+
+crds:
+  # Enable/Disable all CRDs
+  enabled: true
+  zfsBackups:
+    # -- Install ZfsBackup CRD
+    enabled: true
+  zfsNodes:
+    # -- Install ZfsNode CRD
+    enabled: true
+  zfsRestores:
+    # -- Install ZfsRestore CRD
+    enabled: true
+  zfsSnapshots:
+    # -- Install ZfsSnapshot CRD
+    enabled: true
+  zfsVolumes:
+    # -- Install ZfsVolume CRD
+    enabled: true
+  volumeSnapshots:
+    # -- Install Volume Snapshot CRDs
+    enabled: true
