@@ -1,4 +1,4 @@
-{{- if and .Values.volumeSnapshots.enabled .Values.volumeSnapshots.snapshotsEnabled -}}
+{{- if .Values.csi.volumeSnapshots.enabled -}}
 {{- $crdName := "volumesnapshots.snapshot.storage.k8s.io" -}}
 {{- if (include "crdIsAbsent" (list $crdName)) -}}
 apiVersion: apiextensions.k8s.io/v1
