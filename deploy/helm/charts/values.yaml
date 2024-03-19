@@ -174,23 +174,10 @@ zfs:
   bin: zfs
 
 crds:
-  # Enable/Disable all CRDs
-  enabled: true
-  zfsBackups:
-    # -- Install ZfsBackup CRD
+  zfsLocalPv:
+    # Install zfs-localpv CRDs
     enabled: true
-  zfsNodes:
-    # -- Install ZfsNode CRD
-    enabled: true
-  zfsRestores:
-    # -- Install ZfsRestore CRD
-    enabled: true
-  zfsSnapshots:
-    # -- Install ZfsSnapshot CRD
-    enabled: true
-  zfsVolumes:
-    # -- Install ZfsVolume CRD
-    enabled: true
-  volumeSnapshots:
-    # -- Install Volume Snapshot CRDs
-    enabled: true
+  csi:
+    volumeSnapshots:
+      # Install Volume Snapshot CRDs
+      enabled: true

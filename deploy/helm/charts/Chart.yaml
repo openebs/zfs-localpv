@@ -17,7 +17,6 @@ sources:
 dependencies:
   - name: crds
     version: "2.5.0"
-    condition: crds.enabled
 maintainers:
   - name: xUnholy
     email: michaelfornaro@gmail.com

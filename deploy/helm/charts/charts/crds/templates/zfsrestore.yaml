@@ -1,4 +1,4 @@
-{{- if .Values.zfsRestores.enabled -}}
+{{- if .Values.zfsLocalPv.enabled -}}
 {{- $crdName := "zfsrestores.zfs.openebs.io" -}}
 {{- if (include "crdIsAbsent" (list $crdName)) -}}
 ##############################################
