@@ -66,7 +66,7 @@ EOT
 	make clean
 	make
 
-	UUID=$(kubectl get pod -n kube-system openebs-zfs-controller-0 -o 'jsonpath={.metadata.uid}')
+	UUID=$(kubectl get pod -n kube-system -l "openebs.io/component-name=openebs-zfs-controller" -o 'jsonpath={.items[0].metadata.uid}')
 	SOCK_PATH=/var/lib/kubelet/pods/"$UUID"/volumes/kubernetes.io~empty-dir/socket-dir/csi.sock
 
 	sudo chmod -R 777 /var/lib/kubelet

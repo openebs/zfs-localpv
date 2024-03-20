@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: {{ template "zfslocalpv.fullname" . }}-controller
   namespace: {{ .Release.Namespace }}
@@ -12,7 +12,6 @@ spec:
   selector:
     matchLabels:
       {{- include "zfslocalpv.zfsController.matchLabels" . | nindent 6 }}
-  serviceName: "{{ .Values.zfsController.serviceName }}"
   replicas: {{ .Values.zfsController.replicas }}
   template:
     metadata:

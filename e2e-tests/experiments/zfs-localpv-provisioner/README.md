@@ -1,6 +1,6 @@
 ## About this experiment
 
-This experiment deploys the zfs-localpv provisioner in kube-system namespace which includes zfs-controller statefulset (with default value of replica count 1) and csi-node agent deamonset. Apart from this, zpool creation on nodes and generic use-case storage-classes and snapshot class for dynamic provisioning of the volumes based on values provided via env's in run_e2e_test.yml file gets created in this experiment.
+This experiment deploys the zfs-localpv provisioner in kube-system namespace which includes zfs-controller deployment (with default value of replica count 1) and csi-node agent deamonset. Apart from this, zpool creation on nodes and generic use-case storage-classes and snapshot class for dynamic provisioning of the volumes based on values provided via env's in run_e2e_test.yml file gets created in this experiment.
 
 ## Supported platforms:
 

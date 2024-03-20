@@ -64,13 +64,12 @@ zfsNode:
   additionalVolumes: {}
 
 # zfsController contains the configurables for
-# the zfs controller statefulset
+# the zfs controller deployment
 zfsController:
   componentName: openebs-zfs-controller
   initContainers: {}
   additionalVolumes: {}
   replicas: 1
-  serviceName: openebs-zfs
   resizer:
     name: "csi-resizer"
     image:
@@ -138,7 +137,7 @@ zfsController:
 
 
 # zfsPlugin is the common csi container used by the
-# controller statefulset and node daemonset
+# controller deployment and node daemonset
 zfsPlugin:
   name: "openebs-zfs-plugin"
   image:

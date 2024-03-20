@@ -1,6 +1,6 @@
 ## About this experiment
 
-This functional experiment scale up the zfs-controller statefulset replicas to use it in high availability mode and then verify the zfs-localpv behaviour when one of the replicas go down. This experiment checks the initial number of replicas of zfs-controller statefulset and scale it by one if a free node is present which should be able to schedule the pods. Default value for zfs-controller statefulset replica is one.
+This functional experiment scale up the zfs-controller deployment replicas to use it in high availability mode and then verify the zfs-localpv behaviour when one of the replicas go down. This experiment checks the initial number of replicas of zfs-controller deployment and scale it by one if a free node is present which should be able to schedule the pods. Default value for zfs-controller deployment replica is one.
 
 ## Supported platforms:
 
@@ -18,15 +18,15 @@ ZFS : 0.7, 0.8
 
 ## Exit-Criteria
 
-- zfs-controller statefulset should be scaled up by one replica.
+- zfs-controller deployment should be scaled up by one replica.
 - All the replias should be in running state.
 - zfs-localpv volumes should be healthy and data after scaling up controller should not be impacted.
-- This experiment makes one of the zfs-controller statefulset replica to go down, as a result active/master replica of zfs-controller prior to the experiment will be changed to some other remaining replica after the experiment completes. This happens because of the lease mechanism, which is being used to decide which replica will be serving as master. At a time only one replica will be master.
+- This experiment makes one of the zfs-controller deployment replica to go down, as a result active/master replica of zfs-controller prior to the experiment will be changed to some other remaining replica after the experiment completes. This happens because of the lease mechanism, which is being used to decide which replica will be serving as master. At a time only one replica will be master.
 - Volumes provisioning / deprovisioning should not be impacted if any one replica goes down.
 
 ## Steps performed
 
-- Get the no of zfs-controller statefulset replica count.
+- Get the no of zfs-controller deployment replica count.
 - Scale down the controller replicas to zero, wait until controller pods gets terminated successfully and then try to provision a volume to use by busybox application.
 - Due to zero active replicas of zfs-controller, pvc should remain in Pending state.
 - If no. of schedulable nodes are greater or equal to the previous replica count + 1, then zfs-controller will be scaled up by +1 replica. Doing this will Bound the pvc and application pod will come in Running state.

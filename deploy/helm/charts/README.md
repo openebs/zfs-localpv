@@ -38,10 +38,10 @@ $ helm install [RELEASE_NAME] openebs-zfslocalpv/zfs-localpv
 ```
 
 **Note:** If moving from the operator to helm
-- Make sure the namespace provided in the helm install command is same as `OPENEBS_NAMESPACE` (by default it is `openebs`) env in the controller statefulset.
-- Before installing, clean up the stale statefulset and daemonset from `kube-system` namespace using the below commands
+- Make sure the namespace provided in the helm install command is same as `OPENEBS_NAMESPACE` (by default it is `openebs`) env in the controller deployment.
+- Before installing, clean up the stale deployment and daemonset from `kube-system` namespace using the below commands
 ```sh
-kubectl delete sts openebs-zfs-controller -n kube-system
+kubectl delete deploy openebs-zfs-controller -n kube-system
 kubectl delete ds openebs-zfs-node -n kube-system
 ```
 
@@ -115,16 +115,16 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.provisioner.image.pullPolicy`| Image pull policy for csi-provisioner| `IfNotPresent`|
 | `zfsController.provisioner.image.tag`| Image tag for csi-provisioner| `v3.5.0`|
 | `zfsController.provisioner.extraArgs`| Extra command line arguments| `[]`|
-| `zfsController.updateStrategy.type`| Update strategy for zfs localpv controller statefulset | `RollingUpdate` |
-| `zfsController.annotations` | Annotations for zfs localpv controller statefulset metadata| `""`|
-| `zfsController.podAnnotations`| Annotations for zfs localpv controller statefulset's pods metadata | `""`|
+| `zfsController.updateStrategy.type`| Update strategy for zfs localpv controller deployment | `RollingUpdate` |
+| `zfsController.annotations` | Annotations for zfs localpv controller deployment metadata| `""`|
+| `zfsController.podAnnotations`| Annotations for zfs localpv controller deployment's pods metadata | `""`|
 | `zfsController.replicas` | Number of zfs localpv controller replicas | `1` |
-| `zfsController.resources`| Resource and request and limit for zfs localpv controller statefulset containers | `""`|
-| `zfsController.labels`| Labels for zfs localpv controller statefulset metadata | `""`|
-| `zfsController.podLabels`| Appends labels to the zfs localpv controller statefulset pods| `""`|
-| `zfsController.nodeSelector`| Nodeselector for zfs localpv controller statefulset pods| `""`|
-| `zfsController.tolerations` | zfs localpv controller statefulset's pod toleration values | `""`|
-| `zfsController.securityContext` | Seurity context for zfs localpv controller statefulset container | `""`|
+| `zfsController.resources`| Resource and request and limit for zfs localpv controller deployment containers | `""`|
+| `zfsController.labels`| Labels for zfs localpv controller deployment metadata | `""`|
+| `zfsController.podLabels`| Appends labels to the zfs localpv controller deployment pods| `""`|
+| `zfsController.nodeSelector`| Nodeselector for zfs localpv controller deployment pods| `""`|
+| `zfsController.tolerations` | zfs localpv controller deployment's pod toleration values | `""`|
+| `zfsController.securityContext` | Seurity context for zfs localpv controller deployment container | `""`|
 | `rbac.pspEnabled` | Enable PodSecurityPolicy | `false` |
 | `serviceAccount.zfsNode.create` | Create a service account for zfsnode or not| `true`|
 | `serviceAccount.zfsNode.name` | Name for the zfsnode service account| `openebs-zfs-node-sa`|
