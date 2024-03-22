@@ -88,9 +88,7 @@ set +e
 
 echo "running ginkgo test case"
 
-ginkgo -v
-
-if [ $? -ne 0 ]; then
+if ! ginkgo -v -coverprofile=bdd_coverage.txt -covermode=atomic; then
 
 sudo zpool status
 

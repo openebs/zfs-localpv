@@ -37,15 +37,15 @@
 
         - name: Get the version tag for zfs-driver
           shell: >
-            kubectl get sts openebs-zfs-controller -n kube-system 
+            kubectl get deploy openebs-zfs-controller -n kube-system 
             -o jsonpath='{.spec.template.spec.containers[?(@.name=="openebs-zfs-plugin")].image}' | cut -d ":" -f2
           args:
             executable: /bin/bash
           register: zfs_driver_tag
 
-        - name: Get the replica count for zfs-controller statefulset
+        - name: Get the replica count for zfs-controller deployment
           shell: >
-            kubectl get sts openebs-zfs-controller -n kube-system -o jsonpath='{.status.replicas}'
+            kubectl get deploy openebs-zfs-controller -n kube-system -o jsonpath='{.status.replicas}'
           args: 
             executable: /bin/bash
           register: no_of_zfs_ctrl_replicas
@@ -111,7 +111,7 @@
             replace: "{{ lookup('env','TO_VERSION_ZFS_DRIVER_IMAGE') }}"
           when: lookup('env','TO_VERSION_ZFS_DRIVER_IMAGE') | length > 0
 
-        - name: Update the number of zfs-controller statefulset replicas
+        - name: Update the number of zfs-controller deployment replicas
           replace:
             path: ./new_zfs_operator.yml
             regexp: "replicas: 1"
@@ -169,7 +169,7 @@
 
         - name: Check for the count of zfs-controller ready replicas
           shell: >
-            kubectl get sts openebs-zfs-controller -n kube-system -o jsonpath='{.status.readyReplicas}'
+            kubectl get deploy openebs-zfs-controller -n kube-system -o jsonpath='{.status.readyReplicas}'
           args:
             executable: /bin/bash
           register: ready_replicas
@@ -177,9 +177,9 @@
           delay: 5
           retries: 20
 
-        - name: Verify that zfs-driver version from the zfs-controller statefulset image is upgraded
+        - name: Verify that zfs-driver version from the zfs-controller deployment image is upgraded
           shell: >
-            kubectl get sts openebs-zfs-controller -n kube-system
+            kubectl get deploy openebs-zfs-controller -n kube-system
             -o jsonpath='{.spec.template.spec.containers[?(@.name=="openebs-zfs-plugin")].image}'
           args:
             executable: /bin/bash

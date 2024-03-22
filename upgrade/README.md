@@ -19,7 +19,7 @@ And if my current version is 0.4 and want to upgrade to 0.7, that means we want 
 Please do not provision/deprovision any volumes during the upgrade, if we can not control it, then we can scale down the openebs-zfs-controller stateful set to zero replica which will pause all the provisioning/deprovisioning request. And once upgrade is done, the upgraded Driver will continue the provisioning/deprovisioning process.
 
 ```
-$ kubectl edit sts openebs-zfs-controller -n kube-system
+$ kubectl edit deploy openebs-zfs-controller -n kube-system
 
 ```
 And set replicas to zero :

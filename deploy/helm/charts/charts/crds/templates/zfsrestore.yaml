@@ -1,5 +1,6 @@
-
-
+{{- if .Values.zfsLocalPv.enabled -}}
+{{- $crdName := "zfsrestores.zfs.openebs.io" -}}
+{{- if (include "crdIsAbsent" (list $crdName)) -}}
 ##############################################
 ###########                       ############
 ###########   ZFSRestore CRD      ############
@@ -236,3 +237,5 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
+{{- end -}}
+{{- end -}}

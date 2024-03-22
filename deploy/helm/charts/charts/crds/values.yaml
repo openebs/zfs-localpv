@@ -1,0 +1,8 @@
+zfsLocalPv:
+  # Install zfs-localpv CRDs
+  enabled: true
+
+csi:
+  volumeSnapshots:
+    # Install Volume Snapshot CRDs
+    enabled: true

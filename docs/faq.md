@@ -74,7 +74,7 @@ To have HA for the provisioner(controller), we can update the replica count to 2
 here is the yaml snippet to do that :-
 
 ```yaml
-kind: StatefulSet
+kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: openebs-zfs-controller

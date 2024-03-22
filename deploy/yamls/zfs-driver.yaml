@@ -943,7 +943,7 @@ description: "This priority class should be used for the OpenEBS ZFS localPV CSI
 
 ---
 
-kind: StatefulSet
+kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: openebs-zfs-controller
@@ -956,7 +956,6 @@ spec:
     matchLabels:
       app: openebs-zfs-controller
       role: openebs-zfs
-  serviceName: "openebs-zfs"
   replicas: 1
   template:
     metadata:

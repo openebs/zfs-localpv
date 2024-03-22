@@ -16,9 +16,9 @@
           vars:
             status: 'SOT'
         
-        - name: Get the no of replicas in zfs-controller statefulset 
+        - name: Get the no of replicas in zfs-controller deployment 
           shell: >
-            kubectl get sts openebs-zfs-controller -n kube-system -o jsonpath='{.status.replicas}'
+            kubectl get deploy openebs-zfs-controller -n kube-system -o jsonpath='{.status.replicas}'
           args:
             executable: /bin/bash
           register: controller_rep_count
@@ -46,9 +46,9 @@
           set_fact:
             no_of_schedulable_nodes: "{{ schedulable_nodes_count.stdout }}"
           
-        - name: scale down the replicas to zero of zfs-controller statefulset
+        - name: scale down the replicas to zero of zfs-controller deployment
           shell: >
-            kubectl scale sts openebs-zfs-controller -n kube-system --replicas=0
+            kubectl scale deploy openebs-zfs-controller -n kube-system --replicas=0
           args:
             executable: /bin/bash
           register: status
@@ -91,14 +91,14 @@
         
         - block: 
 
-            - name: scale up the zfs-controller statefulset with +1 no of replica count
+            - name: scale up the zfs-controller deployment with +1 no of replica count
               shell: >
-                kubectl scale sts openebs-zfs-controller -n kube-system
+                kubectl scale deploy openebs-zfs-controller -n kube-system
                 --replicas="{{ zfs_ctrl_replicas|int + 1 }}"
               args:
                 executable: /bin/bash
 
-            - name: check that zfs-controller statefulset replicas are up and running
+            - name: check that zfs-controller deployment replicas are up and running
               shell: >
                 kubectl get pods -n kube-system -l app=openebs-zfs-controller --no-headers 
                 -o custom-columns=:.status.phase | grep Running | wc -l
@@ -236,7 +236,7 @@
 
             - name: Scale up the zfs-controller with same no of replica count
               shell: >
-                kubectl scale sts openebs-zfs-controller -n kube-system --replicas={{ zfs_ctrl_replicas }}
+                kubectl scale deploy openebs-zfs-controller -n kube-system --replicas={{ zfs_ctrl_replicas }}
               args:
                 executable: /bin/bash
               register: status
