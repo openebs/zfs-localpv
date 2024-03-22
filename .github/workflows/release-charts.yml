@@ -26,9 +26,6 @@ jobs:
         with:
           version: v3.14.3
 
-      - name: Copy generated CRDs
-        run: make helm
-
       - name: Check diff, commit and push
         run: |
           git diff --quiet deploy/helm/charts/crds || CHANGED=$?
