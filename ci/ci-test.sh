@@ -88,7 +88,7 @@ set +e
 
 echo "running ginkgo test case"
 
-ginkgo -v
+ginkgo -v -coverprofile=bdd_coverage.txt -covermode=atomic
 
 if [ $? -ne 0 ]; then
 
