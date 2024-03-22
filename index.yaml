@@ -2,9 +2,35 @@ apiVersion: v1
 entries:
   zfs-localpv:
   - apiVersion: v2
+    appVersion: 2.5.0
+    created: "2024-03-22T16:20:21.979012+05:30"
+    dependencies:
+    - name: crds
+      repository: ""
+      version: 2.5.0
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    digest: 751a69d004627a93fb71c925faab89a307802fe474a7380786fd552198bae2ed
+    home: https://openebs.io/
+    icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
+    keywords:
+    - cloud-native-storage
+    - block-storage
+    - filesystem
+    - ZFS
+    - Local Persistent Volumes
+    - storage
+    name: zfs-localpv
+    sources:
+    - https://github.com/openebs/zfs-localpv
+    urls:
+    - https://github.com/openebs/zfs-localpv/releases/download/zfs-localpv-2.5.0/zfs-localpv-2.5.0.tgz
+    version: 2.5.0
+  - apiVersion: v2
     appVersion: 2.4.2
     created: "2024-02-28T05:35:40.987065849Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 41d5ac22e3c12838e904f4eec4969d981120a2003b90a2ed34fac2829d3e9619
     home: https://openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -31,7 +57,8 @@ entries:
   - apiVersion: v2
     appVersion: 2.4.1
     created: "2024-01-24T05:55:04.709969198Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 56e0fb85f9f5598042c339a71aaff22d4d5a0631890bf23e671db1215f17b38d
     home: https://openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -58,7 +85,8 @@ entries:
   - apiVersion: v2
     appVersion: 2.4.0
     created: "2023-12-14T13:40:23.829766214Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 9f292d24e7928c72662588363a0e5176b5cfbaaa8a1d9aac51f9a7418b97fa97
     home: https://openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -85,7 +113,8 @@ entries:
   - apiVersion: v2
     appVersion: 2.3.0
     created: "2023-11-16T04:44:03.09831392Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 1d2e2379d044c0d65c882ae45200377c012e3284120c655fa6d349547640858f
     home: https://openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -112,7 +141,8 @@ entries:
   - apiVersion: v2
     appVersion: 2.3.0
     created: "2023-08-31T13:10:56.321239042Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 55ce78ba21d6cabf9bd6f71cbe9aeeb31c821e0cd4a1e29ac36194a058196479
     home: https://openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -139,7 +169,8 @@ entries:
   - apiVersion: v2
     appVersion: 2.3.0
     created: "2023-07-27T11:55:29.954397+05:30"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 3399824b60dafd564673cd1adaa9a536e02247a7334e2a04d99b3be54e2cb7e0
     home: https://openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -166,7 +197,8 @@ entries:
   - apiVersion: v2
     appVersion: 2.2.0
     created: "2023-05-29T09:10:38.569895805Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 684577e25aea37991f59a1cd4975d3a68e89625d3d6e536226e901df79ac0880
     home: https://openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -193,7 +225,8 @@ entries:
   - apiVersion: v2
     appVersion: 2.1.0
     created: "2022-04-18T14:39:14.059977635Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: cb8a056fd7e03971f575908368c51d39eae1514f288f30fcdca01654af875784
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -220,7 +253,8 @@ entries:
   - apiVersion: v2
     appVersion: 2.0.0
     created: "2022-01-11T10:35:51.782738297Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 6058539fe4f815493fa8542c921977ba4ab8ed5d082bf7cf0865538623422700
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -247,7 +281,8 @@ entries:
   - apiVersion: v2
     appVersion: 1.9.3
     created: "2021-09-18T06:24:45.140196966Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 1be81dd4f0f73f649d762a09bc5113db57574dd1f9b110bb48bef51615ef6ad4
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -274,7 +309,8 @@ entries:
   - apiVersion: v2
     appVersion: 1.9.1
     created: "2021-09-15T13:20:01.825762297Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: d97e62bcfe107d802471ea90704cd0721d920ab13b5199d48bcc6f57773febea
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -301,7 +337,8 @@ entries:
   - apiVersion: v2
     appVersion: 1.9.1
     created: "2021-09-15T11:30:40.945763945Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 325c3ca4531ff587096d4d1037f4fe83063fe18272e9b1295d90b1e9a1cb5076
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -328,7 +365,8 @@ entries:
   - apiVersion: v2
     appVersion: 1.9.1
     created: "2021-09-03T08:37:54.820369919Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 03a32e0ae89ec615a891a88a968870521580377f6610dafb8844a2ca3729fe87
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -355,7 +393,8 @@ entries:
   - apiVersion: v2
     appVersion: 1.9.1
     created: "2021-08-30T17:56:20.160809733Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: d41940b53ce7d4db25579537af6c9efca7e652bd254fe35a1ac900bcdb2edef2
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -382,7 +421,8 @@ entries:
   - apiVersion: v2
     appVersion: 1.9.1
     created: "2021-08-18T14:42:40.160809733Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 48629cc683c342c7f63391f057ff548f9ffbb97cf21450062cc74f0c3be8157f
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -409,7 +449,8 @@ entries:
   - apiVersion: v2
     appVersion: 1.9.0
     created: "2021-07-28T07:10:11.634142915Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: 2a275a86a948134df2205be4f4c2344fdbc3269a1497168e825cf66206d4abe4
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -436,7 +477,8 @@ entries:
   - apiVersion: v2
     appVersion: 1.9.0
     created: "2021-07-19T07:38:00.257654644Z"
-    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
+    description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
+      Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
     digest: a6a1567907d61893a8d012fba7567ad1fd4897923c2e8f9cfb6779e34db41921
     home: http://www.openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
@@ -838,4 +880,4 @@ entries:
     urls:
     - https://github.com/openebs/zfs-localpv/releases/download/zfs-localpv-1.3.0/zfs-localpv-1.3.0.tgz
     version: 1.3.0
-generated: "2023-07-27T11:55:29.954699+05:30"
+generated: "2024-03-22T16:20:21.981077+05:30"
