@@ -35,16 +35,16 @@ zfsNode:
   annotations: {}
   podAnnotations: {}
   resources: {}
-  # This can be configured to run on various different k8s distributions like
-  # microk8s where kubelet dir is different
-  kubeletDir: "/var/lib/kubelet/"
-  encrKeysDir: "/home/keys"
   # limits:
   #   cpu: 10m
   #   memory: 32Mi
   # requests:
   #   cpu: 10m
   #   memory: 32Mi
+  # This can be configured to run on various different k8s distributions like
+  # microk8s where kubelet dir is different
+  kubeletDir: "/var/lib/kubelet/"
+  encrKeysDir: "/home/keys"
   ## Labels to be added to openebs-zfs node pods
   podLabels: {}
   nodeSelector: {}
@@ -134,7 +134,6 @@ zfsController:
   priorityClass:
     create: true
     name: zfs-csi-controller-critical
-
 
 # zfsPlugin is the common csi container used by the
 # controller deployment and node daemonset
