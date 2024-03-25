@@ -56,7 +56,7 @@ EOT
 	CSI_TEST_REPO="https://github.com/$test_repo/csi-test.git"
 	CSI_REPO_PATH="$(go env GOPATH)/src/github.com/$test_repo/csi-test"
 	if [ ! -d "$CSI_REPO_PATH" ] ; then
-		git clone -b "v4.0.1" "$CSI_TEST_REPO" "$CSI_REPO_PATH"
+		git clone -b "v4.2.0" "$CSI_TEST_REPO" "$CSI_REPO_PATH"
 	else
 		cd "$CSI_REPO_PATH"
 		git pull "$CSI_REPO_PATH"
