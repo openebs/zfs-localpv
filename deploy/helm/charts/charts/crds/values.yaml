@@ -1,8 +1,12 @@
 zfsLocalPv:
   # Install zfs-localpv CRDs
   enabled: true
+  # -- Keep CRDs on chart uninstall
+  keep: true
 
 csi:
   volumeSnapshots:
     # Install Volume Snapshot CRDs
     enabled: true
+    # -- Keep CRDs on chart uninstall
+    keep: true

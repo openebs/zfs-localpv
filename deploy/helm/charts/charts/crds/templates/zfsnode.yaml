@@ -1,6 +1,4 @@
 {{- if .Values.zfsLocalPv.enabled -}}
-{{- $crdName := "zfsnodes.zfs.openebs.io" -}}
-{{- if (include "crdIsAbsent" (list $crdName)) -}}
 ##############################################
 ###########                       ############
 ###########     ZFSNode CRD       ############
@@ -17,6 +15,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.0
+    {{- include "crds.extraAnnotations" .Values.zfsLocalPv | nindent 4 }}
   creationTimestamp: null
   name: zfsnodes.zfs.openebs.io
 spec:
@@ -95,5 +94,4 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
-{{- end -}}
 {{- end -}}
