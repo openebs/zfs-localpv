@@ -15,7 +15,7 @@
 
 ## Overview
 
-The ZFS-LocalPV Data-Engine became GA on Dec 2020 and is now a core component of the OpenEBS storage platform. <BR>
+The ZFS-LocalPV Data-Engine became GA on Dec 2020 and is now a core component of the OpenEBS storage platform.
 Due to the major adoption of ZFS-LocalPV (+120,000 users), this Data-Engine is now being unified and integrated into the core OpenEBS Storage platform; instead of being maintained as an external Data-Engine within our project.<BR>
 
 Our [2024 Roadmap is here](https://github.com/openebs/openebs/blob/main/ROADMAP.md). It defines a rich set of new featrues, which covers the integration of ZFS-LocalPV into the core OpenEBS platform.<br>
