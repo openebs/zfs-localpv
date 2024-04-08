@@ -63,12 +63,12 @@ The orignal v1.0 dev roadmap [is here ](https://github.com/orgs/openebs/projects
 
 > | Name | Version |
 > | :--- | :--- |
-> | K8S | 1.20+ |
+> | K8S | 1.23+ |
 > | Distro | Alpine, Arch, CentOS, Debian, Fedora, NixOS, SUSE, RHEL, Ubuntu |
 > | Kenel | oldest supported kernel is 2.6.32 |
 > | ZFS | 0.7, 0.8, 2.2.3 |
 > | Memory | ECC Memory is highly recommended |
-> | RAM | 8GiB for best perf with Dedupe enabled. (Will work with 2GiB or less without dedupe) |
+> | RAM | 8GiB for best perf with Dedup enabled. (Will work with 2GiB or less without dedup) |
 
 Check the [features](./docs/features.md) supported for each k8s version.
 
