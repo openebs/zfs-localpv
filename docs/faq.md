@@ -14,24 +14,26 @@ Go to each node and create the ZFS Pool, which will be used for provisioning the
 Once ZFS POOL is created we can install OpenEBS ZFS driver by running the following command.
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openebs/zfs-localpv/develop/deploy/zfs-operator.yaml
+helm repo add openebs https://openebs.github.io/openebs
+helm repo update
+helm install openebs --namespace openebs openebs/openebs --create-namespace
 ```
 
 Verify that the ZFS driver Components are installed and running using below command :
 
 ```
-$ kubectl get pods -n kube-system -l role=openebs-zfs
+$ kubectl get pods -n openebs -l role=openebs-zfs
 ```
 
 Depending on number of nodes, you will see one zfs-controller pod and zfs-node daemonset running
 on the nodes.
 
 ```
-NAME                       READY   STATUS    RESTARTS   AGE
-openebs-zfs-controller-0   4/4     Running   0          5h28m
-openebs-zfs-node-4d94n     2/2     Running   0          5h28m
-openebs-zfs-node-gssh8     2/2     Running   0          5h28m
-openebs-zfs-node-twmx8     2/2     Running   0          5h28m
+NAME                                              READY   STATUS    RESTARTS   AGE
+openebs-zfs-localpv-controller-f78f7467c-blr7q    5/5     Running   0          11m
+openebs-zfs-localpv-node-h46m5                    2/2     Running   0          11m
+openebs-zfs-localpv-node-svfgq                    2/2     Running   0          11m
+openebs-zfs-localpv-node-wm9ks                    2/2     Running   0          11m
 
 ```
 

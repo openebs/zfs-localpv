@@ -122,27 +122,28 @@ https://github.com/openebs/zfs-localpv/blob/HEAD/docs/faq.md#6-how-to-add-custom
 In order to support moving data to a new node later on, you must label each node with a unique value for `openebs.io/nodeid`.
 For more information on migrating data, please [see here](docs/faq.md#8-how-to-migrate-pvs-to-the-new-node-in-case-old-node-is-not-accessible)
 
+**NOTE:** Installation using operator YAMLs is not the supported way any longer.  
 We can install the latest release of OpenEBS ZFS driver by running the following command:
 ```bash
-$ kubectl apply -f https://openebs.github.io/charts/zfs-operator.yaml
+helm repo add openebs https://openebs.github.io/openebs
+helm repo update
+helm install openebs --namespace openebs openebs/openebs --create-namespace
 ```
 
-We can also install it via kustomize using `kubectl apply -k deploy/yamls`, check the [kustomize yaml](deploy/yamls/kustomization.yaml).
+**NOTE:** If you are running a custom Kubelet location, or a Kubernetes distribution that uses a custom Kubelet location, the `kubelet` directory must be changed on the helm values at install-time using the flag option `--set zfs-localpv.zfsNode.kubeletDir=<your-directory-path>` in the `helm install` command.
 
-**NOTE:** If you are running a custom Kubelet location, or a Kubernetes distribution that uses a custom Kubelet location, the `kubelet` directory must be changed at all relevant places in the YAML powering the operator (both the `openebs-zfs-controller` and `openebs-zfs-node`). 
-
-- For `microk8s`, we need to change the kubelet directory to `/var/snap/microk8s/common/var/lib/kubelet/`, we need to replace `/var/lib/kubelet/` with `/var/snap/microk8s/common/var/lib/kubelet/` at all the places in the operator yaml and then we can apply it on microk8s.
+- For `microk8s`, we need to change the kubelet directory to `/var/snap/microk8s/common/var/lib/kubelet/`, we need to replace `/var/lib/kubelet/` with `/var/snap/microk8s/common/var/lib/kubelet/`.
 - For `k0s`, the default directory (`/var/lib/kubelet`) should be changed to `/var/lib/k0s/kubelet`.
 - For `RancherOS`, the default directory (`/var/lib/kubelet`) should be changed to `/opt/rke/var/lib/kubelet`.
 
 Verify that the ZFS driver Components are installed and running using below command. Depending on number of nodes, you will see one zfs-controller pod and zfs-node daemonset running on the nodes :
 ```bash
-$ kubectl get pods -n kube-system -l role=openebs-zfs
-NAME                       READY   STATUS    RESTARTS   AGE
-openebs-zfs-controller-0   5/5     Running   0          5h28m
-openebs-zfs-node-4d94n     2/2     Running   0          5h28m
-openebs-zfs-node-gssh8     2/2     Running   0          5h28m
-openebs-zfs-node-twmx8     2/2     Running   0          5h28m
+$ kubectl get pods -n openebs -l role=openebs-zfs
+NAME                                              READY   STATUS    RESTARTS   AGE
+openebs-zfs-localpv-controller-f78f7467c-blr7q    5/5     Running   0          11m
+openebs-zfs-localpv-node-h46m5                    2/2     Running   0          11m
+openebs-zfs-localpv-node-svfgq                    2/2     Running   0          11m
+openebs-zfs-localpv-node-wm9ks                    2/2     Running   0          11m
 ```
 
 Once ZFS driver is installed and running we can provision a volume.
@@ -410,20 +411,6 @@ pod "fio" deleted
 $ kubectl delete -f pvc.yaml
 persistentvolumeclaim "csi-zfspv" deleted
 ```
-
-> ***Warning***
-> If you are running running kernel ZFS and  cStor on the same set of nodes, the following two points are best practice:
->
-> Disable zfs-import-scan.service service that will avoid importing all pools by scanning all the available devices in the system, disabling scan service will avoid importing pools that are not created by kernel. Disabling scan service will not cause harm since zfs-import-cache.service is enabled and it is the best way to import pools by looking at cache file during boot time.
-> ```bassh
-> $ systemctl stop zfs-import-scan.service
-> $ systemctl disable zfs-import-scan.service
-> ```
->
-> Always maintain upto date /etc/zfs/zpool.cache while performing operations any day2 operations on zfs pools(zpool set cachefile=/etc/zfs/zpool.cache <pool dataset name>).
->
-> Note: After performing the above steps, the kernel ZFS will not import pools created by cStor
-
 
 ## Features
 
