@@ -19,19 +19,19 @@ test_repo="kubernetes-csi"
 
 dumpAgentLogs() {
   NR=$1
-  AgentPOD=$(kubectl get pods -l app=openebs-zfs-node -o jsonpath='{.items[0].metadata.name}' -n kube-system)
-  kubectl describe po "$AgentPOD" -n kube-system
+  AgentPOD=$(kubectl get pods -l app=openebs-zfs-node -o jsonpath='{.items[0].metadata.name}' -n openebs)
+  kubectl describe po "$AgentPOD" -n openebs
   printf "\n\n"
-  kubectl logs --tail="${NR}" "$AgentPOD" -n kube-system -c openebs-zfs-plugin
+  kubectl logs --tail="${NR}" "$AgentPOD" -n openebs -c openebs-zfs-plugin
   printf "\n\n"
 }
 
 dumpControllerLogs() {
   NR=$1
-  ControllerPOD=$(kubectl get pods -l app=openebs-zfs-controller -o jsonpath='{.items[0].metadata.name}' -n kube-system)
-  kubectl describe po "$ControllerPOD" -n kube-system
+  ControllerPOD=$(kubectl get pods -l app=openebs-zfs-controller -o jsonpath='{.items[0].metadata.name}' -n openebs)
+  kubectl describe po "$ControllerPOD" -n openebs
   printf "\n\n"
-  kubectl logs --tail="${NR}" "$ControllerPOD" -n kube-system -c openebs-zfs-plugin
+  kubectl logs --tail="${NR}" "$ControllerPOD" -n openebs -c openebs-zfs-plugin
   printf "\n\n"
 }
 
@@ -66,7 +66,7 @@ EOT
 	make clean
 	make
 
-	UUID=$(kubectl get pod -n kube-system -l "openebs.io/component-name=openebs-zfs-controller" -o 'jsonpath={.items[0].metadata.uid}')
+	UUID=$(kubectl get pod -n openebs -l "openebs.io/component-name=openebs-zfs-controller" -o 'jsonpath={.items[0].metadata.uid}')
 	SOCK_PATH=/var/lib/kubelet/pods/"$UUID"/volumes/kubernetes.io~empty-dir/socket-dir/csi.sock
 
 	sudo chmod -R 777 /var/lib/kubelet
@@ -76,8 +76,7 @@ EOT
 
 function startTestSuite() {
 	echo "================== Start csi-sanity test suite ================="
-	./csi-sanity --ginkgo.v --csi.controllerendpoint=///tmp/csi.sock --csi.endpoint=/var/lib/kubelet/plugins/zfs-localpv/csi.sock --csi.testvolumeparameters=/tmp/parameters.json --csi.testsnapshotparameters=/tmp/parameters.json
-	if [ $? -ne 0 ];
+	if ! ./csi-sanity --ginkgo.v --csi.controllerendpoint=///tmp/csi.sock --csi.endpoint=/var/lib/kubelet/plugins/zfs-localpv/csi.sock --csi.testvolumeparameters=/tmp/parameters.json --csi.testsnapshotparameters=/tmp/parameters.json;
 	then
 		dumpAllLogs
 		exit 1
