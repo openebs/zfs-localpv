@@ -39,11 +39,11 @@ storageclass.storage.k8s.io/openebs-zfspv configured
 Make sure ZFS-LocalPV components are install and in running state before proceeding further
 
 ```
-$ kubectl get pods -n kube-system -l role=openebs-zfs
-NAME                       READY   STATUS    RESTARTS   AGE
-openebs-zfs-controller-0   5/5     Running   0          5m50s
-openebs-zfs-node-b42ft     2/2     Running   0          5m50s
-openebs-zfs-node-txd59     2/2     Running   0          5m50s
+$ kubectl get pods -n openebs -l role=openebs-zfs
+NAME                                              READY   STATUS    RESTARTS   AGE
+openebs-zfs-localpv-controller-f78f7467c-blr7q    5/5     Running   0          11m
+openebs-zfs-localpv-node-h46m5                    2/2     Running   0          11m
+openebs-zfs-localpv-node-svfgq                    2/2     Running   0          11m
 ```
 
 ### Import Steps

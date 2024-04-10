@@ -108,7 +108,7 @@ $ kubectl get nodes pawan-node-1 --show-labels
 NAME           STATUS   ROLES    AGE   VERSION   LABELS
 pawan-node-1   Ready    worker   16d   v1.17.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=pawan-node-1,kubernetes.io/os=linux,node-role.kubernetes.io/worker=true,openebs.io/rack=rack1
 
-$ kubectl get ds -n kube-system openebs-zfs-node -o yaml
+$ kubectl get ds -n openebs openebs-zfs-node -o yaml
 ...
 env:
   - name: OPENEBS_NODE_ID
@@ -129,13 +129,13 @@ It is recommended is to label all the nodes with the same key, they can have dif
 Once we have labeled the node, we can install the zfs driver. The driver will pick the keys from env "ALLOWED_TOPOLOGIES" and add that as the supported topology key. If the driver is already installed and you want to add a new topology information, you can edit the ZFS-LocalPV CSI driver daemon sets (openebs-zfs-node).
 
 ```sh
-$ kubectl get pods -n kube-system -l role=openebs-zfs
+$ kubectl get pods -n openebs -l role=openebs-zfs
 
-NAME                       READY   STATUS    RESTARTS   AGE
-openebs-zfs-controller-0   4/4     Running   0          5h28m
-openebs-zfs-node-4d94n     2/2     Running   0          5h28m
-openebs-zfs-node-gssh8     2/2     Running   0          5h28m
-openebs-zfs-node-twmx8     2/2     Running   0          5h28m
+NAME                                              READY   STATUS    RESTARTS   AGE
+openebs-zfs-localpv-controller-f78f7467c-blr7q    5/5     Running   0          11m
+openebs-zfs-localpv-node-h46m5                    2/2     Running   0          11m
+openebs-zfs-localpv-node-svfgq                    2/2     Running   0          11m
+openebs-zfs-localpv-node-wm9ks                    2/2     Running   0          11m
 ```
 
 We can verify that key has been registered successfully with the ZFSPV CSI Driver by checking the CSI node object yaml :-
