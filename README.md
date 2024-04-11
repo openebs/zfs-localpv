@@ -1,4 +1,4 @@
-## OpenEBS - ZFS-LocalPV CSI Driver
+## OpenEBS - LocalPV-ZFS CSI Driver
 [![Build Status](https://github.com/openebs/zfs-localpv/actions/workflows/build.yml/badge.svg)](https://github.com/openebs/zfs-localpv/actions/workflows/build.yml)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_shield)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3523/badge)](https://bestpractices.coreinfrastructure.org/en/projects/3523)
@@ -7,7 +7,7 @@
 [![Go Report](https://goreportcard.com/badge/github.com/openebs/zfs-localpv)](https://goreportcard.com/report/github.com/openebs/zfs-localpv)
 
 
-| [![opezfs](https://github.com/openebs/website/blob/main/website/public/images/svg/openzfs_logo_2024.svg.png "OpenZFS")](https://github.com/openebs/website/blob/main/website/public/images/svg/openzfs_logo_2024.svg.png) | The OpenEBS ZFS-LocalPV Data-Engine is a heavily deployed production grade CSI driver for dynamically provisioning Node Local Volumes into a K8s cluster utilizing the OpenZFS storage ZPool Data Mgmt stack as the storage backend. It integrates OpenZFS into the OpenEBS platform and exposes many ZFS services and capabilities.   |
+| [![opezfs](https://github.com/openebs/website/blob/main/website/public/images/svg/openzfs_logo_2024.svg.png "OpenZFS")](https://github.com/openebs/website/blob/main/website/public/images/svg/openzfs_logo_2024.svg.png) | The OpenEBS LocalPV-ZFS Data-Engine is a heavily deployed production grade CSI driver for dynamically provisioning Node Local Volumes into a K8s cluster utilizing the OpenZFS storage ZPool Data Mgmt stack as the storage backend. It integrates OpenZFS into the OpenEBS platform and exposes many ZFS services and capabilities.   |
 | :---  | :--- |
 <BR>
 
@@ -15,22 +15,22 @@
 
 ## Overview
 
-The ZFS-LocalPV Data-Engine became GA on Dec 2020 and is now a core component of the OpenEBS storage platform.
-Due to the major adoption of ZFS-LocalPV (+120,000 users), this Data-Engine is now being unified and integrated into the core OpenEBS Storage platform; instead of being maintained as an external Data-Engine within our project.<BR>
+The LocalPV-ZFS Data-Engine became GA on Dec 2020 and is now a core component of the OpenEBS storage platform.
+Due to the major adoption of LocalPV-ZFS (+120,000 users), this Data-Engine is now being unified and integrated into the core OpenEBS Storage platform; instead of being maintained as an external Data-Engine within our project.<BR>
 
-Our [2024 Roadmap is here](https://github.com/openebs/openebs/blob/main/ROADMAP.md). It defines a rich set of new featrues, which covers the integration of ZFS-LocalPV into the core OpenEBS platform.<br>
-Please review this roadmp and feel free to pass back any feedback on it, as well as recommend and suggest new ideas regarding ZFS-LocalPV. We welcome all your feedback.
+Our [2024 Roadmap is here](https://github.com/openebs/openebs/blob/main/ROADMAP.md). It defines a rich set of new featrues, which covers the integration of LocalPV-ZFS into the core OpenEBS platform.<br>
+Please review this roadmp and feel free to pass back any feedback on it, as well as recommend and suggest new ideas regarding LocalPV-ZFS. We welcome all your feedback.
 <br>
 
 <BR>
 
-> **ZFS-LocalPV is very popular** : Live OpenEBS systems actively report back product metrics every day, to our Global Anaytics metrics engine (unless disabled by the user).
+> **LocalPV-ZFS is very popular** : Live OpenEBS systems actively report back product metrics every day, to our Global Anaytics metrics engine (unless disabled by the user).
 > Here are our key project popularity metrics as of: 01 Mar 2024 <BR>
 >
 > :rocket: &nbsp; OpenEBS is the #1 deployed Storage Platform for Kubernetes <BR>
-> :zap: &nbsp; ZFS-LocalPV is the 2nd most deployed Data-Engine within the platform <BR>
-> :sunglasses: &nbsp; ZFS-LocalPV has +120,000 Daily Acive Users <BR>
-> :sunglasses: &nbsp; ZFS-LocalPV has +250,000 Global instllations <BR>
+> :zap: &nbsp; LocalPV-ZFS is the 2nd most deployed Data-Engine within the platform <BR>
+> :sunglasses: &nbsp; LocalPV-ZFS has +120,000 Daily Acive Users <BR>
+> :sunglasses: &nbsp; LocalPV-ZFS has +250,000 Global instllations <BR>
 > :floppy_disk: &nbsp; +49 Million OpenEBS Volumes have been deployed globally <BR>
 > :tv: &nbsp; We have +8 Million Global OpenEBS installations <BR>
 > :star: &nbsp; We are the [#1 GitHub Star ranked](https://github.com/openebs/website/blob/main/website/public/images/png/github_star-history-2024_Feb_1.png) K8s Data Storage platform <BR>
@@ -43,7 +43,7 @@ Please review this roadmp and feel free to pass back any feedback on it, as well
 ## Project info
 
 The orignal v1.0 dev roadmap [is here ](https://github.com/orgs/openebs/projects/10). This tracks our base historical engineering development work and is now somewhat out of date. We will be publish an updated 2024 Unified Roadmp soon, as ZFS-LoalPV is now being integrated and unified into the core OpenEBS storage platform.<BR>
-- The E2E Wiki [is here ](https://github.com/openebs/zfs-localpv/wiki/ZFS-LocalPV-e2e-test-cases)
+- The E2E Wiki [is here ](https://github.com/openebs/zfs-localpv/wiki/LocalPV-ZFS-e2e-test-cases)
 - The E2S Tests [are here](https://github.com/openebs/e2e-tests/projects/7).
 
 <BR>
@@ -53,7 +53,7 @@ The orignal v1.0 dev roadmap [is here ](https://github.com/orgs/openebs/projects
 ### Prerequisites
 
 > [!IMPORTANT]
-> Before installing the ZFS-LocalPV driver please make sure your Kubernetes Cluster meets the following prerequisites:
+> Before installing the LocalPV-ZFS driver please make sure your Kubernetes Cluster meets the following prerequisites:
 > 1. All the nodes must have ZFS utils package installed
 > 2. A ZPOOL has been configurred for provisioning volumes
 > 3. You have access to install RBAC components into kube-system namespace. The OpenEBS ZFS driver components are installed in kube-system namespace to allow them to be flagged as system critical components.
@@ -68,7 +68,7 @@ The orignal v1.0 dev roadmap [is here ](https://github.com/orgs/openebs/projects
 > | Kenel | oldest supported kernel is 2.6.32 |
 > | ZFS | 0.7, 0.8, 2.2.3 |
 > | Memory | ECC Memory is highly recommended |
-> | RAM | 8GiB for best perf with Dedup enabled. (Will work with 2GiB or less without dedup) |
+> | RAM | 8GiB for best perf with Dedup enabled. (Will work with 2GiB or less without Dedup) |
 
 Check the [features](./docs/features.md) supported for each k8s version.
 
@@ -174,7 +174,7 @@ poolname: "zfspv-pool"
 poolname: "zfspv-pool/child"
 ```
 
-Also the dataset provided under `poolname` must exist on *all the nodes* with the name given in the storage class. Check the doc on [storageclasses](docs/storageclasses.md) to know all the supported parameters for ZFS-LocalPV
+Also the dataset provided under `poolname` must exist on *all the nodes* with the name given in the storage class. Check the doc on [storageclasses](docs/storageclasses.md) to know all the supported parameters for LocalPV-ZFS
 
 ##### ext2/3/4 or xfs or btrfs as FsType
 
@@ -358,7 +358,7 @@ zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114    96K  4.00G    96K  legacy
 
 #### 3. Deploy the application
 
-Create the deployment yaml using the pvc backed by ZFS-LocalPV storage.
+Create the deployment yaml using the pvc backed by LocalPV-ZFS storage.
 
 ```yaml
 apiVersion: v1

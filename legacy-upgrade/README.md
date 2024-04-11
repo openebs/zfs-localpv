@@ -4,7 +4,7 @@ This upgrade strategy makes use of operator YAMLs. The use of operator YAMLs is 
 
 -------------------------------------
 
-From zfs-driver 0.6 version, the ZFS-LocalPV related CRs are now grouped together in its own group called `zfs.openebs.io`. So if we are using the driver of version less than 0.6 and want to upgrade to 0.6 release or later then we have to follow these steps. If we are already using the ZFS-LocalPV version greater or equal to 0.6 then we just have to apply the yaml from the release branch to upgrade.
+From zfs-driver 0.6 version, the LocalPV-ZFS related CRs are now grouped together in its own group called `zfs.openebs.io`. So if we are using the driver of version less than 0.6 and want to upgrade to 0.6 release or later then we have to follow these steps. If we are already using the LocalPV-ZFS version greater or equal to 0.6 then we just have to apply the yaml from the release branch to upgrade.
 
 So if my current version is 0.6 and want to upgrade to 0.7, then we can just do this to upgrade :-
 

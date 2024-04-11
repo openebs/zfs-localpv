@@ -49,7 +49,7 @@ allowed values: "yes", "no"
 
 ### shared (*optional* parameter)
 
-Shared specifies whether the volume can be shared among multiple pods. If it is not set to "yes", then the ZFS-LocalPV Driver will not allow the volumes to be mounted by more than one pods. The default value is "no" if shared is not provided in the storageclass.
+Shared specifies whether the volume can be shared among multiple pods. If it is not set to "yes", then the LocalPV-ZFS Driver will not allow the volumes to be mounted by more than one pods. The default value is "no" if shared is not provided in the storageclass.
 
 allowed values: "yes", "no"
 
@@ -59,7 +59,7 @@ Let us look at few storageclasses.
 
 ### StorageClass Backed by ZFS Dataset
 
-We can create a StorageClass with the fstype as “zfs”. Here, the ZFS-LocalPV driver will create a ZFS dataset for the persistence storage. The application will get a dataset for the storage operation. We can also provide recordsize, compression, or dedup property in the StorageClass. The dataset will be created with all the properties mentioned in the StorageClass:
+We can create a StorageClass with the fstype as “zfs”. Here, the LocalPV-ZFS driver will create a ZFS dataset for the persistence storage. The application will get a dataset for the storage operation. We can also provide recordsize, compression, or dedup property in the StorageClass. The dataset will be created with all the properties mentioned in the StorageClass:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -77,13 +77,13 @@ provisioner: zfs.csi.openebs.io
 
 We have the thinprovision option as “no” in the StorageClass, which means that do reserve the space for all the volumes provisioned using this StorageClass. We can set it to “yes” if we don’t want to reserve the space for the provisioned volumes.
 
-The allowVolumeExpansion is needed if we want to resize the volumes provisioned by the StorageClass. ZFS-LocalPV supports online volume resize, which means we don’t need to scale down the application. The new size will be visible to the application automatically.
+The allowVolumeExpansion is needed if we want to resize the volumes provisioned by the StorageClass. LocalPV-ZFS supports online volume resize, which means we don’t need to scale down the application. The new size will be visible to the application automatically.
 
 Once the storageClass is created, we can go ahead and create the PVC and deploy a pod using that PVC.
 
 ### StorageClass Backed by ZFS Volume
 
-There are a few applications that need to have different filesystems to work optimally. For example, Concourse performs best using the “btrfs” filesystem (https://github.com/openebs/zfs-localpv/issues/169). Here we can create a StorageClass with the desired fstype we want. The ZFS-LocalPV driver will create a ZVOL, which is a raw block device carved out from the mentioned ZPOOL and format it to the desired filesystem for the applications to use as persistence storage backed by ZFS Storage Pool:
+There are a few applications that need to have different filesystems to work optimally. For example, Concourse performs best using the “btrfs” filesystem (https://github.com/openebs/zfs-localpv/issues/169). Here we can create a StorageClass with the desired fstype we want. The LocalPV-ZFS driver will create a ZVOL, which is a raw block device carved out from the mentioned ZPOOL and format it to the desired filesystem for the applications to use as persistence storage backed by ZFS Storage Pool:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -104,7 +104,7 @@ We have the thinprovision option as “yes” in the StorageClass, which means t
 
 ### StorageClass for Sharing the Persistence Volumes
 
-By default, the ZFS-LocalPV driver does not allow Volumes to be mounted by more than one pod. Even if we try to do that, only one Pod will come into the running state, and the other Pod will be in ContainerCreating state, and it will be failing on the mount.
+By default, the LocalPV-ZFS driver does not allow Volumes to be mounted by more than one pod. Even if we try to do that, only one Pod will come into the running state, and the other Pod will be in ContainerCreating state, and it will be failing on the mount.
 
 If we want to share a volume among multiple pods, we can create a StorageClass with the “shared” option as “yes”. For this, we can create a StorageClass backed by ZFS dataset as below :
 
@@ -140,7 +140,7 @@ Here, we have to note that all the Pods using that volume will come to the same 
 
 ### StorageClass With k8s Scheduler
 
-The ZFS-LocalPV Driver has two types of its own scheduling logic, VolumeWeighted and CapacityWeighted (Supported from zfs-driver:1.3.0+). To choose any one of the scheduler add scheduler parameter in storage class and give its value accordingly.
+The LocalPV-ZFS Driver has two types of its own scheduling logic, VolumeWeighted and CapacityWeighted (Supported from zfs-driver:1.3.0+). To choose any one of the scheduler add scheduler parameter in storage class and give its value accordingly.
 ```
 parameters:
  scheduler: "VolumeWeighted"
@@ -164,7 +164,7 @@ provisioner: zfs.csi.openebs.io
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-Here, in this case, the Kubernetes scheduler will select a node for the POD and then ask the ZFS-LocalPV driver to create the volume on the selected node. The driver will create the volume where the POD has been scheduled.
+Here, in this case, the Kubernetes scheduler will select a node for the POD and then ask the LocalPV-ZFS driver to create the volume on the selected node. The driver will create the volume where the POD has been scheduled.
 
 From zfs-driver version 1.6.0+, pvc will not be bound till the provisioner succesfully creates the volume on node. Previously, pvc gets bound even if zfs volume creation on nodes keeps failing because scheduler used to return only a single node and provisioner keeps trying to provision the volume on that node only. Now onwards scheduler will return the list of nodes that satisfies the provided topology constraints. Then csi controller will continuosly attempt the volume creation on all these nodes and till volume is created on any of the node or volume creation gets failed on all the nodes. PVC will be bound to a PV only if volume creation succeeds on any one of the nodes.
 
@@ -189,7 +189,7 @@ allowedTopologies:
      - node-2
 ```
 
-At the same time, you must set env variables in the ZFS-LocalPV CSI driver daemon sets (openebs-zfs-node) so that it can pick the node label as the supported topology. It adds "openebs.io/nodename" as default topology key. If the key doesn't exist in the node labels when the CSI ZFS driver register, the key will not add to the topologyKeys. Set more than one keys separated by commas.
+At the same time, you must set env variables in the LocalPV-ZFS CSI driver daemon sets (openebs-zfs-node) so that it can pick the node label as the supported topology. It adds "openebs.io/nodename" as default topology key. If the key doesn't exist in the node labels when the CSI ZFS driver register, the key will not add to the topologyKeys. Set more than one keys separated by commas.
 
 ```yaml
 env:
@@ -242,7 +242,7 @@ $ kubectl edit ds -n openebs openebs-zfs-node
 
 Here we can have ZFS Pool of name “zfspv-pool” created on the nvme disks and want to use this high performing ZFS Pool for the applications that need higher IOPS. We can use the above SorageClass to create the PVC and deploy the application using that.
 
-The ZFS-LocalPV driver will create the Volume in the Pool “zfspv-pool” present on the node  which will be seleted based on scheduler we chose in storage-class. In the above StorageClass, if total capacity of provisioned volumes on node-1 is less, it will create the volume on node-1 only. Alternatively, we can use `volumeBindingMode: WaitForFirstConsumer` to let the k8s select the node where the volume should be provisioned.
+The LocalPV-ZFS driver will create the Volume in the Pool “zfspv-pool” present on the node  which will be seleted based on scheduler we chose in storage-class. In the above StorageClass, if total capacity of provisioned volumes on node-1 is less, it will create the volume on node-1 only. Alternatively, we can use `volumeBindingMode: WaitForFirstConsumer` to let the k8s select the node where the volume should be provisioned.
 
 The problem with the above StorageClass is that it works fine if the number of nodes is less, but if the number of nodes is huge, it is cumbersome to list all the nodes like this. In that case, what we can do is, we can label all the similar nodes using the same key value and use that label to create the StorageClass.
 
@@ -253,7 +253,7 @@ pawan@pawan-master:~/pawan$ kubectl label node pawan-node-1 openebs.io/zpool=nvm
 node/pawan-node-1 labeled
 ```
 
-Add "openebs.io/zpool" to the ZFS-LocalPV CSI driver daemon sets env(ALLOWED_TOPOLOGIES). Now, we can create the StorageClass like this:
+Add "openebs.io/zpool" to the LocalPV-ZFS CSI driver daemon sets env(ALLOWED_TOPOLOGIES). Now, we can create the StorageClass like this:
 
 ```yaml
 apiVersion: storage.k8s.io/v1

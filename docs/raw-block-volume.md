@@ -32,7 +32,7 @@ spec:
       storage: 5Gi
 ```
 
-Now we can deploy the application using the above PVC, the ZFS-LocalPV driver will attach a Raw block device at the given mount path. We can provide the device path using volumeDevices in the application yaml :-
+Now we can deploy the application using the above PVC, the LocalPV-ZFS driver will attach a Raw block device at the given mount path. We can provide the device path using volumeDevices in the application yaml :-
 
 ```yaml
 apiVersion: apps/v1
