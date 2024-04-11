@@ -15,9 +15,9 @@ labels: Bug
 **The output of the following commands will help us better understand what's going on**:
 (Pasting long output into a [GitHub gist](https://gist.github.com) or other [Pastebin](https://pastebin.com/) is fine.)
 
-* `kubectl logs -f openebs-zfs-controller-0 -n kube-system -c openebs-zfs-plugin`
-* `kubectl logs -f openebs-zfs-node-[xxxx] -n kube-system -c openebs-zfs-plugin`
-* `kubectl get pods -n kube-system`
+* `kubectl logs -f openebs-zfs-controller-f78f7467c-blr7q -n openebs -c openebs-zfs-plugin`
+* `kubectl logs -f openebs-zfs-node-[xxxx] -n openebs -c openebs-zfs-plugin`
+* `kubectl get pods -n openebs`
 * `kubectl get zv -A -o yaml`
 
 **Anything else you would like to add:**

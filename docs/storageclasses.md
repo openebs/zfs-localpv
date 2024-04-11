@@ -237,7 +237,7 @@ spec:
 If you want to change topology keys, just set new env(ALLOWED_TOPOLOGIES) .Check [faq](./faq.md#6-how-to-add-custom-topology-key) for more details.
 
 ```
-$ kubectl edit ds -n kube-system openebs-zfs-node
+$ kubectl edit ds -n openebs openebs-zfs-node
 ```
 
 Here we can have ZFS Pool of name “zfspv-pool” created on the nvme disks and want to use this high performing ZFS Pool for the applications that need higher IOPS. We can use the above SorageClass to create the PVC and deploy the application using that.
