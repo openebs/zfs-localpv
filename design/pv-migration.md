@@ -1,5 +1,5 @@
 ---
-title: Volume Migration for ZFS-LocalPV
+title: Volume Migration for LocalPV-ZFS
 authors:
   - "@pawanpraka1"
 owners:
@@ -8,7 +8,7 @@ creation-date: 2021-05-21
 last-updated: 2021-05-21
 ---
 
-# Volume Migration for ZFS-LocalPV
+# Volume Migration for LocalPV-ZFS
 
 ## Table of Contents
 
@@ -27,11 +27,11 @@ last-updated: 2021-05-21
 
 ## Summary
 
-This is a design proposal to implement a feature for migrating a volume from one node to another node. This doc describes how we can move the persistence volumes and the application to the other node for ZFS-LocalPV CSI Driver. This design expects that the administrators will move the disks to the new node and will import the pool there as part of replacing the node. The goal of this design is volume and the pod using the volume should be moved to the new nodes. This design also assumes that admins are not having large number of ZFS POOLs configured on a node.
+This is a design proposal to implement a feature for migrating a volume from one node to another node. This doc describes how we can move the persistence volumes and the application to the other node for LocalPV-ZFS CSI Driver. This design expects that the administrators will move the disks to the new node and will import the pool there as part of replacing the node. The goal of this design is volume and the pod using the volume should be moved to the new nodes. This design also assumes that admins are not having large number of ZFS POOLs configured on a node.
 
 ## Problem
 
-The problem with the LocalPV is, it has the affinity set on the PersistenceVolume object. This will let k8s scheduler to schedule the pods to that node as data is there only. ZFS-LocalPV driver uses nodename to set the affinity which creates the problem here as if we are replacing a node, the node name will change and k8s scheduler will not be able to schedule the pods to the new node even if we have moved the disks there.
+The problem with the LocalPV is, it has the affinity set on the PersistenceVolume object. This will let k8s scheduler to schedule the pods to that node as data is there only. LocalPV-ZFS driver uses nodename to set the affinity which creates the problem here as if we are replacing a node, the node name will change and k8s scheduler will not be able to schedule the pods to the new node even if we have moved the disks there.
 
 ## Current Solution
 
@@ -44,11 +44,11 @@ The problem with the above approach is we can not move the volumes to any existi
 
 ### Keys Per ZPOOL
 
-We are proposing to have a key dedicated to ZFS POOL. This key will be used by the ZFS-LocalPV driver to set the label on the nodes where it is present. In this way we can allow the ZFS POOLs to move from any node to any other node as the key is tied to the ZFS POOL as opposed to keeping it per node. We are proposing to have a `guid.zfs.openebs.io/<pool-guid>=true` label on the node where the pool is present. Assuming admins do not have large number of pools on a node, there will be not much label set on a node.
+We are proposing to have a key dedicated to ZFS POOL. This key will be used by the LocalPV-ZFS driver to set the label on the nodes where it is present. In this way we can allow the ZFS POOLs to move from any node to any other node as the key is tied to the ZFS POOL as opposed to keeping it per node. We are proposing to have a `guid.zfs.openebs.io/<pool-guid>=true` label on the node where the pool is present. Assuming admins do not have large number of pools on a node, there will be not much label set on a node.
 
 ### Migrator
 
-ZFS POOL name should be same across all the nodes for ZFS-LocalPV. So, we have to rename the ZFS POOLs if we are moving it to any existing node. We need a Migrator workflow to update the POOL name in the ZFSVolume object. This will find all the volumes present in a ZFS POOL on that node and updates the ZFSVolume object with the correct PoolName.
+ZFS POOL name should be same across all the nodes for LocalPV-ZFS. So, we have to rename the ZFS POOLs if we are moving it to any existing node. We need a Migrator workflow to update the POOL name in the ZFSVolume object. This will find all the volumes present in a ZFS POOL on that node and updates the ZFSVolume object with the correct PoolName.
 
 **Note:** We can not edit PV volumeAttributes with the new pool name as it is immutable field.
 
@@ -57,7 +57,7 @@ The migrator will look for all the volumes for all the pools present on the node
 ### Workflow
 
 - user will setup all the nodes and setup the ZFS pool on each of those nodes.
-- the ZFS-LocalPV CSI driver will look for all the pools on the node and will set the `guid.zfs.openebs.io/<pool-guid>=true` label for all ZFS POOLs that is present on that node. Let's say node-1 has two pools(say pool1 with guid as 14820954593456176137 and pool2 with guid as 16291571091328403547) present then the labels will be like this :
+- the LocalPV-ZFS CSI driver will look for all the pools on the node and will set the `guid.zfs.openebs.io/<pool-guid>=true` label for all ZFS POOLs that is present on that node. Let's say node-1 has two pools(say pool1 with guid as 14820954593456176137 and pool2 with guid as 16291571091328403547) present then the labels will be like this :
 ```
 $ kubectl get node pawan-node-1 --show-labels
 NAME           STATUS   ROLES    AGE    VERSION   LABELS
@@ -67,17 +67,17 @@ node-1   Ready    worker   351d   v1.17.4   beta.kubernetes.io/arch=amd64,beta.k
 
 #### 1. if node2 is a fresh node
 
-- we can simply import the pool and restart the ZFS-LocalPV driver to make it aware of that pool to set the corresponding node topology
-- the ZFS-LocalPV driver will look for `guid.zfs.openebs.io/14820954593456176137=true` and will remove the label from the nodes where pool is not present
-- the ZFS-LocalPV driver will update the new node with `guid.zfs.openebs.io/14820954593456176137=true` label
+- we can simply import the pool and restart the LocalPV-ZFS driver to make it aware of that pool to set the corresponding node topology
+- the LocalPV-ZFS driver will look for `guid.zfs.openebs.io/14820954593456176137=true` and will remove the label from the nodes where pool is not present
+- the LocalPV-ZFS driver will update the new node with `guid.zfs.openebs.io/14820954593456176137=true` label
 - the migrator will look for ZFSVolume resource and update the OwnerNodeID with the new node id for all the volumes.
 - the k8s scheduler will be able to see the new label and should schedule the pods to this new node.
 
 #### 2. if node2 is existing node and Pool of the same name is present there
 
-- here we need to import the pool with the different name and restart the ZFS-LocalPV driver to make it aware of that pool to set the corresponding node topology
-- the ZFS-LocalPV driver will look for `guid.zfs.openebs.io/14820954593456176137=true` and will remove the label from the nodes where the pool is not present
-- the ZFS-LocalPV driver will update the new node with `guid.zfs.openebs.io/14820954593456176137=true` label
+- here we need to import the pool with the different name and restart the LocalPV-ZFS driver to make it aware of that pool to set the corresponding node topology
+- the LocalPV-ZFS driver will look for `guid.zfs.openebs.io/14820954593456176137=true` and will remove the label from the nodes where the pool is not present
+- the LocalPV-ZFS driver will update the new node with `guid.zfs.openebs.io/14820954593456176137=true` label
 - the migrator will look for ZFSVolume resource and update the PoolName and OwnerNodeID for all the volumes.
 - the k8s scheduler will be able to see the new label and should schedule the pods to this new node.
 

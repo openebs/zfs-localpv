@@ -161,4 +161,4 @@ Status:
 Events:   <none>
 ```
 
-The ZFS-LocalPV driver creates an internal snapshot on the source volume with the name same as clone volume name and then creates the clone from that snapshot. Here you can note that this resource has Snapname field which tells that this volume is created from that internal snapshot.
+The LocalPV-ZFS driver creates an internal snapshot on the source volume with the name same as clone volume name and then creates the clone from that snapshot. Here you can note that this resource has Snapname field which tells that this volume is created from that internal snapshot.

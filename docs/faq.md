@@ -1,8 +1,8 @@
-### 1. What is ZFS-LocalPV
+### 1. What is LocalPV-ZFS
 
-ZFS-LocalPV is a CSI driver for dynamically provisioning a volume in ZFS storage. It also takes care of tearing down the volume from the ZFS storage once volume is deprovisioned.
+LocalPV-ZFS is a CSI driver for dynamically provisioning a volume in ZFS storage. It also takes care of tearing down the volume from the ZFS storage once volume is deprovisioned.
 
-### 2. How to install ZFS-LocalPV
+### 2. How to install LocalPV-ZFS
 
 Make sure that all the nodes have zfsutils-linux installed. We should go to the each node of the cluster and install zfs utils
 
@@ -126,7 +126,7 @@ env:
 ```
 It is recommended is to label all the nodes with the same key, they can have different values for the given keys, but all keys should be present on all the worker node.
 
-Once we have labeled the node, we can install the zfs driver. The driver will pick the keys from env "ALLOWED_TOPOLOGIES" and add that as the supported topology key. If the driver is already installed and you want to add a new topology information, you can edit the ZFS-LocalPV CSI driver daemon sets (openebs-zfs-node).
+Once we have labeled the node, we can install the zfs driver. The driver will pick the keys from env "ALLOWED_TOPOLOGIES" and add that as the supported topology key. If the driver is already installed and you want to add a new topology information, you can edit the LocalPV-ZFS CSI driver daemon sets (openebs-zfs-node).
 
 ```sh
 $ kubectl get pods -n openebs -l role=openebs-zfs
@@ -238,13 +238,13 @@ spec:
 
 Then driver will find the nearest size in Mi, the size allocated will be ((1G + 1Mi - 1) / Mi) * Mi, which will be 954Mi.
 
-PVC size as zero in not a valid capacity. The minimum allocatable size for the ZFS-LocalPV driver is 1Mi, which means that if we are requesting 1 byte of storage space then 1Mi will be allocated for the volume.
+PVC size as zero in not a valid capacity. The minimum allocatable size for the LocalPV-ZFS driver is 1Mi, which means that if we are requesting 1 byte of storage space then 1Mi will be allocated for the volume.
 
 ### 8. How to migrate PVs to the new node in case old node is not accessible
 
-The ZFS-LocalPV driver will set affinity on the PV to make the volume stick to the node so that pod gets scheduled to that node only where the volume is present. Now, the problem here is, when that node is not accesible due to some reason and we move the disks to a new node and import the pool there, the pods will not be scheduled to this node as k8s scheduler will be looking for that node only to schedule the pod.
+The LocalPV-ZFS driver will set affinity on the PV to make the volume stick to the node so that pod gets scheduled to that node only where the volume is present. Now, the problem here is, when that node is not accesible due to some reason and we move the disks to a new node and import the pool there, the pods will not be scheduled to this node as k8s scheduler will be looking for that node only to schedule the pod.
 
-From release 1.7.0 of ZFS-LocalPV, the driver has the ability to use the user defined affinity for creating the PV. While deploying the ZFS-LocalPV driver, first we should label all the nodes using the key `openebs.io/nodeid` with some unique value.
+From release 1.7.0 of LocalPV-ZFS, the driver has the ability to use the user defined affinity for creating the PV. While deploying the LocalPV-ZFS driver, first we should label all the nodes using the key `openebs.io/nodeid` with some unique value.
 ```
 $ kubectl label node node-1 openebs.io/nodeid=custom-value-1
 ```

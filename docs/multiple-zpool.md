@@ -65,7 +65,7 @@ provisioner: zfs.csi.openebs.io
 
 - CSI driver will handle CSI request for volume create
 - CSI driver will read the request parameters and create ZFSVolume resources:
-- ZFSVolume will be watched by the ZFS-LocalPV node agent and will check the poolpattern parameter.
+- ZFSVolume will be watched by the LocalPV-ZFS node agent and will check the poolpattern parameter.
 - The node agent will find all the zpool matching the poolpattern parameter regx and will pick the one which has highest free space available.
 - now the node agent will go ahead and create the volume in the selected zfs pool
 - the node agent will also update the poolname parameter with the selected poolname
@@ -106,7 +106,7 @@ At CSI, when we get a Create Volume request, it will first try to find a node wh
 In CreateVolume call, we will have the list of nodes where the ZFS pools are present and the volume should be created in any one of the node present in the list.
 
 ### 2. Agent Volume Controller
-ZFS-LocalPV driver will create the PV object on scheduled node so that the applcation using that PV always comes to the same node and also it creates the ZFSVolume object for that volume in order to manage the creation of the ZFS dataset. There will be a watcher at each node which will be watching for the ZFSVolume resource which is aimed for them. The watcher is inbuilt into ZFS node-agent. As soon as ZFSVolume object is created for a node, the corresponding watcher will get the add event and it will check for the zpools present on that node whcih satisfies the poolpattern parameter. It will create a list of all the zfs pools matching the poolpattern regx and will pick the pool which has highest free space available which can accomodate the volume creation request. Once volume is created successfully, the node agent will update the ZFSVolume CR with poolname it has selected to create the volume
+LocalPV-ZFS driver will create the PV object on scheduled node so that the applcation using that PV always comes to the same node and also it creates the ZFSVolume object for that volume in order to manage the creation of the ZFS dataset. There will be a watcher at each node which will be watching for the ZFSVolume resource which is aimed for them. The watcher is inbuilt into ZFS node-agent. As soon as ZFSVolume object is created for a node, the corresponding watcher will get the add event and it will check for the zpools present on that node whcih satisfies the poolpattern parameter. It will create a list of all the zfs pools matching the poolpattern regx and will pick the pool which has highest free space available which can accomodate the volume creation request. Once volume is created successfully, the node agent will update the ZFSVolume CR with poolname it has selected to create the volume
 
 
 ## Implementation Plan

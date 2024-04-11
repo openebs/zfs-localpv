@@ -1,24 +1,24 @@
-## Import Existing Volumes to ZFS-LocalPV
+## Import Existing Volumes to LocalPV-ZFS
 
 
 ### Introduction
 
-There can be cases where node can not be recovered from the failure condition, in that case application can not come into running state as k8s will try to schedule it to the same node as the data is there on that node only. Also, there can be cases where people want to attach the existing volume to the ZFS-LocalPV driver. 
+There can be cases where node can not be recovered from the failure condition, in that case application can not come into running state as k8s will try to schedule it to the same node as the data is there on that node only. Also, there can be cases where people want to attach the existing volume to the LocalPV-ZFS driver. 
 
-In case of node failure, we can move the disks to the other node and import the pool there. All the volumes and their data will be intact as disks are still in good shape. Now we can just attach those volumes to the ZFS-LocalPV driver and everything will work seamlessly.
+In case of node failure, we can move the disks to the other node and import the pool there. All the volumes and their data will be intact as disks are still in good shape. Now we can just attach those volumes to the LocalPV-ZFS driver and everything will work seamlessly.
 
-Here, I will walk through the steps to attach the existing volumes to the ZFS-LocalPV CSI driver.
+Here, I will walk through the steps to attach the existing volumes to the LocalPV-ZFS CSI driver.
 
 ### Prerequisites
 
-- We should have ZFS-LocalPV Driver(version 0.6 or later) installed.
+- We should have LocalPV-ZFS Driver(version 0.6 or later) installed.
 - volume should be present which you want to import
 
 ### Setup
 
 #### Storageclass
 
-Setup a storageclaass which will be used for importing the volumes to ZFS-LocalPV
+Setup a storageclaass which will be used for importing the volumes to LocalPV-ZFS
 
 ```
 $ cat sc.yaml
@@ -36,7 +36,7 @@ $ kubectl apply -f sc.yaml
 storageclass.storage.k8s.io/openebs-zfspv configured
 ```
 
-Make sure ZFS-LocalPV components are install and in running state before proceeding further
+Make sure LocalPV-ZFS components are install and in running state before proceeding further
 
 ```
 $ kubectl get pods -n openebs -l role=openebs-zfs
@@ -60,7 +60,7 @@ zfspv-pool          11.6M   246G    20K  /zfspv-pool
 zfspv-pool/fio-vol    24K  4.00G    24K  /zfspv-pool/fio-vol
 ```
 
-Here in the above ZPOOL, a dataset of name "fio-vol" is present and we want to import that to the ZFS-LocalPV CSI driver. First if volume is mounted then we have to unmount it so that it can be mounted by ZFS-LocalPV driver. For ZFS dataset use `zfs umount` command and for zvol we use `umount` command to unmount the volume. We also need to set the mount point for datasets to legacy, we can use `zfs set mountpoint=legacy <dataset>` command for that.
+Here in the above ZPOOL, a dataset of name "fio-vol" is present and we want to import that to the LocalPV-ZFS CSI driver. First if volume is mounted then we have to unmount it so that it can be mounted by LocalPV-ZFS driver. For ZFS dataset use `zfs umount` command and for zvol we use `umount` command to unmount the volume. We also need to set the mount point for datasets to legacy, we can use `zfs set mountpoint=legacy <dataset>` command for that.
 
 Get the volume size :
 
@@ -132,9 +132,9 @@ NAME         CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM       
 fio-vol-pv   4Gi        RWO            Retain           Available   default/fio-vol-pvc   openebs-zfspv            1s
 ```
 
-#### Step 2 : Attach The Volume With ZFS-LocalPV
+#### Step 2 : Attach The Volume With LocalPV-ZFS
 
-If the volume is a zfs dataset, then create ZFS-LocalPV resource with volumeType as "DATASET", otherwise it should be "ZVOL".
+If the volume is a zfs dataset, then create LocalPV-ZFS resource with volumeType as "DATASET", otherwise it should be "ZVOL".
 
 ```
 $ cat zfspvcr.yaml
@@ -162,7 +162,7 @@ Modify the parameters :-
 - ownerNodeID which is node where the pool is present.
 - volumeType should be DATASET if fstype is "zfs" otherwise it should be "ZVOL"
 
-The volume has now been imported to the cluster using the ZFS-LocalPV CSI driver. Please note that in the YAML above, we have added a finalizer `zfs.openebs.io/finalizer`. This says that the volume is managed by the ZFS-LocalPV Driver. If you delete the ZFSVolume object, the corresponding volume (dataset or zvol) will also be deleted from the ZFS pool. If you don't want the volume to be managed by ZFS-LocalPV, please remove the finalizer from the YAML above. In this case, if you delete the ZFSVolume object, the dataset/zvol will not be deleted from the ZFS pool.
+The volume has now been imported to the cluster using the LocalPV-ZFS CSI driver. Please note that in the YAML above, we have added a finalizer `zfs.openebs.io/finalizer`. This says that the volume is managed by the LocalPV-ZFS Driver. If you delete the ZFSVolume object, the corresponding volume (dataset or zvol) will also be deleted from the ZFS pool. If you don't want the volume to be managed by LocalPV-ZFS, please remove the finalizer from the YAML above. In this case, if you delete the ZFSVolume object, the dataset/zvol will not be deleted from the ZFS pool.
 
 If you want, you can also add your own finalizer with or without `zfs.openebs.io/finalizer`. The driver will wait for your finalizer to be removed before it tries to delete the volume from the ZFS pool. If you are setting your own finalizer on the ZFSVolume object, be sure to remove the finalizer first before trying to delete it.
 

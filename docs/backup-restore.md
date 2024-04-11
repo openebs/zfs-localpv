@@ -1,12 +1,12 @@
-# Backup and Restore for ZFS-LocalPV Volumes
+# Backup and Restore for LocalPV-ZFS Volumes
 
 ## Prerequisites
 
-We should have installed the ZFS-LocalPV 1.0.0 or later version for the Backup and Restore, see [readme](../README.md) for the steps to install the ZFS-LocalPV driver.
+We should have installed the LocalPV-ZFS 1.0.0 or later version for the Backup and Restore, see [readme](../README.md) for the steps to install the LocalPV-ZFS driver.
 
 | Project | Minimum Version |
 | :--- | :--- |
-| ZFS-LocalPV | 1.0.0+ |
+| LocalPV-ZFS | 1.0.0+ |
 | Velero | 1.5+ |
 | Velero-Plugin | 2.2.0+ |
 
@@ -46,7 +46,7 @@ If you would like to use cloud storage like AWS-S3 buckets for storing backups, 
 velero install --provider aws --bucket <bucket_name> --secret-file <./aws-iam-creds> --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=<bucket_region>,s3ForcePathStyle="true" --use-volume-snapshots=true --use-restic
 ```
 
-We have to install the velero 1.5 or later version for ZFS-LocalPV.
+We have to install the velero 1.5 or later version for LocalPV-ZFS.
 
 ### c. Deploy MinIO
 
@@ -71,19 +71,19 @@ restic-k7k4s              1/1     Running     0          69s
 velero-7d9c448bc5-j424s   1/1     Running     3          69s
 ```
 
-### d. Setup ZFS-LocalPV Plugin
+### d. Setup LocalPV-ZFS Plugin
 
-We can Install the Velero Plugin for ZFS-LocalPV using below command
+We can Install the Velero Plugin for LocalPV-ZFS using below command
 
 ```
 velero plugin add openebs/velero-plugin:2.2.0
 ```
 
-We have to install the velero-plugin 2.2.0 or later version which has the support for ZFS-LocalPV. Once setup is done, we can go ahead and create the backup/restore.
+We have to install the velero-plugin 2.2.0 or later version which has the support for LocalPV-ZFS. Once setup is done, we can go ahead and create the backup/restore.
 
 ## Create Backup
 
-We can create 3 kind of backups for ZFS-LocalPV. Let us go through them one by one:
+We can create 3 kind of backups for LocalPV-ZFS. Let us go through them one by one:
 
 ### 1. Create the *Full* Backup
 
@@ -100,20 +100,20 @@ spec:
   config:
     bucket: velero
     prefix: zfs
-    namespace: openebs # this is the namespace where ZFS-LocalPV creates all the CRs, passed as OPENEBS_NAMESPACE env in the ZFS-LocalPV deployment
+    namespace: openebs # this is the namespace where LocalPV-ZFS creates all the CRs, passed as OPENEBS_NAMESPACE env in the LocalPV-ZFS deployment
     provider: aws
     region: minio
     s3ForcePathStyle: "true"
     s3Url: http://minio.velero.svc:9000
 ```
 
-The volume snapshot location has the information about where the snapshot should be stored. Here we have to provide the namespace which we have used as OPENEBS_NAMESPACE env while deploying the ZFS-LocalPV. The ZFS-LocalPV Operator yamls uses "openebs" as default value for OPENEBS_NAMESPACE env. Verify the volumesnapshot location:
+The volume snapshot location has the information about where the snapshot should be stored. Here we have to provide the namespace which we have used as OPENEBS_NAMESPACE env while deploying the LocalPV-ZFS. The LocalPV-ZFS Operator yamls uses "openebs" as default value for OPENEBS_NAMESPACE env. Verify the volumesnapshot location:
 
 ```
 kubectl get volumesnapshotlocations.velero.io -n velero
 ```
 
-Now, we can execute velero backup command using the above VolumeSnapshotLocation and the ZFS-LocalPV plugin will take the full backup. We can use the below velero command to create the full backup, we can add all the namespaces we want to be backed up in a comma separated format in --include-namespaces parameter.
+Now, we can execute velero backup command using the above VolumeSnapshotLocation and the LocalPV-ZFS plugin will take the full backup. We can use the below velero command to create the full backup, we can add all the namespaces we want to be backed up in a comma separated format in --include-namespaces parameter.
 
 ```
 velero backup create my-backup --snapshot-volumes --include-namespaces=<backup-namespace> --volume-snapshot-locations=zfspv-full --storage-location=default
@@ -144,7 +144,7 @@ spec:
   config:
     bucket: velero
     prefix: zfs
-    namespace: openebs # this is the namespace where ZFS-LocalPV creates all the CRs, passed as OPENEBS_NAMESPACE env in the ZFS-LocalPV deployment
+    namespace: openebs # this is the namespace where LocalPV-ZFS creates all the CRs, passed as OPENEBS_NAMESPACE env in the LocalPV-ZFS deployment
     provider: aws
     region: minio
     s3ForcePathStyle: "true"
@@ -157,7 +157,7 @@ Update the above VolumeSnapshotLocation with namespace and other fields accordin
 kubectl get volumesnapshotlocations.velero.io -n velero
 ```
 
-Now, we can create a backup schedule using the above VolumeSnapshotLocation and the ZFS-LocalPV plugin will take the full backup of the resources periodically. For example, to take the full backup at every 5 min, we can create the below schedule :
+Now, we can create a backup schedule using the above VolumeSnapshotLocation and the LocalPV-ZFS plugin will take the full backup of the resources periodically. For example, to take the full backup at every 5 min, we can create the below schedule :
 
 ```
 velero create schedule schd --schedule="*/5 * * * *" --snapshot-volumes --include-namespaces=<backup-namespace1>,<backup-namespace2> --volume-snapshot-locations=zfspv-full --storage-location=default
@@ -192,7 +192,7 @@ spec:
     bucket: velero
     prefix: zfs
     incrBackupCount: "3" # number of incremental backups we want to have
-    namespace: openebs # this is the namespace where ZFS-LocalPV creates all the CRs, passed as OPENEBS_NAMESPACE env in the ZFS-LocalPV deployment
+    namespace: openebs # this is the namespace where LocalPV-ZFS creates all the CRs, passed as OPENEBS_NAMESPACE env in the LocalPV-ZFS deployment
     provider: aws
     region: minio
     s3ForcePathStyle: "true"
@@ -205,13 +205,13 @@ Update the above VolumeSnapshotLocation with namespace and other fields accordin
 kubectl get volumesnapshotlocations.velero.io -n velero
 ```
 
-If we have created a backup schedule using the above VolumeSnapshotLocation, the ZFS-LocalPV plugin will start taking the incremental backups. Here, we have to provide `incrBackupCount` parameter which indicates that how many incremental backups we should keep before taking the next full backup. So, in the above case the ZFS-LocalPV plugin will create full backup first and then it will create three incremental backups and after that it will again create a full backup followed by three incremental backups and so on.
+If we have created a backup schedule using the above VolumeSnapshotLocation, the LocalPV-ZFS plugin will start taking the incremental backups. Here, we have to provide `incrBackupCount` parameter which indicates that how many incremental backups we should keep before taking the next full backup. So, in the above case the LocalPV-ZFS plugin will create full backup first and then it will create three incremental backups and after that it will again create a full backup followed by three incremental backups and so on.
 
 For Restore, we need to have the full backup and all the in between the incremental backups available. All the incremental backups are linked to its previous backup, so this link should not be broken otherwise restore will fail.
 
 One thing to note here is `incrBackupCount` parameter defines how many incremental backups we want, it does not include the first full backup. While doing the restore, we just need to give the backup name which we want to restore. The plugin is capable of identifying the incremental backup group and will restore from the full backup and keep restoring the incremental backup till the backup name provided in the restore command.
 
-Now we can create a backup schedule using the above VolumeSnapshotLocation and the ZFS-LocalPV plugin will take care of taking the backup of the resources periodically. For example, to take the incremental backup at every 5 min, we can create the below schedule :
+Now we can create a backup schedule using the above VolumeSnapshotLocation and the LocalPV-ZFS plugin will take care of taking the backup of the resources periodically. For example, to take the incremental backup at every 5 min, we can create the below schedule :
 
 ```
 velero create schedule schd --schedule="*/5 * * * *" --snapshot-volumes --include-namespaces=<backup-namespace1>,<backup-namespace2> --volume-snapshot-locations=zfspv-incr --storage-location=default --ttl 60m
@@ -303,7 +303,7 @@ data:
   pawan-old-node2: pawan-new-node2
 ```
 
-While doing the restore the ZFS-LocalPV plugin will set the affinity on the PV as per the node mapping provided in the config map. Here in the above case the PV created on nodes `pawan-old-node1` and `pawan-old-node2` will be moved to `pawan-new-node1` and `pawan-new-node2` respectively.
+While doing the restore the LocalPV-ZFS plugin will set the affinity on the PV as per the node mapping provided in the config map. Here in the above case the PV created on nodes `pawan-old-node1` and `pawan-old-node2` will be moved to `pawan-new-node1` and `pawan-new-node2` respectively.
 
 ## Things to Consider:
 

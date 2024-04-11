@@ -1,8 +1,8 @@
-# OpenEBS ZFS-LocalPV Adopters
+# OpenEBS LocalPV-ZFS Adopters
 
-This is the list of organizations and users that publicly shared details of how they are using OpenEBS ZFS-LocalPV CSI driver for running their Stateful workloads. Please send PRs to add or remove organizations/users.
+This is the list of organizations and users that publicly shared details of how they are using OpenEBS LocalPV-ZFS CSI driver for running their Stateful workloads. Please send PRs to add or remove organizations/users.
 
-The list of organizations that have publicly shared the usage of ZFS-LocalPV.
+The list of organizations that have publicly shared the usage of LocalPV-ZFS.
 
 
 | Organization | Stateful Workloads | Success Story |
@@ -13,7 +13,7 @@ The list of organizations that have publicly shared the usage of ZFS-LocalPV.
 
 
 
-The list of users that have publicly shared the usage of ZFS-LocalPV.
+The list of users that have publicly shared the usage of LocalPV-ZFS.
 
 
 | User | Stateful Workloads | Success Story |

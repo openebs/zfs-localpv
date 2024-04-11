@@ -1,4 +1,4 @@
-## ZFS-LocalPV Volume Resize
+## LocalPV-ZFS Volume Resize
 
 We can resize the volume by updating the PVC yaml to the desired size and apply it. The ZFS Driver will take care of updating the quota in case of dataset. If we are using a Zvol and have mounted it as ext2/3/4 or xfs file system, the driver will take care of expanding the volume via reize2fs/xfs_growfs binaries.
 

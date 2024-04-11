@@ -18,7 +18,7 @@ labels: Enhancement
 
 
 **Environment:**
-- ZFS-LocalPV version
+- LocalPV-ZFS version
 - Kubernetes version (use `kubectl version`):
 - Kubernetes installer & version:
 - Cloud provider or hardware configuration:

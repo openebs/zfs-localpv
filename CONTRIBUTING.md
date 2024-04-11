@@ -9,7 +9,7 @@ ZFS LocalPV uses the standard GitHub pull requests process to review and accept 
 
 ## Steps to Contribute
 
-ZFS-LocalPV is an Apache 2.0 Licensed project and all your commits should be signed with Developer Certificate of Origin. See [Sign your work](#sign-your-work).
+LocalPV-ZFS is an Apache 2.0 Licensed project and all your commits should be signed with Developer Certificate of Origin. See [Sign your work](#sign-your-work).
 
 * Find an issue to work on or create a new issue. The issues are maintained at [zfs-localpv/issues](https://github.com/openebs/zfs-localpv/issues). You can pick up from a list of [good-first-issues](https://github.com/openebs/zfs-localpv/labels/good%20first%20issue).
 * Claim your issue by commenting your intent to work on it to avoid duplication of efforts.

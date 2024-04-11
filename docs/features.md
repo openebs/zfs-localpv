@@ -1,6 +1,6 @@
 ### Features
 
-| Features | ZFS-LocalPV Version | K8S Version |
+| Features | LocalPV-ZFS Version | K8S Version |
 | :--- | :--- | :--- |
 | Volume Provisioning | 0.2+ | 1.14+ |
 | Volume Deprovisioning | 0.2+ | 1.14+ |
