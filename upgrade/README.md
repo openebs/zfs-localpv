@@ -1,1 +1,1 @@
-Please refer to the documentation at https://openebs.io/docs/main.
+Please refer to the documentation at https://openebs.io/docs.
