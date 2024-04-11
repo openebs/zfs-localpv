@@ -15,45 +15,44 @@
 
 set -e
 
-ZFS_CHART=deploy/helm/charts
+ZFS_OPERATOR=deploy/zfs-operator.yaml
 SNAP_CLASS=deploy/sample/zfssnapclass.yaml
-export OPENEBS_NAMESPACE="openebs"
 
 TEST_DIR="tests"
 
 
 # Prepare env for runnging BDD tests
 # Minikube is already running
-helm install openebs-zfslocalpv "$ZFS_CHART" -n "$OPENEBS_NAMESPACE" --create-namespace --dependency-update --set analytics.enabled=false
-kubectl apply -f "$SNAP_CLASS"
+kubectl apply -f $ZFS_OPERATOR
+kubectl apply -f $SNAP_CLASS
 
 dumpAgentLogs() {
   NR=$1
-  AgentPOD=$(kubectl get pods -l app=openebs-zfs-node -o jsonpath='{.items[0].metadata.name}' -n "$OPENEBS_NAMESPACE")
-  kubectl describe po "$AgentPOD" -n "$OPENEBS_NAMESPACE"
+  AgentPOD=$(kubectl get pods -l app=openebs-zfs-node -o jsonpath='{.items[0].metadata.name}' -n kube-system)
+  kubectl describe po $AgentPOD -n kube-system
   printf "\n\n"
-  kubectl logs --tail="${NR}" "$AgentPOD" -n "$OPENEBS_NAMESPACE" -c openebs-zfs-plugin
+  kubectl logs --tail=${NR} $AgentPOD -n kube-system -c openebs-zfs-plugin
   printf "\n\n"
 }
 
 dumpControllerLogs() {
   NR=$1
-  ControllerPOD=$(kubectl get pods -l app=openebs-zfs-controller -o jsonpath='{.items[0].metadata.name}' -n "$OPENEBS_NAMESPACE")
-  kubectl describe po "$ControllerPOD" -n "$OPENEBS_NAMESPACE"
+  ControllerPOD=$(kubectl get pods -l app=openebs-zfs-controller -o jsonpath='{.items[0].metadata.name}' -n kube-system)
+  kubectl describe po $ControllerPOD -n kube-system
   printf "\n\n"
-  kubectl logs --tail="${NR}" "$ControllerPOD" -n "$OPENEBS_NAMESPACE" -c openebs-zfs-plugin
+  kubectl logs --tail=${NR} $ControllerPOD -n kube-system -c openebs-zfs-plugin
   printf "\n\n"
 }
 
 
 isPodReady(){
-  [ "$(kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n $OPENEBS_NAMESPACE)" = 'True' ]
+  [ "$(kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n kube-system)" = 'True' ]
 }
 
 
 isDriverReady(){
   for pod in $zfsDriver;do
-    isPodReady "$pod" || return 1
+    isPodReady $pod || return 1
   done
 }
 
@@ -64,8 +63,8 @@ waitForZFSDriver() {
   
   i=0
   while [ "$i" -le "$period" ]; do
-    zfsDriver="$(kubectl get pods -l role=openebs-zfs -o 'jsonpath={.items[*].metadata.name}' -n $OPENEBS_NAMESPACE)"
-    if isDriverReady "$zfsDriver"; then
+    zfsDriver="$(kubectl get pods -l role=openebs-zfs -o 'jsonpath={.items[*].metadata.name}' -n kube-system)"
+    if isDriverReady $zfsDriver; then
       return 0
     fi
 
@@ -83,7 +82,7 @@ waitForZFSDriver
 
 cd $TEST_DIR
 
-kubectl get po -n "$OPENEBS_NAMESPACE"
+kubectl get po -n kube-system
 
 set +e
 
@@ -116,12 +115,12 @@ echo "get sc details"
 kubectl get sc --all-namespaces -oyaml
 
 echo "get zfs volume details"
-kubectl get zfsvolumes.zfs.openebs.io -n "$OPENEBS_NAMESPACE" -oyaml
+kubectl get zfsvolumes.zfs.openebs.io -n openebs -oyaml
 
 echo "get zfs snapshot details"
-kubectl get zfssnapshots.zfs.openebs.io -n "$OPENEBS_NAMESPACE" -oyaml
+kubectl get zfssnapshots.zfs.openebs.io -n openebs -oyaml
 
 exit 1
 fi
 
-printf "\n\n######### All test cases passed #########\n\n"
+echo "\n\n######### All test cases passed #########\n\n"
