@@ -1,117 +1,83 @@
-# OpenEBS ZFS LocalPV Helm Repository
+# OpenEBS Helm Repository
 
-<img width="300" align="right" alt="OpenEBS Logo" src="https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/stacked/color/openebs-stacked-color.png" xmlns="http://www.w3.org/1999/html">
+<img width="200" align="right" alt="OpenEBS Logo" src="https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/stacked/color/openebs-stacked-color.png" xmlns="http://www.w3.org/1999/html">
 
-[Helm3](https://helm.sh) must be installed to use the charts.
-Please refer to Helm's [documentation](https://helm.sh/docs/) to get started.
+[OpenEBS](https://openebs.io) helps Developers and Platform SREs easily deploy Kubernetes Stateful Workloads that require fast and highly reliable container attached storage. OpenEBS can be deployed on any Kubernetes cluster - either in cloud, on-premise (virtual or bare metal) or developer system (minikube).
 
-Once Helm is set up properly, add the repo as follows:
+OpenEBS Data Engines and Control Plane are implemented as micro-services, deployed as containers and orchestrated by Kubernetes itself. An added advantage of being a completely Kubernetes native solution is that administrators and developers can interact and manage OpenEBS using all the wonderful tooling that is available for Kubernetes like kubectl, Helm, Prometheus, Grafana, etc.
+
+OpenEBS turns any storage available on the Kubernetes worker nodes into local or distributed Kubernetes Persistent Volumes.
+* Local Volumes are accessible only from a single node in the cluster. Pods using Local Volume have to be scheduled on the node where volume is provisioned. Local Volumes are typically preferred for distributed workloads like Cassandra, MongoDB, Elastic, etc that are distributed in nature and have high availability built into them. Depending on the type of storage attached to the Kubernetes worker, OpenEBS offers different flavors of Local PV - Hostpath, LVM and ZFS.
+* Replicated Volumes as the name suggests, are those that have their data synchronously replicated to multiple nodes. Volumes can sustain node failures. The replication also can be setup across availability zones helping applications move across availability zones. OpenEBS offers Replicated PV Mayastor as an replicated storage solution, which provides high availability and high performance.
+
+## Documentation and user guides
+
+OpenEBS can run on any Kubernetes 1.23+ cluster in a matter of minutes. See the [Quickstart Guide to OpenEBS](https://openebs.io/docs/quickstart-guide/installation) for detailed instructions.
+
+## Getting started
+
+### How to customize OpenEBS Helm chart?
+
+OpenEBS Helm chart is a unified Helm chart that pulls together engine specific charts. The engine charts are included as [dependencies](https://github.com/openebs/openebs/tree/HEAD/charts/Chart.yaml).
 
 ```bash
-$ helm repo add openebs-zfslocalpv https://openebs.github.io/zfs-localpv
+openebs
+├── (default) Local PV HostPath
+├── (default) Local PV LVM
+├── (default) Local PV ZFS
+└── (default) Replicated PV Mayastor
 ```
 
-You can then run `helm search repo openebs-zfslocalpv` to see the charts.
+### Prerequisites
 
-#### Update OpenEBS ZFS LocalPV Repo
+- [LocalPV Hostpath Prerequisites](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-hostpath/hostpath-installation#prerequisites)
+- [LocalPV LVM Prerequisites](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-lvm/lvm-installation#prerequisites)
+- [LocalPV ZFS Prerequisites](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-zfs/zfs-installation#prerequisites)
+- [Replicated Engine Prerequisites](https://openebs.io/docs/user-guides/replicated-storage-user-guide/rs-installation#prerequisites)
 
-Once OpenEBS ZFS Localpv repository has been successfully fetched into the local system, it has to be updated to get the latest version. The ZFS LocalPV charts repo can be updated using the following command.
+### Setup Helm Repository
+
+Before installing OpenEBS Helm chart, the [OpenEBS Helm repository](https://openebs.github.io/openebs) needs to be added to the Helm client.
+
+#### Setup Helm repository
 
 ```bash
+helm repo add openebs https://openebs.github.io/openebs
 helm repo update
 ```
 
-#### Install using Helm 3
+#### Install OpenEBS Helm chart with default values.
 
-- Assign openebs namespace to the current context:
 ```bash
-kubectl config set-context <current_context_name> --namespace=openebs
+helm install openebs --namespace openebs openebs/openebs --create-namespace
 ```
 
-- If namespace is not created, run the following command
+The above commands will install OpenEBS LocalPV Hostpath, OpenEBS LocalPV LVM, OpenEBS LocalPV ZFS and OpenEBS Mayastor components in openebs namespace with chart name as openebs.
+
+Replicated PV Mayastor can be excluded during the installation with the following command:
+
 ```bash
-helm install <your-relase-name> openebs-zfslocalpv/zfs-localpv --create-namespace
+helm install openebs --namespace openebs openebs/openebs --set engines.replicated.mayastor.enabled=false --create-namespace
 ```
-- Else, if namespace is already created, run the following command
+
+To view the chart and get the following output.
+
 ```bash
-helm install <your-relase-name> openebs-zfslocalpv/zfs-localpv
+helm ls -n openebs 
+
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+openebs openebs         1               2024-03-25 09:13:00.903321318 +0000 UTC deployed        openebs-4.0.0   4.0.0
 ```
 
-_See [configuration](#configuration) below._
+As a next step [verify the installation](https://openebs.io/docs/quickstart-guide/installation#verifying-openebs-installation) and do the [post installation](https://openebs.io/docs/quickstart-guide/installation#post-installation-considerations) steps.
 
-_See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
+For more details on customizing and installing OpenEBS please see the [chart values](https://github.com/openebs/openebs/tree/HEAD/charts/README.md).
 
-## Uninstall Chart
+### To uninstall/delete instance with release name
 
-```console
-# Helm
-$ helm uninstall [RELEASE_NAME]
+```bash
+helm ls --all
+helm delete `<RELEASE NAME>` -n `<RELEASE NAMESPACE>`
 ```
 
-This removes all the Kubernetes components associated with the chart and deletes the release.
-
-_See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command documentation._
-
-## Upgrading Chart
-
-```console
-# Helm
-$ helm upgrade [RELEASE_NAME] [CHART] --install
-```
-
-
-## Configuration
-
-The following table lists the configurable parameters of the OpenEBS ZFS LocalPV Provisioner chart and their default values.
-
-| Parameter| Description| Default|
-| -| -| -|
-| `imagePullSecrets`| Provides image pull secrect| `""`|
-| `zfsPlugin.image.registry`| Registry for openebs-zfs-plugin image| `""`|
-| `zfsPlugin.image.repository`| Image repository for openebs-zfs-plugin| `openebs/zfs-driver`|
-| `zfsPlugin.image.pullPolicy`| Image pull policy for openebs-zfs-plugin| `IfNotPresent`|
-| `zfsPlugin.image.tag`| Image tag for openebs-zfs-plugin| `1.1.0`|
-| `zfsNode.driverRegistrar.image.registry`| Registry for csi-node-driver-registrar image| `quay.io/`|
-| `zfsNode.driverRegistrar.image.repository`| Image repository for csi-node-driver-registrar| `k8scsi/csi-node-driver-registrar`|
-| `zfsNode.driverRegistrar.image.pullPolicy`| Image pull policy for csi-node-driver-registrar| `IfNotPresent`|
-| `zfsNode.driverRegistrar.image.tag`| Image tag for csi-node-driver-registrar| `v1.2.0`|
-| `zfsNode.updateStrategy.type`| Update strategy for zfsnode daemonset | `RollingUpdate` |
-| `zfsNode.kubeletDir`| Kubelet mount point for zfsnode daemonset| `"/var/lib/kubelet/"` |
-| `zfsNode.annotations` | Annotations for zfsnode daemonset metadata| `""`|
-| `zfsNode.podAnnotations`| Annotations for zfsnode daemonset's pods metadata | `""`|
-| `zfsNode.resources`| Resource and request and limit for zfsnode daemonset containers | `""`|
-| `zfsNode.labels`| Labels for zfsnode daemonset metadata | `""`|
-| `zfsNode.podLabels`| Appends labels to the zfsnode daemonset pods| `""`|
-| `zfsNode.nodeSelector`| Nodeselector for zfsnode daemonset pods| `""`|
-| `zfsNode.tolerations` | zfsnode daemonset's pod toleration values | `""`|
-| `zfsNode.securityContext` | Seurity context for zfsnode daemonset container | `""`|
-| `zfsController.resizer.image.registry`| Registry for csi-resizer image| `quay.io/`|
-| `zfsController.resizer.image.repository`| Image repository for csi-resizer| `k8scsi/csi-resizer`|
-| `zfsController.resizer.image.pullPolicy`| Image pull policy for csi-resizer| `IfNotPresent`|
-| `zfsController.resizer.image.tag`| Image tag for csi-resizer| `v0.4.0`|
-| `zfsController.snapshotter.image.registry`| Registry for csi-snapshotter image| `quay.io/`|
-| `zfsController.snapshotter.image.repository`| Image repository for csi-snapshotter| `k8scsi/csi-snapshotter`|
-| `zfsController.snapshotter.image.pullPolicy`| Image pull policy for csi-snapshotter| `IfNotPresent`|
-| `zfsController.snapshotter.image.tag`| Image tag for csi-snapshotter| `v2.0.1`|
-| `zfsController.snapshotController.image.registry`| Registry for snapshot-controller image| `quay.io/`|
-| `zfsController.snapshotController.image.repository`| Image repository for snapshot-controller| `k8scsi/snapshot-controller`|
-| `zfsController.snapshotController.image.pullPolicy`| Image pull policy for snapshot-controller| `IfNotPresent`|
-| `zfsController.snapshotController.image.tag`| Image tag for snapshot-controller| `v2.0.1`|
-| `zfsController.provisioner.image.registry`| Registry for csi-provisioner image| `quay.io/`|
-| `zfsController.provisioner.image.repository`| Image repository for csi-provisioner| `k8scsi/csi-provisioner`|
-| `zfsController.provisioner.image.pullPolicy`| Image pull policy for csi-provisioner| `IfNotPresent`|
-| `zfsController.provisioner.image.tag`| Image tag for csi-provisioner| `v1.6.0`|
-| `zfsController.updateStrategy.type`| Update strategy for zfs localpv controller statefulset | `RollingUpdate` |
-| `zfsController.annotations` | Annotations for zfs localpv controller statefulset metadata| `""`|
-| `zfsController.podAnnotations`| Annotations for zfs localpv controller statefulset's pods metadata | `""`|
-| `zfsController.resources`| Resource and request and limit for zfs localpv controller statefulset containers | `""`|
-| `zfsController.labels`| Labels for zfs localpv controller statefulset metadata | `""`|
-| `zfsController.podLabels`| Appends labels to the zfs localpv controller statefulset pods| `""`|
-| `zfsController.nodeSelector`| Nodeselector for zfs localpv controller statefulset pods| `""`|
-| `zfsController.tolerations` | zfs localpv controller statefulset's pod toleration values | `""`|
-| `zfsController.securityContext` | Seurity context for zfs localpv controller statefulset container | `""`|
-| `serviceAccount.zfsNode.create` | Create a service account for zfsnode or not| `true`|
-| `serviceAccount.zfsNode.name` | Name for the zfsnode service account| `openebs-zfs-node-sa`|
-| `serviceAccount.zfsController.create` | Create a service account for zfs localpv controller or not| `true`|
-| `serviceAccount.zfsController.name` | Name for the zfs localpv controller service account| `openebs-zfs-controller-sa`|
-| `analytics.enabled` | Enable or Disable google analytics for the controller| `true`|
+> **Tip**: Prior to deleting the Helm chart, make sure all the storage volumes and pools are deleted.
