@@ -6,6 +6,7 @@ on:
       - 'deploy/helm/**'
     branches:
       - develop
+  workflow_dispatch:
 
 jobs:
   release:
