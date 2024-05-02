@@ -152,3 +152,10 @@ Enable zfsController containers leader election if replicas > 1
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Ensure that the path to kubelet ends with a slash
+*/}}
+{{- define "zfslocalpv.zfsNode.kubeletDir" -}}
+{{- printf "%s/" (.Values.zfsNode.kubeletDir | trimSuffix "/") -}}
+{{- end }}
