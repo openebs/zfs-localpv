@@ -55,7 +55,7 @@ spec:
             - name: ADDRESS
               value: /plugin/csi.sock
             - name: DRIVER_REG_SOCK_PATH
-              value: {{ .Values.zfsNode.kubeletDir }}plugins/zfs-localpv/csi.sock
+              value: {{ if hasSuffix .Values.zfsNode.kubeletDir "/" }}{{ .Values.zfsNode.kubeletDir }}{{ else }}{{ .Values.zfsNode.kubeletDir }}/{{ end }}plugins/zfs-localpv/csi.sock
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -107,7 +107,7 @@ spec:
               mountPropagation: "HostToContainer"
               readOnly: true
             - name: pods-mount-dir
-              mountPath: {{ .Values.zfsNode.kubeletDir }}
+              mountPath: {{ if hasSuffix .Values.zfsNode.kubeletDir "/" }}{{ .Values.zfsNode.kubeletDir }}{{ else }}{{ .Values.zfsNode.kubeletDir }}/{{ end }}
               # needed so that any mounts setup inside this container are
               # propagated back to the host machine.
               mountPropagation: "Bidirectional"
@@ -130,15 +130,15 @@ spec:
             type: Directory
         - name: registration-dir
           hostPath:
-            path: {{ .Values.zfsNode.kubeletDir }}plugins_registry/
+            path: {{ if hasSuffix .Values.zfsNode.kubeletDir "/" }}{{ .Values.zfsNode.kubeletDir }}{{ else }}{{ .Values.zfsNode.kubeletDir }}/{{ end }}plugins_registry/
             type: DirectoryOrCreate
         - name: plugin-dir
           hostPath:
-            path: {{ .Values.zfsNode.kubeletDir }}plugins/zfs-localpv/
+            path: {{ if hasSuffix .Values.zfsNode.kubeletDir "/" }}{{ .Values.zfsNode.kubeletDir }}{{ else }}{{ .Values.zfsNode.kubeletDir }}/{{ end }}plugins/zfs-localpv/
             type: DirectoryOrCreate
         - name: pods-mount-dir
           hostPath:
-            path: {{ .Values.zfsNode.kubeletDir }}
+            path: {{ if hasSuffix .Values.zfsNode.kubeletDir "/" }}{{ .Values.zfsNode.kubeletDir }}{{ else }}{{ .Values.zfsNode.kubeletDir }}/{{ end }}
             type: Directory
 {{- if .Values.zfsNode.additionalVolumes }}
 {{- range $name, $config := .Values.zfsNode.additionalVolumes }}
