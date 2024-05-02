@@ -1,0 +1,16 @@
+{{- if .Values.zfsExporter.enable }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "zfslocalpv.fullname" . }}-exporter
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zfslocalpv.zfsNode.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "zfslocalpv.zfsNode.matchLabels" . | nindent 4 }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.zfsExporter.port }}
+      targetPort: {{ .Values.zfsExporter.port }}
+{{- end }}

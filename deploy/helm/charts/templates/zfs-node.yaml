@@ -111,6 +111,22 @@ spec:
               # needed so that any mounts setup inside this container are
               # propagated back to the host machine.
               mountPropagation: "Bidirectional"
+        {{- if .Values.zfsExporter.enable }}
+        - name: {{ .Values.zfsExporter.name }}
+          image: "{{ .Values.zfsExporter.image.registry }}{{ .Values.zfsExporter.image.repository }}:{{ .Values.zfsExporter.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.zfsExporter.port }}
+          resources:
+            {{- with .Values.zfsExporter.resources }}
+            limits:
+              {{- toYaml .limits | nindent 14 }}
+            requests:
+              {{- toYaml .requests | nindent 14 }}
+            {{- end }}
+          securityContext:
+            privileged: true
+            allowPrivilegeEscalation: true
+        {{- end }}
       volumes:
         - name: device-dir
           hostPath:

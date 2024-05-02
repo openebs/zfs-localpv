@@ -180,3 +180,28 @@ crds:
     volumeSnapshots:
       # Install Volume Snapshot CRDs
       enabled: true
+
+# zfsExporter Confiration
+zfsExporter:
+  enable: true
+  serviceMonitor:
+    enabled: false
+    path: /metrics
+    interval: 10s
+  name: zfs-exporter
+  port: 9134
+  image:
+    # Make sure that registry name end with a '/'.
+    # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
+    registry: harbor.obmondo.com/
+    repository: obmondo/zfs_exporter 
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: v2.3.4_1 # Need to replace
+  resources:
+    limits:
+      cpu: 100m
+      memory: 200Mi
+    requests:
+      cpu: 50m
+      memory: 100Mi

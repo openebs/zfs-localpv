@@ -1,0 +1,17 @@
+{{- if .Values.zfsExporter.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "zfslocalpv.fullname" . }}-service-monitor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zfslocalpv.zfsNode.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "zfslocalpv.zfsNode.matchLabels" . | nindent 4 }}
+  endpoints:
+  - port: {{ .Values.zfsExporter.port }}
+    interval: {{ .Values.zfsExporter.serviceMonitor.interval }}
+    path: {{ .Values.zfsExporter.serviceMonitor.path }}
+{{- end }}
