@@ -55,7 +55,7 @@ spec:
             - name: ADDRESS
               value: /plugin/csi.sock
             - name: DRIVER_REG_SOCK_PATH
-              value: {{ .Values.zfsNode.kubeletDir }}plugins/zfs-localpv/csi.sock
+              value: {{ printf "%s%s" (include "zfslocalpv.zfsNode.kubeletDir" .) "plugins/zfs-localpv/csi.sock" | quote }}
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
