@@ -107,11 +107,7 @@ spec:
               mountPropagation: "HostToContainer"
               readOnly: true
             - name: pods-mount-dir
-<<<<<<< HEAD
-              mountPath: {{ .Values.zfsNode.kubeletDir }}
-=======
               mountPath: {{ include "zfslocalpv.zfsNode.kubeletDir" . | quote }}
->>>>>>> 7d2a4f5 (using custom template function)
               # needed so that any mounts setup inside this container are
               # propagated back to the host machine.
               mountPropagation: "Bidirectional"
@@ -134,17 +130,6 @@ spec:
             type: Directory
         - name: registration-dir
           hostPath:
-<<<<<<< HEAD
-            path: {{ .Values.zfsNode.kubeletDir }}plugins_registry/
-            type: DirectoryOrCreate
-        - name: plugin-dir
-          hostPath:
-            path: {{ .Values.zfsNode.kubeletDir }}plugins/zfs-localpv/
-            type: DirectoryOrCreate
-        - name: pods-mount-dir
-          hostPath:
-            path: {{ .Values.zfsNode.kubeletDir }}
-=======
             path: {{ printf "%s%s" (include "zfslocalpv.zfsNode.kubeletDir" .) "plugins_registry/" | quote }}
             type: DirectoryOrCreate
         - name: plugin-dir
@@ -154,7 +139,6 @@ spec:
         - name: pods-mount-dir
           hostPath:
             path: {{ include "zfslocalpv.zfsNode.kubeletDir" . | quote }}
->>>>>>> 7d2a4f5 (using custom template function)
             type: Directory
 {{- if .Values.zfsNode.additionalVolumes }}
 {{- range $name, $config := .Values.zfsNode.additionalVolumes }}
