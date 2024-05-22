@@ -104,7 +104,7 @@ func init() {
 func GetNodeID(nodename string) (string, error) {
 	node, err := k8sapi.GetNode(nodename)
 	if err != nil {
-		return "", fmt.Errorf("failed to get the node %s", nodename)
+		return "", fmt.Errorf("failed to get the node %s: %w", nodename, err)
 	}
 
 	nodeid, ok := node.Labels[ZFSTopologyKey]
