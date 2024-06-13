@@ -21,7 +21,7 @@ _Mention if this PR is part of any design or a continuation of previous PRs_
 - [ ] Commit has unit tests
 - [ ] Commit has integration tests
 - [ ] (Optional) Are upgrade changes included in this PR? If not, mention the issue/PR to track:
-- [ ] (Optional) If documentation changes are required, which issue on https://github.com/openebs/openebs-docs is used to track them:
+- [ ] (Optional) If documentation changes are required, which issue on https://github.com/openebs/website is used to track them:
 
 
 **PLEASE REMOVE BELOW INFORMATION BEFORE SUBMITTING**
