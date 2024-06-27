@@ -8,7 +8,7 @@ We should have installed the LocalPV-ZFS 1.0.0 or later version for the Backup a
 | :--- | :--- |
 | LocalPV-ZFS | 1.0.0+ |
 | Velero | 1.5+ |
-| Velero-Plugin | 2.2.0+ |
+| Velero-Plugin | 3.6.0+ |
 
 ### Note
 
@@ -37,13 +37,13 @@ aws_secret_access_key = minio123
 We can install Velero by using below command
 
 ```
-velero install --provider aws --bucket velero --secret-file /home/pawan/velero/credentials-minio --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000 --use-volume-snapshots=true --use-restic
+velero install --provider aws --bucket velero --secret-file /home/pawan/velero/credentials-minio --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000 --use-volume-snapshots=true --use-node-agent --uploader-type restic
 ```
 
 If you would like to use cloud storage like AWS-S3 buckets for storing backups, you could use a command like the following: 
 
 ```
-velero install --provider aws --bucket <bucket_name> --secret-file <./aws-iam-creds> --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=<bucket_region>,s3ForcePathStyle="true" --use-volume-snapshots=true --use-restic
+velero install --provider aws --bucket <bucket_name> --secret-file <./aws-iam-creds> --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=<bucket_region>,s3ForcePathStyle="true" --use-volume-snapshots=true --use-node-agent --uploader-type restic
 ```
 
 We have to install the velero 1.5 or later version for LocalPV-ZFS.
@@ -76,10 +76,10 @@ velero-7d9c448bc5-j424s   1/1     Running     3          69s
 We can Install the Velero Plugin for LocalPV-ZFS using below command
 
 ```
-velero plugin add openebs/velero-plugin:2.2.0
+velero plugin add openebs/velero-plugin:3.6.0
 ```
 
-We have to install the velero-plugin 2.2.0 or later version which has the support for LocalPV-ZFS. Once setup is done, we can go ahead and create the backup/restore.
+We have to install the velero-plugin 3.6.0 or later version which has the support for LocalPV-ZFS. Once setup is done, we can go ahead and create the backup/restore.
 
 ## Create Backup
 
