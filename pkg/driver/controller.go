@@ -1,19 +1,3 @@
-/*
-Copyright © 2019 The OpenEBS Authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package driver
 
 import (
@@ -22,33 +6,32 @@ import (
 	"strings"
 	"time"
 
-	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
-	zfsapi "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
-	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
-	"github.com/openebs/zfs-localpv/pkg/version"
-	kubeinformers "k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
-
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	analytics "github.com/openebs/google-analytics-4/usage"
+	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
+	"github.com/openebs/lib-csi/pkg/common/errors"
+	"github.com/openebs/lib-csi/pkg/common/helpers"
+	schd "github.com/openebs/lib-csi/pkg/scheduler"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
+	kubeinformers "k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
-	analytics "github.com/openebs/google-analytics-4/usage"
-	errors "github.com/openebs/lib-csi/pkg/common/errors"
-	"github.com/openebs/lib-csi/pkg/common/helpers"
-	schd "github.com/openebs/lib-csi/pkg/scheduler"
+	zfsapi "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
+	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
+	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
-	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	"github.com/openebs/zfs-localpv/pkg/version"
+	"github.com/openebs/zfs-localpv/pkg/zfs"
 )
 
 // size constants
@@ -60,7 +43,8 @@ const (
 
 	// Ping event is sent periodically
 	Ping string = "zfs-ping"
-
+	// Heartbeat message.
+	Heartbeat string = "zfs-heartbeat"
 	// DefaultCASType Event application name constant for volume event
 	DefaultCASType string = "zfs-localpv"
 
@@ -133,7 +117,8 @@ func (cs *controller) init() error {
 	if zfs.GoogleAnalyticsEnabled == "true" {
 		analytics.RegisterVersionGetter(version.GetVersionDetails)
 		analytics.New().CommonBuild(DefaultCASType).InstallBuilder(true).Send()
-		go analytics.PingCheck(DefaultCASType, Ping)
+		go analytics.PingCheck(DefaultCASType, Ping, false)
+		go analytics.PingCheck(DefaultCASType, Heartbeat, true)
 	}
 
 	// wait for all the caches to be populated.
@@ -159,8 +144,7 @@ func sendEventOrIgnore(pvcName, pvName, capacity, method string) {
 		analytics.New().CommonBuild(DefaultCASType).ApplicationBuilder().
 			SetVolumeName(pvName).
 			SetVolumeClaimName(pvcName).
-			SetLabel(analytics.EventLabelCapacity).
-			SetReplicaCount(LocalPVReplicaCount, method).
+			SetReplicaCount(LocalPVReplicaCount).
 			SetCategory(method).
 			SetVolumeCapacity(capacity).Send()
 	}
