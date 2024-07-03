@@ -1,0 +1,1 @@
+When zfs-localpv is broken due to an k8s api issue, it just says 'GetNodeID failed for node'. This change adds the actual api error.

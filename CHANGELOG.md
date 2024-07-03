@@ -1,3 +1,18 @@
+v2.6.0 / 2024-07-03
+========================
+* feat(analytics): add heartbeat pinger ([#548](https://github.com/openebs/zfs-localpv/pull/548),[@niladrih](https://github.com/niladrih))
+* fix: wrap k8s api error in GetNodeID ([#535](https://github.com/openebs/zfs-localpv/pull/535),[@aep](https://github.com/aep))
+
+v2.5.0 / 2024-03-22
+========================
+* feat(deploy/helm): move volumesnapshot CRDs to the template dir ([#488](https://github.com/openebs/zfs-localpv/pull/488),[@hrudaya21](https://github.com/hrudaya21))
+* fix(plugin): Fix ability to have custom value for openebs.io/nodeid ([#451](https://github.com/openebs/zfs-localpv/pull/451),[@jnels124](https://github.com/jnels124))
+* fix(helm): Add extra args to zfsController containers and leader election inteligence ([#492](https://github.com/openebs/zfs-localpv/pull/492),[@trunet](https://github.com/trunet))
+* chore(design): adding pv migration proposal ([#336](https://github.com/openebs/zfs-localpv/pull/336),[@pawanpraka1](https://github.com/pawanpraka1))
+* fix(charts): correct default chart values ([#506](https://github.com/openebs/zfs-localpv/pull/506),[@jnels124](https://github.com/jnels124))
+* chore: update protobuf deps ([#514](https://github.com/openebs/zfs-localpv/pull/514),[@niladrih](https://github.com/niladrih))
+* chore: change zfs-controller to a deployment from statefulset ([#513](https://github.com/openebs/zfs-localpv/pull/513),[@Abhinandan-Purkait](https://github.com/Abhinandan-Purkait))
+
 v2.4.0 / 2023-12-12
 ========================
 * fix(localpv): restore size to return as part of snapshot create response ([#480](https://github.com/openebs/zfs-localpv/pull/480),[@hrudaya21](https://github.com/hrudaya21))

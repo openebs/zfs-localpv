@@ -1,1 +1,0 @@
-fix regression introduced with v2.0.0 that caused the plugin code to not be able to start when a user sets openebs.io/nodeid
