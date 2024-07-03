@@ -1,1 +1,0 @@
-correct the default values for initContainers and additionalVolumes
