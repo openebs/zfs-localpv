@@ -176,7 +176,7 @@ func VerifyZFSVolume() {
 	gomega.Expect(vol.Finalizers[0]).To(gomega.Equal(zfs.ZFSFinalizer), "while checking finializer to be set {%s}", pvcObj.Spec.VolumeName)
 }
 
-// VerifyZFSVolumePropEdit verigies the volume properties
+// VerifyZFSVolumePropEdit verifies the volume properties
 func VerifyZFSVolumePropEdit() {
 	ginkgo.By("verifying compression property update")
 
