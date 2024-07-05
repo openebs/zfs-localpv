@@ -24,16 +24,6 @@ spec:
         {{ toYaml . | nindent 8 }}
         {{- end}}
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - openebs-zfs-controller
-            topologyKey: "kubernetes.io/hostname"
 {{- if .Values.zfsController.priorityClass.create }}
       priorityClassName: {{ template "zfslocalpv.zfsController.priorityClassName" . }}
 {{- end }}
