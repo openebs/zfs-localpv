@@ -61,51 +61,76 @@ waitForZFSDriver() {
   return 1
 }
 
-# wait for zfs-driver to be up
-waitForZFSDriver
+runTestSuite() {
+  local coverageFile=$1
 
-cd $TEST_DIR
+  # wait for zfs-driver to be up
+  waitForZFSDriver
 
-kubectl get po -n openebs
+  cd $TEST_DIR
 
-set +e
+  kubectl get po -n openebs
 
-echo "running ginkgo test case"
+  set +e
 
-if ! ginkgo -v -coverprofile=bdd_coverage.txt -covermode=atomic; then
+  echo "running ginkgo test case with coverage ${coverageFile}"
 
-sudo zpool status
+  if ! ginkgo -v -coverprofile="${coverageFile}" -covermode=atomic; then
 
-sudo zfs list -t all
+  sudo zpool status
 
-sudo zfs get all
+  sudo zfs list -t all
 
-echo "******************** ZFS Controller logs***************************** "
-dumpControllerLogs 1000
+  sudo zfs get all
 
-echo "********************* ZFS Agent logs *********************************"
-dumpAgentLogs 1000
+  echo "******************** ZFS Controller logs***************************** "
+  dumpControllerLogs 1000
 
-echo "get all the pods"
-kubectl get pods -owide --all-namespaces
+  echo "********************* ZFS Agent logs *********************************"
+  dumpAgentLogs 1000
 
-echo "get pvc and pv details"
-kubectl get pvc,pv -oyaml --all-namespaces
+  echo "get all the pods"
+  kubectl get pods -owide --all-namespaces
 
-echo "get snapshot details"
-kubectl get volumesnapshot.snapshot -oyaml --all-namespaces
+  echo "get pvc and pv details"
+  kubectl get pvc,pv -oyaml --all-namespaces
 
-echo "get sc details"
-kubectl get sc --all-namespaces -oyaml
+  echo "get snapshot details"
+  kubectl get volumesnapshot.snapshot -oyaml --all-namespaces
 
-echo "get zfs volume details"
-kubectl get zfsvolumes.zfs.openebs.io -n openebs -oyaml
+  echo "get sc details"
+  kubectl get sc --all-namespaces -oyaml
 
-echo "get zfs snapshot details"
-kubectl get zfssnapshots.zfs.openebs.io -n openebs -oyaml
+  echo "get zfs volume details"
+  kubectl get zfsvolumes.zfs.openebs.io -n openebs -oyaml
 
-exit 1
-fi
+  echo "get zfs snapshot details"
+  kubectl get zfssnapshots.zfs.openebs.io -n openebs -oyaml
+
+  exit 1
+  fi
+}
+
+runTestSuite bdd_coverage.txt
+
+prepareCustomNodeIdEnv() {
+  for node in $(kubectl get nodes -n openebs -o jsonpath='{.items[*].metadata.name}'); do
+      local zfsNode=$(kubectl get zfsnode -n openebs -o jsonpath="{.items[?(@.metadata.ownerReferences[0].name=='${node}')].metadata.name}")
+      echo "Relabeling node ${node} with ${node}-custom-id"
+      kubectl label node "${node}" openebs.io/nodeid="${node}-custom-id" --overwrite
+
+      local nodeDriver=$(kubectl get pods -l app=openebs-zfs-node -o jsonpath="{.items[?(@.spec.nodeName=='${node}')].metadata.name}" -n kube-system)
+      echo "Restarting ${nodeDriver} on ${node} to pick up the new node id"
+      kubectl delete pod "${nodeDriver}" -n kube-system
+
+      echo "Deleting old zfsnode ${zfsNode}"
+      kubectl delete zfsnode "${zfsNode}" -n openebs
+  done
+}
+
+prepareCustomNodeIdEnv
+runTestSuite bdd_coverage_custom-node-id.txt
 
 printf "\n\n"
 echo "######### All test cases passed #########"
+exit 0
