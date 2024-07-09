@@ -29,7 +29,7 @@ Please review this roadmp and feel free to pass back any feedback on it, as well
 >
 > :rocket: &nbsp; OpenEBS is the #1 deployed Storage Platform for Kubernetes <BR>
 > :zap: &nbsp; LocalPV-ZFS is the 2nd most deployed Data-Engine within the platform <BR>
-> :sunglasses: &nbsp; LocalPV-ZFS has +120,000 Daily Acive Users <BR>
+> :sunglasses: &nbsp; LocalPV-ZFS has +120,000 Daily Active Users <BR>
 > :sunglasses: &nbsp; LocalPV-ZFS has +250,000 Global instllations <BR>
 > :floppy_disk: &nbsp; +49 Million OpenEBS Volumes have been deployed globally <BR>
 > :tv: &nbsp; We have +8 Million Global OpenEBS installations <BR>
