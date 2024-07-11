@@ -147,6 +147,14 @@ spec:
                   been provisioned.
                 minLength: 1
                 type: string
+              quotaType:
+                description: 'quotaType determines whether the dataset volume quota
+                  type is of type "quota" or "refquota". QuotaType can not be modified
+                  once volume has been provisioned. Default Value: quota.'
+                enum:
+                - quota
+                - refquota
+                type: string
               recordsize:
                 description: 'Specifies a suggested block size for files in the file
                   system. The size specified must be a power of two greater than or

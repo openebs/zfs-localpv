@@ -163,6 +163,12 @@ type VolumeInfo struct {
 	// +kubebuilder:validation:Enum=ZVOL;DATASET
 	VolumeType string `json:"volumeType"`
 
+	// quotaType determines whether the dataset volume quota type is of type "quota" or "refquota".
+	// QuotaType can not be modified once volume has been provisioned.
+	// +kubebuilder:validation:Enum=quota;refquota
+	// Default Value: quota.
+	QuotaType string `json:"quotaType,omitempty"`
+
 	// FsType specifies filesystem type for the zfs volume/dataset.
 	// If FsType is provided as "zfs", then the driver will create a
 	// ZFS dataset, formatting is not required as underlying filesystem is ZFS anyway.

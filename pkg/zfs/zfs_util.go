@@ -143,7 +143,7 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 
 	if vol.Spec.VolumeType == VolTypeDataset {
 		if len(vol.Spec.Capacity) != 0 {
-			quotaProperty := "quota=" + vol.Spec.Capacity
+			quotaProperty := vol.Spec.QuotaType + "=" + vol.Spec.Capacity
 			ZFSVolArg = append(ZFSVolArg, "-o", quotaProperty)
 		}
 		if len(vol.Spec.RecordSize) != 0 {
@@ -216,7 +216,7 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 	ZFSVolArg = append(ZFSVolArg, ZFSCreateArg)
 
 	if len(vol.Spec.Capacity) != 0 {
-		quotaProperty := "quota=" + vol.Spec.Capacity
+		quotaProperty := vol.Spec.QuotaType + "=" + vol.Spec.Capacity
 		ZFSVolArg = append(ZFSVolArg, "-o", quotaProperty)
 	}
 	if len(vol.Spec.RecordSize) != 0 {
@@ -292,7 +292,7 @@ func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
 	ZFSVolArg = append(ZFSVolArg, ZFSSetArg)
 
 	if vol.Spec.VolumeType == VolTypeDataset {
-		quotaProperty := "quota=" + vol.Spec.Capacity
+		quotaProperty := vol.Spec.QuotaType + "=" + vol.Spec.Capacity
 		ZFSVolArg = append(ZFSVolArg, quotaProperty)
 	} else {
 		volsizeProperty := "volsize=" + vol.Spec.Capacity
@@ -350,7 +350,7 @@ func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) ([]string, error) {
 
 	if rstr.VolSpec.VolumeType == VolTypeDataset {
 		if len(rstr.VolSpec.Capacity) != 0 {
-			ZFSRecvParam += " -o quota=" + rstr.VolSpec.Capacity
+			ZFSRecvParam += " -o " + rstr.VolSpec.QuotaType + "=" + rstr.VolSpec.Capacity
 		}
 		if len(rstr.VolSpec.RecordSize) != 0 {
 			ZFSRecvParam += " -o recordsize=" + rstr.VolSpec.RecordSize

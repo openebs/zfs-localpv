@@ -172,6 +172,16 @@ func (b *Builder) WithFsType(fstype string) *Builder {
 	return b
 }
 
+// WithQuotaType sets quota type for dataset volume
+func (b *Builder) WithQuotaType(quotatype string) *Builder {
+	if quotatype != "" {
+		b.volume.Object.Spec.QuotaType = quotatype
+	} else {
+		b.volume.Object.Spec.QuotaType = "quota"
+	}
+	return b
+}
+
 // WithShared sets where filesystem is shared or not
 func (b *Builder) WithShared(shared string) *Builder {
 	b.volume.Object.Spec.Shared = shared
