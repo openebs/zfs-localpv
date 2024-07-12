@@ -1,31 +1,16 @@
-# Copyright 2020 The OpenEBS Authors. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-name: ci
+name: Pull Request CI
 
 on:
   pull_request:
     paths-ignore:
-      - 'deploy/helm/**'
       - 'docs/**'
       - 'design/**'
       - 'changelogs/**'
       - '*.md'
+      - 'MAINTAINERS'
     branches:
-      # on pull requests to develop and release branches
       - develop
-      - 'v*'
+      - release/*
 
 jobs:
   lint:
@@ -33,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Shellcheck
         uses: reviewdog/action-shellcheck@v1
@@ -41,9 +28,30 @@ jobs:
           reporter: github-pr-review
           path: '.'
           pattern: '*.sh'
+          
+      - uses: cachix/install-nix-action@v22
+      - name: Check if the chart follows a valid semver version
+        run: |
+          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' scripts/nix/sources.json -r)
+          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+          branch_name="${{ github.event.pull_request.base.ref }}"
+          nix-shell --pure --run "./scripts/validate-version.sh --branch $branch_name" ./scripts/shell.nix
 
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.6.1
 
-  unit-test:
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          changed=$(ct list-changed --config ct.yaml)
+          if [[ -n "$changed" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+  
+      - name: Run chart-testing (lint)
+        run: ct lint --config ct.yaml
+
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -60,9 +68,9 @@ jobs:
           name: coverage-$(date +%s)
           flags: unittests
 
-  bdd-test:
-    needs: ['unit-test']
+  bdd-tests:
     runs-on: ubuntu-latest
+    needs: ['unit-tests']
     strategy:
       fail-fast: true
       matrix:
@@ -71,18 +79,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Installation
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y zfsutils-linux
-          truncate -s 100G /tmp/disk.img
-          sudo zpool create zfspv-pool `sudo losetup -f /tmp/disk.img --show`
-
       - name: Set up Go 1.19
         uses: actions/setup-go@v4
         with:
           go-version: 1.19.9
           cache: false
+        
+      - name: Build images locally
+        run: make zfs-driver-image || exit 1;
+
+      - name: Setup zfs pools
+        run: |
+          sudo apt-get install -y zfsutils-linux
+          truncate -s 100G /tmp/disk.img
+          sudo zpool create zfspv-pool `sudo losetup -f /tmp/disk.img --show`
 
       - name: Setup Minikube-Kubernetes
         uses: medyagh/setup-minikube@latest
@@ -99,9 +109,6 @@ jobs:
           echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
           echo "OPENEBS_NAMESPACE=openebs" >> $GITHUB_ENV
 
-      - name: Build images locally
-        run: make zfs-driver-image || exit 1;
-
       - name: bootstrap
         run: make bootstrap
 
@@ -109,7 +116,7 @@ jobs:
         run: |
           make ci
           make sanity 
-
+      
       - name: Upload CI Test Coverage Report
         uses: codecov/codecov-action@v4  
         with:
@@ -117,32 +124,3 @@ jobs:
           file: ./tests/bdd_coverage.txt
           name: coverage-bdd_coverage-$(date +%s)
           flags: bddtests
-
-  csi-driver:
-    runs-on: ubuntu-latest
-    needs: ['lint', 'bdd-test']
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          version: v0.13.1
-
-      - name: Build
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./buildscripts/zfs-driver/zfs-driver.Dockerfile
-          push: false
-          platforms: linux/amd64, linux/arm64
-          tags: |
-            openebs/zfs-driver:ci
-            

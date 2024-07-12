@@ -54,7 +54,7 @@ endif
 
 
 ifeq (${IMAGE_TAG}, )
-  IMAGE_TAG = ci
+  IMAGE_TAG = 2.7.0-develop
   export IMAGE_TAG
 endif
 
