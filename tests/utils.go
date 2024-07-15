@@ -17,6 +17,7 @@ limitations under the License.
 package tests
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -89,7 +90,7 @@ func IsPropUpdatedEventually(vol *apis.ZFSVolume, prop string, val string) bool 
 		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 		return (newVal == val)
 	},
-		60, 5).
+		180, 5).
 		Should(gomega.BeTrue())
 }
 
@@ -193,18 +194,24 @@ func VerifyZFSVolumePropEdit() {
 	status := IsPropUpdatedEventually(vol, "compression", val)
 	gomega.Expect(status).To(gomega.Equal(true), "while updating compression=on {%s}", vol.Name)
 
-	ginkgo.By("fetching zfs volume for setting compression=off")
-	vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
-		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
-	gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+	compression := []string{"lzjb", "zstd", "zstd-1", "zstd-2", "zstd-3", "zstd-4",
+		"zstd-5", "zstd-6", "zstd-7", "zstd-8", "zstd-9", "zstd-10", "zstd-11",
+		"zstd-12", "zstd-13", "zstd-14", "zstd-15", "zstd-16", "zstd-17", "zstd-18",
+		"zstd-19", "gzip", "gzip-1", "gzip-2", "gzip-3", "gzip-4", "gzip-5", "zle", "lz4", "off"}
+	for _, value := range compression {
+		// message := fmt.Sprintf("fetching zfs volume for setting compression={%s}", value)
+		ginkgo.By(fmt.Sprintf("fetching zfs volume for setting compression={%s}", value))
+		vol, err = ZFSClient.WithNamespace(OpenEBSNamespace).
+			Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+		gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume %s", vol.Name)
+		vol.Spec.Compression = value
+		_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
+		gomega.Expect(err).To(gomega.BeNil(), "while updating the zfs volume {%s}", vol.Name)
+		status := IsPropUpdatedEventually(vol, "compression", value)
 
-	val = "off"
-	vol.Spec.Compression = val
-	_, err = ZFSClient.WithNamespace(OpenEBSNamespace).Update(vol)
-	gomega.Expect(err).To(gomega.BeNil(), "while updating the zfs volume {%s}", vol.Name)
+		gomega.Expect(status).To(gomega.Equal(true), "while updating compression={%s} {%s}", value, vol.Name)
 
-	status = IsPropUpdatedEventually(vol, "compression", val)
-	gomega.Expect(status).To(gomega.Equal(true), "while updating compression=off {%s}", vol.Name)
+	}
 
 	ginkgo.By("verifying dedup property update")
 
