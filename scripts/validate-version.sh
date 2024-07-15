@@ -94,7 +94,7 @@ if [ "$BRANCH_NAME" == "develop" ]; then
   if [[ "$APP_VERSION" != *"-develop" ]]; then
     die "App version must include '-develop' for develop branch"
   fi
-elif [[ "$BRANCH_NAME" =~ ^release/[0-9]+\.[0-9]+$ ]]; then
+elif [[ "$BRANCH_NAME" =~ ^(release/[0-9]+\.[0-9]+)$ ]]; then
   RELEASE_VERSION=$(extract_major_minor "$BRANCH_NAME")
   if [[ "$CHART_VERSION" != "$RELEASE_VERSION."*"-prerelease" ]]; then
     die "Chart version must be in format $RELEASE_VERSION.X-prerelease for release branch"

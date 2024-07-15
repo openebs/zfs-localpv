@@ -4,5 +4,6 @@ mkShell {
   buildInputs = [
     semver-tool
     yq-go
+    chart-testing
   ];
 }
