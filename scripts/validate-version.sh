@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# Write output to error output stream.
-echo_stderr() {
-  echo -e "${1}" >&2
-}
-
 die()
 {
   local _return="${2:-1}"
