@@ -10,7 +10,7 @@ on:
       - 'MAINTAINERS'
     branches:
       - develop
-      - 'release/v[0-9]+.[0-9]+'
+      - 'release/[0-9]+.[0-9]+'
 
 jobs:
   lint:
