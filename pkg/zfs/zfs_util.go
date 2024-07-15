@@ -151,7 +151,13 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 			ZFSVolArg = append(ZFSVolArg, "-o", recordsizeProperty)
 		}
 		if vol.Spec.ThinProvision == "no" {
-			reservationProperty := "reservation=" + vol.Spec.Capacity
+			reservationProperty := ""
+			switch vol.Spec.QuotaType {
+			case "quota":
+				reservationProperty = "reservation=" + vol.Spec.Capacity
+			case "refquota":
+				reservationProperty = "refreservation=" + vol.Spec.Capacity
+			}
 			ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty)
 		}
 		ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=legacy")
@@ -224,7 +230,13 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 		ZFSVolArg = append(ZFSVolArg, "-o", recordsizeProperty)
 	}
 	if vol.Spec.ThinProvision == "no" {
-		reservationProperty := "reservation=" + vol.Spec.Capacity
+		reservationProperty := ""
+		switch vol.Spec.QuotaType {
+		case "quota":
+			reservationProperty = "reservation=" + vol.Spec.Capacity
+		case "refquota":
+			reservationProperty = "refreservation=" + vol.Spec.Capacity
+		}
 		ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty)
 	}
 	if len(vol.Spec.Dedup) != 0 {
