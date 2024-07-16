@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Write output to error output stream.
+echo_stderr() {
+  echo -e "${1}" >&2
+}
+
 die()
 {
   local _return="${2:-1}"
@@ -52,11 +57,6 @@ Options:
 Examples:
   $(basename "$0") --branch develop
 EOF
-}
-
-die() {
-  echo "$1"
-  exit 1
 }
 
 # Parse arguments
