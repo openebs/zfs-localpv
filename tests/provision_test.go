@@ -65,9 +65,21 @@ func blockVolCreationTest() {
 	By("verifying ZFSVolume object", VerifyZFSVolume)
 	By("verifying ZFSVolume property change", VerifyZFSVolumePropEdit)
 	By("Deleting application deployment")
+
+	createSnapshot(pvcName, snapName)
+	verifySnapshotCreated(snapName)
+	createClone(clonePvcName, snapName, scObj.Name)
+	By("Creating and deploying clone app pod", createDeployVerifyCloneApp)
+
+	By("Deleting clone and main application deployment")
+	deleteAppDeployment(cloneAppName)
 	deleteAppDeployment(appName)
-	By("Deleting pvc")
+
+	By("Deleting snapshot, main pvc and clone pvc")
+	deletePVC(clonePvcName)
+	deleteSnapshot(pvcName, snapName)
 	deletePVC(pvcName)
+
 	By("Deleting storage class", deleteStorageClass)
 }
 
