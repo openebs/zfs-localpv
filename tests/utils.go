@@ -17,6 +17,7 @@ limitations under the License.
 package tests
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -84,6 +85,7 @@ func IsPodRunningEventually(namespace, podName string) bool {
 // IsPropUpdatedEventually checks if the property is updated or not eventually
 func IsPropUpdatedEventually(vol *apis.ZFSVolume, prop string, val string) bool {
 	return gomega.Eventually(func() bool {
+		print(vol)
 
 		newVal, err := zfs.GetVolumeProperty(vol, prop)
 		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
@@ -106,17 +108,15 @@ func IsPVCDeletedEventually(pvcName string) bool {
 		Should(gomega.BeTrue())
 }
 
-func createFstypeStorageClass(ftype string) {
+func createFstypeStorageClass(parameters map[string]string) {
 	var (
 		err error
 	)
 
-	parameters := map[string]string{
-		"poolname": POOLNAME,
-		"fstype":   ftype,
-	}
+	// Convert the map to a JSON string
+	paramAsString, _ := json.Marshal(parameters)
 
-	ginkgo.By("building a " + ftype + " storage class")
+	ginkgo.By("building a storage class with given params" + string(paramAsString))
 	scObj, err = sc.NewBuilder().
 		WithGenerateName(scName).
 		WithVolumeExpansion(true).
@@ -176,9 +176,20 @@ func VerifyZFSVolume() {
 	gomega.Expect(vol.Finalizers[0]).To(gomega.Equal(zfs.ZFSFinalizer), "while checking finializer to be set {%s}", pvcObj.Spec.VolumeName)
 }
 
+// VerifyStorageClassParams verifies the volume properties set at creation time
+func VerifyStorageClassParams(property, propertyVal string) {
+	vol, err := ZFSClient.WithNamespace(OpenEBSNamespace).
+		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+	gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+	status := IsPropUpdatedEventually(vol, property, propertyVal)
+	gomega.Expect(status).To(gomega.Equal(true), "while updating {%s%}={%s%} {%s}", property, propertyVal, vol.Name)
+}
+
 // VerifyZFSVolumePropEdit verifies the volume properties
 func VerifyZFSVolumePropEdit() {
 	ginkgo.By("verifying compression property update")
+
+	println(" Inside VerifyZFSVolumePropEdit ashish {%s}", pvcObj.Spec.VolumeName)
 
 	ginkgo.By("fetching zfs volume for setting compression=on")
 	vol, err := ZFSClient.WithNamespace(OpenEBSNamespace).
