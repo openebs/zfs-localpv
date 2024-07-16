@@ -10,7 +10,7 @@ on:
       - 'MAINTAINERS'
     branches:
       - develop
-      - 'release/[0-9]+.[0-9]+'
+      - 'release/**'
 
 jobs:
   lint:
@@ -30,23 +30,22 @@ jobs:
           pattern: '*.sh'
           
       - uses: cachix/install-nix-action@v22
+      - name: Pre-populate nix-shell
+        run: |
+          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
+          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+     
+      - uses: rrbutani/use-nix-shell-action@v1.1.0
+        with:
+            file: shell.nix
       - name: Check if the chart follows a valid semver version
         run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' scripts/nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
           branch_name="${{ github.event.pull_request.base.ref }}"
-          nix-shell --pure --run "./scripts/validate-version.sh --branch $branch_name" ./scripts/shell.nix
-
-      - name: Run chart-testing (list-changed)
-        id: list-changed
-        run: |
-          changed=$(nix-shell --pure --run "ct list-changed --config ct.yaml" ./scripts/shell.nix)
-          if [[ -n "$changed" ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
+          ./scripts/validate-chart-version.sh --branch $branch_name
   
-      - name: Run chart-testing (lint)
-        run: nix-shell --pure --run "ct lint --config ct.yaml" ./scripts/shell.nix
+      - name: Run chart-testing lint
+        run: |
+          ct lint --config ct.yaml
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -81,13 +80,21 @@ jobs:
         with:
           go-version: 1.19.9
           cache: false
-        
+
+      - uses: cachix/install-nix-action@v22
+      - name: Pre-populate nix-shell
+        run: |
+          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
+          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+     
+      - uses: rrbutani/use-nix-shell-action@v1.1.0
+        with:
+          file: shell.nix
       - name: Build images locally
         run: make zfs-driver-image || exit 1;
 
       - name: Setup zfs pools
         run: |
-          sudo apt-get install -y zfsutils-linux
           truncate -s 100G /tmp/disk.img
           sudo zpool create zfspv-pool `sudo losetup -f /tmp/disk.img --show`
 
@@ -113,7 +120,7 @@ jobs:
         run: |
           make ci
           make sanity 
-      
+
       - name: Upload CI Test Coverage Report
         uses: codecov/codecov-action@v4  
         with:

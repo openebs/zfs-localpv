@@ -53,8 +53,12 @@ ifeq (${DBUILD_SITE_URL}, )
 endif
 
 
+# Set the path to the Chart.yaml file
+ROOT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+CHART_YAML:=${ROOT_DIR}/deploy/helm/charts/Chart.yaml
+
 ifeq (${IMAGE_TAG}, )
-  IMAGE_TAG = 2.7.0-develop
+  IMAGE_TAG := ${shell yq e '.version' $(CHART_YAML)}
   export IMAGE_TAG
 endif
 
