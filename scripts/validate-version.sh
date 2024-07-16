@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Write output to error output stream.
 echo_stderr() {
@@ -64,7 +64,7 @@ while [ "$#" -gt 0 ]; do
   case $1 in
     -b|--branch)
       BRANCH_NAME=$2
-      shift 2
+      shift
       ;;
     -h|--help)
       help
@@ -75,6 +75,7 @@ while [ "$#" -gt 0 ]; do
       die "Unknown option: $1"
       ;;
   esac
+  shift
 done
 
 # Extract major and minor version from the branch name
@@ -82,7 +83,7 @@ extract_major_minor() {
   echo "$1" | awk -F/ '{print $2}'
 }
 
-if [ "$BRANCH_NAME" == "develop" ]; then
+if [[ "$BRANCH_NAME" == "develop" ]]; then
   if [[ "$CHART_VERSION" != *"-develop" ]]; then
     die "Chart version must include '-develop' for develop branch"
   fi
