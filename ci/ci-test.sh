@@ -7,7 +7,7 @@ TEST_DIR="tests"
 
 # Prepare env for runnging BDD tests
 # Minikube is already running
-helm install zfs-localpv ./deploy/helm/charts -n "$OPENEBS_NAMESPACE" --create-namespace --set zfsPlugin.pullPolicy=Never
+helm install zfs-localpv ./deploy/helm/charts -n "$OPENEBS_NAMESPACE" --create-namespace --set zfsPlugin.pullPolicy=Never --set analytics.enabled=false
 kubectl apply -f "$SNAP_CLASS"
 
 dumpAgentLogs() {
