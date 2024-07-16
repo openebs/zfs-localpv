@@ -30,11 +30,6 @@ jobs:
           pattern: '*.sh'
           
       - uses: cachix/install-nix-action@v22
-      - name: Pre-populate nix-shell
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
-     
       - uses: rrbutani/use-nix-shell-action@v1.1.0
         with:
             file: shell.nix
@@ -75,28 +70,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - uses: cachix/install-nix-action@v22
+      - uses: rrbutani/use-nix-shell-action@v1.1.0
+        with:
+          file: shell.nix
+
       - name: Set up Go 1.19
         uses: actions/setup-go@v4
         with:
           go-version: 1.19.9
           cache: false
 
-      - uses: cachix/install-nix-action@v22
-      - name: Pre-populate nix-shell
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
-     
-      - uses: rrbutani/use-nix-shell-action@v1.1.0
-        with:
-          file: shell.nix
       - name: Build images locally
         run: make zfs-driver-image || exit 1;
 
       - name: Setup zfs pools
         run: |
+          sudo apt-get install zfsutils-linux -y
           truncate -s 100G /tmp/disk.img
-          sudo zpool create zfspv-pool `sudo losetup -f /tmp/disk.img --show`
+          sudo zpool create zfspv-pool $(sudo losetup -f /tmp/disk.img --show)
 
       - name: Setup Minikube-Kubernetes
         uses: medyagh/setup-minikube@latest

@@ -5,7 +5,6 @@ in
 pkgs.mkShell {
   name = "scripts-shell";
   buildInputs = with pkgs; [
-    zfs
     semver-tool
     yq-go
     chart-testing
