@@ -221,7 +221,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 	schld := parameters["scheduler"]
 	fstype := parameters["fstype"]
 	shared := parameters["shared"]
-	qoutatype := parameters["qoutatype"]
+	quotatype := parameters["quotatype"]
 
 	vtype := zfs.GetVolumeType(fstype)
 
@@ -280,7 +280,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		WithVolumeType(vtype).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		WithFsType(fstype).
-		WithQuotaType(qoutatype).
+		WithQuotaType(quotatype).
 		WithShared(shared).
 		WithCompression(compression).Build()
 
