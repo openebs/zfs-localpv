@@ -1,16 +1,16 @@
-name: Pull Request CI
+name: Pull Request
 
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
-      - 'design/**'
-      - 'changelogs/**'
-      - '*.md'
-      - 'MAINTAINERS'
+      - "docs/**"
+      - "design/**"
+      - "changelogs/**"
+      - "*.md"
+      - "MAINTAINERS"
     branches:
       - develop
-      - 'release/**'
+      - "release/**"
 
 jobs:
   lint:
@@ -26,18 +26,18 @@ jobs:
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-review
-          path: '.'
-          pattern: '*.sh'
-          
+          path: "."
+          pattern: "*.sh"
+
       - uses: cachix/install-nix-action@v22
       - uses: rrbutani/use-nix-shell-action@v1.1.0
         with:
-            file: shell.nix
+          file: shell.nix
       - name: Check if the chart follows a valid semver version
         run: |
           branch_name="${{ github.event.pull_request.base.ref }}"
           ./scripts/validate-chart-version.sh --branch $branch_name
-  
+
       - name: Run chart-testing lint
         run: |
           ct lint --config ct.yaml
@@ -52,7 +52,7 @@ jobs:
         run: make test
 
       - name: Upload Coverage Report
-        uses: codecov/codecov-action@v4  
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.txt
@@ -61,7 +61,7 @@ jobs:
 
   bdd-tests:
     runs-on: ubuntu-latest
-    needs: ['unit-tests']
+    needs: ["unit-tests"]
     strategy:
       fail-fast: true
       matrix:
@@ -69,11 +69,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - uses: cachix/install-nix-action@v22
-      - uses: rrbutani/use-nix-shell-action@v1.1.0
-        with:
-          file: shell.nix
 
       - name: Set up Go 1.19
         uses: actions/setup-go@v4
@@ -98,7 +93,7 @@ jobs:
           driver: none
           kubernetes-version: ${{ matrix.kubernetes }}
           cni: calico
-          start-args: '--install-addons=false'
+          start-args: "--install-addons=false"
 
       - name: Setting environment variables
         run: |
@@ -111,10 +106,10 @@ jobs:
       - name: Running tests
         run: |
           make ci
-          make sanity 
+          make sanity
 
       - name: Upload CI Test Coverage Report
-        uses: codecov/codecov-action@v4  
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./tests/bdd_coverage.txt
@@ -123,7 +118,7 @@ jobs:
 
   csi-driver:
     runs-on: ubuntu-latest
-    needs: ['lint', 'bdd-tests']
+    needs: ["lint", "bdd-tests"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
