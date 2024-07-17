@@ -44,6 +44,7 @@ allowed values: "on", "off"
 ### thinprovision (*optional* parameter)
 
 ThinProvision describes whether space reservation for the source volume is required or not. The value "yes" indicates that volume should be thin provisioned and "no" means thick provisioning of the volume. If thinProvision is set to "yes" then volume can be provisioned even if the ZPOOL does not have the enough capacity. If thinProvision is set to "no" then volume can be provisioned only if the ZPOOL has enough capacity and capacity required by volume can be reserved.
+Omitting this parameter lets ZFS default behavior prevail: thin provisioning for filesystems and thick provisioning (through `refreservation`) for volumes.
 
 allowed values: "yes", "no"
 
