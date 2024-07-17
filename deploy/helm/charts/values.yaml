@@ -1,9 +1,6 @@
 # Default values for openebs-zfslocalpv.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-release:
-  version: "2.5.1"
-
 imagePullSecrets:
 # - name: "image-pull-secret"
 
@@ -146,7 +143,7 @@ zfsPlugin:
     repository: openebs/zfs-driver
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 2.5.0
+    tag: 2.7.0-develop
 
 role: openebs-zfs
 
