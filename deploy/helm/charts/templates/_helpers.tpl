@@ -60,7 +60,7 @@ Define meta labels for openebs zfs-localpv components
 {{- define "zfslocalpv.common.metaLabels" -}}
 chart: {{ template "zfslocalpv.chart" . }}
 heritage: {{ .Release.Service }}
-openebs.io/version: {{ .Values.release.version | quote }}
+openebs.io/version: {{ .Chart.AppVersion | quote }}
 role: {{ .Values.role | quote }}
 {{- end -}}
 
