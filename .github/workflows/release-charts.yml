@@ -1,11 +1,12 @@
 name: Release Charts
 
-on:
-  push:
-    paths:
-      - 'deploy/helm/**'
-    branches:
-      - develop
+# Disable the workflow till we have the proper CI setup
+# on:
+#   push:
+#     paths:
+#       - 'deploy/helm/**'
+#     branches:
+#       - develop
 
 jobs:
   release:
