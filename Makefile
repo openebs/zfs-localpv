@@ -58,7 +58,7 @@ ROOT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 CHART_YAML:=${ROOT_DIR}/deploy/helm/charts/Chart.yaml
 
 ifeq (${IMAGE_TAG}, )
-  IMAGE_TAG := ${shell yq e '.version' $(CHART_YAML)}
+  IMAGE_TAG := $(shell awk -F': ' '/^version:/ {print $$2}' $(CHART_YAML))
   export IMAGE_TAG
 endif
 
