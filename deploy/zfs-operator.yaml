@@ -1267,6 +1267,10 @@ spec:
                   description: Free specifies the available capacity of zfs pool.
                   pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                   x-kubernetes-int-or-string: true
+                name:
+                  description: Name of the zfs pool.
+                  minLength: 1
+                  type: string
                 used:
                   anyOf:
                   - type: integer
@@ -1274,18 +1278,14 @@ spec:
                   description: Used specifies the used capacity of zfs pool.
                   pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                   x-kubernetes-int-or-string: true
-                name:
-                  description: Name of the zfs pool.
-                  minLength: 1
-                  type: string
                 uuid:
                   description: UUID denotes a unique identity of a zfs pool.
                   minLength: 1
                   type: string
               required:
               - free
-              - used
               - name
+              - used
               - uuid
               type: object
             type: array
