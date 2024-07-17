@@ -29,6 +29,7 @@ import (
 func (in *Pool) DeepCopyInto(out *Pool) {
 	*out = *in
 	out.Free = in.Free.DeepCopy()
+	out.Used = in.Used.DeepCopy()
 	return
 }
 
