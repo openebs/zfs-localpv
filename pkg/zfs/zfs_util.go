@@ -151,14 +151,7 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 			ZFSVolArg = append(ZFSVolArg, "-o", recordsizeProperty)
 		}
 		if vol.Spec.ThinProvision == "no" {
-			reservationProperty := ""
-			switch vol.Spec.QuotaType {
-			case "refquota":
-				reservationProperty = "refreservation=" + vol.Spec.Capacity
-			default:
-				reservationProperty = "reservation=" + vol.Spec.Capacity
-			}
-			ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty)
+			ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty(vol.Spec.QuotaType, vol.Spec.Capacity))
 		}
 		ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=legacy")
 	}
@@ -230,14 +223,7 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 		ZFSVolArg = append(ZFSVolArg, "-o", recordsizeProperty)
 	}
 	if vol.Spec.ThinProvision == "no" {
-		reservationProperty := ""
-		switch vol.Spec.QuotaType {
-		case "refquota":
-			reservationProperty = "refreservation=" + vol.Spec.Capacity
-		default:
-			reservationProperty = "reservation=" + vol.Spec.Capacity
-		}
-		ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty)
+		ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty(vol.Spec.QuotaType, vol.Spec.Capacity))
 	}
 	if len(vol.Spec.Dedup) != 0 {
 		dedupProperty := "dedup=" + vol.Spec.Dedup
@@ -979,4 +965,13 @@ func decodeListOutput(raw []byte) ([]apis.Pool, error) {
 		}
 	}
 	return pools, nil
+}
+
+// get the reservation property based on the quota type
+func reservationProperty(quotaType string, capacity string) string {
+	var reservationProperties = map[string]string{
+		"quota":    "reservation=",
+		"refquota": "refreservation=",
+	}
+	return reservationProperties[quotaType] + capacity
 }
