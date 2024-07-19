@@ -153,10 +153,10 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 		if vol.Spec.ThinProvision == "no" {
 			reservationProperty := ""
 			switch vol.Spec.QuotaType {
-			case "quota":
-				reservationProperty = "reservation=" + vol.Spec.Capacity
 			case "refquota":
 				reservationProperty = "refreservation=" + vol.Spec.Capacity
+			default:
+				reservationProperty = "reservation=" + vol.Spec.Capacity
 			}
 			ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty)
 		}
@@ -232,10 +232,10 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 	if vol.Spec.ThinProvision == "no" {
 		reservationProperty := ""
 		switch vol.Spec.QuotaType {
-		case "quota":
-			reservationProperty = "reservation=" + vol.Spec.Capacity
 		case "refquota":
 			reservationProperty = "refreservation=" + vol.Spec.Capacity
+		default:
+			reservationProperty = "reservation=" + vol.Spec.Capacity
 		}
 		ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty)
 	}
