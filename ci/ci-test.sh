@@ -63,6 +63,7 @@ waitForZFSDriver() {
 
 runTestSuite() {
   local coverageFile=$1
+  local labelFilter="$2"
 
   # wait for zfs-driver to be up
   waitForZFSDriver
@@ -75,7 +76,7 @@ runTestSuite() {
 
   echo "running ginkgo test case with coverage ${coverageFile}"
 
-  if ! ginkgo -v -coverprofile="${coverageFile}" -covermode=atomic; then
+  if ! ginkgo -v -coverprofile="${coverageFile}" --label-filter="${labelFilter}" -covermode=atomic; then
 
   sudo zpool status
 
@@ -111,7 +112,7 @@ runTestSuite() {
   fi
 }
 
-runTestSuite bdd_coverage.txt
+runTestSuite bdd_coverage.txt "!custom-node-id"
 
 prepareCustomNodeIdEnv() {
   for node in $(kubectl get nodes -n openebs -o jsonpath='{.items[*].metadata.name}'); do
@@ -129,7 +130,7 @@ prepareCustomNodeIdEnv() {
 }
 
 prepareCustomNodeIdEnv
-runTestSuite bdd_coverage_custom-node-id.txt
+runTestSuite bdd_coverage_custom-node-id.txt "custom-node-id"
 
 printf "\n\n"
 echo "######### All test cases passed #########"

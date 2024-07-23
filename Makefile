@@ -12,7 +12,7 @@ EXTERNAL_TOOLS=\
 	golang.org/x/lint/golint \
 	github.com/axw/gocov/gocov \
 	gopkg.in/matm/v1/gocov-html \
-	github.com/onsi/ginkgo/ginkgo \
+	github.com/onsi/ginkgo/v2/ginkgo \
 	github.com/onsi/gomega/...
 
 # The images can be pushed to any docker/image registeries
