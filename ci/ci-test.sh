@@ -120,9 +120,9 @@ prepareCustomNodeIdEnv() {
       echo "Relabeling node ${node} with ${node}-custom-id"
       kubectl label node "${node}" openebs.io/nodeid="${node}-custom-id" --overwrite
 
-      local nodeDriver=$(kubectl get pods -l app=openebs-zfs-node -o jsonpath="{.items[?(@.spec.nodeName=='${node}')].metadata.name}" -n kube-system)
+      local nodeDriver=$(kubectl get pods -l app=openebs-zfs-node -o jsonpath="{.items[?(@.spec.nodeName=='${node}')].metadata.name}" -n openebs)
       echo "Restarting ${nodeDriver} on ${node} to pick up the new node id"
-      kubectl delete pod "${nodeDriver}" -n kube-system
+      kubectl delete pod "${nodeDriver}" -n openebs
 
       echo "Deleting old zfsnode ${zfsNode}"
       kubectl delete zfsnode "${zfsNode}" -n openebs
