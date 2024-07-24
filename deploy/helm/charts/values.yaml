@@ -163,6 +163,7 @@ serviceAccount:
 
 analytics:
   enabled: true
+  installerType: "zfs-localpv-helm"
 zfs:
   # If you use a non-standard path to the zfs binary, specify it here
   # bin: /run/current-system/sw/bin/zfs

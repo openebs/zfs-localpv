@@ -11,7 +11,7 @@ HELM_CHART_DIR="$ROOT_DIR/deploy/helm/charts/"
 CRD_CHART_TEMPLATE_DIR="$HELM_CHART_DIR/charts/crds/templates"
 CONTROLLER_GEN=$(which controller-gen)
 RELEASE_NAME="openebs"
-RELEASE_NAMESPACE="openebs"
+RELEASE_NAMESPACE="kube-system"
 
 if [ "$CONTROLLER_GEN" = "" ]; then
   echo "ERROR: failed to get controller-gen, Please run make bootstrap to install it";
@@ -32,4 +32,4 @@ for FILE in "$DEPLOY_YAML_DIR"/zfs.openebs.io_*; do
   awk 'BEGIN { print "{{- if .Values.zfsLocalPv.enabled -}}" } { print } END { if (NR > 0) print "{{- end -}}" }' "$TARGET_FILE" > "$TARGET_FILE.tmp" && mv "$TARGET_FILE.tmp" "$TARGET_FILE"
 done
 
-helm template $RELEASE_NAME $HELM_CHART_DIR -n $RELEASE_NAME > $DEPLOY_YAML_DIR/../zfs-operator.yaml
+helm template $RELEASE_NAME $HELM_CHART_DIR -n $RELEASE_NAMESPACE --set analytics.installerType="zfs-operator" > $DEPLOY_YAML_DIR/../zfs-operator.yaml
