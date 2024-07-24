@@ -106,17 +106,34 @@ func IsPVCDeletedEventually(pvcName string) bool {
 		Should(gomega.BeTrue())
 }
 
-func createFstypeStorageClass(ftype string) {
+// VerifyStorageClassParams verifies the volume properties set at creation time
+func VerifyStorageClassParams(parameters map[string]string) {
+	for propertyKey, propertyVal := range parameters {
+		if propertyKey != "fstype" && propertyKey != "thinprovision" {
+			vol, err := ZFSClient.WithNamespace(OpenEBSNamespace).
+				Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+			gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+			status := IsPropUpdatedEventually(vol, propertyKey, propertyVal)
+			gomega.Expect(status).To(gomega.Equal(true), "while updating {%s%}={%s%} {%s}", propertyKey, propertyVal, vol.Name)
+		}
+	}
+}
+
+func createFstypeStorageClass(addons map[string]string) {
 	var (
 		err error
 	)
 
 	parameters := map[string]string{
 		"poolname": POOLNAME,
-		"fstype":   ftype,
 	}
 
-	ginkgo.By("building a " + ftype + " storage class")
+	// Update params with addons
+	for key, value := range addons {
+		parameters[key] = value
+	}
+
+	ginkgo.By("building a " + addons["ftype"] + " storage class")
 	scObj, err = sc.NewBuilder().
 		WithGenerateName(scName).
 		WithVolumeExpansion(true).
@@ -584,4 +601,58 @@ func deletePVC(pvcname string) {
 	ginkgo.By("verifying deleted pvc")
 	status := IsPVCDeletedEventually(pvcname)
 	gomega.Expect(status).To(gomega.Equal(true), "while trying to get deleted pvc")
+}
+
+func getStoragClassParams() []map[string]string {
+	return []map[string]string{
+		{
+			"fstype":      "zfs",
+			"compression": "lz4",
+		},
+		{
+			"fstype":      "zfs",
+			"compression": "lz4",
+			"dedup":       "on",
+		},
+		{
+			"fstype":        "zfs",
+			"compression":   "zstd-6",
+			"dedup":         "on",
+			"thinprovision": "yes",
+		},
+		{
+			"fstype": "zfs",
+			"dedup":  "on",
+		},
+		{
+			"fstype":        "zfs",
+			"compression":   "gzip",
+			"thinprovision": "yes",
+		},
+		{
+			"fstype":        "zfs",
+			"compression":   "gzip",
+			"dedup":         "on",
+			"thinprovision": "yes",
+		},
+		{
+			"fstype":      "xfs",
+			"compression": "zstd-6",
+		},
+		{
+			"fstype":        "xfs",
+			"compression":   "zstd-6",
+			"dedup":         "on",
+			"thinprovision": "yes",
+		},
+		{
+			"fstype": "ext4",
+			"dedup":  "on",
+		},
+		{
+			"fstype":      "btrfs",
+			"compression": "zstd-6",
+			"dedup":       "on",
+		},
+	}
 }
