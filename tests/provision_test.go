@@ -55,7 +55,6 @@ func create(parameters map[string]string) {
 	By("verifying ZFSVolume object", VerifyZFSVolume)
 	By("verifying storage class parameters")
 	VerifyStorageClassParams(parameters)
-
 }
 
 // Creates the snapshot/clone resources

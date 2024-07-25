@@ -84,7 +84,6 @@ func IsPodRunningEventually(namespace, podName string) bool {
 // IsPropUpdatedEventually checks if the property is updated or not eventually
 func IsPropUpdatedEventually(vol *apis.ZFSVolume, prop string, val string) bool {
 	return gomega.Eventually(func() bool {
-
 		newVal, err := zfs.GetVolumeProperty(vol, prop)
 		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 		return (newVal == val)
@@ -107,16 +106,40 @@ func IsPVCDeletedEventually(pvcName string) bool {
 }
 
 // VerifyStorageClassParams verifies the volume properties set at creation time
-func VerifyStorageClassParams(parameters map[string]string) {
-	for propertyKey, propertyVal := range parameters {
-		if propertyKey != "fstype" && propertyKey != "thinprovision" {
-			vol, err := ZFSClient.WithNamespace(OpenEBSNamespace).
-				Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
-			gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
-			status := IsPropUpdatedEventually(vol, propertyKey, propertyVal)
-			gomega.Expect(status).To(gomega.Equal(true), "while updating {%s%}={%s%} {%s}", propertyKey, propertyVal, vol.Name)
-		}
+func VerifyStorageClassParams(property map[string]string) {
+	vol, err := ZFSClient.WithNamespace(OpenEBSNamespace).
+		Get(pvcObj.Spec.VolumeName, metav1.GetOptions{})
+	gomega.Expect(err).To(gomega.BeNil(), "while fetching the zfs volume {%s}", vol.Name)
+	// Check for file system type
+	if property["fstype"] == "zfs" {
+		property["type"] = "filesystem"
+	} else {
+		property["type"] = "volume"
 	}
+	generateThinProvisionParams(property)
+	delete(property, "fstype")
+
+	for propertyKey, propertyVal := range property {
+		status := IsPropUpdatedEventually(vol, propertyKey, propertyVal)
+		gomega.Expect(status).To(gomega.Equal(true), "while updating {%s%}={%s%} {%s}", propertyKey, propertyVal, vol.Name)
+	}
+
+}
+
+// It populates the map for thing provisioning params
+// Refer https://github.com/openebs/zfs-localpv/issues/560#issuecomment-2232535073
+func generateThinProvisionParams(property map[string]string) {
+	if property["fstype"] == "zfs" {
+		property["quota"] = capacity
+		property["reservation"] = defaultReservation
+		if property["thinprovision"] == "no" {
+			property["reservation"] = capacity
+		}
+	} else {
+		property["quota"] = "-"
+		property["reservation"] = defaultReservation
+	}
+	delete(property, "thinprovision")
 }
 
 func createFstypeStorageClass(addons map[string]string) {
