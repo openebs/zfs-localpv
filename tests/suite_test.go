@@ -55,15 +55,16 @@ var (
 	clonePvcName   = "zfspv-pvc-clone"
 	cloneAppName   = "busybox-zfspv-clone"
 
-	scObj            *storagev1.StorageClass
-	deployObj        *appsv1.Deployment
-	pvcObj           *corev1.PersistentVolumeClaim
-	appPod           *corev1.PodList
-	accessModes      = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
-	capacity         = "5368709120" // 5Gi
-	NewCapacity      = "8Gi"        // 8Gi, for testing resize
-	KubeConfigPath   string
-	OpenEBSNamespace string
+	scObj              *storagev1.StorageClass
+	deployObj          *appsv1.Deployment
+	pvcObj             *corev1.PersistentVolumeClaim
+	appPod             *corev1.PodList
+	accessModes        = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
+	capacity           = "5368709120" // 5Gi
+	NewCapacity        = "8Gi"        // 8Gi, for testing resize
+	defaultReservation = "0"          // The default value for reservation is 0
+	KubeConfigPath     string
+	OpenEBSNamespace   string
 )
 
 func init() {
