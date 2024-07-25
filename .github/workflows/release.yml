@@ -1,17 +1,4 @@
-# Copyright 2020 The OpenEBS Authors. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-name: release
+name: Release Images and Charts
 
 on:
   release:
@@ -19,32 +6,137 @@ on:
       - "created"
 
 jobs:
-  csi-driver:
-    if: contains(github.ref, 'tags/v')
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+        with:
+          fetch-depth: 0
+
+      - uses: cachix/install-nix-action@v22
+      - uses: rrbutani/use-nix-shell-action@v1.1.0
+        with:
+          file: shell.nix
+
+      - name: Check if the chart is publishable
+        run: |
+          TAG=${{ github.event.release.tag_name }}
+          ./scripts/update-chart-version.sh --tag $TAG --publish-release
+
+      - name: Run chart-testing lint
+        run: |
+          ct lint --config ct.yaml
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unit test
+        run: make test
+
+      - name: Upload Coverage Report
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.txt
+          name: coverage-$(date +%s)
+          flags: unittests
+
+  bdd-tests:
+    runs-on: ubuntu-latest
+    needs: ["unit-tests"]
+    strategy:
+      fail-fast: true
+      matrix:
+        kubernetes: [v1.27.3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.19.9
+          cache: false
+
+      - name: Build images locally
+        run: make zfs-driver-image || exit 1;
+
+      - name: Setup zfs pools
+        run: |
+          sudo apt-get install zfsutils-linux -y
+          truncate -s 100G /tmp/disk.img
+          sudo zpool create zfspv-pool $(sudo losetup -f /tmp/disk.img --show)
+
+      - name: Setup Minikube-Kubernetes
+        uses: medyagh/setup-minikube@latest
+        with:
+          cache: false
+          minikube-version: 1.31.1
+          driver: none
+          kubernetes-version: ${{ matrix.kubernetes }}
+          cni: calico
+          start-args: "--install-addons=false"
+
+      - name: Setting environment variables
+        run: |
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+          echo "OPENEBS_NAMESPACE=openebs" >> $GITHUB_ENV
+
+      - name: bootstrap
+        run: make bootstrap
+
+      - name: Running tests
+        run: |
+          make ci
+          make sanity
+
+      - name: Upload CI Test Coverage Report
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./tests/bdd_coverage.txt
+          name: coverage-bdd_coverage-$(date +%s)
+          flags: bddtests
+
+  csi-driver:
+    runs-on: ubuntu-latest
+    needs: ["lint", "bdd-tests"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v22
+      - name: Pre-populate nix-shell
+        run: |
+          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
+          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+          nix-shell --pure --run "echo" ./shell.nix
+
+      - name: Check if the chart is publishable
+        run: |
+          TAG=${{ github.event.release.tag_name }}
+          nix-shell --pure --run "./scripts/update-chart-version.sh --tag $TAG --publish-release" ./shell.nix
+          
       - name: Set Image Org
-        # sets the default IMAGE_ORG to openebs
         run: |
           [ -z "${{ secrets.IMAGE_ORG }}" ] && IMAGE_ORG=openebs || IMAGE_ORG=${{ secrets.IMAGE_ORG}}
           echo "IMAGE_ORG=${IMAGE_ORG}" >> $GITHUB_ENV
 
-      - name: Set Tag and Branch
+      - name: Set IMAGE_TAG and BRANCH
         run: |
-          TAG="${GITHUB_REF#refs/*/v}"
-          echo "TAG=${TAG}" >> $GITHUB_ENV
-          echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
-          BRANCH="v${TAG%.*}.x"
-          echo "BRANCH=${BRANCH}" >> $GITHUB_ENV
+          BRANCH=${{ github.ref_name }}
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$(awk -F': ' '/^version:/ {print $$2}' deploy/helm/charts/Chart.yaml)" >> $GITHUB_ENV
 
       - name: Set Build Date
         id: date
         run: |
           echo "DATE=$(date -u +'%Y-%m-%dT%H:%M:%S%Z')" >> $GITHUB_OUTPUT
-      
+
       - name: Docker meta
         id: docker_meta
         uses: docker/metadata-action@v4
@@ -56,36 +148,12 @@ jobs:
             ghcr.io/${{ env.IMAGE_ORG }}/zfs-driver
           tags: |
             type=raw,value=latest,enable=false
-            type=raw,value=${{ env.TAG }}
-      
-      - name: Print Build info
+            type=raw,value=${{ env.IMAGE_TAG }}
+
+      - name: Print Tag info
         run: |
+          echo "BRANCH: ${{ env.BRANCH }}"
           echo "${{ steps.docker_meta.outputs.tags }}"
-          echo "RELEASE TAG: ${RELEASE_TAG}"
-          echo "RELEASE BRANCH: ${BRANCH}"
-
-      - name: Configure Git
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-
-      - name: Update Operator YAML
-        if: "!github.event.release.prerelease"
-        run: |
-          echo "update the operator yaml with the image tag"
-          sed -i "s/zfs-driver:.*/zfs-driver:${RELEASE_TAG}/" deploy/yamls/zfs-driver.yaml
-          sed -i "s/openebs.io\/version:.*/openebs.io\/version: ${RELEASE_TAG}/" deploy/yamls/zfs-driver.yaml
-          sed -i "s/zfs-driver:.*/zfs-driver:${RELEASE_TAG}/" deploy/zfs-operator.yaml
-          sed -i "s/openebs.io\/version:.*/openebs.io\/version: ${RELEASE_TAG}/" deploy/zfs-operator.yaml
-          sed -i "s/newTag:.*/newTag: ${RELEASE_TAG}/" deploy/yamls/kustomization.yaml
-
-          git diff --quiet deploy/ || CHANGED=$?
-          if [[ $CHANGED -ne 0 ]]; then
-            echo "Commiting operator yaml changes"
-            git add deploy/
-            git commit -s -m 'chore(yaml): updating operator yaml with the image tag'
-            git push origin HEAD:"${BRANCH}"
-          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -99,11 +167,11 @@ jobs:
           version: v0.13.1
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3 
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Login to Quay
         uses: docker/login-action@v3
         with:
@@ -131,4 +199,28 @@ jobs:
             DBUILD_DATE=${{ steps.date.outputs.DATE }}
             DBUILD_REPO_URL=https://github.com/openebs/zfs-localpv
             DBUILD_SITE_URL=https://openebs.io
-            RELEASE_TAG=${{ env.RELEASE_TAG }}
+            BRANCH=${{ env.BRANCH }}
+
+  release-chart:
+    runs-on: ubuntu-latest
+    needs: ["csi-driver"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v22
+      - name: Pre-populate nix-shell
+        run: |
+          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
+          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+          nix-shell --pure --run "echo" ./shell.nix
+
+      - name: Check if the chart is publishable
+        run: |
+          TAG=${{ github.event.release.tag_name }}
+          nix-shell --pure --run "./scripts/update-chart-version.sh --tag $TAG --publish-release" ./shell.nix
+          
+      - name: Publish zfs localpv develop or prerelease helm chart
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          charts_dir: ./deploy/helm
