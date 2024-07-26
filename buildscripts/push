@@ -118,4 +118,3 @@ then
   # Push COMMIT tagged image - :COMMIT
   TagAndPushImage "${DIMAGE}" "${COMMIT}"
 fi;
-	

@@ -18,7 +18,7 @@ if [ "$CONTROLLER_GEN" = "" ]; then
   exit 1;
 fi
 
-$CONTROLLER_GEN crd:trivialVersions=false,preserveUnknownFields=false paths=./pkg/apis/... output:crd:artifacts:config=$DEPLOY_YAML_DIR
+$CONTROLLER_GEN crd:trivialVersions=false,preserveUnknownFields=false paths=./pkg/apis/... output:crd:artifacts:config="$DEPLOY_YAML_DIR"
 
 for FILE in "$DEPLOY_YAML_DIR"/zfs.openebs.io_*; do
   BASE_NAME=$(basename "$FILE" | sed -e 's/^zfs.openebs.io_//' -e 's/s\.yaml$/.yaml/')
@@ -32,4 +32,4 @@ for FILE in "$DEPLOY_YAML_DIR"/zfs.openebs.io_*; do
   awk 'BEGIN { print "{{- if .Values.zfsLocalPv.enabled -}}" } { print } END { if (NR > 0) print "{{- end -}}" }' "$TARGET_FILE" > "$TARGET_FILE.tmp" && mv "$TARGET_FILE.tmp" "$TARGET_FILE"
 done
 
-helm template $RELEASE_NAME $HELM_CHART_DIR -n $RELEASE_NAMESPACE --set analytics.installerType="zfs-operator" > $DEPLOY_YAML_DIR/../zfs-operator.yaml
+helm template "$RELEASE_NAME" "$HELM_CHART_DIR" -n "$RELEASE_NAMESPACE" --set analytics.installerType="zfs-operator" > "$DEPLOY_YAML_DIR"/../zfs-operator.yaml

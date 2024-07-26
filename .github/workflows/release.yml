@@ -28,11 +28,49 @@ jobs:
         run: |
           ct lint --config ct.yaml
 
-  unit-tests:
+  validate_codegen:
     runs-on: ubuntu-latest
+    env:
+      GOPATH: ${{ github.workspace }}/go
+      GOBIN: ${{ github.workspace }}/go/bin
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/src/github.com/openebs/zfs-localpv
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          path: ${{ env.GOPATH }}/src/github.com/openebs/zfs-localpv
+
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.19.9
+          cache: false
+
+      - name: Helm tool installer
+        uses: Azure/setup-helm@v4.2.0
+
+      - name: Verify kubegen
+        run: |
+          make verify-kubegen
+
+      - name: Verify manifests
+        run: |
+          make verify-manifests
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: ["lint", "validate_codegen"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go 1.19
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.19.9
+          cache: false
 
       - name: Unit test
         run: make test
@@ -104,7 +142,7 @@ jobs:
 
   csi-driver:
     runs-on: ubuntu-latest
-    needs: ["lint", "bdd-tests"]
+    needs: ["bdd-tests"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
