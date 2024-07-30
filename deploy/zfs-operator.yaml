@@ -24,12 +24,9 @@ metadata:
   name: openebs-zfs-controller-sa
   namespace: kube-system
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
-    release: openebs
     component: "openebs-zfs-controller"
     openebs.io/component-name: "openebs-zfs-controller"
 ---
@@ -40,12 +37,9 @@ metadata:
   name: openebs-zfs-node-sa
   namespace: kube-system
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
-    release: openebs
     openebs.io/component-name: "openebs-zfs-node"
 ---
 # Source: zfs-localpv/templates/configmap.yaml
@@ -55,12 +49,9 @@ metadata:
   name: openebs-zfspv-bin
   namespace: kube-system # should be the same namespace where it is getting mounted
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
-    release: openebs
     openebs.io/component-name: "openebs-zfs-node"
 data:
   zfs: |
@@ -80,7 +71,6 @@ metadata:
   annotations:
     api-approved.kubernetes.io: https://github.com/kubernetes-csi/external-snapshotter/pull/814
     controller-gen.kubebuilder.io/version: v0.11.3
-    helm.sh/resource-policy: keep
     
   creationTimestamp: null
   name: volumesnapshotclasses.snapshot.storage.k8s.io
@@ -231,7 +221,6 @@ metadata:
   annotations:
     api-approved.kubernetes.io: https://github.com/kubernetes-csi/external-snapshotter/pull/814
     controller-gen.kubebuilder.io/version: v0.11.3
-    helm.sh/resource-policy: keep
     
   creationTimestamp: null
   name: volumesnapshotcontents.snapshot.storage.k8s.io
@@ -720,7 +709,6 @@ metadata:
   annotations:
     api-approved.kubernetes.io: https://github.com/kubernetes-csi/external-snapshotter/pull/814
     controller-gen.kubebuilder.io/version: v0.11.3
-    helm.sh/resource-policy: keep
     
   creationTimestamp: null
   name: volumesnapshots.snapshot.storage.k8s.io
@@ -1110,7 +1098,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.0
-    helm.sh/resource-policy: keep
     
   creationTimestamp: null
   name: zfsbackups.zfs.openebs.io
@@ -1217,7 +1204,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.0
-    helm.sh/resource-policy: keep
     
   creationTimestamp: null
   name: zfsnodes.zfs.openebs.io
@@ -1304,7 +1290,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.0
-    helm.sh/resource-policy: keep
     
   creationTimestamp: null
   name: zfsrestores.zfs.openebs.io
@@ -1533,7 +1518,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.0
-    helm.sh/resource-policy: keep
     
   creationTimestamp: null
   name: zfssnapshots.zfs.openebs.io
@@ -1907,7 +1891,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.0
-    helm.sh/resource-policy: keep
     
   creationTimestamp: null
   name: zfsvolumes.zfs.openebs.io
@@ -2347,12 +2330,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-provisioner-role
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
-    release: openebs
     component: "openebs-zfs-controller"
     openebs.io/component-name: "openebs-zfs-controller"
 rules:
@@ -2402,12 +2382,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-snapshotter-role
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
-    release: openebs
     component: "openebs-zfs-controller"
     openebs.io/component-name: "openebs-zfs-controller"
 rules:
@@ -2451,12 +2428,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-driver-registrar-role
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
-    release: openebs
     openebs.io/component-name: "openebs-zfs-node"
 rules:
   - apiGroups: [""]
@@ -2475,12 +2449,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-provisioner-binding
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
-    release: openebs
     component: "openebs-zfs-controller"
     openebs.io/component-name: "openebs-zfs-controller"
 subjects:
@@ -2498,12 +2469,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-snapshotter-binding
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
-    release: openebs
     component: "openebs-zfs-controller"
     openebs.io/component-name: "openebs-zfs-controller"
 subjects:
@@ -2521,12 +2489,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-driver-registrar-binding
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
-    release: openebs
     openebs.io/component-name: "openebs-zfs-node"
 subjects:
   - kind: ServiceAccount
@@ -2544,18 +2509,14 @@ metadata:
   name: openebs-zfs-localpv-node
   namespace: kube-system
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
-    release: openebs
     openebs.io/component-name: "openebs-zfs-node"
 spec:
   selector:
     matchLabels:
       name: "openebs-zfs-node"
-      release: openebs
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 100%
@@ -2563,12 +2524,9 @@ spec:
   template:
     metadata:
       labels:
-        chart: zfs-localpv-2.7.0-develop
-        heritage: Helm
         openebs.io/version: "2.7.0-develop"
         role: "openebs-zfs"
         name: "openebs-zfs-node"
-        release: openebs
         openebs.io/component-name: "openebs-zfs-node"
     spec:
       priorityClassName: openebs-zfs-csi-node-critical
@@ -2683,30 +2641,23 @@ metadata:
   name: openebs-zfs-localpv-controller
   namespace: kube-system
   labels:
-    chart: zfs-localpv-2.7.0-develop
-    heritage: Helm
     openebs.io/version: "2.7.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
-    release: openebs
     component: "openebs-zfs-controller"
     openebs.io/component-name: "openebs-zfs-controller"
 spec:
   selector:
     matchLabels:
       app: "openebs-zfs-controller"
-      release: openebs
       component: "openebs-zfs-controller"
   replicas: 1
   template:
     metadata:
       labels:
-        chart: zfs-localpv-2.7.0-develop
-        heritage: Helm
         openebs.io/version: "2.7.0-develop"
         role: "openebs-zfs"
         app: "openebs-zfs-controller"
-        release: openebs
         component: "openebs-zfs-controller"
         openebs.io/component-name: "openebs-zfs-controller"
         

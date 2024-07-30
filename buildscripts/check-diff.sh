@@ -2,4 +2,4 @@
 
 set -e
 
-git --no-pager diff --exit-code  pkg/generated pkg/apis/ deploy/yamls
+git --no-pager diff --exit-code  pkg/generated pkg/apis deploy/yamls

@@ -177,3 +177,7 @@ crds:
     volumeSnapshots:
       # Install Volume Snapshot CRDs
       enabled: true
+
+# Allows adding helm specific labels to the components.
+# Only useful for generating independent templates from helm.
+enableHelmMetaLabels: true

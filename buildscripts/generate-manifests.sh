@@ -37,4 +37,8 @@ for FILE in "$DEPLOY_YAML_DIR"/zfs.openebs.io_*; do
 done
 
 # Generate the zfs-operator.yaml using the helm chart.
-helm template "$RELEASE_NAME" "$HELM_CHART_DIR" -n "$RELEASE_NAMESPACE" --set analytics.installerType="zfs-operator" > "$DEPLOY_YAML_DIR"/../zfs-operator.yaml
+helm template "$RELEASE_NAME" "$HELM_CHART_DIR" -n "$RELEASE_NAMESPACE" \
+  --set analytics.installerType="zfs-operator" \
+  --set crds.zfsLocalPv.keep=false \
+  --set crds.csi.volumeSnapshots.keep=false \
+  --set enableHelmMetaLabels=false > "$DEPLOY_YAML_DIR"/../zfs-operator.yaml
