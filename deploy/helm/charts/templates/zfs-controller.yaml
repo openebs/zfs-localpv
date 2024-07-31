@@ -128,7 +128,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: OPENEBS_IO_INSTALLER_TYPE
-              value: "zfs-localpv-helm"
+              value: "{{ if (not (hasKey .Values.analytics "installerType")) }}zfs-localpv-helm{{ else }}{{ .Values.analytics.installerType }}{{ end }}"
             - name: OPENEBS_IO_ENABLE_ANALYTICS
               value: "{{ .Values.analytics.enabled }}"
           args :
