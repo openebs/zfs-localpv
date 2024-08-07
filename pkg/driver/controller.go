@@ -302,7 +302,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 
 		timeout, err = zfs.ProvisionVolume(ctx, vol)
 		if err == nil {
-			return node, nil
+			return nodeid, nil
 		}
 
 		// if timeout reached, return the error and let csi retry the volume creation
@@ -434,7 +434,7 @@ func (cs *controller) CreateVolume(
 ) (*csi.CreateVolumeResponse, error) {
 
 	var err error
-	var selected string
+	var selectedNodeId string
 
 	if err = cs.validateVolumeCreateReq(req); err != nil {
 		return nil, err
@@ -451,28 +451,23 @@ func (cs *controller) CreateVolume(
 	if contentSource != nil && contentSource.GetSnapshot() != nil {
 		snapshotID := contentSource.GetSnapshot().GetSnapshotId()
 
-		selected, err = CreateSnapClone(ctx, req, snapshotID)
+		selectedNodeId, err = CreateSnapClone(ctx, req, snapshotID)
 	} else if contentSource != nil && contentSource.GetVolume() != nil {
 		srcVol := contentSource.GetVolume().GetVolumeId()
-		selected, err = CreateVolClone(ctx, req, srcVol)
+		selectedNodeId, err = CreateVolClone(ctx, req, srcVol)
 	} else {
-		selected, err = CreateZFSVolume(ctx, req)
+		selectedNodeId, err = CreateZFSVolume(ctx, req)
 	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	klog.Infof("created the volume %s/%s on node %s", pool, volName, selected)
+	klog.Infof("created the volume %s/%s on node %s", pool, volName, selectedNodeId)
 
 	sendEventOrIgnore(pvcName, volName, strconv.FormatInt(int64(size), 10), analytics.VolumeProvision)
 
-	nodeid, err := zfs.GetNodeID(selected)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetNodeID failed : %s", err.Error())
-	}
-
-	topology := map[string]string{zfs.ZFSTopologyKey: nodeid}
+	topology := map[string]string{zfs.ZFSTopologyKey: selectedNodeId}
 	cntx := map[string]string{zfs.PoolNameKey: pool, zfs.OpenEBSCasTypeKey: zfs.ZFSCasTypeName}
 
 	return csipayload.NewCreateVolumeResponseBuilder().

@@ -19,7 +19,7 @@ package tests
 import (
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"

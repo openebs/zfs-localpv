@@ -20,7 +20,7 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	"github.com/openebs/zfs-localpv/tests/deploy"

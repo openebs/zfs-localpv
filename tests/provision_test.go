@@ -17,12 +17,13 @@ limitations under the License.
 package tests
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 )
 
 var _ = Describe("[zfspv] TEST VOLUME PROVISIONING", func() {
 	Context("App is deployed with zfs driver", func() {
 		It("Running zfs volume Creation Test", volumeCreationTest)
+		It("Running zfs volume Creation Test with custom node id", Label("custom-node-id"), volumeCreationTest)
 	})
 })
 
