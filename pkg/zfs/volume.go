@@ -402,8 +402,8 @@ func UpdateRestoreInfo(rstr *apis.ZFSRestore, status apis.ZFSRestoreStatus) erro
 }
 
 // GetUserFinalizers returns all the finalizers present on the ZFSVolume object
-// execpt the one owned by ZFS node daemonset. We also need to ignore the foregroundDeletion
-// finalizer as this will be present becasue of the foreground cascading deletion
+// except the one owned by ZFS node daemonset. We also need to ignore the foregroundDeletion
+// finalizer as this will be present because of the foreground cascading deletion
 func GetUserFinalizers(finalizers []string) []string {
 	var userFin []string
 	for _, fin := range finalizers {
@@ -417,17 +417,21 @@ func GetUserFinalizers(finalizers []string) []string {
 
 // IsVolumeReady returns true if volume is Ready
 func IsVolumeReady(vol *apis.ZFSVolume) bool {
-
-	if vol.Status.State == ZFSStatusReady {
-		return true
+	// The status was added to ZFSVolume since v0.8.0
+	if vol.Status.State != "" {
+		// For newer volumes created after v0.8.0, the status is sufficient to determine if the volume is ready
+		// If we check the finalizer to ensure the volume is Ready while the status is Pending or Failed
+		// the volume may never become Ready again when the controller provisions the volume again due to a timeout or controller crash
+		return vol.Status.State == ZFSStatusReady
 	}
 
-	// For older volumes, there was no Status field
+	// For older volumes created before v0.8.0, there was no Status field
 	// so checking the node finalizer to make sure volume is Ready
 	for _, fin := range vol.Finalizers {
 		if fin == ZFSFinalizer {
 			return true
 		}
 	}
+
 	return false
 }
