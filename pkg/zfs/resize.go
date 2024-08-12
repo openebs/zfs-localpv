@@ -21,7 +21,7 @@ import (
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/mount"
+	"k8s.io/mount-utils"
 )
 
 // ResizeExtn can be used to run a resize command on the ext2/3/4 filesystem
