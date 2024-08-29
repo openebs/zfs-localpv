@@ -137,12 +137,13 @@ jobs:
       - name: Setting environment variables
         run: |
           echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
-          echo "OPENEBS_NAMESPACE=openebs" >> $GITHUB_ENV
 
       - name: bootstrap
         run: make bootstrap
 
       - name: Running tests
+        env:
+          OPENEBS_NAMESPACE: "openebs"
         run: |
           make ci
           make sanity

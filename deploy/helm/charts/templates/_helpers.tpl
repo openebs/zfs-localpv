@@ -98,6 +98,7 @@ Create labels for openebs zfs-localpv controller
 Create match labels for openebs zfs-localpv node daemon
 */}}
 {{- define "zfslocalpv.zfsNode.matchLabels" -}}
+app: {{ .Values.zfsNode.componentName | quote }}
 name: {{ .Values.zfsNode.componentName | quote }}{{ if or (not (hasKey .Values "enableHelmMetaLabels")) .Values.enableHelmMetaLabels }}
 release: {{ .Release.Name }}
 {{- end -}}

@@ -8,12 +8,11 @@ VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods \
 # Tools required for different make
 # targets or for development purposes
 EXTERNAL_TOOLS=\
-	golang.org/x/tools/cmd/cover \
-	golang.org/x/lint/golint \
-	github.com/axw/gocov/gocov \
-	gopkg.in/matm/v1/gocov-html \
-	github.com/onsi/ginkgo/v2/ginkgo \
-	github.com/onsi/gomega/...
+	golang.org/x/tools/cmd/cover@latest \
+	golang.org/x/lint/golint@latest \
+	github.com/axw/gocov/gocov@latest \
+	gopkg.in/matm/v1/gocov-html@latest \
+	github.com/onsi/ginkgo/v2/ginkgo@v2.20.1
 
 # The images can be pushed to any docker/image registeries
 # like docker hub, quay. The registries are specified in
@@ -120,7 +119,7 @@ verify-deps: deps
 bootstrap: controller-gen
 	@for tool in  $(EXTERNAL_TOOLS) ; do \
 		echo "+ Installing $$tool" ; \
-		cd && GO111MODULE=on go install -mod=mod $$tool@latest; \
+		cd && GO111MODULE=on go install -mod=mod $$tool; \
 	done
 
 .PHONY: controller-gen
