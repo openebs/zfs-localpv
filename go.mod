@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/container-storage-interface/spec v1.8.0
 	github.com/kubernetes-csi/csi-lib-utils v0.9.0
+	// Update nix/sources.json nixpkgsGinkgo revision when this updated, to pull in the correct version of ginkgo.
 	github.com/onsi/ginkgo/v2 v2.19.1
 	github.com/onsi/gomega v1.34.1
 	github.com/openebs/google-analytics-4 v0.2.1
