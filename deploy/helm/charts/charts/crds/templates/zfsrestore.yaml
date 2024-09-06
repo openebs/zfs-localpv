@@ -159,8 +159,8 @@ spec:
                   type is of type "quota" or "refquota". QuotaType can not be modified
                   once volume has been provisioned. Default Value: quota.'
                 enum:
-                  - quota
-                  - refquota
+                - quota
+                - refquota
                 type: string
               recordsize:
                 description: 'Specifies a suggested block size for files in the file
