@@ -131,6 +131,14 @@ spec:
               value: "{{ if (not (hasKey .Values.analytics "installerType")) }}zfs-localpv-helm{{ else }}{{ .Values.analytics.installerType }}{{ end }}"
             - name: OPENEBS_IO_ENABLE_ANALYTICS
               value: "{{ .Values.analytics.enabled }}"
+            {{- if .Values.analytics.gaId }}
+            - name: GA_ID
+              value: {{ .Values.analytics.gaId | quote }}
+            {{- end }}
+            {{- if .Values.analytics.gaKey }}
+            - name: GA_KEY
+              value: {{ .Values.analytics.gaKey | quote }}
+            {{- end }}
           args :
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_CONTROLLER_DRIVER)"

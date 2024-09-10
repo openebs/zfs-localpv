@@ -7,7 +7,7 @@ require (
 	github.com/kubernetes-csi/csi-lib-utils v0.9.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.7
-	github.com/openebs/google-analytics-4 v0.2.1
+	github.com/openebs/google-analytics-4 v0.3.0
 	github.com/openebs/lib-csi v0.8.2
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.0
