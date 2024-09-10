@@ -58,9 +58,11 @@ Create the name of the service account to use
 Define meta labels for openebs zfs-localpv components
 */}}
 {{- define "zfslocalpv.common.metaLabels" -}}
+{{- if or (not (hasKey .Values "enableHelmMetaLabels")) .Values.enableHelmMetaLabels -}}
 chart: {{ template "zfslocalpv.chart" . }}
 heritage: {{ .Release.Service }}
-openebs.io/version: {{ .Values.release.version | quote }}
+{{ end -}}
+openebs.io/version: {{ .Chart.AppVersion | quote }}
 role: {{ .Values.role | quote }}
 {{- end -}}
 
@@ -69,7 +71,9 @@ Create match labels for openebs zfs-localpv controller
 */}}
 {{- define "zfslocalpv.zfsController.matchLabels" -}}
 app: {{ .Values.zfsController.componentName | quote }}
+{{ if or (not (hasKey .Values "enableHelmMetaLabels")) .Values.enableHelmMetaLabels -}}
 release: {{ .Release.Name }}
+{{ end -}}
 component: {{ .Values.zfsController.componentName | quote }}
 {{- end -}}
 
@@ -94,8 +98,9 @@ Create labels for openebs zfs-localpv controller
 Create match labels for openebs zfs-localpv node daemon
 */}}
 {{- define "zfslocalpv.zfsNode.matchLabels" -}}
-name: {{ .Values.zfsNode.componentName | quote }}
+name: {{ .Values.zfsNode.componentName | quote }}{{ if or (not (hasKey .Values "enableHelmMetaLabels")) .Values.enableHelmMetaLabels }}
 release: {{ .Release.Name }}
+{{- end -}}
 {{- end -}}
 
 {{/*

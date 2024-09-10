@@ -5,3 +5,4 @@ chart-dirs:
   - deploy/helm
 helm-extra-args: --timeout=500s
 validate-maintainers: false
+check-version-increment: false

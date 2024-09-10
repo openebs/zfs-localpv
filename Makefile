@@ -53,8 +53,12 @@ ifeq (${DBUILD_SITE_URL}, )
 endif
 
 
+# Set the path to the Chart.yaml file
+ROOT_DIR:=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+CHART_YAML:=${ROOT_DIR}/deploy/helm/charts/Chart.yaml
+
 ifeq (${IMAGE_TAG}, )
-  IMAGE_TAG = ci
+  IMAGE_TAG := $(shell awk -F': ' '/^version:/ {print $$2}' $(CHART_YAML))
   export IMAGE_TAG
 endif
 
@@ -121,7 +125,7 @@ bootstrap: controller-gen
 
 .PHONY: controller-gen
 controller-gen:
-	TMP_DIR=$(shell mktemp -d) && cd $$TMP_DIR && go mod init tmp && go install -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0 && rm -rf $$TMP_DIR;
+	@go install -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0
 
 # SRC_PKG is the path of code files
 SRC_PKG := github.com/openebs/zfs-localpv/pkg
@@ -140,7 +144,7 @@ kubegendelete:
 
 .PHONY: deepcopy-install
 deepcopy-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/deepcopy-gen
+	@go install -mod=mod k8s.io/code-generator/cmd/deepcopy-gen@v0.27.2
 
 .PHONY: deepcopy
 deepcopy:
@@ -152,7 +156,7 @@ deepcopy:
 
 .PHONY: clientset-install
 clientset-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/client-gen
+	@go install -mod=mod k8s.io/code-generator/cmd/client-gen@v0.27.2
 
 .PHONY: clientset
 clientset:
@@ -166,7 +170,7 @@ clientset:
 
 .PHONY: lister-install
 lister-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/lister-gen
+	@go install -mod=mod k8s.io/code-generator/cmd/lister-gen@v0.27.2
 
 .PHONY: lister
 lister:
@@ -178,7 +182,7 @@ lister:
 
 .PHONY: informer-install
 informer-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/informer-gen
+	@go install -mod=mod k8s.io/code-generator/cmd/informer-gen@v0.27.2
 
 .PHONY: informer
 informer:
@@ -231,5 +235,15 @@ golint:
 	@echo "Completed golint no recommendations !!"
 	@echo "--------------------------------"
 	@echo ""
+
+.PHONY: verify-manifests
+verify-manifests: bootstrap manifests
+	@./buildscripts/check-diff.sh
+	@echo "Completed verify-manifests no changes detected !!"
+
+.PHONY: verify-kubegen
+verify-kubegen: bootstrap kubegen
+	@./buildscripts/check-diff.sh
+	@echo "Completed verify-codegen no changes detected !!"
 
 include Makefile.buildx.mk
