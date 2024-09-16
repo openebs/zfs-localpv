@@ -6,15 +6,15 @@ appVersion: 2.6.1-prerelease
 icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
 home: https://openebs.io/
 keywords:
-- cloud-native-storage
-- block-storage
-- filesystem
-- ZFS
-- Local Persistent Volumes
-- storage
+  - cloud-native-storage
+  - block-storage
+  - filesystem
+  - ZFS
+  - Local Persistent Volumes
+  - storage
 sources:
-- https://github.com/openebs/zfs-localpv
+  - https://github.com/openebs/zfs-localpv
 dependencies:
-- name: crds
-  version: 2.6.1-prerelease
-  condition: crds.enabled
+  - name: crds
+    version: 2.6.1-prerelease
+    condition: crds.enabled

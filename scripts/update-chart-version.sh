@@ -138,7 +138,7 @@ update_chart_yaml() {
 
   yq_ibl ".version = \"$VERSION\" | .appVersion = \"$APP_VERSION\"" "$CHART_YAML"
   yq_ibl ".version = \"$VERSION\"" "$CRD_CHART_YAML"
-  yq_ibl "(.dependencies[] | select(.name == \"crds\") | .version) = \"$VERSION\"" "$CHART_YAML"
+  yq_ibl "(.dependencies[] | select(.name == \"crds\").version) |= \"$VERSION\"" "$CHART_YAML"
   yq_ibl ".zfsPlugin.image.tag = \"$VERSION\"" "$VALUES_YAML"
 }
 
