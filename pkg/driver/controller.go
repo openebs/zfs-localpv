@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -63,6 +64,15 @@ type controller struct {
 
 	k8sNodeInformer cache.SharedIndexInformer
 	zfsNodeInformer cache.SharedIndexInformer
+
+	volMutexes sync.Map
+}
+
+func (cs *controller) LockVolume(volume string) func() {
+	value, _ := cs.volMutexes.LoadOrStore(volume, &sync.Mutex{})
+	mtx := value.(*sync.Mutex)
+	mtx.Lock()
+	return func() { mtx.Unlock() }
 }
 
 // NewController returns a new instance
@@ -450,6 +460,9 @@ func (cs *controller) CreateVolume(
 	contentSource := req.GetVolumeContentSource()
 	pvcName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/name")
 
+	unlock := cs.LockVolume(volName)
+	defer unlock()
+
 	if contentSource != nil && contentSource.GetSnapshot() != nil {
 		snapshotID := contentSource.GetSnapshot().GetSnapshotId()
 
@@ -493,6 +506,8 @@ func (cs *controller) DeleteVolume(
 	}
 
 	volumeID := strings.ToLower(req.GetVolumeId())
+	unlock := cs.LockVolume(volumeID)
+	defer unlock()
 
 	// verify if the volume has already been deleted
 	vol, err := zfs.GetVolume(volumeID)
@@ -611,6 +626,8 @@ func (cs *controller) ControllerExpandVolume(
 			"ControllerExpandVolume: no volumeID provided",
 		)
 	}
+	unlock := cs.LockVolume(volumeID)
+	defer unlock()
 
 	/* round off the new size */
 	updatedSize := getRoundedCapacity(req.GetCapacityRange().GetRequiredBytes())
@@ -707,6 +724,10 @@ func (cs *controller) CreateSnapshot(
 	if err != nil {
 		return nil, err
 	}
+	unlockVol := cs.LockVolume(volumeID)
+	defer unlockVol()
+	unlockSnap := cs.LockVolume(snapName)
+	defer unlockSnap()
 
 	snapTimeStamp := time.Now().Unix()
 	var state string
@@ -803,6 +824,10 @@ func (cs *controller) DeleteSnapshot(
 		// should succeed when an invalid snapshot id is used
 		return &csi.DeleteSnapshotResponse{}, nil
 	}
+	unlockVol := cs.LockVolume(snapshotID[0])
+	defer unlockVol()
+	unlockSnap := cs.LockVolume(snapshotID[1])
+	defer unlockSnap()
 	if err := zfs.DeleteSnapshot(snapshotID[1]); err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
