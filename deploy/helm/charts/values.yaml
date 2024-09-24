@@ -143,7 +143,7 @@ zfsPlugin:
     repository: openebs/zfs-driver
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 2.6.2-prerelease
+    tag: 2.6.3-prerelease
 
 role: openebs-zfs
 
