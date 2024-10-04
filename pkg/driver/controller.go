@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -65,23 +64,7 @@ type controller struct {
 	k8sNodeInformer cache.SharedIndexInformer
 	zfsNodeInformer cache.SharedIndexInformer
 
-	volMutexes sync.Map
-}
-
-func (cs *controller) LockVolume(volume string) func() {
-	value, _ := cs.volMutexes.LoadOrStore(volume, &sync.Mutex{})
-	mtx := value.(*sync.Mutex)
-	mtx.Lock()
-	return func() { mtx.Unlock() }
-}
-
-func (cs *controller) LockVolumeWithSnapshot(volume string, snapshot string) func() {
-	unlockVol := cs.LockVolume(volume)
-	unlockSnap := cs.LockVolume(snapshot)
-	return func() {
-		unlockVol()
-		unlockSnap()
-	}
+	volumeLock *volumeLock
 }
 
 // NewController returns a new instance
@@ -90,6 +73,7 @@ func NewController(d *CSIDriver) csi.ControllerServer {
 	ctrl := &controller{
 		driver:       d,
 		capabilities: newControllerCapabilities(),
+		volumeLock:   newVolumeLock(),
 	}
 	if err := ctrl.init(); err != nil {
 		klog.Fatalf("init controller: %v", err)
@@ -469,7 +453,7 @@ func (cs *controller) CreateVolume(
 	contentSource := req.GetVolumeContentSource()
 	pvcName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/name")
 
-	unlock := cs.LockVolume(volName)
+	unlock := cs.volumeLock.LockVolume(volName)
 	defer unlock()
 
 	if contentSource != nil && contentSource.GetSnapshot() != nil {
@@ -515,7 +499,7 @@ func (cs *controller) DeleteVolume(
 	}
 
 	volumeID := strings.ToLower(req.GetVolumeId())
-	unlock := cs.LockVolume(volumeID)
+	unlock := cs.volumeLock.LockVolume(volumeID)
 	defer unlock()
 
 	// verify if the volume has already been deleted
@@ -635,7 +619,7 @@ func (cs *controller) ControllerExpandVolume(
 			"ControllerExpandVolume: no volumeID provided",
 		)
 	}
-	unlock := cs.LockVolume(volumeID)
+	unlock := cs.volumeLock.LockVolume(volumeID)
 	defer unlock()
 
 	/* round off the new size */
@@ -733,7 +717,7 @@ func (cs *controller) CreateSnapshot(
 	if err != nil {
 		return nil, err
 	}
-	unlock := cs.LockVolumeWithSnapshot(volumeID, snapName)
+	unlock := cs.volumeLock.LockVolumeWithSnapshot(volumeID, snapName)
 	defer unlock()
 
 	snapTimeStamp := time.Now().Unix()
@@ -831,7 +815,7 @@ func (cs *controller) DeleteSnapshot(
 		// should succeed when an invalid snapshot id is used
 		return &csi.DeleteSnapshotResponse{}, nil
 	}
-	unlock := cs.LockVolumeWithSnapshot(snapshotID[0], snapshotID[1])
+	unlock := cs.volumeLock.LockVolumeWithSnapshot(snapshotID[0], snapshotID[1])
 	defer unlock()
 	if err := zfs.DeleteSnapshot(snapshotID[1]); err != nil {
 		return nil, status.Errorf(
