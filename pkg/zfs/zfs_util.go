@@ -297,6 +297,10 @@ func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
 		ZFSVolArg = append(ZFSVolArg, volsizeProperty)
 	}
 
+	if vol.Spec.ThinProvision == "no" {
+		ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty(vol.Spec.QuotaType, vol.Spec.Capacity))
+	}
+
 	ZFSVolArg = append(ZFSVolArg, volume)
 
 	return ZFSVolArg
