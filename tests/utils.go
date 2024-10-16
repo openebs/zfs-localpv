@@ -639,7 +639,7 @@ func getStoragClassParams() []map[string]string {
 		},
 		{
 			"fstype":        "zfs",
-			"compression":   "zstd-6",
+			"compression":   "zstd-fast",
 			"dedup":         "on",
 			"thinprovision": "yes",
 		},
@@ -676,6 +676,10 @@ func getStoragClassParams() []map[string]string {
 			"fstype":      "btrfs",
 			"compression": "zstd-6",
 			"dedup":       "on",
+		},
+		{
+			"fstype":      "xfs",
+			"compression": "zstd-fast",
 		},
 	}
 }
