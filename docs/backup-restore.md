@@ -37,13 +37,13 @@ aws_secret_access_key = minio123
 We can install Velero by using below command
 
 ```
-velero install --provider aws --bucket velero --secret-file /home/pawan/velero/credentials-minio --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000 --use-volume-snapshots=true --use-node-agent --uploader-type restic
+velero install --provider aws --bucket velero --secret-file /home/pawan/velero/credentials-minio --plugins velero/velero-plugin-for-aws:v1.10.1 --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000 --use-volume-snapshots=true --use-node-agent
 ```
 
 If you would like to use cloud storage like AWS-S3 buckets for storing backups, you could use a command like the following: 
 
 ```
-velero install --provider aws --bucket <bucket_name> --secret-file <./aws-iam-creds> --plugins velero/velero-plugin-for-aws:v1.0.0-beta.1 --backup-location-config region=<bucket_region>,s3ForcePathStyle="true" --use-volume-snapshots=true --use-node-agent --uploader-type restic
+velero install --provider aws --bucket <bucket_name> --secret-file <./aws-iam-creds> --plugins velero/velero-plugin-for-aws:v1.10.1 --backup-location-config region=<bucket_region>,s3ForcePathStyle="true" --use-volume-snapshots=true --use-node-agent
 ```
 
 We have to install the velero 1.5 or later version for LocalPV-ZFS.
@@ -65,9 +65,7 @@ $ kubectl get po -n velero
 NAME                      READY   STATUS      RESTARTS   AGE
 minio-d787f4bf7-xqmq5     1/1     Running     0          8s
 minio-setup-prln8         0/1     Completed   0          8s
-restic-4kx8l              1/1     Running     0          69s
-restic-g5zq9              1/1     Running     0          69s
-restic-k7k4s              1/1     Running     0          69s
+node-agent-lltf2          1/1     Running     0          69s
 velero-7d9c448bc5-j424s   1/1     Running     3          69s
 ```
 
