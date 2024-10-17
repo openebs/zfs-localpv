@@ -790,11 +790,11 @@ func (cs *controller) DeleteSnapshot(
 	req *csi.DeleteSnapshotRequest,
 ) (*csi.DeleteSnapshotResponse, error) {
 
-	if req.SnapshotId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "DeleteSnapshot: empty snapshotID")
-	}
-
 	klog.Infof("DeleteSnapshot request for %s", req.SnapshotId)
+
+	if err := cs.validateDeleteSnapshotReq(req); err != nil {
+		return nil, err
+	}
 
 	// snapshodID is formed as <volname>@<snapname>
 	// parsing them here
@@ -803,7 +803,9 @@ func (cs *controller) DeleteSnapshot(
 		// should succeed when an invalid snapshot id is used
 		return &csi.DeleteSnapshotResponse{}, nil
 	}
-	if err := zfs.DeleteSnapshot(snapshotID[1]); err != nil {
+
+	snapName := snapshotID[1]
+	if err := zfs.DeleteSnapshot(snapName); err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
 			"failed to handle DeleteSnapshot for %s, {%s}",
@@ -986,7 +988,7 @@ func (cs *controller) ListVolumes(
 }
 
 func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) error {
-	volumeID := req.GetVolumeId()
+	volumeID := strings.ToLower(req.GetVolumeId())
 	if volumeID == "" {
 		return status.Error(
 			codes.InvalidArgument,
@@ -994,7 +996,29 @@ func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) erro
 		)
 	}
 
-	err := cs.validateRequest(
+	// volume should not be deleted if there are snapshots present for the volume
+	snapList, err := zfs.GetSnapshotsForVolume(volumeID)
+	if err != nil {
+		return status.Errorf(
+			codes.NotFound,
+			"failed to handle delete volume request for {%s}, "+
+				"validation failed checking for snapshots. Error: %s",
+			req.GetVolumeId(),
+			err.Error(),
+		)
+	}
+
+	// delete is not supported if there are any snapshots present for the volume
+	if len(snapList.Items) != 0 {
+		return status.Errorf(
+			codes.Internal,
+			"failed to handle delete volume request for {%s} with %d snapshots",
+			req.GetVolumeId(),
+			len(snapList.Items),
+		)
+	}
+
+	err = cs.validateRequest(
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
 	)
 	if err != nil {
@@ -1004,6 +1028,14 @@ func (cs *controller) validateDeleteVolumeReq(req *csi.DeleteVolumeRequest) erro
 			volumeID,
 		)
 	}
+	return nil
+}
+
+func (cs *controller) validateDeleteSnapshotReq(req *csi.DeleteSnapshotRequest) error {
+	if req.GetSnapshotId() == "" {
+		return status.Errorf(codes.InvalidArgument, "DeleteSnapshot: empty snapshotID")
+	}
+
 	return nil
 }
 

@@ -299,6 +299,15 @@ func GetZFSSnapshot(snapID string) (*apis.ZFSSnapshot, error) {
 	return snap, err
 }
 
+// GetSnapshotsForVolume fetches all the snapshots for the given volume
+func GetSnapshotsForVolume(volumeID string) (*apis.ZFSSnapshotList, error) {
+	listOptions := metav1.ListOptions{
+		LabelSelector: ZFSVolKey + "=" + volumeID,
+	}
+	snapList, err := snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).List(listOptions)
+	return snapList, err
+}
+
 // GetZFSSnapshotStatus returns ZFSSnapshot status
 func GetZFSSnapshotStatus(snapID string) (string, error) {
 	getOptions := metav1.GetOptions{}
