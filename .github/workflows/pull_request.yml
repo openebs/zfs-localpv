@@ -14,7 +14,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
           ct lint --config ct.yaml
 
   validate_codegen:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       GOPATH: ${{ github.workspace }}/go
       GOBIN: ${{ github.workspace }}/go/bin
@@ -75,7 +75,7 @@ jobs:
           make verify-manifests
 
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: ["lint", "validate_codegen"]
     steps:
       - name: Checkout
@@ -99,7 +99,7 @@ jobs:
           flags: unittests
 
   bdd-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: ["unit-tests"]
     strategy:
       fail-fast: true
@@ -157,7 +157,7 @@ jobs:
           flags: bddtests
 
   csi-driver:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: ["bdd-tests"]
     steps:
       - name: Checkout

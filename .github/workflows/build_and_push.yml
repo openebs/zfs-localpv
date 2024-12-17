@@ -14,7 +14,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
           ct lint --config ct.yaml
 
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: ["lint"]
     steps:
       - name: Checkout
@@ -60,7 +60,7 @@ jobs:
           flags: unittests
 
   bdd-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: ["unit-tests"]
     strategy:
       fail-fast: true
@@ -118,7 +118,7 @@ jobs:
           flags: bddtests
 
   csi-driver:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: ["bdd-tests"]
     steps:
       - name: Checkout
@@ -205,7 +205,7 @@ jobs:
             BRANCH=${{ env.BRANCH }}
 
   release-chart:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: ["csi-driver"]
     steps:
       - uses: actions/checkout@v4
