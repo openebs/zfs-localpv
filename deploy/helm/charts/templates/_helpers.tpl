@@ -98,7 +98,6 @@ Create labels for openebs zfs-localpv controller
 Create match labels for openebs zfs-localpv node daemon
 */}}
 {{- define "zfslocalpv.zfsNode.matchLabels" -}}
-app: {{ .Values.zfsNode.componentName | quote }}
 name: {{ .Values.zfsNode.componentName | quote }}{{ if or (not (hasKey .Values "enableHelmMetaLabels")) .Values.enableHelmMetaLabels }}
 release: {{ .Release.Name }}
 {{- end -}}
@@ -108,6 +107,7 @@ release: {{ .Release.Name }}
 Create component labels openebs zfs-localpv node daemon
 */}}
 {{- define "zfslocalpv.zfsNode.componentLabels" -}}
+app: {{ .Values.zfsNode.componentName | quote }}
 openebs.io/component-name: {{ .Values.zfsNode.componentName | quote }}
 {{- end -}}
 
