@@ -150,11 +150,19 @@ func VerifyStorageClassParams(property map[string]string) {
 // Refer https://github.com/openebs/zfs-localpv/issues/560#issuecomment-2232535073
 func generateThinProvisionParams(property map[string]string) {
 	if property["fstype"] == "zfs" {
-		property["quota"] = capacity
-		property["reservation"] = defaultReservation
-		if property["thinprovision"] == "no" {
-			property["reservation"] = capacity
+		if property["quotatype"] == "quota" {
+			property["quota"] = string(capacity)
+			if property["thinprovision"] == "no" {
+				property["reservation"] = string(capacity)
+			}
 		}
+		if property["quotatype"] == "refquota" {
+			property["refquota"] = string(capacity)
+			if property["thinprovision"] == "no" {
+				property["refreservation"] = string(capacity)
+			}
+		}
+		delete(property, "quotatype")
 	} else {
 		property["quota"] = "-"
 		property["reservation"] = defaultReservation
@@ -700,6 +708,19 @@ func getStoragClassParams() []map[string]string {
 		{
 			"fstype":      "xfs",
 			"compression": "zstd-fast",
+		},
+		{
+			"fstype":    "zfs",
+			"quotatype": "quota",
+		},
+		{
+			"fstype":    "zfs",
+			"quotatype": "refquota",
+		},
+		{
+			"fstype":        "zfs",
+			"thinprovision": "no",
+			"quotatype":     "refquota",
 		},
 	}
 }
