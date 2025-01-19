@@ -18,9 +18,9 @@ package tests
 
 import (
 	"fmt"
-	"k8s.io/klog/v2"
 	"os/exec"
-	"time"
+
+	"k8s.io/klog/v2"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -478,41 +478,31 @@ func resizeAndVerifyPVC() {
 }
 func createDeployVerifyApp() {
 	ginkgo.By("creating and deploying app pod")
-	createAndDeployAppPod(appName)
-	time.Sleep(30 * time.Second)
-	ginkgo.By("verifying app pod is running", verifyAppPodRunning)
+	createAndDeployAppPod(appName, pvcName)
+	ginkgo.By("verifying app pod is running", func() { verifyAppPodRunning(appName) })
 }
 
 func createDeployVerifyCloneApp() {
 	ginkgo.By("creating and deploying app pod")
-	createAndDeployAppPod(cloneAppName)
-	time.Sleep(30 * time.Second)
-	ginkgo.By("verifying app pod is running", verifyAppPodRunning)
+	createAndDeployAppPod(cloneAppName, clonePvcName)
+	ginkgo.By("verifying app pod is running", func() { verifyAppPodRunning(cloneAppName) })
 }
 
-func createAndDeployAppPod(appname string) {
+func createAndDeployAppPod(appname string, pvcname string) {
 	var err error
+	labels := map[string]string{
+		"app":     "busybox",
+		"appName": appname,
+	}
 	ginkgo.By("building a busybox app pod deployment using above zfs volume")
 	deployObj, err = deploy.NewBuilder().
 		WithName(appname).
 		WithNamespace(OpenEBSNamespace).
-		WithLabelsNew(
-			map[string]string{
-				"app": "busybox",
-			},
-		).
-		WithSelectorMatchLabelsNew(
-			map[string]string{
-				"app": "busybox",
-			},
-		).
+		WithLabelsNew(labels).
+		WithSelectorMatchLabelsNew(labels).
 		WithPodTemplateSpecBuilder(
 			pts.NewBuilder().
-				WithLabelsNew(
-					map[string]string{
-						"app": "busybox",
-					},
-				).
+				WithLabelsNew(labels).
 				WithContainerBuilders(
 					container.NewBuilder().
 						WithImage("busybox").
@@ -537,45 +527,38 @@ func createAndDeployAppPod(appname string) {
 				WithVolumeBuilders(
 					k8svolume.NewBuilder().
 						WithName("datavol1").
-						WithPVCSource(pvcObj.Name),
-				),
+						WithPVCSource(pvcname),
+				).
+				WithTerminationGracePeriodSeconds(5),
 		).
 		Build()
 
-	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while building app deployement {%s}", appName)
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while building app deployement {%s}", appname)
 
 	deployObj, err = DeployClient.WithNamespace(OpenEBSNamespace).Create(deployObj)
 	gomega.Expect(err).ShouldNot(
 		gomega.HaveOccurred(),
 		"while creating pod {%s} in namespace {%s}",
-		appName,
+		appname,
 		OpenEBSNamespace,
 	)
 }
 
 func createAndDeployBlockAppPod() {
 	var err error
+	labels := map[string]string{
+		"app":     "busybox",
+		"appName": appName,
+	}
 	ginkgo.By("building a busybox app pod deployment using above zfs volume")
 	deployObj, err = deploy.NewBuilder().
 		WithName(appName).
 		WithNamespace(OpenEBSNamespace).
-		WithLabelsNew(
-			map[string]string{
-				"app": "busybox",
-			},
-		).
-		WithSelectorMatchLabelsNew(
-			map[string]string{
-				"app": "busybox",
-			},
-		).
+		WithLabelsNew(labels).
+		WithSelectorMatchLabelsNew(labels).
 		WithPodTemplateSpecBuilder(
 			pts.NewBuilder().
-				WithLabelsNew(
-					map[string]string{
-						"app": "busybox",
-					},
-				).
+				WithLabelsNew(labels).
 				WithContainerBuilders(
 					container.NewBuilder().
 						WithImage("busybox").
@@ -601,7 +584,8 @@ func createAndDeployBlockAppPod() {
 					k8svolume.NewBuilder().
 						WithName("datavol1").
 						WithPVCSource(pvcObj.Name),
-				),
+				).
+				WithTerminationGracePeriodSeconds(5),
 		).
 		Build()
 
@@ -618,18 +602,21 @@ func createAndDeployBlockAppPod() {
 
 func createDeployVerifyBlockApp() {
 	ginkgo.By("creating and deploying app pod", createAndDeployBlockAppPod)
-	time.Sleep(30 * time.Second)
-	ginkgo.By("verifying app pod is running", verifyAppPodRunning)
+	ginkgo.By("verifying app pod is running", func() { verifyAppPodRunning(appName) })
 }
 
-func verifyAppPodRunning() {
+func verifyAppPodRunning(appname string) {
 	var err error
-	appPod, err = PodClient.WithNamespace(OpenEBSNamespace).
-		List(metav1.ListOptions{
-			LabelSelector: "app=busybox",
-		},
-		)
-	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while verifying application pod")
+	gomega.Eventually(func() bool {
+		appPod, err = PodClient.WithNamespace(OpenEBSNamespace).
+			List(metav1.ListOptions{
+				LabelSelector: "app=busybox,appName=" + appname,
+			})
+		gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while verifying application pod")
+		return len(appPod.Items) == 1
+	},
+		60, 5).
+		Should(gomega.BeTrue())
 
 	status := IsPodRunningEventually(OpenEBSNamespace, appPod.Items[0].Name)
 	gomega.Expect(status).To(gomega.Equal(true), "while checking status of pod {%s}", appPod.Items[0].Name)
