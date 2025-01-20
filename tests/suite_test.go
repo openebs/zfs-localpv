@@ -71,7 +71,8 @@ func init() {
 
 	OpenEBSNamespace = os.Getenv("OPENEBS_NAMESPACE")
 	if OpenEBSNamespace == "" {
-		os.Setenv("OPENEBS_NAMESPACE", "openebs")
+		OpenEBSNamespace = "openebs"
+		os.Setenv("OPENEBS_NAMESPACE", OpenEBSNamespace)
 	}
 	SCClient = sc.NewKubeClient(sc.WithKubeConfigPath(KubeConfigPath))
 	PVCClient = pvc.NewKubeClient(pvc.WithKubeConfigPath(KubeConfigPath))

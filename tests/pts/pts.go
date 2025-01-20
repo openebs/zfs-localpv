@@ -339,6 +339,14 @@ func (b *Builder) WithContainerBuilders(
 	return b
 }
 
+// WithTerminationGracePeriodSeconds adds the terminationGracePeriodSeconds
+func (b *Builder) WithTerminationGracePeriodSeconds(
+	period int64,
+) *Builder {
+	b.podtemplatespec.Object.Spec.TerminationGracePeriodSeconds = &period
+	return b
+}
+
 // WithVolumeBuilders builds the list of volumebuilders provided
 // and merges it to the volumes field of podtemplatespec.
 func (b *Builder) WithVolumeBuilders(
