@@ -122,7 +122,7 @@ verify-deps: deps
 bootstrap: controller-gen
 	@for tool in  $(EXTERNAL_TOOLS) ; do \
 		echo "+ Installing $$tool" ; \
-		cd && GO111MODULE=on go install -mod=mod $$tool; \
+		GO111MODULE=on go install -mod=mod $$tool; \
 	done
 
 .PHONY: controller-gen
