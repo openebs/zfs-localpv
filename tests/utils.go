@@ -492,6 +492,7 @@ func createAndDeployAppPod(appname string, pvcname string) {
 	var err error
 	labels := map[string]string{
 		"app":     "busybox",
+		"role":    "test",
 		"appName": appname,
 	}
 	ginkgo.By("building a busybox app pod deployment using above zfs volume")
@@ -548,6 +549,7 @@ func createAndDeployBlockAppPod() {
 	var err error
 	labels := map[string]string{
 		"app":     "busybox",
+		"role":    "test",
 		"appName": appName,
 	}
 	ginkgo.By("building a busybox app pod deployment using above zfs volume")
@@ -610,7 +612,7 @@ func verifyAppPodRunning(appname string) {
 	gomega.Eventually(func() bool {
 		appPod, err = PodClient.WithNamespace(OpenEBSNamespace).
 			List(metav1.ListOptions{
-				LabelSelector: "app=busybox,appName=" + appname,
+				LabelSelector: "role=test,appName=" + appname,
 			})
 		gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while verifying application pod")
 		return len(appPod.Items) == 1

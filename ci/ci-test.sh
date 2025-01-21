@@ -63,8 +63,8 @@ cleanup() {
   echo "Cleaning up test resources"
 
   if kubectl get nodes 2>/dev/null; then
-    kubectl delete deployment -lappRole=test -n "$OPENEBS_NAMESPACE"
-    kubectl delete pod -lappRole=test --force -n "$OPENEBS_NAMESPACE"
+    kubectl delete deployment -lrole=test -n "$OPENEBS_NAMESPACE"
+    kubectl delete pod -lrole=test --force -n "$OPENEBS_NAMESPACE"
     kubectl delete pvc -n "$OPENEBS_NAMESPACE" --all
 
     sleep 3
