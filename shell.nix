@@ -21,6 +21,7 @@ pkgs.mkShell {
     util-linux
     jq
     zfs
+    nixos-shell
   ] ++ pkgs.lib.optional (builtins.getEnv "IN_NIX_SHELL" == "pure") [ docker-client ];
 
   PRE_COMMIT_ALLOW_NO_CONFIG = 1;

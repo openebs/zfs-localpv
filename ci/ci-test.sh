@@ -176,6 +176,8 @@ helm_install() {
   kubectl apply -f "$SNAP_CLASS"
 
   waitForZFSDriver
+
+  kubectl get po -n "$OPENEBS_NAMESPACE"
 }
 
 runTestSuite() {
@@ -186,8 +188,6 @@ runTestSuite() {
   waitForZFSDriver
 
   cd "$TEST_DIR"
-
-  kubectl get po -n "$OPENEBS_NAMESPACE"
 
   echo "running ginkgo test case with coverage ${coverageFile}"
 
@@ -213,6 +213,8 @@ prepareCustomNodeIdEnv() {
     echo "Deleting old zfsnode ${zfsNode}"
     kubectl delete zfsnode "${zfsNode}" -n "$OPENEBS_NAMESPACE"
   done
+
+  kubectl get po -n "$OPENEBS_NAMESPACE"
 }
 
 load_k3s() {
