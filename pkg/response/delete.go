@@ -39,3 +39,23 @@ func NewDeleteVolumeResponseBuilder() *DeleteVolumeResponseBuilder {
 func (b *DeleteVolumeResponseBuilder) Build() *csi.DeleteVolumeResponse {
 	return b.response
 }
+
+// DeleteSnapshotResponseBuilder helps building an
+// instance of csi DeleteSnapshotResponse
+type DeleteSnapshotResponseBuilder struct {
+	response *csi.DeleteSnapshotResponse
+}
+
+// NewDeleteSnapshotResponseBuilder returns a new
+// instance of DeleteSnapshotResponseBuilder
+func NewDeleteSnapshotResponseBuilder() *DeleteSnapshotResponseBuilder {
+	return &DeleteSnapshotResponseBuilder{
+		response: &csi.DeleteSnapshotResponse{},
+	}
+}
+
+// Build returns the constructed instance
+// of csi DeleteSnapshotResponse
+func (b *DeleteSnapshotResponseBuilder) Build() *csi.DeleteSnapshotResponse {
+	return b.response
+}

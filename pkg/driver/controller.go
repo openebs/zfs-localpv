@@ -503,14 +503,14 @@ func (cs *controller) DeleteVolume(
 	defer unlock()
 
 	// verify if the volume has already been deleted
-	vol, err := zfs.GetVolume(volumeID)
+	vol, err := zfs.GetZFSVolume(volumeID)
 	if vol != nil && vol.DeletionTimestamp != nil {
-		goto deleteResponse
+		return csipayload.NewDeleteVolumeResponseBuilder().Build(), nil
 	}
 
 	if err != nil {
 		if k8serror.IsNotFound(err) {
-			goto deleteResponse
+			return csipayload.NewDeleteVolumeResponseBuilder().Build(), nil
 		}
 		return nil, errors.Wrapf(
 			err,
@@ -524,19 +524,45 @@ func (cs *controller) DeleteVolume(
 		return nil, status.Error(codes.Internal, "can not delete, volume creation is in progress")
 	}
 
-	// Delete the corresponding ZV CR
-	err = zfs.DeleteVolume(volumeID)
+	// Fetch the list of snapshot for the given volume
+	snapList, err := zfs.GetSnapshotForVolume(volumeID)
 	if err != nil {
-		return nil, errors.Wrapf(
-			err,
-			"failed to handle delete volume request for {%s}",
-			volumeID,
+		return nil, status.Errorf(
+			codes.NotFound,
+			"failed to handle delete volume request for {%s}, "+
+				"validation failed checking for snapshots. Error: %s",
+			req.VolumeId,
+			err.Error(),
 		)
+	}
+
+	// Delete the corresponding ZV CR only if there are no snapshots present for the volume
+	if len(snapList.Items) == 0 {
+		err = zfs.DeleteVolume(volumeID)
+		if err != nil {
+			return nil, errors.Wrapf(
+				err,
+				"failed to handle delete volume request for {%s}",
+				volumeID,
+			)
+		}
+	} else {
+		// add annotation to the volume to indicate that it is eligible for deletion
+		// once all the snapshots are deleted and the reclaim policy is not Retain
+		// this volume will be deleted
+		err = zfs.MarkForDeletion(volumeID)
+		if err != nil {
+			return nil, errors.Wrapf(
+				err,
+				"failed to annotate volume on deletion request for {%s}",
+				volumeID,
+			)
+		}
+
 	}
 
 	sendEventOrIgnore("", volumeID, vol.Spec.Capacity, analytics.VolumeDeprovision)
 
-deleteResponse:
 	return csipayload.NewDeleteVolumeResponseBuilder().Build(), nil
 }
 
@@ -815,8 +841,36 @@ func (cs *controller) DeleteSnapshot(
 		// should succeed when an invalid snapshot id is used
 		return &csi.DeleteSnapshotResponse{}, nil
 	}
+	volumeID := snapshotID[0]
 	unlock := cs.volumeLock.LockVolumeWithSnapshot(snapshotID[0], snapshotID[1])
 	defer unlock()
+
+	// verify if the snapshot has already been deleted
+	_, err := zfs.GetZFSSnapshot(snapshotID[1])
+
+	if err != nil {
+		if k8serror.IsNotFound(err) {
+			return csipayload.NewDeleteSnapshotResponseBuilder().Build(), nil
+		}
+		return nil, errors.Wrapf(
+			err,
+			"failed to get snapshot for {%s}",
+			snapshotID[1],
+		)
+	}
+
+	// Fetch the list of snapshot for the given volume
+	snapList, err := zfs.GetSnapshotForVolume(volumeID)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.FailedPrecondition,
+			"failed to handle delete snapshot request for {%s}, "+
+				"validation failed checking for snapshot list for volume. Error: %s",
+			volumeID,
+			err.Error(),
+		)
+	}
+
 	if err := zfs.DeleteSnapshot(snapshotID[1]); err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -825,7 +879,34 @@ func (cs *controller) DeleteSnapshot(
 			err.Error(),
 		)
 	}
-	return &csi.DeleteSnapshotResponse{}, nil
+
+	eligibleForDeletion, err := zfs.IsVolumeEligibleForDeletion(volumeID)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.FailedPrecondition,
+			"failed to handle delete snapshot request for {%s}, "+
+				"validation failed checking for eligible for deletion. Error: %s",
+			volumeID,
+			err.Error(),
+		)
+	}
+
+	klog.Infof(" The snap list size %v and eligibleForDeletion %v", len(snapList.Items), eligibleForDeletion)
+	// Delete the corresponding ZV CR only if this is the last snapshot
+	// for the volume and the corresponding pvc is deleted
+	if len(snapList.Items) == 1 && eligibleForDeletion {
+		err = zfs.DeleteVolume(volumeID)
+		if err != nil {
+			return nil, errors.Wrapf(
+				err,
+				"failed to handle delete volume request for {%s}",
+				volumeID,
+			)
+		}
+		klog.Infof("volume %s deleted after the deletion of last snapshot %s ", volumeID, snapshotID[1])
+	}
+
+	return csipayload.NewDeleteSnapshotResponseBuilder().Build(), nil
 }
 
 // ListSnapshots lists all snapshots for the

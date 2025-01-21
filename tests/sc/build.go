@@ -18,6 +18,7 @@ package sc
 
 import (
 	"github.com/openebs/lib-csi/pkg/common/errors"
+	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 )
 
@@ -86,6 +87,12 @@ func (b *Builder) WithProvisioner(provisioner string) *Builder {
 		return b
 	}
 	b.sc.object.Provisioner = provisioner
+	return b
+}
+
+// WithReclaimPolicy sets the ReclaimPolicy field of storageclass with provided argument.
+func (b *Builder) WithReclaimPolicy(reclaimPolicy *corev1.PersistentVolumeReclaimPolicy) *Builder {
+	b.sc.object.ReclaimPolicy = reclaimPolicy
 	return b
 }
 
