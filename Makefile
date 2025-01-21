@@ -86,6 +86,7 @@ clean:
 	@echo "--> Cleaning Directory" ;
 	go clean -testcache
 	rm -rf bin
+	./ci/ci-test.sh clean
 	chmod -R u+w ${GOPATH}/bin/${CSI_DRIVER} 2>/dev/null || true
 	chmod -R u+w ${GOPATH}/pkg/* 2>/dev/null || true
 	rm -rf ${GOPATH}/bin/${CSI_DRIVER}
@@ -197,14 +198,14 @@ informer:
 
 manifests:
 	@echo "+ Generating zfs localPV crds"
-	$(PWD)/buildscripts/generate-manifests.sh
+	./buildscripts/generate-manifests.sh
 
 .PHONY: zfs-driver
 zfs-driver: format
 	@echo "--------------------------------"
 	@echo "--> Building ${CSI_DRIVER}        "
 	@echo "--------------------------------"
-	@PNAME=${CSI_DRIVER} CTLNAME=${CSI_DRIVER} sh -c "'$(PWD)/buildscripts/build.sh'"
+	@PNAME=${CSI_DRIVER} CTLNAME=${CSI_DRIVER} sh -c "'./buildscripts/build.sh'"
 
 .PHONY: zfs-driver-image
 zfs-driver-image: zfs-driver
@@ -215,15 +216,31 @@ zfs-driver-image: zfs-driver
 	cd buildscripts/${CSI_DRIVER} && docker build -t ${IMAGE_ORG}/${CSI_DRIVER}:${IMAGE_TAG} ${DBUILD_ARGS} . && docker tag ${IMAGE_ORG}/${CSI_DRIVER}:${IMAGE_TAG} quay.io/${IMAGE_ORG}/${CSI_DRIVER}:${IMAGE_TAG}
 	@rm buildscripts/${CSI_DRIVER}/${CSI_DRIVER}
 
+.PHONY: image-tag
+image-tag:
+	@echo ${IMAGE_TAG}
+
+.PHONY: image-repo
+image-repo:
+	@echo ${IMAGE_ORG}/${CSI_DRIVER}
+
+.PHONY: image-ref
+image-ref:
+	@echo ${IMAGE_ORG}/${CSI_DRIVER}:${IMAGE_TAG}
+
 .PHONY: ci
 ci:
 	@echo "--> Running ci test";
-	$(PWD)/ci/ci-test.sh
+	./ci/ci-test.sh run
+
+.PHONY: helm-install
+helm-install:
+	./ci/ci-test.sh install
 
 .PHONY: sanity
 sanity:
 	@echo "--> Running CSI Sanity test";
-	$(PWD)/ci/sanity.sh
+	./ci/sanity.sh
 
 # Push images
 deploy-images:

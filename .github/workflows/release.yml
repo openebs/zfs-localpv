@@ -70,13 +70,10 @@ jobs:
           cache: false
 
       - name: Build images locally
-        run: make zfs-driver-image || exit 1;
+        run: make zfs-driver-image
 
-      - name: Setup zfs pools
-        run: |
-          sudo apt-get install zfsutils-linux -y
-          truncate -s 100G /tmp/disk.img
-          sudo zpool create zfspv-pool $(sudo losetup -f /tmp/disk.img --show)
+      - name: Install zfs utils
+        run: sudo apt-get install zfsutils-linux -y
 
       - name: Setup Minikube-Kubernetes
         uses: medyagh/setup-minikube@latest
@@ -100,6 +97,7 @@ jobs:
           OPENEBS_NAMESPACE: "openebs"
         run: |
           make ci
+          make helm-install
           make sanity
 
       - name: Upload CI Test Coverage Report
@@ -128,7 +126,7 @@ jobs:
         run: |
           TAG=${{ github.event.release.tag_name }}
           nix-shell --pure --run "./scripts/update-chart-version.sh --tag $TAG --publish-release" ./shell.nix
-          
+
       - name: Set Image Org
         run: |
           [ -z "${{ secrets.IMAGE_ORG }}" ] && IMAGE_ORG=openebs || IMAGE_ORG=${{ secrets.IMAGE_ORG}}
@@ -226,7 +224,7 @@ jobs:
         run: |
           TAG=${{ github.event.release.tag_name }}
           nix-shell --pure --run "./scripts/update-chart-version.sh --tag $TAG --publish-release" ./shell.nix
-          
+
       - name: Publish zfs localpv develop or prerelease helm chart
         uses: stefanprodan/helm-gh-pages@master
         with:
