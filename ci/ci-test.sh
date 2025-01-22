@@ -53,7 +53,7 @@ cleanup_loop_zfs() {
 
     sudo "$(which zpool)" destroy -f zfspv-pool || :
     sudo losetup -d "$device" 2>/dev/null || :
-    rm "/tmp/disk.img"
+    rm "/tmp/disk.img" || :
   done
 }
 
@@ -78,6 +78,8 @@ cleanup() {
       # shellcheck disable=SC2086
       kubectl delete crds $CRDS_TO_DELETE_ON_CLEANUP
       kubectl delete -f "${SNAP_CLASS}"
+
+      kubectl delete pod -lrole=openebs-zfs --force -n "$OPENEBS_NAMESPACE"
     fi
   fi
 
@@ -139,7 +141,8 @@ dump_logs() {
 }
 
 isPodReady(){
-  [ "$(kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n "$OPENEBS_NAMESPACE")" = 'True' ]
+  [ "$(kubectl get po "$1" -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}' -n "$OPENEBS_NAMESPACE")" = 'True' ] &&
+  [ "$(kubectl get po "$1" -o 'jsonpath={.metadata.deletionTimestamp}' -n "$OPENEBS_NAMESPACE")" = "" ]
 }
 
 isDriverReady(){
@@ -177,7 +180,7 @@ helm_install() {
 
   waitForZFSDriver
 
-  kubectl get po -n "$OPENEBS_NAMESPACE"
+  kubectl get pods -n "$OPENEBS_NAMESPACE"
 }
 
 runTestSuite() {

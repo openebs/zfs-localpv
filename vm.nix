@@ -70,7 +70,7 @@ in
     enable = true;
     config = {
       safe = {
-        directory = [ "/zfs" "/zfs/nix/.go/src/github.com/kubernetes-csi/csi-test/" "/zfs/nix/.go/src/github.com/kubernetes-csi/csi-test/.git" ];
+        directory = [ "/zfs" "/zfs/nix/.go/src/github.com/kubernetes-csi/csi-test" "/zfs/nix/.go/src/github.com/kubernetes-csi/csi-test/.git" ];
       };
     };
   };
