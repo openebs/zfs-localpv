@@ -1,12 +1,11 @@
 let
   sources = import ./nix/sources.nix;
-  pkgs = import sources.nixpkgs {};
+  pkgs = import sources.nixpkgs { };
 in
 pkgs.mkShell {
-  name = "scripts-shell";
+  name = "zfs-shell";
   buildInputs = with pkgs; [
     chart-testing
-    ginkgo
     git
     go_1_20
     golint
@@ -22,7 +21,11 @@ pkgs.mkShell {
     util-linux
     jq
     zfs
-  ] ++ pkgs.lib.optional (builtins.getEnv "IN_NIX_SHELL" == "pure") [ docker ];
+    nixos-shell
+  ] ++ pkgs.lib.optional (builtins.getEnv "IN_NIX_SHELL" == "pure") [ docker-client ];
+
+  PRE_COMMIT_ALLOW_NO_CONFIG = 1;
+
   shellHook = ''
     export GOPATH=$(pwd)/nix/.go
     export GOCACHE=$(pwd)/nix/.go/cache
@@ -42,5 +45,7 @@ pkgs.mkShell {
       rm $(pwd)/nix/bins/sudo 2>/dev/null || :
       rmdir $(pwd)/nix/bins 2>/dev/null || :
     fi
+
+    make bootstrap
   '';
 }
