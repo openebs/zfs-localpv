@@ -1,1 +1,0 @@
-fix issue when creating volume from snapshot or snapshot clone when node id differs from node name

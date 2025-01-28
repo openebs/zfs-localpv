@@ -1,3 +1,13 @@
+v2.6.2 / 2024-09-25
+========================
+* Cherry-pick #552 ([#552](https://github.com/openebs/zfs-localpv/pull/552),[@Abhinandan-Purkait](https://github.com/Abhinandan-Purkait))
+
+v2.6.1 / 2024-09-17
+========================
+* Cherry-pick CI changes ([#583](https://github.com/openebs/zfs-localpv/pull/548),[@Abhinandan-Purkait](https://github.com/Abhinandan-Purkait))
+* Cherry-pick PR 575 into release/2.6 branch ([#575](https://github.com/openebs/zfs-localpv/pull/575),[@Abhinandan-Purkait](https://github.com/Abhinandan-Purkait))
+* fix: chart.yaml indentation ([#586](https://github.com/openebs/zfs-localpv/pull/586),[@Abhinandan-Purkait](https://github.com/Abhinandan-Purkait))
+
 v2.6.0 / 2024-07-03
 ========================
 * feat(analytics): add heartbeat pinger ([#548](https://github.com/openebs/zfs-localpv/pull/548),[@niladrih](https://github.com/niladrih))

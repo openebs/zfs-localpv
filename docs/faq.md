@@ -4,7 +4,7 @@ LocalPV-ZFS is a CSI driver for dynamically provisioning a volume in ZFS storage
 
 ### 2. How to install LocalPV-ZFS
 
-Make sure that all the nodes have zfsutils-linux installed. We should go to the each node of the cluster and install zfs utils
+Make sure that all the nodes have zfsutils-linux installed. We should go to the each node of the cluster and install zfs utils.
 
 ```
 $ apt-get install zfsutils-linux
@@ -19,7 +19,7 @@ helm repo update
 helm install openebs --namespace openebs openebs/openebs --create-namespace
 ```
 
-Verify that the ZFS driver Components are installed and running using below command :
+Verify that the ZFS driver Components are installed and running using below command:
 
 ```
 $ kubectl get pods -n openebs -l role=openebs-zfs
@@ -39,7 +39,7 @@ openebs-zfs-localpv-node-wm9ks                    2/2     Running   0          1
 
 ### 3. How to upgrade the driver to newer version
 
-Follow the instructions here https://github.com/openebs/zfs-localpv/tree/develop/upgrade.
+Please refer to the documentation at https://openebs.io/docs/user-guides/upgrade.
 
 ### 4. ZFS Pools are there on certain nodes only, how can I create the storage class.
 

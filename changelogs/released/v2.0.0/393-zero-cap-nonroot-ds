@@ -1,3 +1,0 @@
-Fixes GetCapacity in pkg/driver/controller.go to report the ZFS pool
-capacity even when using a child dataset at the storage class' poolname
-attribute.
