@@ -91,11 +91,8 @@ jobs:
       - name: Build images locally
         run: make zfs-driver-image
 
-      - name: Setup zfs pools
-        run: |
-          sudo apt-get install zfsutils-linux -y
-          truncate -s 100G /tmp/disk.img
-          sudo zpool create zfspv-pool $(sudo losetup -f /tmp/disk.img --show)
+      - name: Install zfs utils
+        run: sudo apt-get install zfsutils-linux -y
 
       - name: Setup Minikube-Kubernetes
         uses: medyagh/setup-minikube@latest
@@ -119,13 +116,14 @@ jobs:
           OPENEBS_NAMESPACE: "openebs"
         run: |
           make ci
+          make helm-install
           make sanity
 
       - name: Upload CI Test Coverage Report
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./tests/bdd_coverage.txt
+          files: ./tests/bdd_coverage.txt,./tests/bdd_coverage_custom-node-id.txt
           name: coverage-bdd_coverage-$(date +%s)
           flags: bddtests
 
