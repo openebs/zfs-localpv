@@ -15,7 +15,7 @@ OpenEBS ZFS LocalPV is a [CSI](https://github.com/container-storage-interface/sp
 2. CSI Node Plugin - Serves the requests by performing the operations and making the volume available for the initiator.
 
 ### Why OpenEBS ZFS LocalPV?
-1. Light weight, easy to setup storage provisoner for provisioning node local volumes in k8s ecosystem.
+1. Lightweight, easy to set up storage provisoner for host-local volumes in k8s ecosystem.
 2. Makes ZFS stack available to k8s, allowing end users to use the ZFS functionalites like snapshot, restore, clone, thin provisioning, resize, encryption, compression, dedup, etc for their Persistent Volumes.
 3. Cloud native, i.e based on CSI spec, so certified to run on K8s.
 
@@ -30,37 +30,51 @@ LocalPV refers to storage that is directly attached to a specific node in the Ku
 - <b>No replication</b>: Data is not replicated across nodes, so if the node fails, the data may become inaccessible.
 - <b>High performance</b>: Since the storage is local, it typically offers lower latency compared to network-attached storage.
 
+The diagram below depicts the mapping to the host disks, the ZFS stack on top of the disks and the kubernetes persistent volumes to be consumed by the workload. ZFS LocalPV CSI Controller upon creation of the Persistent Volume Claim, creates a ZFSVolume CR, which emits an event for ZFS LocalPV CSI Node Plugin to create the zvol/dataset. When workloads are scheduled the ZFS LocalPV CSI Node Plugin makes this zvol/dataset available via a mount point on the host.
+
 ```mermaid
 graph TD;
-  subgraph Node1["Node 1"]
-    subgraph K8S NODE 1[" "]
-      NODE_1_PV1["PV 1"] --> NODE_1_APP1["APP 1"]
-      NODE_1_PV2["PV 2"] --> NODE_1_APP2["APP 2"]
+  subgraph Node2["Node 2"]
+    subgraph K8S_NODE1[" "]
+      N1_PV1["PV"] --> N1_APP1["APP"]
+      N1_PV2["PV"] --> N1_APP2["APP"]
     end
-    subgraph ZFS Stack 2["ZFS Stack"]
-      ZPOOL_1_1 --> ZVOL1_1["ZVOL 1"]
-      ZPOOL_1_1 --> ZVOL3_1["ZVOL 2"]
-      ZVOL1_1["ZVOL 1"] --> NODE_1_PV1 
-      ZVOL3_1["ZVOL 2"] --> NODE_1_PV2
+    subgraph LVM_Stack2["ZFS Stack"]
+      V1_1 --> L1_1["ZVOL"]
+      V1_1 --> L3_1["ZVOL"]
+      L1_1 --> N1_PV1 
+      L3_1 --> N1_PV2
     end
     subgraph Blockdevices1[" "]
-      NODE_1_DISK_1["/dev/sdc"] --> ZPOOL_1_1["ZPOOL"]
-      NODE_1_DISK_2["/dev/sdb"] --> ZPOOL_1_1["ZPOOL"]
+      D1["/dev/sdc"] --> V1_1["ZPOOL"]
+      D2["/dev/sdb"] --> V1_1["ZPOOL"]
     end
   end
 
-  subgraph Node2["Node 2"]
-    subgraph K8S NODE 2[" "]
-      NODE_2_PV1["PV 1"] --> NODE_2_APP1["APP 1"]
+  subgraph Node1["Node 1"]
+    subgraph K8S_NODE2[" "]
+      N2_PV1["PV"] --> N2_APP1["APP"]
     end
-    subgraph ZFS Stack 1["ZFS Stack"]
-      ZPOOL_2_2 --> ZVOL_2_2["ZVOL 1"]
-      ZVOL_2_2["ZVOL 1"] --> NODE_2_PV1 
+    subgraph LVM_Stack1["ZFS Stack"]
+      V2_2 --> Z2_2["ZVOL"]
+      Z2_2 --> N2_PV1 
     end
     subgraph Blockdevices2[" "]
-      NODE_2_DISK["/dev/sdb"] --> ZPOOL_2_2["ZPOOL"]
+      D3["/dev/sdb"] --> V2_2["ZPOOL"]
     end
   end
+
+  classDef pv fill:#FFCC00,stroke:#FF9900,color:#000;
+  classDef app fill:#99CC00,stroke:#66CC00,color:#000;
+  classDef disk fill:#FF6666,stroke:#FF3333,color:#000;
+  classDef zfs fill:#99CCFF,stroke:#6699FF,color:#000;
+
+  class N1_PV1,N1_PV2,N2_PV1 pv;
+  class N1_APP1,N1_APP2,N2_APP1 app;
+  class D1,D2,D3 disk;
+  class V1_1,V2_2 zfs;
+  class L1_1,L3_1,Z2_2 zfs;
+
 ```
 
 ### Supported System

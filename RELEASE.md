@@ -1,7 +1,7 @@
 # Release Process
 zfs-localpv follows a on quaterly release cadence for minor version releases. The scope of the release is determined by contributor availability. The scope is published in the [Release Tracker Projects](https://github.com/orgs/openebs/projects/78).
 
-## Prerelease Candidate Verification Checklist
+## Pre-release Candidate Verification Checklist
 
 Every release has a prerelease tag that gets created on branch creation, explained further below. This prerelease tag is meant for all the below action items throughout the release process:
 - Platform Verification
