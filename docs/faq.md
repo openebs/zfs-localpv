@@ -19,7 +19,7 @@ helm repo update
 helm install openebs --namespace openebs openebs/openebs --create-namespace
 ```
 
-Verify that the ZFS driver Components are installed and running using below command:
+Verify that the LocalPV ZFS CSI driver components are installed and running using below command:
 
 ```
 $ kubectl get pods -n openebs -l role=openebs-zfs

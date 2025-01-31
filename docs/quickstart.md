@@ -1,40 +1,51 @@
-## Usage and Deployment
+# Usage and Deployment
 
-### Prerequisites
+## Prerequisites
 
-> [!IMPORTANT]
-> Before installing the LocalPV-ZFS driver please make sure your Kubernetes Cluster meets the following prerequisites:
-> 1. All the nodes must have ZFS utils package installed
-> 2. A ZPOOL has been configurred for provisioning volumes
-> 3. You have access to install RBAC components into kube-system namespace. The OpenEBS ZFS driver components are installed in kube-system namespace to allow them to be flagged as system critical components.
-<BR>
+> **Important:** Before installing the ZFS LocalPV driver, ensure the following prerequisites are met:
+- All nodes must have the ZFS utilities package installed.
+- A ZFS Pool (ZPool) must be configured for provisioning volumes.
 
 ## Setup
 
-All nodes should have the same verion of zfsutils-linux installed. <BR>
+All nodes must have the same version of `zfsutils-linux` installed: Please check here for [version](../README.md#supported-system) details.
 
 ```bash
-$ apt-get install zfsutils-linux
+apt-get install zfsutils-linux
 ```
 
-Go to each node and create the ZFS Pool, which will be used for provisioning the volumes. You can create the Pool of your choice, it can be striped, mirrored or raidz pool.
+### Creating a ZFS Pool
 
-If you have the disk(say /dev/sdb) then you can use the below command to create a striped pool :
+On each node, create the ZFS pool that will be used for provisioning volumes. You can create different types of pools (striped, mirrored, RAID-Z) as needed.
+
+For a striped pool on a disk (e.g., `/dev/sdb`):
+
 ```bash
-$ zpool create zfspv-pool /dev/sdb
-```
-You can also create mirror or raidz pool as per your need. Check https://github.com/openzfs/zfs for more information.
-
-
-If you don't have the disk, then you can create the zpool on the loopback device which is backed by a sparse file. Use this for testing purpose only.
-```bash
-$ truncate -s 100G /tmp/disk.img
-$ zpool create zfspv-pool `losetup -f /tmp/disk.img --show`
+zpool create zfspv-pool /dev/sdb
 ```
 
-Once the ZFS Pool is created, verify the pool via `zpool status` command, you should see something like this :
+For more details on creating mirrored or RAID-Z pools, refer to the [OpenZFS documentation](https://github.com/openzfs/zfs).
+
+#### Creating a Loopback ZFS Pool (For Testing Only)
+
+If no physical disk is available, create a ZFS pool on a loopback device backed by a sparse file:
+
 ```bash
-$ zpool status
+truncate -s 100G /tmp/disk.img
+zpool create zfspv-pool $(losetup -f /tmp/disk.img --show)
+```
+
+### Verifying the ZFS Pool
+
+Run the following command to verify the ZFS pool:
+
+```bash
+zpool status
+```
+
+Expected output:
+
+```
   pool: zfspv-pool
  state: ONLINE
   scan: none requested
@@ -47,33 +58,56 @@ config:
 errors: No known data errors
 ```
 
-Configure the custom topology keys (if needed). This can be used for many purposes like if we want to create the PV on nodes in a particuler zone or building. We can label the nodes accordingly and use that key in the storageclass for taking the scheduling decesion:
+### Configuring Custom Topology Keys
 
-https://github.com/openebs/zfs-localpv/blob/HEAD/docs/faq.md#6-how-to-add-custom-topology-key
+For advanced scheduling, configure custom topology keys to define volume placement based on zones, racks, or other node-specific attributes. More details are available in the [OpenEBS ZFS FAQ](./faq.md#6-how-to-add-custom-topology-key).
 
-<BR>
+---
 
 ## Installation
-In order to support moving data to a new node later on, you must label each node with a unique value for `openebs.io/nodeid`.
-For more information on migrating data, please [see here](docs/faq.md#8-how-to-migrate-pvs-to-the-new-node-in-case-old-node-is-not-accessible)
 
-**NOTE:** Installation using operator YAMLs is not the supported way any longer.  
-We can install the latest release of OpenEBS ZFS driver by running the following command:
+### Node Labeling
+
+To support future data migration, label each node with a unique `openebs.io/nodeid` value:
+
+```bash
+kubectl label node <node-name> openebs.io/nodeid=<unique-id>
+```
+
+Refer to the [migration guide](docs/faq.md#8-how-to-migrate-pvs-to-the-new-node-in-case-old-node-is-not-accessible) for more details.
+
+### Installing the OpenEBS ZFS Driver
+
+Installation using operator YAMLs is no longer supported. Instead, use Helm:
+
 ```bash
 helm repo add openebs https://openebs.github.io/openebs
 helm repo update
 helm install openebs --namespace openebs openebs/openebs --create-namespace
 ```
 
-**NOTE:** If you are running a custom Kubelet location, or a Kubernetes distribution that uses a custom Kubelet location, the `kubelet` directory must be changed on the helm values at install-time using the flag option `--set zfs-localpv.zfsNode.kubeletDir=<your-directory-path>` in the `helm install` command.
+**Note:** If using a custom kubelet directory, specify it during installation:
 
-- For `microk8s`, we need to change the kubelet directory to `/var/snap/microk8s/common/var/lib/kubelet/`, we need to replace `/var/lib/kubelet/` with `/var/snap/microk8s/common/var/lib/kubelet/`.
-- For `k0s`, the default directory (`/var/lib/kubelet`) should be changed to `/var/lib/k0s/kubelet`.
-- For `RancherOS`, the default directory (`/var/lib/kubelet`) should be changed to `/opt/rke/var/lib/kubelet`.
-
-Verify that the ZFS driver Components are installed and running using below command. Depending on number of nodes, you will see one zfs-controller pod and zfs-node daemonset running on the nodes :
 ```bash
-$ kubectl get pods -n openebs -l role=openebs-zfs
+--set zfs-localpv.zfsNode.kubeletDir=<your-directory-path>
+```
+
+Examples:
+- **MicroK8s:** `/var/snap/microk8s/common/var/lib/kubelet/`
+- **K0s:** `/var/lib/k0s/kubelet`
+- **RancherOS:** `/opt/rke/var/lib/kubelet`
+
+### Verifying Installation
+
+After installation, ensure that the ZFS LocalPV CSI driver components are running:
+
+```bash
+kubectl get pods -n openebs -l role=openebs-zfs
+```
+
+Expected output (depending on node count):
+
+```
 NAME                                              READY   STATUS    RESTARTS   AGE
 openebs-zfs-localpv-controller-f78f7467c-blr7q    5/5     Running   0          11m
 openebs-zfs-localpv-node-h46m5                    2/2     Running   0          11m
@@ -81,11 +115,13 @@ openebs-zfs-localpv-node-svfgq                    2/2     Running   0          1
 openebs-zfs-localpv-node-wm9ks                    2/2     Running   0          11m
 ```
 
-Once ZFS driver is installed and running we can provision a volume.
+Once the ZFS driver is installed and running, you can provision volumes.
 
-### Deployment
+---
 
-#### 1. Create a Storage class
+## Deployment
+
+### 1. Creating a StorageClass
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -100,26 +136,31 @@ parameters:
   poolname: "zfspv-pool"
 provisioner: zfs.csi.openebs.io
 ```
+### Storage Class Configuration
 
-The storage class contains the volume parameters like recordsize(should be power of 2), compression, dedup and fstype. You can select what are all parameters you want. In case, zfs properties paramenters are not provided, the volume will inherit the properties from the ZFS Pool.
+The storage class contains volume parameters such as `recordsize` (which must be a power of 2), `compression`, `dedup`, and `fstype`. You can select the parameters you wish to configure. If ZFS property parameters are not provided, the volume will inherit the properties from the ZFS pool or the defaults.
 
-The *poolname* is the must argument. It should be noted that *poolname* can either be the root dataset or a child dataset e.g.
+### Pool Name Requirement
+
+The `poolname` parameter is mandatory. It is important to note that `poolname` can either be the root dataset or a child dataset. For example:
+
 ```yaml
 poolname: "zfspv-pool"
 poolname: "zfspv-pool/child"
 ```
 
-Also the dataset provided under `poolname` must exist on *all the nodes* with the name given in the storage class. Check the doc on [storageclasses](docs/storageclasses.md) to know all the supported parameters for LocalPV-ZFS
+Additionally, the dataset specified under `poolname` must exist on *all nodes* with the given name in the storage class. Refer to the [Storage Classes documentation](./storageclasses.md) for a complete list of supported parameters for LocalPV-ZFS.
 
-##### ext2/3/4 or xfs or btrfs as FsType
+### Supported Filesystem Types
 
-If we provide fstype as one of ext2/3/4 or xfs or btrfs, the driver will create a ZVOL, which is a blockdevice carved out of ZFS Pool.
-This blockdevice will be formatted with corresponding filesystem before it's used by the driver.
+#### ext2/3/4, XFS, or Btrfs as `fstype`
 
-> **Note**
-> This means there will be a filesystem layer on top of ZFS volume, and applications may not get optimal performance.
+If `fstype` is set to `ext2`, `ext3`, `ext4`, `xfs`, or `btrfs`, the driver will create a ZVOL, which is a block device carved out of the ZFS pool. This block device will be formatted with the specified filesystem before being used by the driver.
 
-A sample storage class for `ext4` fstype is provided below :
+> **Note:**
+> Since there is a filesystem layer on top of the ZFS volume, applications may not achieve optimal performance.
+
+##### Example: Storage Class for `ext4`
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -135,13 +176,13 @@ parameters:
 provisioner: zfs.csi.openebs.io
 ```
 
-Here please note that we are providing `volblocksize` instead of `recordsize` since we will create a ZVOL, for which we can choose the blocksize with which we want to create the block device. Here, please note that for ZFS, volblocksize should be power of 2.
+Here, `volblocksize` is specified instead of `recordsize` since a ZVOL is created, and we can define the block size for the block device. Note that for ZFS, `volblocksize` must be a power of 2.
 
-##### ZFS as FsType
+#### ZFS as `fstype`
 
-In case if we provide "zfs" as the fstype, the ZFS driver will create ZFS DATASET in the ZFS Pool, which is the ZFS filesystem. Here, there will not be any extra layer between application and storage, and applications can get the optimal performance.
+If `fstype` is set to `zfs`, the ZFS driver will create a ZFS dataset within the ZFS pool, acting as a native ZFS filesystem. In this case, no extra layer exists between the application and storage, allowing for optimal performance.
 
-The sample storage class for ZFS fstype is provided below :
+##### Example: Storage Class for `zfs`
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -157,12 +198,11 @@ parameters:
 provisioner: zfs.csi.openebs.io
 ```
 
-Here please note that we are providing `recordsize` which will be used to create the ZFS datasets, which specifies the maximum block size for files in the zfs file system. The recordsize has to be power of 2 for ZFS datasets.
+In this case, `recordsize` is specified for ZFS datasets. This defines the maximum block size for files in the ZFS filesystem. The `recordsize` must be a power of 2.
 
-##### ZPOOL Availability
+### ZFS Pool Availability
 
-If ZFS pool is available on certain nodes only, then make use of topology to tell the list of nodes where we have the ZFS pool available. 
-As shown in the below storage class, we can use allowedTopologies to describe ZFS pool availability on nodes.
+If the ZFS pool is available only on specific nodes, `allowedTopologies` can be used to specify where the pool exists. The following example demonstrates this configuration:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -181,50 +221,19 @@ allowedTopologies:
 - matchLabelExpressions:
   - key: kubernetes.io/hostname
     values:
-      - zfspv-node1
-      - zfspv-node2
+      - k8s-node-1
+      - k8s-node2
 ```
 
-The above storage class tells that ZFS pool "zfspv-pool" is available on nodes zfspv-node1 and zfspv-node2 only. The ZFS driver will create volumes on those nodes only.
+This storage class specifies that the ZFS pool `zfspv-pool` is only available on `k8s-node-1` and `k8s-node-1`, ensuring that volumes are created only on these nodes.
 
-Please note that the provisioner name for ZFS driver is "zfs.csi.openebs.io", we have to use this while creating the storage class so that the volume provisioning/deprovisioning request can come to ZFS driver.
+> **Note:** The provisioner name for the ZFS driver is `zfs.csi.openebs.io`. This must be used when creating the storage class to direct volume provisioning and deprovisioning requests to the ZFS driver.
 
-##### Scheduler
+> **Note:** The ZFS driver includes its own scheduler, designed to distribute PVs across nodes to prevent overloading a single node. The driver supports two scheduling algorithms. Check [this](./scheduler.md) to read in detail.
 
-The ZFS driver has its own scheduler which will try to distribute the PV across the nodes so that one node should not be loaded with all the volumes. Currently the driver supports two scheduling algorithms: VolumeWeighted and CapacityWeighted, in which it will try to find a ZFS pool which has less number of volumes provisioned in it or less capacity of volume provisioned out of a pool respectively, from all the nodes where the ZFS pools are available. To know about how to select scheduler via storage-class See [this](https://github.com/openebs/zfs-localpv/blob/HEAD/docs/storageclasses.md#storageclass-with-k8s-scheduler).
-Once it is able to find the node, it will create a PV for that node and also create a ZFSVolume custom resource for the volume with the NODE information. The watcher for this ZFSVolume CR will get all the information for this object and creates a ZFS dataset(zvol) with the given ZFS property on the mentioned node.
+#### 2. Creating a PersistentVolumeClaim (PVC)
 
-The scheduling algorithm currently only accounts for either the number of ZFS volumes or total capacity occupied from a zpool and does not account for other factors like available cpu or memory while making scheduling decisions.
-
-So if you want to use node selector/affinity rules on the application pod, or have cpu/memory constraints, kubernetes scheduler should be used.
-To make use of kubernetes scheduler, you can set the `volumeBindingMode` as `WaitForFirstConsumer` in the storage class.
-
-This will cause a delayed binding, i.e kubernetes scheduler will schedule the application pod first and then it will ask the ZFS driver to create the PV. 
-
-The driver will then create the PV on the node where the pod is scheduled :
-
-```yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: openebs-zfspv
-allowVolumeExpansion: true
-parameters:
-  recordsize: "128k"
-  compression: "off"
-  dedup: "off"
-  fstype: "zfs"
-  poolname: "zfspv-pool"
-provisioner: zfs.csi.openebs.io
-volumeBindingMode: WaitForFirstConsumer
-```
-
-Please note that once a PV is created for a node, application using that PV will always get scheduled to that particular node only, as PV will be sticky to that node.
-
-The scheduling algorithm by ZFS driver or kubernetes will come into picture only during the deployment time. Once the PV is created, 
-the application can not move anywhere as the data is there on the node where the PV is.
-
-#### 2. Create a PVC
+To create a PVC using the storage class configured for the ZFS driver, use the following YAML definition:
 
 ```yaml
 kind: PersistentVolumeClaim
@@ -240,15 +249,19 @@ spec:
       storage: 4Gi
 ```
 
-Create a PVC using the storage class created for the ZFS driver. Here, the allocated volume size will be rounded off to the nearest Mi or Gi notation, check the [faq](./docs/faq.md#7-why-the-zfs-volume-size-is-different-than-the-reqeusted-size-in-pvc) section for more details.
+The allocated volume size will be rounded off to the nearest MiB or GiB notation. Refer to the [FAQ](./faq.md#7-why-the-zfs-volume-size-is-different-than-the-reqeusted-size-in-pvc) section for more details.
 
-If we are using the immediate binding in the storageclass then we can check the kubernetes resource for the corresponding ZFS volume, otherwise in late binding case, we can check the same after pod has been scheduled :
+If the storage class uses immediate binding, you can check the corresponding Kubernetes resource for the ZFS volume immediately. However, in the case of late binding, this information will be available only after the pod has been scheduled.
+
+To check the created ZFS volume:
 
 ```bash
 $ kubectl get zv -n openebs
 NAME                                       ZPOOL        NODE           SIZE         STATUS   FILESYSTEM   AGE
 pvc-34133838-0d0d-11ea-96e3-42010a800114   zfspv-pool   zfspv-node1    4294967296   Ready    zfs          4s
 ```
+
+To get detailed information about the ZFS volume:
 
 ```bash
 $ kubectl describe zv pvc-34133838-0d0d-11ea-96e3-42010a800114 -n openebs
@@ -280,9 +293,9 @@ Status:
 Events:           <none>
 ```
 
-The ZFS driver will create a ZFS dataset (or zvol as per fstype in the storageclass) on the node zfspv-node1 for the mentioned ZFS pool and the dataset name will same as PV name.
+The ZFS driver will create a ZFS dataset (or a zvol, depending on the `fstype` defined in the storage class) on node `zfspv-node1` within the specified ZFS pool. The dataset name will be the same as the PV name.
 
-Go to the node zfspv-node1 and check the volume :
+To verify the volume on the node `zfspv-node1`, run the following command:
 
 ```bash
 $ zfs list
@@ -291,9 +304,7 @@ zfspv-pool                                            444K   362G    96K  /zfspv
 zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114    96K  4.00G    96K  legacy
 ```
 
-#### 3. Deploy the application
-
-Create the deployment yaml using the pvc backed by LocalPV-ZFS storage.
+### 3. Deploying an Application
 
 ```yaml
 apiVersion: v1
@@ -306,7 +317,7 @@ spec:
   - name: perfrunner
     image: openebs/tests-fio
     command: ["/bin/bash"]
-    args: ["-c", "while true ;do sleep 50; done"]
+    args: ["-c", "while true; do sleep 50; done"]
     volumeMounts:
        - mountPath: /datadir
          name: fio-vol
@@ -317,31 +328,30 @@ spec:
       claimName: csi-zfspv
 ```
 
-After the deployment of the application, we can go to the node and see that the zfs volume is being used
-by the application for reading/writting the data and space is consumed from the ZFS pool.
+Once the application is deployed, you can verify that the ZFS volume is being utilized by the application for read/write operations. The allocated space will be consumed from the ZFS pool accordingly.
 
-#### 4. ZFS Property Change
+### 4. Modifying ZFS Properties
 
-ZFS Volume Property can be changed like compression on/off can be done by just simply editing the kubernetes resource for the corresponding zfs volume by using below command :
+ZFS volume properties, such as enabling or disabling compression, can be modified by editing the corresponding Kubernetes resource using the following command:
 
 ```bash
-$ kubectl edit zv pvc-34133838-0d0d-11ea-96e3-42010a800114 -n openebs
+kubectl edit zv pvc-34133838-0d0d-11ea-96e3-42010a800114 -n openebs
 ```
 
-You can edit the relevant property like make compression on or make dedup on and save it.
-This property will be applied to the corresponding volume and can be verified using
-below command on the node:
+Modify the desired properties (e.g., enable compression or deduplication) and save the changes. To verify that the updated properties have been applied to the volume, run the following command on the node:
 
 ```bash
-$ zfs get all zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114
+zfs get all zfspv-pool/pvc-34133838-0d0d-11ea-96e3-42010a800114
 ```
 
-#### 5. Deprovisioning
+### 5. Deprovisioning a Volume
 
-for deprovisioning the volume we can delete the application which is using the volume and then we can go ahead and delete the pv, as part of deletion of pv this volume will also be deleted from the ZFS pool and data will be freed.
+To deprovision a volume, first delete the application using the volume. Then, delete the PersistentVolumeClaim (PVC). Once the PVC is deleted, the corresponding volume will be removed from the ZFS pool, freeing up the associated storage.
 
 ```bash
-$ kubectl delete -f fio.yaml
-pod "fio" deleted
-$ kubectl delete -f pvc.yaml
-persistentvolumeclaim "csi-zfspv" deleted
+kubectl delete -f fio.yaml
+# Output: pod "fio" deleted
+
+kubectl delete -f pvc.yaml
+# Output: persistentvolumeclaim "csi-zfspv" deleted
+```
