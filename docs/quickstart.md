@@ -8,7 +8,7 @@
 
 ## Setup
 
-All nodes must have the same version of `zfsutils-linux` installed: Please check here for [version](../README.md#supported-system) details.
+All nodes must have the same version of `zfsutils-linux` installed: Please check here for [version](../README.md#supported-system) details. For example for installing on Ubuntu disto use:
 
 ```bash
 apt-get install zfsutils-linux

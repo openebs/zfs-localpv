@@ -3,7 +3,7 @@ LocalPV ZFS follows or tries to follow semantic versioning principles as specifi
 
 ## Pre-release Candidate Verification Checklist
 
-Every release has a pre-release tag that gets created on branch creation, explained further below. This pre-release tag is meant for all the below action items throughout the release process:
+Every release has a pre-release version that gets created on branch creation, explained further below. This pre-release version is meant for all the below action items throughout the release process:
 - Platform Verification
 - Regression and Feature Verification Automated tests
 - Exploratory testing by QA engineers
@@ -11,7 +11,7 @@ Every release has a pre-release tag that gets created on branch creation, explai
 - Upgrade from previous releases
 - Beta testing by users on issues that they are interested in
 
-If any issues are found during the above stages, they are fixed and the prerelease tag is overridden by the newer changes and are up for above action items again.
+If any issues are found during the above stages, they are fixed and the prerelease version is overridden by the newer changes and are up for above action items again.
 
 Once all the above tests are completed, a main release is created.
 
@@ -21,9 +21,9 @@ LocalPV ZFS is released with container images and a respective helm chart as the
 
 Before creating a release, the repo owner needs to create a separate branch from the active branch, which is `develop`. Name of the branch should follow the naming convention of `release/2.7` if release is for `2.7.x`.
 
-Upon creation of a release branch ex. `release/2.7`, two automated PRs open up to change the chart versions of the charts in `release/2.7` branch to `2.7.0-prerelease` and `develop` to `2.8.0-develop`. Post merge of these two PRs, the `2.7.0-prerelease` and `2.8.0-develop` tags are pushed to respective docker registries and also the respective helm charts against these tags are published. The prerelease versions increment via automated PRs on every release creation. For example once `2.7.0` is published a `2.7.1-prerelease` image and chart would be published to allow testing of further patch releases and so on.
+Upon creation of a release branch ex. `release/2.7`, two automated PRs open up to change the chart versions of the charts in `release/2.7` branch to `2.7.0-prerelease` and `develop` to `2.8.0-develop`. Post merge of these two PRs, the `2.7.0-prerelease` and `2.8.0-develop` versions are pushed to respective docker registries and also the respective helm charts against these versions are published. The prerelease versions increment via automated PRs on every release creation. For example once `2.7.0` is published a `2.7.1-prerelease` image and chart would be published to allow testing of further patch releases and so on.
 
-The format of the release tag follows semver versioning. The final release tag is of format `X.Y.Z` and the respective prerelease and develop tags are `X.Y.Z-prerelease` and `X.Y+1.0-develop`.
+The format of the release tag follows semver versioning. The final release tag is of format `X.Y.Z` and the respective prerelease and develop versions are `X.Y.Z-prerelease` and `X.Y+1.0-develop`.
 
 Once the release is triggered, the unchanged code undergoes stages as such linting, unit-tests and bdd-tests and the code coverage is updated accordingly. Post the former jobs, the image build is triggered with the specified tag, the images are published and the chart is run though scripts that update the image tags at the relevant places and eventually helm charts are published.
 
@@ -32,6 +32,4 @@ The helm charts are hosted on github deployments for the corresponding releases.
 The tagged images are published at: https://hub.docker.com/r/openebs/zfs-driver/tags
 The release Helm charts are published at: https://github.com/openebs/LocalPV ZFS/tree/gh-pages
 
-Once a release is created:-
-1. The repo owner updates the release page changelog with the necessary contents.
-2. The repo owner updates the [CHANGELOG.md](./CHANGELOG.md) file with the changelog for the release.
+It should be verified if all significant changes to the project have been itemized on to the CHANGELOG.md file, before a release is cut.

@@ -4,11 +4,19 @@ LocalPV-ZFS is a CSI driver for dynamically provisioning a volume in ZFS storage
 
 ### 2. How to install LocalPV-ZFS
 
-Make sure that all the nodes have zfsutils-linux installed. We should go to the each node of the cluster and install zfs utils.
+Make sure that all the nodes have zfsutils-linux installed. We should go to the each node of the cluster and install zfs utils. For example for installing on Ubuntu disto use:
 
 ```
 $ apt-get install zfsutils-linux
 ```
+
+If a non-standard path to the zfs binary is used, it can be specified via
+the helm chart using:
+
+```bash
+--set zfs-localpv.zfs.bin=<custom-binary-path>
+```
+
 Go to each node and create the ZFS Pool, which will be used for provisioning the volumes. You can create the Pool of your choice, it can be striped, mirrored or raidz pool.
 
 Once ZFS POOL is created we can install OpenEBS ZFS driver by running the following command.
