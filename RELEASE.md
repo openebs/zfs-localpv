@@ -1,5 +1,6 @@
 # Release Process
-LocalPV ZFS follows or tries to follow semantic versioning principles as specified here https://semver.org. It follows a on quarterly release cadence for minor version releases. The scope of the release is determined by contributor availability. The scope is published in the [Release Tracker Projects](https://github.com/orgs/openebs/projects/78).
+
+LocalPV ZFS tries to follow semantic versioning principles as specified here https://semver.org. It follows a on quarterly release cadence for minor version releases. The scope of the release is determined by contributor availability. The scope is published in the [Release Tracker Projects](https://github.com/orgs/openebs/projects/78).
 
 ## Pre-release Candidate Verification Checklist
 
@@ -29,7 +30,7 @@ Once the release is triggered, the unchanged code undergoes stages as such linti
 
 The helm charts are hosted on github deployments for the corresponding releases.
 
-The tagged images are published at: https://hub.docker.com/r/openebs/zfs-driver/tags
-The release Helm charts are published at: https://github.com/openebs/LocalPV ZFS/tree/gh-pages
+The tagged images are published at: <https://hub.docker.com/r/openebs/zfs-driver/tags>
+The release Helm charts are published at: <https://github.com/openebs/zfs-localpv/tree/gh-pages>
 
 It should be verified if all significant changes to the project have been itemized on to the CHANGELOG.md file, before a release is cut.

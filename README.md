@@ -25,7 +25,7 @@ OpenEBS ZFS LocalPV is a [CSI](https://github.com/container-storage-interface/sp
 
 1. Lightweight, easy to set up storage provisoner for host-local volumes in k8s ecosystem.
 2. Makes ZFS stack available to K8s, allowing end users to use the ZFS functionalites like snapshot, restore, clone, thin provisioning, resize, encryption, compression, dedup, etc for their Persistent Volumes.
-3. Cloud native, i.e based on CSI spec, so certified to run on K8s.
+3. Cloud native, i.e based on CSI spec, so developed to run on K8s.
 
 ### Architecture
 
@@ -131,9 +131,11 @@ Check the [features](./docs/features.md) supported for each k8s version.
 - [ ] Ephemeral inline volume
 
 ## Dev Activity dashboard
+
 ![Alt](https://repobeats.axiom.co/api/embed/d990adda232a580d4c0fd9b98d6557079bb3bf4a.svg "Repobeats analytics image")
 
 ## License compliance
+
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B162%2Fgithub.com%2Fopenebs%2Fzfs-localpv.svg?type=large&issueType=license)](https://app.fossa.com/projects/custom%2B162%2Fgithub.com%2Fopenebs%2Fzfs-localpv?ref=badge_large&issueType=license)
 
 ## OpenEBS is a [CNCF Sandbox Project](https://www.cncf.io/projects/openebs)
