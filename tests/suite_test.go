@@ -25,6 +25,7 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	"github.com/openebs/zfs-localpv/tests/deploy"
 	"github.com/openebs/zfs-localpv/tests/pod"
+	"github.com/openebs/zfs-localpv/tests/pv"
 	"github.com/openebs/zfs-localpv/tests/pvc"
 	"github.com/openebs/zfs-localpv/tests/sc"
 	appsv1 "k8s.io/api/apps/v1"
@@ -41,18 +42,33 @@ const (
 )
 
 var (
-	ZFSClient      *volbuilder.Kubeclient
-	SCClient       *sc.Kubeclient
-	PVCClient      *pvc.Kubeclient
-	DeployClient   *deploy.Kubeclient
-	PodClient      *pod.KubeClient
-	scName         = "zfspv-sc"
-	ZFSProvisioner = "zfs.csi.openebs.io"
-	pvcName        = "zfspv-pvc"
-	snapName       = "zfspv-snap"
-	appName        = "busybox-zfspv"
-	clonePvcName   = "zfspv-pvc-clone"
-	cloneAppName   = "busybox-zfspv-clone"
+	ZFSClient           *volbuilder.Kubeclient
+	SCClient            *sc.Kubeclient
+	PVCClient           *pvc.Kubeclient
+	PVClient            *pv.Kubeclient
+	DeployClient        *deploy.Kubeclient
+	PodClient           *pod.KubeClient
+	scName              = "zfspv-sc"
+	ZFSProvisioner      = "zfs.csi.openebs.io"
+	RetainReclaimPolicy = corev1.PersistentVolumeReclaimPolicy(corev1.PersistentVolumeReclaimRetain)
+
+	pvcNameFS    = "zfspv-pvc-fs"
+	pvcNameBlock = "zfspv-pvc-block"
+
+	appNameFS    = "busybox-zfspv-fs"
+	appNameBlock = "busybox-zfspv-block"
+
+	snapNameFS    = "zfspv-snap-fs"
+	snapNameBlock = "zfspv-snap-block"
+
+	clonePvcNameFS    = "zfspv-pvc-clone-fs"
+	clonePvcNameBlock = "zfspv-pvc-clone-block"
+
+	cloneAppNameFS    = "busybox-zfspv-clone-fs"
+	cloneAppNameBlock = "busybox-zfspv-clone-block"
+
+	pvFromRetainZV  = "pv-from-retain-zv"
+	pvcFromRetainZV = "pvc-from-retain-zv"
 
 	scObj              *storagev1.StorageClass
 	deployObj          *appsv1.Deployment
@@ -76,6 +92,7 @@ func init() {
 	}
 	SCClient = sc.NewKubeClient(sc.WithKubeConfigPath(KubeConfigPath))
 	PVCClient = pvc.NewKubeClient(pvc.WithKubeConfigPath(KubeConfigPath))
+	PVClient = pv.NewKubeClient(pv.WithKubeConfigPath(KubeConfigPath))
 	DeployClient = deploy.NewKubeClient(deploy.WithKubeConfigPath(KubeConfigPath))
 	PodClient = pod.NewKubeClient(pod.WithKubeConfigPath(KubeConfigPath))
 	ZFSClient = volbuilder.NewKubeclient(volbuilder.WithKubeConfigPath(KubeConfigPath))

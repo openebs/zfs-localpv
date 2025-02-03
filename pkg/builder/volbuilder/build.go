@@ -21,6 +21,9 @@ import (
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 )
 
+// MarkForDeletionAnnotation is the annotation key
+const MarkForDeletionAnnotation string = "openebs.io/marked-for-deletion"
+
 // Builder is the builder object for ZFSVolume
 type Builder struct {
 	volume *ZFSVolume
@@ -151,6 +154,15 @@ func (b *Builder) WithRecordSize(rs string) *Builder {
 // WithVolBlockSize sets the volblocksize of ZFSVolume
 func (b *Builder) WithVolBlockSize(bs string) *Builder {
 	b.volume.Object.Spec.VolBlockSize = bs
+	return b
+}
+
+// WithAnnotation sets the annotation of ZFSVolume
+func (b *Builder) WithAnnotation() *Builder {
+	if b.volume.Object.Annotations == nil {
+		b.volume.Object.Annotations = make(map[string]string)
+	}
+	b.volume.Object.Annotations[MarkForDeletionAnnotation] = "true"
 	return b
 }
 

@@ -27,6 +27,8 @@ import (
 	"github.com/openebs/zfs-localpv/pkg/builder/restorebuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 )
@@ -213,13 +215,6 @@ func DeleteSnapshot(snapname string) (err error) {
 	return
 }
 
-// GetVolume the corresponding ZFSVolume CR
-func GetVolume(volumeID string) (*apis.ZFSVolume, error) {
-	return volbuilder.NewKubeclient().
-		WithNamespace(OpenEBSNamespace).
-		Get(volumeID, metav1.GetOptions{})
-}
-
 // DeleteVolume deletes the corresponding ZFSVol CR
 func DeleteVolume(volumeID string) (err error) {
 	err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Delete(volumeID)
@@ -249,6 +244,18 @@ func GetZFSVolume(volumeID string) (*apis.ZFSVolume, error) {
 	vol, err := volbuilder.NewKubeclient().
 		WithNamespace(OpenEBSNamespace).Get(volumeID, getOptions)
 	return vol, err
+}
+
+// UpdateZFSVolumeAnnotation updtates the ZFSVolume CR with the given annotation
+func UpdateZFSVolumeAnnotation(vol *apis.ZFSVolume) error {
+	newVol, err := volbuilder.BuildFrom(vol).
+		WithAnnotation().Build()
+
+	if err != nil {
+		return err
+	}
+	_, err = volbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(newVol)
+	return err
 }
 
 // GetZFSVolumeState returns ZFSVolume OwnerNode and State for
@@ -440,4 +447,47 @@ func IsVolumeReady(vol *apis.ZFSVolume) bool {
 	}
 
 	return false
+}
+
+// GetSnapshotForVolume fetches all the snapshots for the given volume
+func GetSnapshotForVolume(volumeID string) (*apis.ZFSSnapshotList, error) {
+	listOptions := metav1.ListOptions{
+		LabelSelector: ZFSVolKey + "=" + volumeID,
+	}
+	snapList, err := snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).List(listOptions)
+	return snapList, err
+}
+
+// MarkForDeletion marks the volume for deletion by adding the annotation
+func MarkForDeletion(volumeName string) error {
+	zv, err := GetZFSVolume(volumeName)
+	if err != nil {
+		klog.Errorf("failed to get ZV %s: %v", volumeName, err)
+		return err
+	}
+
+	err = UpdateZFSVolumeAnnotation(zv)
+	if err != nil {
+		klog.Errorf("Failed to annotate the ZV with marked for deletion %s: %v", volumeName, err)
+		return err
+	}
+	return nil
+}
+
+// IsVolumeEligibleForDeletion checks if the volume can be deleted or not
+func IsVolumeEligibleForDeletion(volumeName string) (bool, error) {
+
+	zfsVol, err := GetZFSVolume(volumeName)
+	if err != nil {
+		return false, status.Errorf(
+			codes.Internal,
+			"failed to get ZFSVolume %s: %v",
+			volumeName,
+			err,
+		)
+	}
+	if zfsVol.Annotations[volbuilder.MarkForDeletionAnnotation] == "true" {
+		return true, nil
+	}
+	return false, nil
 }
