@@ -1,4 +1,4 @@
-## OpenEBS - LocalPV-ZFS CSI Driver
+## OpenEBS Local PV ZFS
 
 [![CNCF Status](https://img.shields.io/badge/cncf%20status-sandbox-blue.svg)](https://www.cncf.io/projects/openebs/)
 [![LICENSE](https://img.shields.io/github/license/openebs/openebs.svg)](./LICENSE)
@@ -11,17 +11,16 @@
 [![CLOMonitor](https://img.shields.io/endpoint?url=https://clomonitor.io/api/projects/cncf/openebs/badge)](https://clomonitor.io/projects/cncf/openebs)
 [![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/openebs)](https://artifacthub.io/packages/helm/openebs/openebs)
 
-
 ## Overview
 
-### What is OpenEBS ZFS LocalPV?
+### What is OpenEBS Local PV ZFS?
 
-OpenEBS ZFS LocalPV is a [CSI](https://github.com/container-storage-interface/spec) plugin for implementation of [ZFS](https://en.wikipedia.org/wiki/ZFS) backed persistent volumes for Kubernetes. It is a local storage solution, which means the device, volume and the application are on the same host. It doesn't contain any dataplane, i.e only its simply a control-plane for the kernel zfs volumes. It mainly comprises of two components which are implemented in accordance to the CSI Specs:
+OpenEBS Local PV ZFS is a [CSI](https://github.com/container-storage-interface/spec) plugin for implementation of [ZFS](https://en.wikipedia.org/wiki/ZFS) backed persistent volumes for Kubernetes. It is a local storage solution, which means the device, volume and the application are on the same host. It doesn't contain any dataplane, i.e only its simply a control-plane for the kernel zfs volumes. It mainly comprises of two components which are implemented in accordance to the CSI Specs:
 
 1. CSI Controller - Frontends the incoming requests and initiates the operation.
 2. CSI Node Plugin - Serves the requests by performing the operations and making the volume available for the initiator.
 
-### Why OpenEBS ZFS LocalPV?
+### Why OpenEBS Local PV ZFS?
 
 1. Lightweight, easy to set up storage provisoner for host-local volumes in k8s ecosystem.
 2. Makes ZFS stack available to K8s, allowing end users to use the ZFS functionalites like snapshot, restore, clone, thin provisioning, resize, encryption, compression, dedup, etc for their Persistent Volumes.
@@ -39,7 +38,7 @@ LocalPV refers to storage that is directly attached to a specific node in the Ku
 - <b>No replication</b>: Data is not replicated across nodes, so if the node fails, the data may become inaccessible.
 - <b>High performance</b>: Since the storage is local, it typically offers lower latency compared to network-attached storage.
 
-The diagram below depicts the mapping to the host disks, the ZFS stack on top of the disks and the kubernetes persistent volumes to be consumed by the workload. ZFS LocalPV CSI Controller upon creation of the Persistent Volume Claim, creates a ZFSVolume CR, which emits an event for ZFS LocalPV CSI Node Plugin to create the zvol/dataset. When workloads are scheduled the ZFS LocalPV CSI Node Plugin makes this zvol/dataset available via a mount point on the host.
+The diagram below depicts the mapping to the host disks, the ZFS stack on top of the disks and the kubernetes persistent volumes to be consumed by the workload. Local PV ZFS CSI Controller upon creation of the Persistent Volume Claim, creates a ZFSVolume CR, which emits an event for Local PV ZFS CSI Node Plugin to create the zvol/dataset. When workloads are scheduled the Local PV ZFS CSI Node Plugin makes this zvol/dataset available via a mount point on the host.
 
 ```mermaid
 graph TD;

@@ -7,7 +7,7 @@ OpenEBS is an "umbrella project". Every project, repository and file in the Open
 
 This project follows the [OpenEBS Contributor Guidelines](https://github.com/openebs/community/blob/HEAD/CONTRIBUTING.md)
 
-# Contributing to zfs localpv
+# Contributing to LocalPV ZFS
 
 ZFS LocalPV uses the standard GitHub pull requests process to review and accept contributions.  There are several areas that could use your help. For starters, you could help in improving the sections in this document by either creating a new issue describing the improvement or submitting a pull request to this repository. The issues are maintained at [zfs-localpv/issues](https://github.com/openebs/zfs-localpv/issues) repository.
 
@@ -59,13 +59,6 @@ If you set your `user.name` and `user.email` in git config, you can sign your co
 You can also use git [aliases](https://git-scm.com/book/tr/v2/Git-Basics-Git-Aliases) like `git config --global alias.ci 'commit -s'`. Now you can commit with `git ci` and the commit will be signed.
 
 ---
-## Adding a changelog
-If PR is about adding a new feature or bug fix then the Author of the PR is expected to add a changelog file with their pull request. This changelog file should be a new file created under the `changelogs/unreleased` folder. Name of this file must be in `pr_number-username` format and contents of the file should be the one-liner text which explains the feature or bug fix.
-
-```sh
-zfs-localpv/changelogs/unreleased   <- folder
-    12-github_user_name            <- file
-```
 ## Setting up your Development Environment
 
 This project is implemented using Go and uses the standard golang tools for development and build. In addition, this project heavily relies on Docker and Kubernetes. It is expected that the contributors:
