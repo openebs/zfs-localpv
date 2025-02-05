@@ -1,13 +1,12 @@
 # Contributing Guidelines
-<BR>
 
 ## Umbrella Project
-OpenEBS is an "umbrella project". Every project, repository and file in the OpenEBS organization adopts and follows the policies found in the Community repo umbrella project files.
-<BR>
+
+OpenEBS is an "umbrella project". Every sub-project, repository and file in the OpenEBS organization adopts and follows the policies found in the Community repo umbrella project files.
 
 This project follows the [OpenEBS Contributor Guidelines](https://github.com/openebs/community/blob/HEAD/CONTRIBUTING.md)
 
-# Contributing to LocalPV ZFS
+# Contributing to Local PV ZFS
 
 ZFS LocalPV uses the standard GitHub pull requests process to review and accept contributions.  There are several areas that could use your help. For starters, you could help in improving the sections in this document by either creating a new issue describing the improvement or submitting a pull request to this repository. The issues are maintained at [zfs-localpv/issues](https://github.com/openebs/zfs-localpv/issues) repository.
 
