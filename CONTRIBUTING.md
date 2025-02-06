@@ -2,9 +2,10 @@
 
 ## Umbrella Project
 
-OpenEBS is an "umbrella project". Every sub-project, repository and file in the OpenEBS organization adopts and follows the policies found in the Community repo umbrella project files.
+OpenEBS is an `Umbrella Project` whose governance and policies are defined in the [community](https://github.com/openebs/community/) repository.
+These policies are applicable to every sub-project, repository and file existing within the [OpenEBS GitHub organization](https://github.com/openebs/).
 
-This project follows the [OpenEBS Contributor Guidelines](https://github.com/openebs/community/blob/HEAD/CONTRIBUTING.md)
+This project follows the [OpenEBS Contributor Guidelines](https://github.com/openebs/community/blob/HEAD/CONTRIBUTING.md).
 
 # Contributing to Local PV ZFS
 
