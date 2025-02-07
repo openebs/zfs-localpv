@@ -54,6 +54,12 @@ Shared specifies whether the volume can be shared among multiple pods. If it is 
 
 allowed values: "yes", "no"
 
+### quotatype
+
+This parameter allows for choosing between refquota or quota and uses this value as zfs command options.
+
+allowed values: "quota", "refquota"
+
 ## Usage
 
 Let us look at few storageclasses.
