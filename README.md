@@ -13,20 +13,18 @@
 
 ## Overview
 
-### What is OpenEBS Local PV ZFS?
-
 OpenEBS Local PV ZFS is a [CSI](https://github.com/container-storage-interface/spec) plugin for implementation of [ZFS](https://en.wikipedia.org/wiki/ZFS) backed persistent volumes for Kubernetes. It is a local storage solution, which means the device, volume and the application are on the same host. It doesn't contain any dataplane, i.e only its simply a control-plane for the kernel zfs volumes. It mainly comprises of two components which are implemented in accordance to the CSI Specs:
 
 1. CSI Controller - Frontends the incoming requests and initiates the operation.
 2. CSI Node Plugin - Serves the requests by performing the operations and making the volume available for the initiator.
 
-### Why OpenEBS Local PV ZFS?
+## Why OpenEBS Local PV ZFS?
 
 1. Lightweight, easy to set up storage provisoner for host-local volumes in k8s ecosystem.
 2. Makes ZFS stack available to K8s, allowing end users to use the ZFS functionalites like snapshot, restore, clone, thin provisioning, resize, encryption, compression, dedup, etc for their Persistent Volumes.
 3. Cloud native, i.e based on CSI spec, so developed to run on K8s.
 
-### Architecture
+## Architecture
 
 LocalPV refers to storage that is directly attached to a specific node in the Kubernetes cluster. It uses locally available disks (e.g., SSDs, HDDs) on the node.
 
@@ -85,7 +83,7 @@ graph TD;
 
 ```
 
-### Supported System
+## Supported System
 
 > | Name | Version |
 > | :--- | :--- |
@@ -98,7 +96,7 @@ graph TD;
 
 Check the [features](./docs/features.md) supported for each k8s version.
 
-### Documents
+## Documents
 
 - [Prerequisites](./docs/quickstart.md#prerequisites)
 - [Quickstart](./docs/quickstart.md#setup)
@@ -120,7 +118,7 @@ Check the [features](./docs/features.md) supported for each k8s version.
     - [x] `Block` mode
 - [x] Supports fsTypes: `ext4`, `btrfs`, `xfs`, `zfs`
 - [x] Volume metrics
-- [x] [Snapshot]
+- [x] Snapshot
     - [x] [Create](docs/snapshot.md)
     - [x] [Restore](docs/clone.md#create-clone-from-snapshot)
 - [x] [Clone](docs/clone.md#create-clone-from-volume)
@@ -131,7 +129,7 @@ Check the [features](./docs/features.md) supported for each k8s version.
 
 ## Dev Activity dashboard
 
-![Alt](https://repobeats.axiom.co/api/embed/d990adda232a580d4c0fd9b98d6557079bb3bf4a.svg "Repobeats analytics image")
+![Alt](https://repobeats.axiom.co/api/embed/201b3c4bdd37f67c41fae1ea295d8a1887fba654.svg "Repobeats analytics image")
 
 ## License compliance
 
