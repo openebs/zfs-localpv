@@ -28,7 +28,7 @@ jobs:
       - name: Modify the chart version based on the tag
         run: |
           tag=${{ github.ref_name }}
-          echo "BASE=$(nix-shell --pure --run "./scripts/update-chart-version.sh --tag $tag" ./shell.nix)" >> $GITHUB_ENV
+          echo "BASE=$(nix-shell --pure --run "./scripts/update-chart-version.sh --tag $tag" ./shell.nix | tail -n 1)" >> $GITHUB_ENV
 
       - name: Create Pull Request to release
         if:  ${{ env.BASE }}
