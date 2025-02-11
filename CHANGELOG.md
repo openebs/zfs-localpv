@@ -1,3 +1,96 @@
+v2.7.0 / 2025-02-10
+========================
+
+The 2.7.0 release of zfs‑localpv focuses on enhancing the stability, feature set, and developer experience. Key highlights include new configuration options for quota management, support for faster compression algorithms, fixes to race conditions and resource cleanup, and a raft of improvements to tests, CI workflows, and documentation. In addition, several maintenance tasks and dependency updates have been performed to keep the project robust and secure.
+
+---
+
+## New Features
+
+- **Configurable Quota Options**  
+  - An option has been added to let users choose between using _refquota_ and _quota_ for ZFS volumes. This change (#542 by @cinapm) gives administrators more flexibility when managing resource limits.
+
+- **Enhanced Compression Support**  
+  - Support for the _zstd‑fast_ algorithm has been introduced (#597 by @Abhinandan‑Purkait). This new option improves performance when compression is desired on ZFS volumes.
+
+---
+
+## Bug Fixes and Stability Improvements
+
+- **Volume Provisioning and Controller Fixes**  
+  - The plugin now correctly retrieves the owner node id (#549).  
+  - A fix ensures that if a ZFS volume already exists, the controller will provision the volume without error (#576 by @AChangFeng).  
+  - Several race conditions in the CSI controller have been addressed:
+    - A per‑volume mutex was introduced to prevent simultaneous CSI controller calls that might cause the volume CR to be inadvertently deleted (#588 by @Lucaber and #613 by @sinhaashish).  
+    - The ZFS timer used during volume creation is now properly stopped after volume creation completes (#600 by @rfyiamcool).
+
+- **YAML and CRD Corrections**  
+  - VolumeSnapshot CRDs now have identation fixes (#620 by @nilroy).  
+  - Minor formatting adjustments (such as indent fixes for imagePullSecrets in the deployment charts - see #596 by @chris199512).
+
+- **Reservation and Deployment Fixes**  
+  - A bug in the reservation logic during volume expansion (with refquota settings) has been resolved (#595 by @abuisine).  
+  - Controller fixes prevent accidental deletion of volume CRs when snapshots exist (#613 by @sinhaashish).
+
+---
+
+## Testing Enhancements
+
+- **BDD and Integration Tests**  
+  - New BDD tests for CI have been added (#551 and #556 by @sinhaashish), improving confidence in test outcomes.
+  
+- **Snapshot and Clone Testing**  
+  - Snapshot and clone tests for raw block volumes have been introduced (#559, #570 by @sinhaashish).  
+  - Thin provision and volume type specific tests (#572 by @sinhaashish).  
+  - Additional tests now verify quota and refquota parameters (#608 by @Abhinandan‑Purkait).  
+  - Clone tests have been corrected so that the clone deployment uses the proper clone app and volume (#612 by @tiagolobocastro).
+
+- **Local Testing Improvements**  
+  - Various enhancements to local testing setups have been applied (#609 by @tiagolobocastro) to help developers run tests without elevated privileges and with more predictable behavior.
+
+---
+
+## Continuous Integration and Deployment
+
+- **Workflow Enhancements**  
+  - The pull_request workflow has been enhanced to improve reliability (#557 by @Abhinandan‑Purkait).  
+  - The build.yml workflow received improvements for efficiency (#565 by @Abhinandan‑Purkait).  
+  - CI now includes branch preparation changes (#567 by @Abhinandan‑Purkait) and explicit namespace settings (#580 by @sinhaashish).
+
+- **New CI Features**  
+  - A Fossa CLI workflow has been integrated to automatically check licensing issues (#599 by @Abhinandan‑Purkait).  
+  - The CI environment now pins Ubuntu to 22.04 to ensure consistency for minikube (#604 by @Abhinandan‑Purkait).  
+  - Updates to the build_and_push action (addressing missing changes) are included (#618 by @tiagolobocastro).
+
+---
+
+## Documentation and Contributor Workflow
+
+- **Documentation Updates**  
+  - Typos and minor errors in the README have been fixed (#554 by @druesendieb), and several docs (such as the localpv parameter explanations in docs and backup‑restore guides) have been updated (#563, #585).  
+  - A security section now cross‑references relevant security documents (#611 by @tiagolobocastro).
+
+- **Contributor and Release Process Improvements**  
+  - The contributor workflow documentation has been improved to provide clearer guidelines on how to contribute (#616 by @tiagolobocastro).  
+  - The overall README and additional documentation have been tidied up, and outdated assets have been moved or removed (#619 by @Abhinandan‑Purkait).  
+  - Changes to the RBAC configuration were applied (#603 by @d4rkfella) to ensure that all components (including CSI snapshotter) have the correct permissions.
+
+---
+
+## Dependency and Maintenance Updates
+
+- **CRD Generation and Cleanup**  
+  - The CRDs have been replaced with an auto‑generated copy (#564 by @niladrih) to reduce manual errors.  
+  - Unused scripts have been removed and the make manifests updated (#569 by @Abhinandan‑Purkait).
+
+- **Dependency Bumps**  
+  - The analytics dependency has been updated (#578 by @niladrih).  
+  - The Go networking package has been bumped from 0.28.0 to 0.33.0 (#610 by dependabot).
+
+- **Chart and Label Adjustments**  
+  - A fix was made to move the `app=componentName` label out of the csi‑node matchLabels section to prevent upgrade issues (#605 by @niladrih).
+---
+
 v2.6.2 / 2024-09-25
 ========================
 * fix(chart): handle trailing slash (/) in csi plugin kubelet directory ([#532](https://github.com/openebs/zfs-localpv/pull/532),[@w3aman](https://github.com/w3aman))
