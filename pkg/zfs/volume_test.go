@@ -38,3 +38,27 @@ func TestIsVolumeReady(t *testing.T) {
 		})
 	}
 }
+
+func TestReservationProperty(t *testing.T) {
+	tests := []struct {
+		name      string
+		quotaType string
+		capacity  string
+		expected  string
+	}{
+		{"Empty quotaType defaults to quota", "", "10G", "reservation=10G"},
+		{"Valid quotaType quota", "quota", "5G", "reservation=5G"},
+		{"Valid quotaType refquota", "refquota", "3G", "refreservation=3G"},
+		{"Invalid quotaType defaults to quota", "invalid", "2G", "reservation=2G"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := reservationProperty(tt.quotaType, tt.capacity)
+			if result != tt.expected {
+				t.Errorf("For quotaType %q and capacity %q, expected %q but got %q",
+					tt.quotaType, tt.capacity, tt.expected, result)
+			}
+		})
+	}
+}
