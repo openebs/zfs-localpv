@@ -143,7 +143,7 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 
 	if vol.Spec.VolumeType == VolTypeDataset {
 		if len(vol.Spec.Capacity) != 0 {
-			quotaProperty := vol.Spec.QuotaType + "=" + vol.Spec.Capacity
+			quotaProperty := quotaProperty(vol.Spec.QuotaType) + "=" + vol.Spec.Capacity
 			ZFSVolArg = append(ZFSVolArg, "-o", quotaProperty)
 		}
 		if len(vol.Spec.RecordSize) != 0 {
@@ -215,7 +215,7 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 	ZFSVolArg = append(ZFSVolArg, ZFSCreateArg)
 
 	if len(vol.Spec.Capacity) != 0 {
-		quotaProperty := vol.Spec.QuotaType + "=" + vol.Spec.Capacity
+		quotaProperty := quotaProperty(vol.Spec.QuotaType) + "=" + vol.Spec.Capacity
 		ZFSVolArg = append(ZFSVolArg, "-o", quotaProperty)
 	}
 	if len(vol.Spec.RecordSize) != 0 {
@@ -290,7 +290,7 @@ func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
 	ZFSVolArg = append(ZFSVolArg, ZFSSetArg)
 
 	if vol.Spec.VolumeType == VolTypeDataset {
-		quotaProperty := vol.Spec.QuotaType + "=" + vol.Spec.Capacity
+		quotaProperty := quotaProperty(vol.Spec.QuotaType) + "=" + vol.Spec.Capacity
 		ZFSVolArg = append(ZFSVolArg, quotaProperty)
 	} else {
 		volsizeProperty := "volsize=" + vol.Spec.Capacity
@@ -971,11 +971,25 @@ func decodeListOutput(raw []byte) ([]apis.Pool, error) {
 	return pools, nil
 }
 
-// get the reservation property based on the quota type
-func reservationProperty(quotaType string, capacity string) string {
-	var reservationProperties = map[string]string{
+// reservationProperty returns the reservation property based on the quota type.
+func reservationProperty(quotaType, capacity string) string {
+	validQuotaType := quotaProperty(quotaType)
+
+	reservationProperties := map[string]string{
 		"quota":    "reservation=",
 		"refquota": "refreservation=",
 	}
-	return reservationProperties[quotaType] + capacity
+
+	// Return the mapped property or default to "reservation="
+	return reservationProperties[validQuotaType] + capacity
+}
+
+// quotaProperty ensures backwards compatibility for the quota property.
+func quotaProperty(quotaType string) string {
+	switch quotaType {
+	case "refquota":
+		return "refquota"
+	default:
+		return "quota"
+	}
 }
