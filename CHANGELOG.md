@@ -1,7 +1,20 @@
+v2.7.1 / 2025-02-12
+========================
+
+The `2.7.1` release of OpenEBS Local PV ZFS focuses fixing a bug which prevented volume clones upon upgrade. This bug got introduced because of a new feature being  added for the selection of the `quota` and `requota`, but the backwards compatibility was not taken care of. This has also highlighted the gaps on upgrade testing, which we would like to work upon in the upcoming releases
+
+---
+
+## Bug Fixes and Stability Improvements
+- fix: quota property empty on upgrade to ensure backwards compatibility (#629 by @Abhinandan-Purkait)
+
+
 v2.7.0 / 2025-02-10
 ========================
 
 The 2.7.0 release of zfs‑localpv focuses on enhancing the stability, feature set, and developer experience. Key highlights include new configuration options for quota management, support for faster compression algorithms, fixes to race conditions and resource cleanup, and a raft of improvements to tests, CI workflows, and documentation. In addition, several maintenance tasks and dependency updates have been performed to keep the project robust and secure.
+
+**NOTE: The 2.7.0 release of OpenEBS Local PV ZFS has bug which affects the volume clone feature upon upgrade from previous version. It has been fixed via a patch release [2.7.1](https://github.com/openebs/zfs-localpv/releases/tag/v2.7.1). We would recommend users to upgrade directly to 2.7.1, if coming from 2.6.x and below**
 
 ---
 
