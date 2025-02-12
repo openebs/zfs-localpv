@@ -253,3 +253,26 @@ Feature: Validate volume provisioning for fsType zfs, ext4, xfs, btrfs
       |  ext4  |
       |  xfs   |
       |  btrfs |
+
+  Scenario Outline: Main features should work after upgrade
+    Given The latest stable version of OpenEBS Local PV ZFS is installed in the cluster
+    And a storage class is created with fsType as <fsType> and thinprovision as <thinprovision> and allowExpansion as true
+    And pvc is created referencing this storage class 
+    And a deployment is created using the same pvc
+    And a volume snapshot is created referencing this storage class
+    When the OpenEBS Local PV ZFS installed in the cluster is upgraded to target prerelease or develop version
+    And the pvc capacity is updated to a greater size
+    Then the pvc resize should work correctly and the filesystem should be updated eventually
+    When a restore is created from the snapshot
+    Then the restore should be created successfully and should be consumable by a workload
+    When a clone is created from the pvc
+    Then the clone should be created successfully and should be consumable by a workload    
+    And the workloads should keep running until completion
+    Examples:
+      | fsType | thinprovision |
+      |  zfs   |    no         |
+      |  xfs   |    no         |
+      |  zfs   |    yes        |
+      |  xfs   |    yes        |
+      |  zfs   |               |
+      |  xfs   |               |
