@@ -71,7 +71,7 @@ func main() {
 	)
 
 	cmd.PersistentFlags().StringVar(
-		&config.PluginType, "plugin", "csi-plugin", "Type of this driver i.e. controller or node",
+		&config.PluginType, "plugin", "csi-plugin", "Type of this driver i.e. controller or agent",
 	)
 
 	err := cmd.Execute()
