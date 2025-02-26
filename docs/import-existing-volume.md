@@ -138,7 +138,7 @@ If the volume is a zfs dataset, then create LocalPV-ZFS resource with volumeType
 
 ```
 $ cat zfspvcr.yaml
-apiVersion: zfs.openebs.io/v1alpha1
+apiVersion: zfs.openebs.io/v1
 kind: ZFSVolume
 metadata:
   finalizers:
@@ -151,6 +151,7 @@ spec:
   ownerNodeID: pawan-3 # should be the nodename where ZPOOL is running
   poolName: zfspv-pool # poolname where the volume is present
   volumeType: DATASET # whether it is a DATASET or ZVOL
+  shared: "yes" # whether or not the volume can be shared across pods
 status:
   state: Ready # state should be Ready as volume is already present
 ```
