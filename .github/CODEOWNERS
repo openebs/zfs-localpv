@@ -1,5 +1,5 @@
 # Default code owners
-*                           @openebs/localpv-zfs-approvers @openebs/org-maintainers
+*                           @openebs/localpv-zfs-approvers
 
 # CODEOWNERS file owners
 /.github/CODEOWNERS         @openebs/org-maintainers
