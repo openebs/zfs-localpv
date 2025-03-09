@@ -352,7 +352,7 @@ func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) ([]string, error) {
 
 	if rstr.VolSpec.VolumeType == VolTypeDataset {
 		if len(rstr.VolSpec.Capacity) != 0 {
-			ZFSRecvParam += " -o " + rstr.VolSpec.QuotaType + "=" + rstr.VolSpec.Capacity
+			ZFSRecvParam += " -o " + quotaProperty(rstr.VolSpec.QuotaType) + "=" + rstr.VolSpec.Capacity
 		}
 		if len(rstr.VolSpec.RecordSize) != 0 {
 			ZFSRecvParam += " -o recordsize=" + rstr.VolSpec.RecordSize
