@@ -23,24 +23,18 @@ import (
 
 	"time"
 
+	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
 	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog/v2"
-)
-
-var (
-	masterURL  string
-	kubeconfig string
 )
 
 // Start starts the zfsvolume controller.
 func Start(controllerMtx *sync.RWMutex, stopCh <-chan struct{}) error {
+
 	// Get in cluster config
-	cfg, err := getClusterConfig(kubeconfig)
+	cfg, err := k8sapi.Config().Get()
 	if err != nil {
 		return errors.Wrap(err, "error building kubeconfig")
 	}
@@ -87,20 +81,4 @@ func Start(controllerMtx *sync.RWMutex, stopCh <-chan struct{}) error {
 
 	// Threadiness defines the number of workers to be launched in Run function
 	return controller.Run(2, stopCh)
-}
-
-// GetClusterConfig return the config for k8s.
-func getClusterConfig(kubeconfig string) (*rest.Config, error) {
-	cfg, err := rest.InClusterConfig()
-	if err != nil {
-		klog.Errorf("Failed to get k8s Incluster config. %+v", err)
-		if kubeconfig == "" {
-			return nil, errors.Wrap(err, "kubeconfig is empty")
-		}
-		cfg, err = clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
-		if err != nil {
-			return nil, errors.Wrap(err, "error building kubeconfig")
-		}
-	}
-	return cfg, err
 }
