@@ -125,8 +125,8 @@ type nonBlockingGRPCServer struct {
 // Start grpc server for serving CSI endpoints
 func (s *nonBlockingGRPCServer) Start() {
 	// Also stop the grpc server if SIGINT or SIGTERM is received
-	// This is only a temporary solution, better pass a cancellable context around for the lifetime of the application
-	// See: https://stackoverflow.com/a/74895157 and https://gist.github.com/embano1/e0bf49d24f1cdd07cffad93097c04f0a
+	// TODO: (tech-debt) Setup signal handler more above, several files want to use stopCh and the appropriate function is only allowed to be used once.
+	// Affected files: pkg/driver/agent.go pkg/driver/controller.go pkg/driver/grpc.go
 	stopCh := make(chan os.Signal, 1)
 	signal.Notify(stopCh, syscall.SIGINT, syscall.SIGTERM)
 	s.wg.Add(1)
