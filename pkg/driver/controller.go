@@ -103,6 +103,8 @@ func (cs *controller) init() error {
 		0, informers.WithNamespace(zfs.OpenEBSNamespace))
 
 	// set up signals so we handle the first shutdown signal gracefully
+	// TODO: (tech-debt) Setup signal handler more above, several files want to use stopCh and this function is only allowed to be used once (see #647)
+	// Affected files: pkg/driver/agent.go pkg/driver/controller.go pkg/driver/grpc.go
 	stopCh := signals.SetupSignalHandler()
 
 	cs.k8sNodeInformer = kubeInformerFactory.Core().V1().Nodes().Informer()

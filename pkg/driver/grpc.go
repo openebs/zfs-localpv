@@ -21,8 +21,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -122,8 +124,17 @@ type nonBlockingGRPCServer struct {
 
 // Start grpc server for serving CSI endpoints
 func (s *nonBlockingGRPCServer) Start() {
-
+	// Also stop the grpc server if SIGINT or SIGTERM is received
+	// TODO: (tech-debt) Setup signal handler more above, several files want to use stopCh and the appropriate function is only allowed to be used once.
+	// Affected files: pkg/driver/agent.go pkg/driver/controller.go pkg/driver/grpc.go
+	stopCh := make(chan os.Signal, 1)
+	signal.Notify(stopCh, syscall.SIGINT, syscall.SIGTERM)
 	s.wg.Add(1)
+	go func() {
+		<-stopCh    // wait for the stop signal
+		s.Stop()    // noone actually stops the grpc server, so have to do here
+		s.wg.Done() // to mark above wg.Add as done
+	}()
 
 	go s.serve(s.endpoint, s.idntyServer, s.ctrlServer, s.agentServer)
 }
@@ -135,11 +146,13 @@ func (s *nonBlockingGRPCServer) Wait() {
 
 // Stop the service forcefully
 func (s *nonBlockingGRPCServer) Stop() {
+	klog.Info("Shutting down gRPC server gracefully")
 	s.server.GracefulStop()
 }
 
 // ForceStop the service
 func (s *nonBlockingGRPCServer) ForceStop() {
+	klog.Info("Shutting down gRPC server forcefully")
 	s.server.Stop()
 }
 
