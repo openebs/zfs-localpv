@@ -175,7 +175,7 @@ helm_install() {
   truncate -s 100G /tmp/disk.img
   sudo zpool create zfspv-pool "$(sudo losetup -f /tmp/disk.img --show)"
 
-  helm install zfs-localpv ./deploy/helm/charts -n "$OPENEBS_NAMESPACE" --create-namespace --set zfsPlugin.image.pullPolicy=Never --set analytics.enabled=false
+  helm install zfs-localpv ./deploy/helm/charts -n "$OPENEBS_NAMESPACE" --create-namespace --set zfsPlugin.image.pullPolicy=Never --set analytics.enabled=false --set backupGC.enabled=true
   kubectl apply -f "$SNAP_CLASS"
 
   waitForZFSDriver

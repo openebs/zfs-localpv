@@ -132,6 +132,14 @@ func (cs *controller) init() error {
 		cs.k8sNodeInformer.HasSynced,
 		cs.zfsNodeInformer.HasSynced)
 	klog.Info("synced k8s & zfs node informer caches")
+
+	if zfs.ZFSBackupGCEnabled {
+		bgc := &BackupGarbageCollector{}
+		err = bgc.Initialize(openebsClient, stopCh)
+		if err != nil {
+			return errors.Wrap(err, "failed to initialize backup garbage collector")
+		}
+	}
 	return nil
 }
 

@@ -122,6 +122,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `serviceAccount.zfsController.create` | Create a service account for zfs localpv controller or not| `true`|
 | `serviceAccount.zfsController.name` | Name for the zfs localpv controller service account| `openebs-zfs-controller-sa`|
 | `analytics.enabled` | Enable or Disable google analytics for the controller| `true`|
+| `backupGC.enabled` | Enable or Disable backup garbage collection for the controller| `false`|
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 

@@ -22,6 +22,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/openebs/zfs-localpv/pkg/builder/bkpbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
 	"github.com/openebs/zfs-localpv/tests/deploy"
 	"github.com/openebs/zfs-localpv/tests/pod"
@@ -48,6 +49,7 @@ var (
 	PVClient            *pv.Kubeclient
 	DeployClient        *deploy.Kubeclient
 	PodClient           *pod.KubeClient
+	BKPClient           *bkpbuilder.Kubeclient
 	scName              = "zfspv-sc"
 	ZFSProvisioner      = "zfs.csi.openebs.io"
 	RetainReclaimPolicy = corev1.PersistentVolumeReclaimPolicy(corev1.PersistentVolumeReclaimRetain)
@@ -69,6 +71,9 @@ var (
 
 	pvFromRetainZV  = "pv-from-retain-zv"
 	pvcFromRetainZV = "pvc-from-retain-zv"
+
+	backupVolumeName = "zfspv-backup-volume"
+	backupNodeID     = "node-id"
 
 	scObj              *storagev1.StorageClass
 	deployObj          *appsv1.Deployment
@@ -96,6 +101,7 @@ func init() {
 	DeployClient = deploy.NewKubeClient(deploy.WithKubeConfigPath(KubeConfigPath))
 	PodClient = pod.NewKubeClient(pod.WithKubeConfigPath(KubeConfigPath))
 	ZFSClient = volbuilder.NewKubeclient(volbuilder.WithKubeConfigPath(KubeConfigPath))
+	BKPClient = bkpbuilder.NewKubeclient(bkpbuilder.WithKubeConfigPath(KubeConfigPath))
 }
 
 func TestSource(t *testing.T) {

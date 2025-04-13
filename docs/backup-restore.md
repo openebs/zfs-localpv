@@ -217,6 +217,8 @@ velero create schedule schd --schedule="*/5 * * * *" --snapshot-volumes --includ
 
 Velero natively does not support the incremental backup, so while taking the incremental backup we have to set the appropriate ttl for the backups so that we have full incremental backup group available for restore. For example, in the above case we creating a schedule to take the backup at every 5 min and VolumeSnapshotLocation says we should keep 3 incremental backups then ttl should be set to 5 min * (3 incr + 1 full) = 20 min or more. So that the full backup and all the incremental backups are available for the restore. If we don't set the ttl correctly and full backup gets deleted, we won't be able use that backup, so we should make sure that correct ttl is set for the incremental backups schedule.
 
+**NOTE**: The backup garbage collector must be turned on (env variable on the zfs-driver controller `OPENEBS_IO_ENABLE_BACKUP_GC: true`). If it’s disabled, the plugin will remain stuck when performing full or incremental backups.
+
 We can check the backup status using `velero backup get` command:
 
 ```
