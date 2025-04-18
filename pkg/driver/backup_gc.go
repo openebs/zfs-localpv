@@ -165,7 +165,7 @@ func (bgc *BackupGarbageCollector) handleBackupCreation(obj interface{}) {
 
 	// Check if the backup references a prevSnapName that doesn't exist
 	if backup.Spec.PrevSnapName != "" {
-		go bgc.validateBackupPrevSnapName(backup)
+		go bgc.deleteOrphanedIncBackup(backup)
 	}
 }
 
@@ -191,7 +191,7 @@ func (bgc *BackupGarbageCollector) handleBackupUpdate(oldObj, newObj interface{}
 
 	// If prevSnapName was added or changed, validate it
 	if oldBackup.Spec.PrevSnapName != newBackup.Spec.PrevSnapName && newBackup.Spec.PrevSnapName != "" {
-		go bgc.validateBackupPrevSnapName(newBackup)
+		go bgc.deleteOrphanedIncBackup(newBackup)
 	}
 }
 
@@ -224,9 +224,9 @@ func (bgc *BackupGarbageCollector) handleBackupDeletion(obj interface{}) {
 	go bgc.deleteBackupsReferencingDeletedBackup(backup)
 }
 
-// validateBackupPrevSnapName checks if the previous snapshot referenced by a backup exists.
+// deleteOrphanedIncBackup checks if the previous snapshot referenced by a backup exists.
 // If the reference doesn't exist, the backup is deleted to maintain chain integrity.
-func (bgc *BackupGarbageCollector) validateBackupPrevSnapName(backup *zfsapi.ZFSBackup) {
+func (bgc *BackupGarbageCollector) deleteOrphanedIncBackup(backup *zfsapi.ZFSBackup) {
 	if backup.Spec.PrevSnapName == "" {
 		return
 	}
