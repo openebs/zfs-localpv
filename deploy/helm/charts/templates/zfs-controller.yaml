@@ -129,6 +129,8 @@ spec:
             - name: GA_KEY
               value: {{ .Values.analytics.gaKey | quote }}
             {{- end }}
+            - name: OPENEBS_IO_ENABLE_BACKUP_GC
+              value: "{{ .Values.backupGC.enabled }}"
           args :
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_CONTROLLER_DRIVER)"

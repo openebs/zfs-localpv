@@ -40,6 +40,8 @@ const (
 	OpenEBSNamespaceKey string = "OPENEBS_NAMESPACE"
 	// GoogleAnalyticsKey This environment variable is set via env
 	GoogleAnalyticsKey string = "OPENEBS_IO_ENABLE_ANALYTICS"
+	// ZFSBackupGCEnabledKey This environment variable is set via env
+	ZFSBackupGCEnabledKey string = "OPENEBS_IO_ENABLE_BACKUP_GC"
 	// ZFSFinalizer for the ZfsVolume CR
 	ZFSFinalizer string = "zfs.openebs.io/finalizer"
 	// ZFSVolKey for the ZfsSnapshot CR to store Persistence Volume name
@@ -75,6 +77,9 @@ var (
 
 	// GoogleAnalyticsEnabled should send google analytics or not
 	GoogleAnalyticsEnabled string
+
+	// ZFSBackupGCEnabled is the flag to enable backup garbage collection
+	ZFSBackupGCEnabled bool
 )
 
 func init() {
@@ -101,6 +106,12 @@ func init() {
 	}
 
 	GoogleAnalyticsEnabled = os.Getenv(GoogleAnalyticsKey)
+
+	if os.Getenv(ZFSBackupGCEnabledKey) == "true" {
+		ZFSBackupGCEnabled = true
+	} else {
+		ZFSBackupGCEnabled = false
+	}
 }
 
 // GetNodeID returns the Node ID of the given K8s nodename.

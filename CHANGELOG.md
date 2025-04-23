@@ -1,3 +1,12 @@
+v2.8.0 / To be Released
+========================
+
+## New Features
+
+- **Backup garbage collector**
+  - Disabled by default. This feature clean up ZFSBackups which `prevSnapName` is missing in the cluster. Fixing [openebs/velero-plugin#119](https://github.com/openebs/velero-plugin/issues/119) deleting orphaned backups and fixing frequency of full backups creation.
+
+
 v2.7.1 / 2025-02-12
 ========================
 
