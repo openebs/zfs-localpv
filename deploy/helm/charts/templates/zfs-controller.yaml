@@ -19,9 +19,12 @@ spec:
       annotations: {{ toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "zfslocalpv.zfsController.labels" . | nindent 8 }}
+        {{- include "zfslocalpv.zfsController.labels" . | nindent 8 -}}
         {{- with .Values.zfsController.podLabels}}
-        {{ toYaml . | nindent 8 }}
+        {{ toYaml . | nindent 8 -}}
+        {{- end}}
+        {{- with .Values.loggingLabels}}
+        {{ toYaml . | nindent 8 -}}
         {{- end}}
     spec:
 {{- if .Values.zfsController.priorityClass.create }}
