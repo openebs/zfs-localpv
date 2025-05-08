@@ -26,6 +26,9 @@ spec:
         {{- with .Values.zfsNode.podLabels}}
         {{ toYaml . | nindent 8 }}
         {{- end}}
+        {{- with .Values.loggingLabels}}
+        {{ toYaml . | nindent 8 }}
+        {{- end}}
     spec:
 {{- if .Values.zfsNode.priorityClass.create }}
       priorityClassName: {{ template "zfslocalpv.zfsNode.priorityClassName" . }}

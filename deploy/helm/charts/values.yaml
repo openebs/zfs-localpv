@@ -13,6 +13,9 @@ rbac:
   # rbac.pspEnabled: `true` if PodSecurityPolicy resources should be created
   pspEnabled: false
 
+loggingLabels:
+  openebs.io/logging: "true"
+
 # zfsNode contains the configurables for
 # the zfs node daemonset
 zfsNode:
