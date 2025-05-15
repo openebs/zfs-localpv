@@ -760,16 +760,30 @@ func GetVolumeDevPath(vol *apis.ZFSVolume) (string, error) {
 
 // ResizeZFSVolume resize volume
 func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string, resizefs bool) error {
+	oldReservation, err := GetVolumeProperty(vol, reservationPropertyName(vol.Spec.QuotaType))
+	if err != nil {
+		return err
+	}
 
 	volume := vol.Spec.PoolName + "/" + vol.Name
 	args := buildVolumeResizeArgs(vol)
 	cmd := exec.Command(ZFSVolCmd, args...)
-	out, err := cmd.CombinedOutput()
 
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		klog.Errorf(
-			"zfs: could not resize the volume %v cmd %v error: %s", volume, args, string(out),
-		)
+		klog.Errorf("zfs: could not resize the volume %v cmd %v error: %s", volume, args, string(out))
+		klog.Infof("zfs: reverting the volume quota to %s", oldReservation)
+
+		revertedVol := vol.DeepCopy()
+		revertedVol.Spec.Capacity = oldReservation
+		args := buildVolumeResizeArgs(revertedVol)
+		cmd := exec.Command(ZFSVolCmd, args...)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			klog.Errorf(
+				"zfs: could not revert the volume %v quota cmd %v error: %s", volume, args, string(out),
+			)
+		}
+
 		return err
 	}
 
@@ -973,15 +987,20 @@ func decodeListOutput(raw []byte) ([]apis.Pool, error) {
 
 // reservationProperty returns the reservation property based on the quota type.
 func reservationProperty(quotaType, capacity string) string {
+	return reservationPropertyName(quotaType) + "=" + capacity
+}
+
+// reservationPropertyName returns the reservation property name based on the quota type.
+func reservationPropertyName(quotaType string) string {
 	validQuotaType := quotaProperty(quotaType)
 
 	reservationProperties := map[string]string{
-		"quota":    "reservation=",
-		"refquota": "refreservation=",
+		"quota":    "reservation",
+		"refquota": "refreservation",
 	}
 
-	// Return the mapped property or default to "reservation="
-	return reservationProperties[validQuotaType] + capacity
+	// Return the mapped property or default to "reservation"
+	return reservationProperties[validQuotaType]
 }
 
 // quotaProperty ensures backwards compatibility for the quota property.
