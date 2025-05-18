@@ -671,6 +671,35 @@ func (cs *controller) ControllerExpandVolume(
 		)
 	}
 
+	// --- Capacity check start ---
+	poolname := vol.Spec.PoolName
+	var availableCapacity int64
+	zfsNodesCache := cs.zfsNodeInformer.GetIndexer()
+	// Find the node where this volume is provisioned
+	mappedNodeID, mapErr := zfs.GetNodeID(vol.Spec.OwnerNodeID)
+	if mapErr != nil {
+		mappedNodeID = vol.Spec.OwnerNodeID
+	}
+	v, exists, err := zfsNodesCache.GetByKey(zfs.OpenEBSNamespace + "/" + mappedNodeID)
+	if err == nil && exists {
+		zfsNode := v.(*zfsapi.ZFSNode)
+		for _, zpool := range zfsNode.Pools {
+			if zpool.Name == poolname {
+				freeCapacity := zpool.Free.Value()
+				availableCapacity = freeCapacity
+				break
+			}
+		}
+	}
+	if availableCapacity > 0 && updatedSize > availableCapacity {
+		return nil, status.Errorf(
+			codes.ResourceExhausted,
+			"ControllerExpandVolumeRequest: requested size %d exceeds available pool capacity %d for pool %s",
+			updatedSize, availableCapacity, poolname,
+		)
+	}
+	// --- Capacity check end ---
+
 	volsize, err := strconv.ParseInt(vol.Spec.Capacity, 10, 64)
 	if err != nil {
 		return nil, status.Errorf(
