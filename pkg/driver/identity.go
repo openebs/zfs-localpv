@@ -28,6 +28,7 @@ import (
 // for CSI IdentityServer
 type identity struct {
 	driver *CSIDriver
+	csi.UnimplementedIdentityServer
 }
 
 // NewIdentity returns a new instance of CSI

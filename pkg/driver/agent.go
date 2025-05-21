@@ -45,6 +45,7 @@ import (
 // for CSI NodeServer
 type node struct {
 	driver *CSIDriver
+	csi.UnimplementedNodeServer
 }
 
 // NewNode returns a new instance
