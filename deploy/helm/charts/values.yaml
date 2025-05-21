@@ -29,7 +29,7 @@ zfsNode:
       repository: sig-storage/csi-node-driver-registrar
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v2.8.0
+      tag: v2.13.0
   updateStrategy:
     type: RollingUpdate
   annotations: {}
@@ -79,7 +79,7 @@ zfsController:
       repository: sig-storage/csi-resizer
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v1.8.0
+      tag: v1.13.2
     extraArgs: []
   snapshotter:
     name: "csi-snapshotter"
@@ -90,7 +90,7 @@ zfsController:
       repository: sig-storage/csi-snapshotter
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v6.2.2
+      tag: v8.2.0
     extraArgs: []
   snapshotController:
     name: "snapshot-controller"
@@ -101,7 +101,7 @@ zfsController:
       repository: sig-storage/snapshot-controller
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v6.2.2
+      tag: v8.2.0
     extraArgs: []
   provisioner:
     name: "csi-provisioner"
@@ -112,7 +112,7 @@ zfsController:
       repository: sig-storage/csi-provisioner
       pullPolicy: IfNotPresent
       # Overrides the image tag whose default is the chart appVersion.
-      tag: v3.5.0
+      tag: v5.2.0
     extraArgs: []
   updateStrategy:
     type: RollingUpdate
