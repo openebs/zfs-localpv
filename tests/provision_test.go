@@ -62,7 +62,7 @@ func create(parameters map[string]string) {
 func snapshotAndCloneCreate() {
 	createSnapshot(pvcNameFS, snapNameFS)
 	verifySnapshotCreated(snapNameFS)
-	createClone(clonePvcNameFS, snapNameFS, scObj.Name)
+	createClone(clonePvcNameFS, snapNameFS, scObj.Name, "Filesystem")
 	By("Creating and deploying clone app pod", func() { createDeployVerifyCloneApp(cloneAppNameFS, clonePvcNameFS) })
 }
 
@@ -90,7 +90,8 @@ func blockVolCreationTest() {
 
 	createSnapshot(pvcNameBlock, snapNameBlock)
 	verifySnapshotCreated(snapNameBlock)
-	createClone(clonePvcNameBlock, snapNameBlock, scObj.Name)
+
+	createClone(clonePvcNameBlock, snapNameBlock, scObj.Name, "Block")
 	By("Creating and deploying clone app pod", func() { createDeployVerifyCloneApp(cloneAppNameBlock, clonePvcNameBlock) })
 
 	By("Deleting main application deployment")

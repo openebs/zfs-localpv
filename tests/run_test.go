@@ -50,6 +50,7 @@ spec:
   resources:
     requests:
       storage: 5Gi
+  volumeMode: #volumemode
   storageClassName: #storageclass
 `
 )
@@ -95,12 +96,13 @@ func createSnapshot(pvcName, snapName string) {
 	Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
 }
 
-func createClone(clonepvc, snapname, storageclass string) {
+func createClone(clonepvc, snapname, storageclass, mode string) {
 	By("creating clone volume from snapshot " + snapname)
 
 	syaml := strings.Replace(cloneYAML, "#snapname", snapname, -1)
 	cyaml := strings.Replace(syaml, "#pvcname", clonepvc, -1)
-	yaml := strings.Replace(cyaml, "#storageclass", storageclass, -1)
+	myaml := strings.Replace(cyaml, "#volumemode", mode, -1)
+	yaml := strings.Replace(myaml, "#storageclass", storageclass, -1)
 
 	stdout, stderr, err := kubectlWithInput([]byte(yaml), "apply", "-n", OpenEBSNamespace, "-f", "-")
 	Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
