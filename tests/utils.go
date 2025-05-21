@@ -520,7 +520,11 @@ func createDeployVerifyApp(appName, pvcName string) {
 
 func createDeployVerifyCloneApp(cloneAppName, clonePvcName string) {
 	ginkgo.By("creating and deploying app pod")
-	createAndDeployAppPod(cloneAppName, clonePvcName)
+	if clonePvcName == "zfspv-pvc-clone-block" {
+		createAndDeployBlockAppPod(cloneAppName, clonePvcName)
+	} else {
+		createAndDeployAppPod(cloneAppName, clonePvcName)
+	}
 	ginkgo.By("verifying app pod is running", func() { verifyAppPodRunning(cloneAppName) })
 }
 
