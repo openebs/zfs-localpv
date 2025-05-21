@@ -65,6 +65,8 @@ type controller struct {
 	zfsNodeInformer cache.SharedIndexInformer
 
 	volumeLock *volumeLock
+
+	csi.UnimplementedControllerServer
 }
 
 // NewController returns a new instance
@@ -1218,4 +1220,18 @@ func LabelIndexFunc(label string) cache.IndexFunc {
 		}
 		return vs, nil
 	}
+}
+
+func (cs *controller) ControllerGetVolume(
+	ctx context.Context,
+	req *csi.ControllerGetVolumeRequest,
+) (*csi.ControllerGetVolumeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "ControllerGetVolume is not implemented")
+}
+
+func (cs *controller) ControllerModifyVolume(
+	ctx context.Context,
+	req *csi.ControllerModifyVolumeRequest,
+) (*csi.ControllerModifyVolumeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "ControllerModifyVolume is not implemented")
 }
