@@ -62,3 +62,26 @@ func TestReservationProperty(t *testing.T) {
 		})
 	}
 }
+
+func TestQuotaProperty(t *testing.T) {
+	tests := []struct {
+		name      string
+		quotaType string
+		expected  string
+	}{
+		{"Empty quotaType defaults to quota", "", "quota"},
+		{"Valid quotaType quota", "quota", "quota"},
+		{"Valid quotaType refquota", "refquota", "refquota"},
+		{"Invalid quotaType defaults to quota", "invalid", "quota"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := quotaProperty(tt.quotaType)
+			if result != tt.expected {
+				t.Errorf("For quotaType %q, expected %q but got %q",
+					tt.quotaType, tt.expected, result)
+			}
+		})
+	}
+}
