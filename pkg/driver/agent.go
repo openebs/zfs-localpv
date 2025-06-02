@@ -380,8 +380,15 @@ func (ns *node) NodeExpandVolume(
 	}
 
 	if err = zfs.ResizeZFSVolume(vol, req.GetVolumePath(), resizefs); err != nil {
+		code := codes.Internal
+
+		// error defined in zfs source code: https://github.com/openzfs/zfs/blob/zfs-2.3.99/lib/libzfs/libzfs_util.c#L551
+		if strings.Contains(err.Error(), "size is greater than available space") {
+			code = codes.ResourceExhausted
+		}
+
 		return nil, status.Errorf(
-			codes.Internal,
+			code,
 			"failed to handle NodeExpandVolume Request for %s, {%s}",
 			req.VolumeId,
 			err.Error(),

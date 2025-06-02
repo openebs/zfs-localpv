@@ -89,7 +89,7 @@ func GetVolumeType(fstype string) string {
 	}
 }
 
-// builldZvolCreateArgs returns zfs create command for zvol along with attributes as a string array
+// buildZvolCreateArgs returns zfs create command for zvol along with attributes as a string array
 func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
 
@@ -132,7 +132,7 @@ func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
 	return ZFSVolArg
 }
 
-// builldCloneCreateArgs returns zfs clone commands for zfs volume/dataset along with attributes as a string array
+// buildCloneCreateArgs returns zfs clone commands for zfs volume/dataset along with attributes as a string array
 func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
 
@@ -193,7 +193,7 @@ func buildZFSSnapCreateArgs(snap *apis.ZFSSnapshot) []string {
 	return ZFSSnapArg
 }
 
-// builldZFSSnapDestroyArgs returns zfs destroy command for zfs snapshot
+// buildZFSSnapDestroyArgs returns zfs destroy command for zfs snapshot
 // zfs destroy <poolname>/<volname>@<snapname>
 func buildZFSSnapDestroyArgs(snap *apis.ZFSSnapshot) []string {
 	var ZFSSnapArg []string
@@ -206,7 +206,7 @@ func buildZFSSnapDestroyArgs(snap *apis.ZFSSnapshot) []string {
 	return ZFSSnapArg
 }
 
-// builldDatasetCreateArgs returns zfs create command for dataset along with attributes as a string array
+// buildDatasetCreateArgs returns zfs create command for dataset along with attributes as a string array
 func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
 
@@ -252,7 +252,7 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 	return ZFSVolArg
 }
 
-// builldVolumeSetArgs returns volume set command along with attributes as a string array
+// buildVolumeSetArgs returns volume set command along with attributes as a string array
 // TODO(pawan) need to find a way to identify which property has changed
 func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
@@ -281,7 +281,7 @@ func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 	return ZFSVolArg
 }
 
-// builldVolumeResizeArgs returns volume set  for resizing the zfs volume
+// buildVolumeResizeArgs returns volume set command for resizing the zfs volume
 func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
 
@@ -306,7 +306,7 @@ func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
 	return ZFSVolArg
 }
 
-// builldVolumeBackupArgs returns volume send command for sending the zfs volume
+// buildVolumeBackupArgs returns volume send command for sending the zfs volume
 func buildVolumeBackupArgs(bkp *apis.ZFSBackup, vol *apis.ZFSVolume) ([]string, error) {
 	var ZFSVolArg []string
 	backupDest := bkp.Spec.BackupDest
@@ -335,7 +335,7 @@ func buildVolumeBackupArgs(bkp *apis.ZFSBackup, vol *apis.ZFSVolume) ([]string, 
 	return ZFSVolArg, nil
 }
 
-// builldVolumeRestoreArgs returns volume recv command for receiving the zfs volume
+// buildVolumeRestoreArgs returns volume recv command for receiving the zfs volume
 func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) ([]string, error) {
 	var ZFSVolArg []string
 	var ZFSRecvParam string
@@ -386,7 +386,7 @@ func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) ([]string, error) {
 	return ZFSVolArg, nil
 }
 
-// builldVolumeDestroyArgs returns volume destroy command along with attributes as a string array
+// buildVolumeDestroyArgs returns volume destroy command along with attributes as a string array
 func buildVolumeDestroyArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
 
@@ -760,16 +760,30 @@ func GetVolumeDevPath(vol *apis.ZFSVolume) (string, error) {
 
 // ResizeZFSVolume resize volume
 func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string, resizefs bool) error {
+	oldReservation, err := GetVolumeProperty(vol, reservationPropertyName(vol.Spec.QuotaType))
+	if err != nil {
+		return err
+	}
 
 	volume := vol.Spec.PoolName + "/" + vol.Name
 	args := buildVolumeResizeArgs(vol)
 	cmd := exec.Command(ZFSVolCmd, args...)
-	out, err := cmd.CombinedOutput()
 
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		klog.Errorf(
-			"zfs: could not resize the volume %v cmd %v error: %s", volume, args, string(out),
-		)
+		klog.Errorf("zfs: could not resize the volume %v cmd %v error: %s", volume, args, string(out))
+		klog.Infof("zfs: reverting the volume quota to %s", oldReservation)
+
+		revertedVol := vol.DeepCopy()
+		revertedVol.Spec.Capacity = oldReservation
+		args := buildVolumeResizeArgs(revertedVol)
+		cmd := exec.Command(ZFSVolCmd, args...)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			klog.Errorf(
+				"zfs: could not revert the volume %v quota cmd %v error: %s", volume, args, string(out),
+			)
+		}
+
 		return err
 	}
 
@@ -973,15 +987,20 @@ func decodeListOutput(raw []byte) ([]apis.Pool, error) {
 
 // reservationProperty returns the reservation property based on the quota type.
 func reservationProperty(quotaType, capacity string) string {
+	return reservationPropertyName(quotaType) + "=" + capacity
+}
+
+// reservationPropertyName returns the reservation property name based on the quota type.
+func reservationPropertyName(quotaType string) string {
 	validQuotaType := quotaProperty(quotaType)
 
 	reservationProperties := map[string]string{
-		"quota":    "reservation=",
-		"refquota": "refreservation=",
+		"quota":    "reservation",
+		"refquota": "refreservation",
 	}
 
-	// Return the mapped property or default to "reservation="
-	return reservationProperties[validQuotaType] + capacity
+	// Return the mapped property or default to "reservation"
+	return reservationProperties[validQuotaType]
 }
 
 // quotaProperty ensures backwards compatibility for the quota property.
