@@ -24,7 +24,7 @@ metadata:
   name: openebs-zfs-controller-sa
   namespace: kube-system
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -37,10 +37,10 @@ metadata:
   name: openebs-zfs-node-sa
   namespace: kube-system
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
-    app: "openebs-zfs-node"
     name: "openebs-zfs-node"
+    app: "openebs-zfs-node"
     openebs.io/component-name: "openebs-zfs-node"
 ---
 # Source: zfs-localpv/templates/configmap.yaml
@@ -50,10 +50,10 @@ metadata:
   name: openebs-zfspv-bin
   namespace: kube-system # should be the same namespace where it is getting mounted
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
-    app: "openebs-zfs-node"
     name: "openebs-zfs-node"
+    app: "openebs-zfs-node"
     openebs.io/component-name: "openebs-zfs-node"
 data:
   zfs: |
@@ -109,9 +109,10 @@ spec:
             are non-namespaced
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description: |
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
               type: string
             deletionPolicy:
               description: deletionPolicy determines whether a VolumeSnapshotContent
@@ -130,9 +131,10 @@ spec:
                 VolumeSnapshotClass. Required.
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description: |
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             parameters:
               additionalProperties:
@@ -151,7 +153,8 @@ spec:
         - jsonPath: .driver
           name: Driver
           type: string
-        - description: Determines whether a VolumeSnapshotContent created through the
+        - description: |
+            Determines whether a VolumeSnapshotContent created through the
             VolumeSnapshotClass should be deleted when its bound VolumeSnapshot is deleted.
           jsonPath: .deletionPolicy
           name: DeletionPolicy
@@ -171,9 +174,10 @@ spec:
             are non-namespaced
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description: |
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
               type: string
             deletionPolicy:
               description: deletionPolicy determines whether a VolumeSnapshotContent
@@ -192,9 +196,10 @@ spec:
                 VolumeSnapshotClass. Required.
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description: |
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             parameters:
               additionalProperties:
@@ -282,14 +287,16 @@ spec:
             object in the underlying storage system
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description: |
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description: |
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             spec:
               description: spec defines properties of a VolumeSnapshotContent created
@@ -365,17 +372,18 @@ spec:
                       description: API version of the referent.
                       type: string
                     fieldPath:
-                      description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                      description: |
+                        If referring to a piece of an object instead of
+                        an entire object, this string should contain a valid JSON/Go
+                        field access statement, such as desiredState.manifest.containers[2].
+                        For example, if the object reference is to a container within
+                        a pod, this would take on a value like: "spec.containers{name}"
+                        (where "name" refers to the name of the container that triggered
+                        the event) or if no container name is specified "spec.containers[2]"
+                        (container with index 2 in this pod). This syntax is chosen
+                        only to have some well-defined way of referencing a part of
+                        an object. TODO: this design is not final and this field is
+                        subject to change in the future.
                       type: string
                     kind:
                       description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
@@ -387,8 +395,9 @@ spec:
                       description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
                       type: string
                     resourceVersion:
-                      description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                      description: |
+                        Specific resourceVersion to which this reference
+                        is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                       type: string
                     uid:
                       description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
@@ -405,7 +414,8 @@ spec:
               description: status represents the current information of a snapshot.
               properties:
                 creationTime:
-                  description: creationTime is the timestamp when the point-in-time
+                  description: |
+                    creationTime is the timestamp when the point-in-time
                     snapshot is taken by the underlying storage system. In dynamic snapshot
                     creation case, this field will be filled in by the CSI snapshotter
                     sidecar with the "creation_time" value returned from CSI "CreateSnapshot"
@@ -423,9 +433,10 @@ spec:
                     if any. Upon success after retry, this error field will be cleared.
                   properties:
                     message:
-                      description: 'message is a string detailing the encountered error
-                      during snapshot creation if specified. NOTE: message may be
-                      logged, and it should not contain sensitive information.'
+                      description: |
+                        message is a string detailing the encountered error
+                        during snapshot creation if specified. NOTE: message may be
+                        logged, and it should not contain sensitive information.
                       type: string
                     time:
                       description: time is the timestamp when the error was encountered.
@@ -521,14 +532,16 @@ spec:
             object in the underlying storage system
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description: |
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description: |
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             spec:
               description: spec defines properties of a VolumeSnapshotContent created
@@ -593,17 +606,18 @@ spec:
                       description: API version of the referent.
                       type: string
                     fieldPath:
-                      description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                      description: |
+                        If referring to a piece of an object instead of
+                        an entire object, this string should contain a valid JSON/Go
+                        field access statement, such as desiredState.manifest.containers[2].
+                        For example, if the object reference is to a container within
+                        a pod, this would take on a value like: "spec.containers{name}"
+                        (where "name" refers to the name of the container that triggered
+                        the event) or if no container name is specified "spec.containers[2]"
+                        (container with index 2 in this pod). This syntax is chosen
+                        only to have some well-defined way of referencing a part of
+                        an object. TODO: this design is not final and this field is
+                        subject to change in the future.
                       type: string
                     kind:
                       description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
@@ -615,8 +629,9 @@ spec:
                       description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
                       type: string
                     resourceVersion:
-                      description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                      description: |
+                        Specific resourceVersion to which this reference
+                        is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                       type: string
                     uid:
                       description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
@@ -650,9 +665,10 @@ spec:
                     if any. Upon success after retry, this error field will be cleared.
                   properties:
                     message:
-                      description: 'message is a string detailing the encountered error
-                      during snapshot creation if specified. NOTE: message may be
-                      logged, and it should not contain sensitive information.'
+                      description: |
+                        message is a string detailing the encountered error
+                        during snapshot creation if specified. NOTE: message may be
+                        logged, and it should not contain sensitive information.
                       type: string
                     time:
                       description: time is the timestamp when the error was encountered.
@@ -772,14 +788,16 @@ spec:
             snapshot of a persistent volume, or binding to a pre-existing snapshot.
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description: |
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description: |
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             spec:
               description: 'spec defines the desired characteristics of a snapshot requested
@@ -812,17 +830,18 @@ spec:
                       type: string
                   type: object
                 volumeSnapshotClassName:
-                  description: 'VolumeSnapshotClassName is the name of the VolumeSnapshotClass
-                  requested by the VolumeSnapshot. VolumeSnapshotClassName may be
-                  left nil to indicate that the default SnapshotClass should be used.
-                  A given cluster may have multiple default Volume SnapshotClasses:
-                  one default per CSI Driver. If a VolumeSnapshot does not specify
-                  a SnapshotClass, VolumeSnapshotSource will be checked to figure
-                  out what the associated CSI Driver is, and the default VolumeSnapshotClass
-                  associated with that CSI Driver will be used. If more than one VolumeSnapshotClass
-                  exist for a given CSI Driver and more than one have been marked
-                  as default, CreateSnapshot will fail and generate an event. Empty
-                  string is not allowed for this field.'
+                  description: |
+                    VolumeSnapshotClassName is the name of the VolumeSnapshotClass
+                    requested by the VolumeSnapshot. VolumeSnapshotClassName may be
+                    left nil to indicate that the default SnapshotClass should be used.
+                    A given cluster may have multiple default Volume SnapshotClasses:
+                    one default per CSI Driver. If a VolumeSnapshot does not specify
+                    a SnapshotClass, VolumeSnapshotSource will be checked to figure
+                    out what the associated CSI Driver is, and the default VolumeSnapshotClass
+                    associated with that CSI Driver will be used. If more than one VolumeSnapshotClass
+                    exist for a given CSI Driver and more than one have been marked
+                    as default, CreateSnapshot will fail and generate an event. Empty
+                    string is not allowed for this field.
                   type: string
               required:
                 - source
@@ -834,14 +853,15 @@ spec:
                 point at each other) before using this object.
               properties:
                 boundVolumeSnapshotContentName:
-                  description: 'boundVolumeSnapshotContentName is the name of the VolumeSnapshotContent
-                  object to which this VolumeSnapshot object intends to bind to. If
-                  not specified, it indicates that the VolumeSnapshot object has not
-                  been successfully bound to a VolumeSnapshotContent object yet. NOTE:
-                  To avoid possible security issues, consumers must verify binding
-                  between VolumeSnapshot and VolumeSnapshotContent objects is successful
-                  (by validating that both VolumeSnapshot and VolumeSnapshotContent
-                  point at each other) before using this object.'
+                  description: |
+                    boundVolumeSnapshotContentName is the name of the VolumeSnapshotContent
+                    object to which this VolumeSnapshot object intends to bind to. If
+                    not specified, it indicates that the VolumeSnapshot object has not
+                    been successfully bound to a VolumeSnapshotContent object yet. NOTE:
+                    To avoid possible security issues, consumers must verify binding
+                    between VolumeSnapshot and VolumeSnapshotContent objects is successful
+                    (by validating that both VolumeSnapshot and VolumeSnapshotContent
+                    point at each other) before using this object.
                   type: string
                 creationTime:
                   description: creationTime is the timestamp when the point-in-time
@@ -959,19 +979,22 @@ spec:
             snapshot of a persistent volume, or binding to a pre-existing snapshot.
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description: |
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description: |
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             spec:
-              description: 'spec defines the desired characteristics of a snapshot requested
-              by a user. More info: https://kubernetes.io/docs/concepts/storage/volume-snapshots#volumesnapshots
-              Required.'
+              description: |
+                spec defines the desired characteristics of a snapshot requested
+                by a user. More info: https://kubernetes.io/docs/concepts/storage/volume-snapshots#volumesnapshots
+                Required.
               properties:
                 source:
                   description: source specifies where a snapshot will be created from.
@@ -994,17 +1017,18 @@ spec:
                       type: string
                   type: object
                 volumeSnapshotClassName:
-                  description: 'VolumeSnapshotClassName is the name of the VolumeSnapshotClass
-                  requested by the VolumeSnapshot. VolumeSnapshotClassName may be
-                  left nil to indicate that the default SnapshotClass should be used.
-                  A given cluster may have multiple default Volume SnapshotClasses:
-                  one default per CSI Driver. If a VolumeSnapshot does not specify
-                  a SnapshotClass, VolumeSnapshotSource will be checked to figure
-                  out what the associated CSI Driver is, and the default VolumeSnapshotClass
-                  associated with that CSI Driver will be used. If more than one VolumeSnapshotClass
-                  exist for a given CSI Driver and more than one have been marked
-                  as default, CreateSnapshot will fail and generate an event. Empty
-                  string is not allowed for this field.'
+                  description: |
+                    VolumeSnapshotClassName is the name of the VolumeSnapshotClass
+                    requested by the VolumeSnapshot. VolumeSnapshotClassName may be
+                    left nil to indicate that the default SnapshotClass should be used.
+                    A given cluster may have multiple default Volume SnapshotClasses:
+                    one default per CSI Driver. If a VolumeSnapshot does not specify
+                    a SnapshotClass, VolumeSnapshotSource will be checked to figure
+                    out what the associated CSI Driver is, and the default VolumeSnapshotClass
+                    associated with that CSI Driver will be used. If more than one VolumeSnapshotClass
+                    exist for a given CSI Driver and more than one have been marked
+                    as default, CreateSnapshot will fail and generate an event. Empty
+                    string is not allowed for this field.
                   type: string
               required:
                 - source
@@ -1016,14 +1040,15 @@ spec:
                 point at each other) before using this object.
               properties:
                 boundVolumeSnapshotContentName:
-                  description: 'boundVolumeSnapshotContentName is the name of the VolumeSnapshotContent
-                  object to which this VolumeSnapshot object intends to bind to. If
-                  not specified, it indicates that the VolumeSnapshot object has not
-                  been successfully bound to a VolumeSnapshotContent object yet. NOTE:
-                  To avoid possible security issues, consumers must verify binding
-                  between VolumeSnapshot and VolumeSnapshotContent objects is successful
-                  (by validating that both VolumeSnapshot and VolumeSnapshotContent
-                  point at each other) before using this object.'
+                  description: |
+                    boundVolumeSnapshotContentName is the name of the VolumeSnapshotContent
+                    object to which this VolumeSnapshot object intends to bind to. If
+                    not specified, it indicates that the VolumeSnapshot object has not
+                    been successfully bound to a VolumeSnapshotContent object yet. NOTE:
+                    To avoid possible security issues, consumers must verify binding
+                    between VolumeSnapshot and VolumeSnapshotContent objects is successful
+                    (by validating that both VolumeSnapshot and VolumeSnapshotContent
+                    point at each other) before using this object.
                   type: string
                 creationTime:
                   description: creationTime is the timestamp when the point-in-time
@@ -1046,9 +1071,10 @@ spec:
                     will be cleared.
                   properties:
                     message:
-                      description: 'message is a string detailing the encountered error
-                      during snapshot creation if specified. NOTE: message may be
-                      logged, and it should not contain sensitive information.'
+                      description: |
+                        message is a string detailing the encountered error
+                        during snapshot creation if specified. NOTE: message may be
+                        logged, and it should not contain sensitive information.
                       type: string
                     time:
                       description: time is the timestamp when the error was encountered.
@@ -2356,7 +2382,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-provisioner-role
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2408,7 +2434,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-snapshotter-role
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2440,7 +2466,7 @@ rules:
     verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents/status"]
-    verbs: ["update"]
+    verbs: ["update", "patch"]
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshots/status"]
     verbs: ["update"]
@@ -2454,10 +2480,10 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-driver-registrar-role
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
-    app: "openebs-zfs-node"
     name: "openebs-zfs-node"
+    app: "openebs-zfs-node"
     openebs.io/component-name: "openebs-zfs-node"
 rules:
   - apiGroups: [""]
@@ -2476,7 +2502,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-provisioner-binding
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2496,7 +2522,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-snapshotter-binding
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2516,10 +2542,10 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-driver-registrar-binding
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
-    app: "openebs-zfs-node"
     name: "openebs-zfs-node"
+    app: "openebs-zfs-node"
     openebs.io/component-name: "openebs-zfs-node"
 subjects:
   - kind: ServiceAccount
@@ -2537,15 +2563,14 @@ metadata:
   name: openebs-zfs-localpv-node
   namespace: kube-system
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
-    app: "openebs-zfs-node"
     name: "openebs-zfs-node"
+    app: "openebs-zfs-node"
     openebs.io/component-name: "openebs-zfs-node"
 spec:
   selector:
     matchLabels:
-      app: "openebs-zfs-node"
       name: "openebs-zfs-node"
   updateStrategy:
     rollingUpdate:
@@ -2554,18 +2579,20 @@ spec:
   template:
     metadata:
       labels:
-        openebs.io/version: "2.7.0-develop"
+        openebs.io/version: "2.8.0"
         role: "openebs-zfs"
-        app: "openebs-zfs-node"
         name: "openebs-zfs-node"
+        app: "openebs-zfs-node"
         openebs.io/component-name: "openebs-zfs-node"
+        
+        openebs.io/logging: "true"
     spec:
       priorityClassName: openebs-zfs-csi-node-critical
       serviceAccountName: openebs-zfs-node-sa
       hostNetwork: true
       containers:
         - name: csi-node-driver-registrar
-          image: "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0"
+          image: "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0"
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -2595,7 +2622,7 @@ spec:
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
-          image: "openebs/zfs-driver:2.7.0-develop"
+          image: "openebs/zfs-driver:2.8.0"
           imagePullPolicy: IfNotPresent
           args:
             - "--nodename=$(OPENEBS_NODE_NAME)"
@@ -2672,7 +2699,7 @@ metadata:
   name: openebs-zfs-localpv-controller
   namespace: kube-system
   labels:
-    openebs.io/version: "2.7.0-develop"
+    openebs.io/version: "2.8.0"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2686,19 +2713,21 @@ spec:
   template:
     metadata:
       labels:
-        openebs.io/version: "2.7.0-develop"
+        openebs.io/version: "2.8.0"
         role: "openebs-zfs"
         app: "openebs-zfs-controller"
         component: "openebs-zfs-controller"
         openebs.io/component-name: "openebs-zfs-controller"
         
         name: openebs-zfs-controller
+        
+        openebs.io/logging: "true"
     spec:
       priorityClassName: openebs-zfs-csi-controller-critical
       serviceAccountName: openebs-zfs-controller-sa
       containers:
         - name: csi-resizer
-          image: "registry.k8s.io/sig-storage/csi-resizer:v1.8.0"
+          image: "registry.k8s.io/sig-storage/csi-resizer:v1.13.2"
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"            
@@ -2710,7 +2739,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: csi-snapshotter
-          image: "registry.k8s.io/sig-storage/csi-snapshotter:v6.2.2"
+          image: "registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0"
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"            
@@ -2721,12 +2750,12 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: snapshot-controller
-          image: "registry.k8s.io/sig-storage/snapshot-controller:v6.2.2"
+          image: "registry.k8s.io/sig-storage/snapshot-controller:v8.2.0"
           args:
             - "--v=5"            
           imagePullPolicy: IfNotPresent
         - name: csi-provisioner
-          image: "registry.k8s.io/sig-storage/csi-provisioner:v3.5.0"
+          image: "registry.k8s.io/sig-storage/csi-provisioner:v5.2.0"
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -2751,7 +2780,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: openebs-zfs-plugin
-          image: "openebs/zfs-driver:2.7.0-develop"
+          image: "openebs/zfs-driver:2.8.0"
           imagePullPolicy: IfNotPresent
           env:
             - name: OPENEBS_CONTROLLER_DRIVER
@@ -2766,6 +2795,8 @@ spec:
               value: "zfs-operator"
             - name: OPENEBS_IO_ENABLE_ANALYTICS
               value: "true"
+            - name: OPENEBS_IO_ENABLE_BACKUP_GC
+              value: "false"
           args :
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_CONTROLLER_DRIVER)"

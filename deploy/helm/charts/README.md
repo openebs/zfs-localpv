@@ -1,11 +1,11 @@
 
-#  OpenEBS LocalPV Provisioner
+#  OpenEBS Local PV ZFS Provisioner
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Chart Lint and Test](https://github.com/openebs/zfs-localpv/workflows/Chart%20Lint%20and%20Test/badge.svg)
 ![Release Charts](https://github.com/openebs/zfs-localpv/workflows/Release%20Charts/badge.svg?branch=develop)
 
-A Helm chart for openebs zfs localpv provisioner. This chart bootstraps OpenEBS ZFS LocalPV provisioner deployment on a [Kubernetes](http://kubernetes.io) cluster using the  [Helm](https://helm.sh) package manager.
+A Helm chart for openebs localpv zfs provisioner. This chart bootstraps OpenEBS ZFS LocalPV provisioner deployment on a [Kubernetes](http://kubernetes.io) cluster using the  [Helm](https://helm.sh) package manager.
 
 
 **Homepage:** <http://www.openebs.io/>
@@ -30,10 +30,10 @@ $ helm install [RELEASE_NAME] openebs-zfslocalpv/zfs-localpv
 
 **Note:** If moving from the operator to helm
 - Make sure the namespace provided in the helm install command is same as `OPENEBS_NAMESPACE` (by default it is `openebs`) env in the controller deployment.
-- Before installing, clean up the stale deployment and daemonset from `kube-system` namespace using the below commands
+- Before installing, clean up the stale deployment and daemonset from `openebs` namespace using the below commands
 ```sh
-kubectl delete deploy openebs-zfs-controller -n kube-system
-kubectl delete ds openebs-zfs-node -n kube-system
+kubectl delete deploy openebs-zfs-controller -n openebs
+kubectl delete ds openebs-zfs-node -n openebs
 ```
 
 
@@ -63,66 +63,55 @@ $ helm upgrade [RELEASE_NAME] [CHART] --install
 
 The following table lists the configurable parameters of the OpenEBS ZFS Localpv chart and their default values.
 
-| Parameter| Description| Default|
-| -| -| -|
-| `imagePullSecrets`| Provides image pull secrect| `""`|
-| `zfsPlugin.image.registry`| Registry for openebs-zfs-plugin image| `""`|
-| `zfsPlugin.image.repository`| Image repository for openebs-zfs-plugin| `openebs/zfs-driver`|
-| `zfsPlugin.image.pullPolicy`| Image pull policy for openebs-zfs-plugin| `IfNotPresent`|
-| `zfsPlugin.image.tag`| Image tag for openebs-zfs-plugin| `2.7.0-develop`|
-| `zfsNode.allowedTopologyKeys`| Custom topology keys required for provisioning| `"kubernetes.io/hostname,"`|
-| `zfsNode.driverRegistrar.image.registry`| Registry for csi-node-driver-registrar image| `registry.k8s.io/`|
-| `zfsNode.driverRegistrar.image.repository`| Image repository for csi-node-driver-registrar| `sig-storage/csi-node-driver-registrar`|
-| `zfsNode.driverRegistrar.image.pullPolicy`| Image pull policy for csi-node-driver-registrar| `IfNotPresent`|
-| `zfsNode.driverRegistrar.image.tag`| Image tag for csi-node-driver-registrar| `v2.8.0`|
-| `zfsNode.updateStrategy.type`| Update strategy for zfsnode daemonset | `RollingUpdate` |
-| `zfsNode.kubeletDir`| Kubelet mount point for zfsnode daemonset| `"/var/lib/kubelet/"` |
-| `zfsNode.encrKeysDir` | Zfs encryption key directory| `"/home/keys"` |
-| `zfsNode.annotations` | Annotations for zfsnode daemonset metadata| `""`|
-| `zfsNode.podAnnotations`| Annotations for zfsnode daemonset's pods metadata | `""`|
-| `zfsNode.resources`| Resource and request and limit for zfsnode daemonset containers | `""`|
-| `zfsNode.labels`| Labels for zfsnode daemonset metadata | `""`|
-| `zfsNode.podLabels`| Appends labels to the zfsnode daemonset pods| `""`|
-| `zfsNode.nodeSelector`| Nodeselector for zfsnode daemonset pods| `""`|
-| `zfsNode.tolerations` | zfsnode daemonset's pod toleration values | `""`|
-| `zfsNode.securityContext` | Seurity context for zfsnode daemonset container | `""`|
-| `zfsController.resizer.image.registry`| Registry for csi-resizer image| `registry.k8s.io/`|
-| `zfsController.resizer.image.repository`| Image repository for csi-resizer| `sig-storage/csi-resizer`|
-| `zfsController.resizer.image.pullPolicy`| Image pull policy for csi-resizer| `IfNotPresent`|
-| `zfsController.resizer.image.tag`| Image tag for csi-resizer| `v1.8.0`|
-| `zfsController.resizer.extraArgs`| Extra command line arguments| `[]`|
-| `zfsController.snapshotter.image.registry`| Registry for csi-snapshotter image| `registry.k8s.io/`|
-| `zfsController.snapshotter.image.repository`| Image repository for csi-snapshotter| `sig-storage/csi-snapshotter`|
-| `zfsController.snapshotter.image.pullPolicy`| Image pull policy for csi-snapshotter| `IfNotPresent`|
-| `zfsController.snapshotter.image.tag`| Image tag for csi-snapshotter| `v6.2.2`|
-| `zfsController.snapshotter.extraArgs`| Extra command line arguments| `[]`|
-| `zfsController.snapshotController.image.registry`| Registry for snapshot-controller image| `registry.k8s.io/`|
-| `zfsController.snapshotController.image.repository`| Image repository for snapshot-controller| `sig-storage/snapshot-controller`|
-| `zfsController.snapshotController.image.pullPolicy`| Image pull policy for snapshot-controller| `IfNotPresent`|
-| `zfsController.snapshotController.image.tag`| Image tag for snapshot-controller| `v6.2.2`|
-| `zfsController.snapshotController.extraArgs`| Extra command line arguments| `[]`|
-| `zfsController.provisioner.image.registry`| Registry for csi-provisioner image| `registry.k8s.io/`|
-| `zfsController.provisioner.image.repository`| Image repository for csi-provisioner| `sig-storage/csi-provisioner`|
-| `zfsController.provisioner.image.pullPolicy`| Image pull policy for csi-provisioner| `IfNotPresent`|
-| `zfsController.provisioner.image.tag`| Image tag for csi-provisioner| `v3.5.0`|
-| `zfsController.provisioner.extraArgs`| Extra command line arguments| `[]`|
-| `zfsController.updateStrategy.type`| Update strategy for zfs localpv controller deployment | `RollingUpdate` |
-| `zfsController.annotations` | Annotations for zfs localpv controller deployment metadata| `""`|
-| `zfsController.podAnnotations`| Annotations for zfs localpv controller deployment's pods metadata | `""`|
-| `zfsController.replicas` | Number of zfs localpv controller replicas | `1` |
-| `zfsController.resources`| Resource and request and limit for zfs localpv controller deployment containers | `""`|
-| `zfsController.labels`| Labels for zfs localpv controller deployment metadata | `""`|
-| `zfsController.podLabels`| Appends labels to the zfs localpv controller deployment pods| `""`|
-| `zfsController.nodeSelector`| Nodeselector for zfs localpv controller deployment pods| `""`|
-| `zfsController.tolerations` | zfs localpv controller deployment's pod toleration values | `""`|
-| `zfsController.securityContext` | Seurity context for zfs localpv controller deployment container | `""`|
-| `rbac.pspEnabled` | Enable PodSecurityPolicy | `false` |
-| `serviceAccount.zfsNode.create` | Create a service account for zfsnode or not| `true`|
-| `serviceAccount.zfsNode.name` | Name for the zfsnode service account| `openebs-zfs-node-sa`|
-| `serviceAccount.zfsController.create` | Create a service account for zfs localpv controller or not| `true`|
-| `serviceAccount.zfsController.name` | Name for the zfs localpv controller service account| `openebs-zfs-controller-sa`|
-| `analytics.enabled` | Enable or Disable google analytics for the controller| `true`|
-| `backupGC.enabled` | Enable or Disable backup garbage collection for the controller| `false`|
+## Values
+
+| Key                                                                 | Type   | Default Value               | Description                                                                                           |
+|----------------------------------------------------------------------|--------|-----------------------------|-------------------------------------------------------------------------------------------------------|
+| `analytics.enabled`                                                  | bool   | `true`                      | Enables or disables analytics reporting for the chart.                                                 |
+| `analytics.installerType`                                             | string | `"zfs-localpv-helm"`        | Specifies the installer type for analytics.                                                           |
+| `backupGC.enabled`                                                    | bool   | `false`                     | Enables or disables garbage collection for backups.                                                   |
+| `crds.csi.volumeSnapshots.enabled`                                    | bool   | `true`                      | Enables or disables the installation of Volume Snapshot CRDs.                                          |
+| `crds.zfsLocalPv.enabled`                                             | bool   | `true`                      | Enables or disables the installation of ZFS Local Persistent Volume CRDs.                             |
+| `enableHelmMetaLabels`                                                | bool   | `true`                      | Adds Helm-specific metadata labels to the components.                                                 |
+| `feature.storageCapacity`                                             | bool   | `true`                      | Enables or disables storage capacity tracking feature.                                                |
+| `imagePullSecrets`                                                    | list   | `[]`                        | List of secrets to use when pulling images from private registries.                                    |
+| `loggingLabels."openebs.io/logging"`                                  | string | `"true"`                    | Enables or disables logging for OpenEBS components.                                                   |
+| `rbac.pspEnabled`                                                     | bool   | `false`                     | Enables or disables the creation of PodSecurityPolicy resources.                                       |
+| `role`                                                                | string | `"openebs-zfs"`             | Specifies the role for the OpenEBS ZFS component.                                                     |
+| `serviceAccount.zfsController.create`                                 | bool   | `true`                      | Specifies whether a service account should be created for the ZFS controller.                          |
+| `serviceAccount.zfsController.name`                                   | string | `"openebs-zfs-controller-sa"` | The name of the service account to use for the ZFS controller.                                         |
+| `serviceAccount.zfsNode.create`                                       | bool   | `true`                      | Specifies whether a service account should be created for the ZFS node.                                |
+| `serviceAccount.zfsNode.name`                                         | string | `"openebs-zfs-node-sa"`     | The name of the service account to use for the ZFS node.                                               |
+| `zfs.bin`                                                             | string | `"zfs"`                     | Path to the ZFS binary.                                                                                |
+| `zfsController.additionalVolumes`                                     | list   | `[]`                        | Additional volumes to mount into the ZFS controller pods.                                              |
+| `zfsController.annotations`                                           | map    | `{}`                        | Annotations to add to the ZFS controller pods.                                                         |
+| `zfsController.componentName`                                         | string | `"openebs-zfs-controller"`  | Name of the ZFS controller component.                                                                  |
+| `zfsController.initContainers`                                        | list   | `[]`                        | List of init containers to run before the ZFS controller pods.                                         |
+| `zfsController.nodeSelector`                                          | map    | `{}`                        | Node selector for scheduling ZFS controller pods.                                                      |
+| `zfsController.podAnnotations`                                        | map    | `{}`                        | Annotations to add to the ZFS controller pods.                                                         |
+| `zfsController.podLabels.name`                                        | string | `"openebs-zfs-controller"`  | Labels to add to the ZFS controller pods.                                                              |
+| `zfsController.priorityClass.create`                                  | bool   | `true`                      | Specifies whether to create a priority class for the ZFS controller pods.                              |
+| `zfsController.priorityClass.name`                                    | string | `"zfs-csi-controller-critical"` | The name of the priority class to use for the ZFS controller pods.                                      |
+| `zfsController.provisioner.extraArgs`                                 | list   | `[]`                        | Additional arguments to pass to the CSI provisioner.                                                   |
+| `zfsController.provisioner.image.pullPolicy`                          | string | `"IfNotPresent"`            | Image pull policy for the CSI provisioner.                                                             |
+| `zfsController.provisioner.image.registry`                            | string | `"registry.k8s.io/"`        | Image registry for the CSI provisioner.                                                                |
+| `zfsController.provisioner.image.repository`                          | string | `"sig-storage/csi-provisioner"` | Image repository for the CSI provisioner.                                                              |
+| `zfsController.provisioner.image.tag`                                 | string | `"v5.2.0"`                  | Image tag for the CSI provisioner.                                                                      |
+| `zfsController.provisioner.name`                                      | string | `"csi-provisioner"`         | Name of the CSI provisioner container.                                                                 |
+| `zfsController.replicas`                                              | int    | `1`                         | Number of replicas for the ZFS controller deployment.                                                  |
+| `zfsController.resizer.extraArgs`                                     | list   | `[]`                        | Additional arguments to pass to the CSI resizer.                                                       |
+| `zfsController.resizer.image.pullPolicy`                              | string | `"IfNotPresent"`            | Image pull policy for the CSI resizer.                                                                 |
+| `zfsController.resizer.image.registry`                                | string | `"registry.k8s.io/"`        | Image registry for the CSI resizer.                                                                    |
+| `zfsController.resizer.image.repository`                              | string | `"sig-storage/csi-resizer"` | Image repository for the CSI resizer.                                                                  |
+| `zfsController.resizer.image.tag`                                     | string | `"v1.13.2"`                 | Image tag for the CSI resizer.                                                                          |
+| `zfsController.resizer.name`                                          | string | `"csi-resizer"`             | Name of the CSI resizer container.                                                                     |
+| `zfsController.resources`                                             | map    | `{}`                        | Resource requests and limits for the ZFS controller pods.                                               |
+| `zfsController.securityContext`                                       | map    | `{}`                        | Security context for the ZFS controller pods.                                                          |
+| `zfsController.snapshotController.extraArgs`                          | list   | `[]`                        | Additional arguments to pass to the snapshot controller.                                                |
+| `zfsController.snapshotController.image.pullPolicy`                   | string | `"IfNotPresent"`            | Image pull policy for the snapshot controller.                                                          |
+| `zfsController.snapshotController.image.registry`                     | string | `"registry.k8s.io/"`        | Image registry for the snapshot controller.                                                             |
+| `zfsController.snapshotController.image.repository`                   | string | `"sig-storage/snapshot-controller"` | Image repository for the snapshot controller.                                                           |
+| `zfsController.snapshotController.image.tag`                          | string | `"v8.2.0"`                  | Image tag for the snapshot controller. 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
