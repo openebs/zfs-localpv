@@ -119,11 +119,11 @@ create_version_from_tag() {
     else
       VERSION="$EXTRACTED_VERSION"
     fi
-  elif [[ "$TAG" == *"-rc" ]]; then
+  elif [[ "$TAG" == *"-rc"* ]]; then
     if [[ -z $PUBLISH_RELEASE ]]; then
       NO_OP=1
     else
-      local EXTRACTED_VERSION=$(echo "$TAG" | grep -oP '(?<=v)\d+\.\d+\.\d+(-\w+)?')
+      local EXTRACTED_VERSION=$(echo "$TAG" | grep -oP '(?<=v)\d+\.\d+\.\d+(?:-[\w\.]+)?')
       check_tag_is_valid "$EXTRACTED_VERSION" "$CURRENT_CHART_VERSION"
       VERSION="$EXTRACTED_VERSION"
     fi

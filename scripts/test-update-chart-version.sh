@@ -87,8 +87,12 @@ run_test "Test 14: Actual release tag to modify the chart versions" \
          --tag "v1.2.3" --dry-run --chart-version "1.2.3-prerelease" --publish-release
 
 run_test "Test 15: Actual release rc tag to modify the chart versions" \
-         "1.2.3-rc" \
-         --tag "v1.2.3-rc" --dry-run --chart-version "1.2.3-prerelease" --publish-release
+         "2.8.0-rc" \
+         --tag "v2.8.0-rc" --dry-run --chart-version "2.8.0-prerelease" --publish-release
+
+run_test "Test 16: Actual release rc with build number tag to modify the chart versions" \
+         "2.8.0-rc.0" \
+         --tag "v2.8.0-rc.0" --dry-run --chart-version "2.8.0-prerelease" --publish-release
   
 if [ -n "$FAILED" ]; then
   echo "Some of the tests have failed..."
