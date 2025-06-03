@@ -14,6 +14,7 @@ pkgs.mkShell {
     gnumake
     minikube
     semver-tool
+    helm-docs
     yq-go
     which
     curl
