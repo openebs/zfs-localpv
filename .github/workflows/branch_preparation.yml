@@ -27,9 +27,8 @@ jobs:
 
       - name: Modify the chart version based on the tag
         run: |
-          tag=${{ github.ref_name }}
-          echo "BASE=$(nix-shell --pure --run "./scripts/update-chart-version.sh --tag $tag" ./shell.nix | tail -n 1)" >> $GITHUB_ENV
-
+          nix-shell --pure ./shell.nix --run "./scripts/update-chart-version.sh --tag ${{ github.ref_name }} > /tmp/file"
+          echo "BASE=$(cat /tmp/file)" >> $GITHUB_ENV
       - name: Create Pull Request to release
         if:  ${{ env.BASE }}
         id: cpr
@@ -41,8 +40,8 @@ jobs:
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           title: "Prepare release branch after release ${{ github.ref_name }}"
           labels: |
-              update-release-branch
-              automated-pr
+            kind/ci
+            area/helm
           draft: false
           signoff: true
           branch: "create-pull-request/patch-${{ env.BASE }}"
@@ -84,8 +83,8 @@ jobs:
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           title: "Prepare develop branch on ${{ github.ref_name }} creation"
           labels: |
-            update-develop-branch
-            automated-pr
+            kind/ci
+            area/helm
           draft: false
           signoff: true
           branch: "create-pull-request/patch-develop"
@@ -123,8 +122,8 @@ jobs:
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           title: "Prepare ${{ github.ref_name }} branch"
           labels: |
-              prepare-release-branch
-              automated-pr
+            kind/ci
+            area/helm
           draft: false
           signoff: true
           branch: "create-pull-request/patch-${{ github.ref_name }}"
