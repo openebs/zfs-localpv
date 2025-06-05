@@ -153,6 +153,8 @@ While you rebase your changes, you must resolve any conflicts that might arise a
 Before starting, ensure you have installed all the dependencies.
 If you're using [nix], then simply enter the [nix-shell] which will setup a shell with all required packages:
 
+NOTE: If you're using zsh plugin in nix-shell, make sure your zshrc configurations don't override the Go envs set by the nix-shell.
+
 ```sh
 $ nix-shell
 go: downloading ....
