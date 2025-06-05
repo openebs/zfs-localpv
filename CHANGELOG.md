@@ -1,11 +1,77 @@
-v2.8.0 / To be Released
+v2.8.0 / 2025-06-03
 ========================
 
-## New Features
+This release of **OpenEBS ZFS-LocalPV** introduces critical bug fixes, enhancements to CSI spec compliance, improvements in upgrade testing and backup lifecycle management, as well as several documentation and maintenance updates. It builds on the stability delivered in 2.7.x with a focus on upgrade compatibility, developer usability, and operational observability.
 
-- **Backup garbage collector**
-  - Disabled by default. This feature clean up ZFSBackups which `prevSnapName` is missing in the cluster. Fixing [openebs/velero-plugin#119](https://github.com/openebs/velero-plugin/issues/119) deleting orphaned backups and fixing frequency of full backups creation.
+---
 
+## New Features and Enhancements
+
+- **Backup Garbage Collector**  
+  Introduced a backup garbage collector in the controller to automatically clean up stale or orphaned backup resources.  
+  [#651](https://github.com/openebs/zfs-localpv/pull/651) by @pando85
+
+- **Refactored Helm Chart Labels**  
+  Added improved and consistent labeling, including logging-related labels, to enhance Helm chart maintainability and observability.  
+  [#653](https://github.com/openebs/zfs-localpv/pull/653) by @Abhinandan-Purkait
+
+- **CSI Spec Upgrade to v1.11**  
+  Updated CSI spec and associated sidecar containers to CSI v1.11 to maintain compatibility and benefit from upstream improvements.  
+  [#655](https://github.com/openebs/zfs-localpv/pull/655) by @Abhinandan-Purkait
+
+---
+
+## Bug Fixes and Improvements
+
+- **Quota Property Handling**  
+  - Fixed an issue where the `quota` property was not correctly retained during upgrades.  
+    [#629](https://github.com/openebs/zfs-localpv/pull/629) by @Abhinandan-Purkait  
+  - Ensured backward compatibility of `quotatype` values during volume restores.  
+    [#642](https://github.com/openebs/zfs-localpv/pull/642) by @Abhinandan-Purkait
+
+- **Controller Crash on CSI NodeGetInfo RPC**  
+  Fixed a crash where unhandled errors in the CSI `NodeGetInfo` call could cause the controller to exit unexpectedly.  
+  [#656](https://github.com/openebs/zfs-localpv/pull/656) by @plaffitt
+
+- **Graceful gRPC Server Shutdown**  
+  The gRPC server now gracefully handles `SIGTERM` and `SIGINT` signals for clean exit.  
+  [#647](https://github.com/openebs/zfs-localpv/pull/647) by @dionysius
+
+- **Improved Kubeconfig Loading**  
+  The agent now leverages the OpenEBS `lib-csi` Kubernetes client to reliably load kubeconfig from multiple locations.  
+  [#645](https://github.com/openebs/zfs-localpv/pull/645) by @dionysius
+
+- **Plugin Flag Validation**  
+  The CLI flag `--plugin` now only accepts `controller` and `agent`, disallowing invalid values like `node`.  
+  [#638](https://github.com/openebs/zfs-localpv/pull/638) by @dionysius
+
+---
+
+## Testing Enhancements
+
+- **BDD Specs for Upgrade Testing**  
+  Introduced automated BDD test specs to validate upgrades and ensure compatibility between versions.  
+  [#636](https://github.com/openebs/zfs-localpv/pull/636) by @Abhinandan-Purkait
+
+---
+
+## Documentation and Contributor Workflow
+
+- **Improved Volume Import Guide**  
+  The FAQ on importing existing ZFS volumes has been updated with correct and detailed working steps.  
+  [#639](https://github.com/openebs/zfs-localpv/pull/639) by @WowSuchRicky
+
+---
+
+## Continuous Integration and Maintenance
+
+- **CODEOWNERS Updates**  
+  Added and refined `CODEOWNERS` configuration to better reflect current maintainers and code ownership.  
+  [#633](https://github.com/openebs/zfs-localpv/pull/633), [#637](https://github.com/openebs/zfs-localpv/pull/637), [#640](https://github.com/openebs/zfs-localpv/pull/640) by @niladrih
+
+- **BASE Environment Fix in CI**  
+  Resolved a configuration bug where the `BASE` env variable was not properly set in CI workflows.  
+  [#632](https://github.com/openebs/zfs-localpv/pull/632) by @Abhinandan-Purkait
 
 v2.7.1 / 2025-02-12
 ========================
