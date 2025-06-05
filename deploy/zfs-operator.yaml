@@ -24,7 +24,7 @@ metadata:
   name: openebs-zfs-controller-sa
   namespace: kube-system
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -37,7 +37,7 @@ metadata:
   name: openebs-zfs-node-sa
   namespace: kube-system
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -50,7 +50,7 @@ metadata:
   name: openebs-zfspv-bin
   namespace: kube-system # should be the same namespace where it is getting mounted
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -2382,7 +2382,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-provisioner-role
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2434,7 +2434,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-snapshotter-role
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2480,7 +2480,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-driver-registrar-role
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -2502,7 +2502,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-provisioner-binding
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2522,7 +2522,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-snapshotter-binding
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2542,7 +2542,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-driver-registrar-binding
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -2563,7 +2563,7 @@ metadata:
   name: openebs-zfs-localpv-node
   namespace: kube-system
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -2579,7 +2579,7 @@ spec:
   template:
     metadata:
       labels:
-        openebs.io/version: "2.8.0"
+        openebs.io/version: "2.9.0-develop"
         role: "openebs-zfs"
         name: "openebs-zfs-node"
         app: "openebs-zfs-node"
@@ -2622,7 +2622,7 @@ spec:
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
-          image: "openebs/zfs-driver:2.8.0"
+          image: "openebs/zfs-driver:2.9.0-develop"
           imagePullPolicy: IfNotPresent
           args:
             - "--nodename=$(OPENEBS_NODE_NAME)"
@@ -2699,7 +2699,7 @@ metadata:
   name: openebs-zfs-localpv-controller
   namespace: kube-system
   labels:
-    openebs.io/version: "2.8.0"
+    openebs.io/version: "2.9.0-develop"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2713,7 +2713,7 @@ spec:
   template:
     metadata:
       labels:
-        openebs.io/version: "2.8.0"
+        openebs.io/version: "2.9.0-develop"
         role: "openebs-zfs"
         app: "openebs-zfs-controller"
         component: "openebs-zfs-controller"
@@ -2780,7 +2780,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: openebs-zfs-plugin
-          image: "openebs/zfs-driver:2.8.0"
+          image: "openebs/zfs-driver:2.9.0-develop"
           imagePullPolicy: IfNotPresent
           env:
             - name: OPENEBS_CONTROLLER_DRIVER
