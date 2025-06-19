@@ -48,22 +48,6 @@ check_tag_is_valid() {
     fi
 }
 
-# yq-go eats up blank lines
-# this function gets around that using diff with --ignore-blank-lines
-yq_ibl()
-{
-  set +e
-  diff_out=$(diff -B <(yq '.' "$2") <(yq "$1" "$2"))
-  error=$?
-  if [ "$error" != "0" ] && [ "$error" != "1" ]; then
-    exit "$error"
-  fi
-  if [ -n "$diff_out" ]; then
-    echo "$diff_out" | patch --quiet --no-backup-if-mismatch "$2" -
-  fi
-  set -euo pipefail
-}
-
 # RULES: This would run only when changes are pushed to a release/x.y branch.
 # 1. Branch name can only be of format release/x.y
 # 2. If current chart version of type develop(on branch creation), 
@@ -158,6 +142,8 @@ CRD_CHART_NAME="crds"
 CRD_CHART_YAML="$CHART_DIR/charts/$CRD_CHART_NAME/Chart.yaml"
 # Final computed version to be set in this.
 VERSION=""
+
+source "$SCRIPT_DIR/yq_utils.sh"
 
 # Parse arguments
 while [ "$#" -gt 0 ]; do

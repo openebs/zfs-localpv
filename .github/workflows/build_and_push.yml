@@ -156,9 +156,7 @@ jobs:
         with:
           # add each registry to which the image needs to be pushed here
           images: |
-            ${{ env.IMAGE_ORG }}/zfs-driver
-            quay.io/${{ env.IMAGE_ORG }}/zfs-driver
-            ghcr.io/${{ env.IMAGE_ORG }}/zfs-driver
+            ghcr.io/${{ env.IMAGE_ORG }}/dev/zfs-driver
           tags: |
             type=raw,value=latest,enable=false
             type=raw,value=${{ env.IMAGE_TAG }}
@@ -178,19 +176,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           version: v0.13.1
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to Quay
-        uses: docker/login-action@v3
-        with:
-          registry: quay.io
-          username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Login to GHCR
         uses: docker/login-action@v3

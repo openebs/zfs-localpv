@@ -1,0 +1,228 @@
+name: Release Images and Charts
+
+on:
+  release:
+    types:
+      - "created"
+
+jobs:
+  # lint:
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+
+  #     - uses: cachix/install-nix-action@v22
+  #     - uses: rrbutani/use-nix-shell-action@v1.1.0
+  #       with:
+  #         file: shell.nix
+
+  #     - name: Check if the chart is publishable
+  #       run: |
+  #         TAG=${{ github.event.release.tag_name }}
+  #         ./scripts/update-chart-version.sh --tag $TAG --publish-release
+
+  #     - name: Run chart-testing lint
+  #       run: |
+  #         ct lint --config ct.yaml
+
+  # unit-tests:
+  #   runs-on: ubuntu-22.04
+  #   needs: ["lint"]
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Go 1.20
+  #       uses: actions/setup-go@v4
+  #       with:
+  #         go-version: 1.20.14
+  #         cache: false
+
+  #     - name: Unit test
+  #       run: make test
+
+  #     - name: Upload Coverage Report
+  #       uses: codecov/codecov-action@v4
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+  #         file: ./coverage.txt
+  #         name: coverage-$(date +%s)
+  #         flags: unittests
+
+  # bdd-tests:
+  #   runs-on: ubuntu-22.04
+  #   needs: ["unit-tests"]
+  #   strategy:
+  #     fail-fast: true
+  #     matrix:
+  #       kubernetes: [v1.27.3]
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Go 1.20
+  #       uses: actions/setup-go@v4
+  #       with:
+  #         go-version: 1.20.14
+  #         cache: false
+
+  #     - name: Build images locally
+  #       run: make zfs-driver-image
+
+  #     - name: Install zfs utils
+  #       run: sudo apt-get install zfsutils-linux -y
+
+  #     - name: Setup Minikube-Kubernetes
+  #       uses: medyagh/setup-minikube@latest
+  #       with:
+  #         cache: false
+  #         minikube-version: 1.31.1
+  #         driver: none
+  #         kubernetes-version: ${{ matrix.kubernetes }}
+  #         cni: calico
+  #         start-args: "--install-addons=false"
+
+  #     - name: Setting environment variables
+  #       run: |
+  #         echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+
+  #     - name: bootstrap
+  #       run: make bootstrap
+
+  #     - name: Running tests
+  #       env:
+  #         OPENEBS_NAMESPACE: "openebs"
+  #       run: |
+  #         make ci
+  #         make helm-install
+  #         make sanity
+
+  #     - name: Upload CI Test Coverage Report
+  #       uses: codecov/codecov-action@v4
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+  #         file: ./tests/bdd_coverage.txt
+  #         name: coverage-bdd_coverage-$(date +%s)
+  #         flags: bddtests
+
+  csi-driver:
+    runs-on: ubuntu-22.04
+    #needs: ["bdd-tests"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v22
+      - name: Pre-populate nix-shell
+        run: |
+          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
+          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+          nix-shell --pure --run "echo" ./shell.nix
+
+      - name: Check if the chart is publishable
+        run: |
+          TAG=${{ github.event.release.tag_name }}
+          nix-shell --pure --run "./scripts/update-chart-version.sh --tag $TAG --publish-release" ./shell.nix
+
+      - name: Set Image Org
+        run: |
+          [ -z "${{ secrets.IMAGE_ORG }}" ] && IMAGE_ORG=openebs || IMAGE_ORG=${{ secrets.IMAGE_ORG}}
+          echo "IMAGE_ORG=${IMAGE_ORG}" >> $GITHUB_ENV
+
+      - name: Set IMAGE_TAG and BRANCH
+        run: |
+          BRANCH=${{ github.ref_name }}
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$(awk -F': ' '/^version:/ {print $$2}' deploy/helm/charts/Chart.yaml)" >> $GITHUB_ENV
+
+      - name: Set Build Date
+        id: date
+        run: |
+          echo "DATE=$(date -u +'%Y-%m-%dT%H:%M:%S%Z')" >> $GITHUB_OUTPUT
+
+      - name: Docker meta
+        id: docker_meta
+        uses: docker/metadata-action@v4
+        with:
+          # add each registry to which the image needs to be pushed here
+          images: 
+            ghcr.io/${{ env.IMAGE_ORG }}/dev/zfs-driver
+          tags: |
+            type=raw,value=latest,enable=false
+            type=raw,value=${{ env.IMAGE_TAG }}
+
+      - name: Print Tag info
+        run: |
+          echo "BRANCH: ${{ env.BRANCH }}"
+          echo "${{ steps.docker_meta.outputs.tags }}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.13.1
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./buildscripts/zfs-driver/zfs-driver.Dockerfile
+          push: true
+          platforms: linux/amd64, linux/arm64
+          tags: |
+            ${{ steps.docker_meta.outputs.tags }}
+          build-args: |
+            DBUILD_DATE=${{ steps.date.outputs.DATE }}
+            DBUILD_REPO_URL=https://github.com/openebs/zfs-localpv
+            DBUILD_SITE_URL=https://openebs.io
+            BRANCH=${{ env.BRANCH }}
+
+  release-chart:
+    runs-on: ubuntu-22.04
+    needs: ["csi-driver"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v22
+      - name: Pre-populate nix-shell
+        run: |
+          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
+          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+          nix-shell --pure --run "echo" ./shell.nix
+
+      - name: Check if the chart is publishable
+        run: |
+          TAG=${{ github.event.release.tag_name }}
+          nix-shell --pure --run "./scripts/update-chart-version.sh --tag $TAG --publish-release" ./shell.nix
+
+      - name: Update the registry and the repository
+        run: |
+          nix-shell --pure --run "./scripts/update-reg-repo.sh --registry ghcr.io --repository openebs/dev" ./shell.nix
+
+      - name: Push chart to oci registry
+        uses: appany/helm-oci-chart-releaser@v0.3.0
+        with:
+          name: zfs-localpv
+          repository: openebs/dev
+          tag: ${{ github.ref_name }}
+          path: /dev/charts/my-chart
+          registry: ghcr.io
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          update_dependencies: 'true'
+        
