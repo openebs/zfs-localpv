@@ -22,6 +22,7 @@ pkgs.mkShell {
     util-linux
     jq
     zfs
+    crane
     nixos-shell
   ] ++ pkgs.lib.optional (builtins.getEnv "IN_NIX_SHELL" == "pure") [ docker-client ];
 
