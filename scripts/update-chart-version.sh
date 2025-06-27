@@ -1,16 +1,7 @@
 #!/usr/bin/env bash
 
-# Write output to error output stream.
-echo_stderr() {
-  echo -e "${1}" >&2
-}
-
-die()
-{
-  local _return="${2:-1}"
-  echo_stderr "$1"
-  exit "${_return}"
-}
+SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]:-"$0"}")")"
+source "$SCRIPT_DIR/log.sh"
 
 help() {
   cat <<EOF
@@ -34,34 +25,18 @@ check_tag_is_valid() {
     local current_chart_version="$2"
 
     if [[ "$(semver validate $tag)" != "valid" ]]; then
-      die "Tag is not a valid sevmer complaint version"
+      log_fatal "Tag is not a valid sevmer complaint version"
     fi
 
     if [[ $current_chart_version != *"-prerelease" ]]; then
-      die "Chart version($current_chart_version) should be a prerelease format to proceed for tag creation flow"
+      log_fatal "Chart version($current_chart_version) should be a prerelease format to proceed for tag creation flow"
     fi
 
     allowed_diff=("" "patch" "prerelease")
     diff="$(semver diff "$tag" "$current_chart_version")"
     if ! [[ " ${allowed_diff[*]} " =~ " $diff " ]]; then
-      die "For release/x.y branch the current chart version($current_chart_version)'s X.Y must exactly match X.Y from tag ($tag)"
+      log_fatal "For release/x.y branch the current chart version($current_chart_version)'s X.Y must exactly match X.Y from tag ($tag)"
     fi
-}
-
-# yq-go eats up blank lines
-# this function gets around that using diff with --ignore-blank-lines
-yq_ibl()
-{
-  set +e
-  diff_out=$(diff -B <(yq '.' "$2") <(yq "$1" "$2"))
-  error=$?
-  if [ "$error" != "0" ] && [ "$error" != "1" ]; then
-    exit "$error"
-  fi
-  if [ -n "$diff_out" ]; then
-    echo "$diff_out" | patch --quiet --no-backup-if-mismatch "$2" -
-  fi
-  set -euo pipefail
 }
 
 # RULES: This would run only when changes are pushed to a release/x.y branch.
@@ -87,7 +62,7 @@ create_version_from_release_branch() {
       elif [[ "$CURRENT_CHART_VERSION" == *"-prerelease" ]]; then
         NO_OP=1
       else
-        die "Current chart version doesn't match a develop or prerel format"
+        log_fatal "Current chart version doesn't match a develop or prerel format"
       fi
     elif [[ "$TYPE" ==  "develop" ]]; then
       EXPECTED_VERSION="$(semver bump minor "$EXTRACTED_VERSION.0")-develop"
@@ -98,7 +73,7 @@ create_version_from_release_branch() {
       fi
     fi
   else
-    die "Branch name($BRANCH_NAME) is not of format release/x.y"
+    log_fatal "Branch name($BRANCH_NAME) is not of format release/x.y"
   fi
 }
 
@@ -128,7 +103,7 @@ create_version_from_tag() {
       VERSION="$EXTRACTED_VERSION"
     fi
   else
-    die "Invalid tag format. Expected 'vX.Y.Z'"
+    log_fatal "Invalid tag format. Expected 'vX.Y.Z'"
   fi
 }
 
@@ -149,7 +124,6 @@ NO_OP=
 CURRENT_CHART_VERSION=
 PUBLISH_RELEASE=
 # Set the path to the Chart.yaml file
-SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]:-"$0"}")")"
 ROOT_DIR="$SCRIPT_DIR/.."
 CHART_DIR="$ROOT_DIR/deploy/helm/charts"
 CHART_YAML="$CHART_DIR/Chart.yaml"
@@ -158,6 +132,8 @@ CRD_CHART_NAME="crds"
 CRD_CHART_YAML="$CHART_DIR/charts/$CRD_CHART_NAME/Chart.yaml"
 # Final computed version to be set in this.
 VERSION=""
+
+source "$SCRIPT_DIR/yq_utils.sh"
 
 # Parse arguments
 while [ "$#" -gt 0 ]; do
@@ -196,7 +172,7 @@ while [ "$#" -gt 0 ]; do
       ;;
     *)
       help
-      die "Unknown option: $1"
+      log_fatal "Unknown option: $1"
       ;;
   esac
 done
@@ -211,7 +187,7 @@ elif [[ -n "${TAG-}" ]]; then
   create_version_from_tag
 else
   help
-  die "Either --branch and --type or --tag and must be specified."
+  log_fatal "Either --branch and --type or --tag and must be specified."
 fi
 
 if [[ -z $NO_OP ]]; then
@@ -222,6 +198,6 @@ if [[ -z $NO_OP ]]; then
       echo "$VERSION"
     fi
   else
-    die "Failed to update the chart versions"
+    log_fatal "Failed to update the chart versions"
   fi
 fi
