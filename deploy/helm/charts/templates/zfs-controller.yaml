@@ -55,6 +55,8 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+          resources:
+            {{- toYaml .Values.zfsController.resources | nindent 12 }}
         - name: {{ .Values.zfsController.snapshotter.name }}
           image: "{{ .Values.zfsController.snapshotter.image.registry }}{{ .Values.zfsController.snapshotter.image.repository }}:{{ .Values.zfsController.snapshotter.image.tag }}"
           imagePullPolicy: {{ .Values.zfsController.snapshotter.image.pullPolicy }}
@@ -70,6 +72,8 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+          resources:
+            {{- toYaml .Values.zfsController.resources | nindent 12 }}
         - name: {{ .Values.zfsController.snapshotController.name }}
           image: "{{ .Values.zfsController.snapshotController.image.registry }}{{ .Values.zfsController.snapshotController.image.repository }}:{{ .Values.zfsController.snapshotController.image.tag }}"
           args:
@@ -79,6 +83,8 @@ spec:
             - {{ tpl . $ | quote }}
           {{- end }}
           imagePullPolicy: {{ .Values.zfsController.snapshotController.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.zfsController.resources | nindent 12 }}
         - name: {{ .Values.zfsController.provisioner.name }}
           image: "{{ .Values.zfsController.provisioner.image.registry }}{{ .Values.zfsController.provisioner.image.repository }}:{{ .Values.zfsController.provisioner.image.tag }}"
           imagePullPolicy: {{ .Values.zfsController.provisioner.image.pullPolicy }}
@@ -108,6 +114,8 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+          resources:
+            {{- toYaml .Values.zfsController.resources | nindent 12 }}
         - name: {{ .Values.zfsPlugin.name }}
           image: "{{ .Values.zfsPlugin.image.registry }}{{ .Values.zfsPlugin.image.repository }}:{{ .Values.zfsPlugin.image.tag }}"
           imagePullPolicy: {{ .Values.zfsPlugin.image.pullPolicy }}
@@ -140,6 +148,8 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
+          resources:
+            {{- toYaml .Values.zfsController.resources | nindent 12 }}
       volumes:
         - name: socket-dir
           emptyDir: {}
