@@ -70,6 +70,8 @@ spec:
               mountPath: /plugin
             - name: registration-dir
               mountPath: /registration
+          resources:
+            {{- toYaml .Values.zfsNode.resources | nindent 12 }}
         - name: {{ .Values.zfsPlugin.name }}
           securityContext:
             privileged: true
@@ -114,6 +116,8 @@ spec:
               # needed so that any mounts setup inside this container are
               # propagated back to the host machine.
               mountPropagation: "Bidirectional"
+          resources:
+            {{- toYaml .Values.zfsNode.resources | nindent 12 }}
       volumes:
         - name: device-dir
           hostPath:
