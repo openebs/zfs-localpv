@@ -148,9 +148,39 @@ func blockVolCreationWithReclaimRetainTest() {
 
 }
 
+func encryptedVolCreationTest() {
+	By("Creating encrypted storage class", createEncryptedStorageClass)
+	By("creating and verifying PVC bound status", func() { createAndVerifyPVC(pvcNameFS) })
+
+	By("Creating and deploying app pod", func() { createDeployVerifyApp(appNameFS, pvcNameFS) })
+	By("verifying ZFSVolume object", VerifyZFSVolume)
+
+	createSnapshot(pvcNameFS, snapNameFS)
+	verifySnapshotCreated(snapNameFS)
+
+	createClone(clonePvcNameFS, snapNameFS, scObj.Name, "Filesystem")
+	By("Creating and deploying clone app pod", func() { createDeployVerifyCloneApp(cloneAppNameFS, clonePvcNameFS) })
+
+	By("Deleting clone application deployment")
+	deleteAppDeployment(cloneAppNameFS)
+	By("Deleting clone pvc")
+	deletePVC(clonePvcNameFS)
+
+	By("Deleting snapshot")
+	deleteSnapshot(pvcNameFS, snapNameFS)
+
+	By("Deleting main application deployment")
+	deleteAppDeployment(appNameFS)
+	By("Deleting main pvc")
+	deletePVC(pvcNameFS)
+
+	By("Deleting storage class", deleteStorageClass)
+}
+
 func volumeCreationTest() {
 	By("Running volume creation test", fsVolCreationTest)
 	By("Running block volume creation test", blockVolCreationTest)
 	By("Running block volume creation test with retain reclaim policy", blockVolCreationWithReclaimRetainTest)
+	By("Running encrypted volume creation test", encryptedVolCreationTest)
 
 }

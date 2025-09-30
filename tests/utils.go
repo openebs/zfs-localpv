@@ -279,6 +279,33 @@ func createStorageClass() {
 	gomega.Expect(err).To(gomega.BeNil(), "while creating a default storageclass {%s}", scName)
 }
 
+func createEncryptedStorageClass() {
+	var (
+		err error
+	)
+
+	parameters := map[string]string{
+		"poolname":    POOLNAME,
+		"encryption":  "aes-256-gcm",
+		"keyformat":   "raw",
+		"keylocation": "file:///etc/zfs/keys/zfspool0.key",
+		"fstype":      "zfs",
+		"compression": "lz4",
+	}
+
+	ginkgo.By("building an encrypted storage class")
+	scObj, err = sc.NewBuilder().
+		WithGenerateName(scName).
+		WithVolumeExpansion(true).
+		WithParametersNew(parameters).
+		WithProvisioner(ZFSProvisioner).Build()
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(),
+		"while building encrypted storageclass obj with prefix {%s}", scName)
+
+	scObj, err = SCClient.Create(scObj)
+	gomega.Expect(err).To(gomega.BeNil(), "while creating an encrypted storageclass {%s}", scName)
+}
+
 // VerifyZFSVolume verify the properties of a zfs-volume
 func VerifyZFSVolume() {
 	ginkgo.By("fetching zfs volume")
@@ -771,6 +798,13 @@ func getStoragClassParams() []map[string]string {
 			"fstype":        "zfs",
 			"thinprovision": "no",
 			"quotatype":     "refquota",
+		},
+		{
+			"fstype":      "zfs",
+			"encryption":  "aes-256-gcm",
+			"keyformat":   "raw",
+			"keylocation": "file:///etc/zfs/keys/zfspool0.key",
+			"compression": "lz4",
 		},
 	}
 }
