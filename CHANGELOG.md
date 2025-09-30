@@ -1,3 +1,14 @@
+v2.9.0 / TBC
+========================
+
+## Bug Fixes and Improvements
+
+- **Fixed Encrypted Volume Cloning**
+  Removed encryption parameters (`-o encryption`, `-o keylocation`, `-o keyformat`) from the `zfs clone` command. These parameters are read-only and cannot be set on clones as they automatically inherit encryption from the parent snapshot.
+  [#675](https://github.com/openebs/zfs-localpv/pull/675)
+
+---
+
 v2.8.0 / 2025-06-03
 ========================
 
