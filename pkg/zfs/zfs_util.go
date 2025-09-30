@@ -164,18 +164,10 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 		compressionProperty := "compression=" + vol.Spec.Compression
 		ZFSVolArg = append(ZFSVolArg, "-o", compressionProperty)
 	}
-	if len(vol.Spec.Encryption) != 0 {
-		encryptionProperty := "encryption=" + vol.Spec.Encryption
-		ZFSVolArg = append(ZFSVolArg, "-o", encryptionProperty)
-	}
-	if len(vol.Spec.KeyLocation) != 0 {
-		keyLocation := "keylocation=" + vol.Spec.KeyLocation
-		ZFSVolArg = append(ZFSVolArg, "-o", keyLocation)
-	}
-	if len(vol.Spec.KeyFormat) != 0 {
-		keyFormat := "keyformat=" + vol.Spec.KeyFormat
-		ZFSVolArg = append(ZFSVolArg, "-o", keyFormat)
-	}
+	// Note: Encryption parameters (encryption, keylocation, keyformat) are NOT set when cloning.
+	// ZFS clones automatically inherit encryption settings from the parent snapshot.
+	// The encryption property is read-only on clones and attempting to set it will fail with
+	// "encryption is readonly" error. This is expected ZFS behavior.
 	ZFSVolArg = append(ZFSVolArg, snapshot, volume)
 	return ZFSVolArg
 }
