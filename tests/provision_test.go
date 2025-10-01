@@ -24,6 +24,7 @@ var _ = Describe("[zfspv] TEST VOLUME PROVISIONING", func() {
 	Context("App is deployed with zfs driver", func() {
 		It("Running zfs volume Creation Test", volumeCreationTest)
 		It("Running zfs volume Creation Test with custom node id", Label("custom-node-id"), volumeCreationTest)
+		It("Running encrypted volume creation test", encryptedVolCreationTest)
 	})
 })
 
@@ -181,6 +182,5 @@ func volumeCreationTest() {
 	By("Running volume creation test", fsVolCreationTest)
 	By("Running block volume creation test", blockVolCreationTest)
 	By("Running block volume creation test with retain reclaim policy", blockVolCreationWithReclaimRetainTest)
-	By("Running encrypted volume creation test", encryptedVolCreationTest)
 
 }
