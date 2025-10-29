@@ -21,7 +21,7 @@ curl -L https://nixos.org/nix/install | sh
 >
 > That's totally fine, you'll need the following additional system packages:
 >
-> * `Go` 1.20
+> * `Go` 1.24
 > * `kubectl`
 
 ### Fork in the cloud
