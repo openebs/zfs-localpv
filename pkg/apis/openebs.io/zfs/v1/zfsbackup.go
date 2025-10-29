@@ -53,7 +53,6 @@ type ZFSBackupSpec struct {
 	OwnerNodeID string `json:"ownerNodeID"`
 
 	// SnapName is the snapshot name for backup
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	SnapName string `json:"snapName,omitempty"`
 

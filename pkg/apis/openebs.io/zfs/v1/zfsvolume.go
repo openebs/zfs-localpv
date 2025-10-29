@@ -181,7 +181,6 @@ type VolumeInfo struct {
 	// Shared specifies whether the volume can be shared among multiple pods.
 	// If it is not set to "yes", then the ZFS-LocalPV Driver will not allow
 	// the volumes to be mounted by more than one pods.
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=yes;no
 	Shared string `json:"shared,omitempty"`
 }

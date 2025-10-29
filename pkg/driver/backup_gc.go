@@ -6,12 +6,12 @@ import (
 	"github.com/openebs/lib-csi/pkg/common/errors"
 	zfsapi "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/bkpbuilder"
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
+	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
 	"github.com/openebs/zfs-localpv/pkg/zfs"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // BackupSnapshotIndex is the name of the index that allows lookup of ZFSBackup resources
@@ -87,7 +87,8 @@ func (bgc *BackupGarbageCollector) InitializeForTesting(openebsClient clientset.
 		informers.WithNamespace(namespace),
 	)
 
-	stopCh := signals.SetupSignalHandler()
+	stopCtx := ctrl.SetupSignalHandler()
+	stopCh := stopCtx.Done()
 
 	bgc.zfsBackupInformer = openebsInformerFactory.Zfs().V1().ZFSBackups().Informer()
 
