@@ -10,9 +10,9 @@ VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods \
 EXTERNAL_TOOLS=\
 	golang.org/x/tools/cmd/cover@latest \
 	golang.org/x/lint/golint@latest \
-	github.com/axw/gocov/gocov@v1.1 \
+	github.com/axw/gocov/gocov@latest \
 	github.com/matm/gocov-html/cmd/gocov-html@latest \
-	github.com/onsi/ginkgo/v2/ginkgo@v2.20.1
+	github.com/onsi/ginkgo/v2/ginkgo@v2.27.1
 
 # The images can be pushed to any docker/image registeries
 # like docker hub, quay. The registries are specified in
@@ -127,7 +127,7 @@ bootstrap: controller-gen
 
 .PHONY: controller-gen
 controller-gen:
-	@go install -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0
+	@go install -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0
 
 # SRC_PKG is the path of code files
 SRC_PKG := github.com/openebs/zfs-localpv/pkg
@@ -144,22 +144,32 @@ kubegendelete:
 	@rm -rf pkg/generated/lister
 	@rm -rf pkg/generated/informer
 
+# Install generators (v0.34.1)
 .PHONY: deepcopy-install
 deepcopy-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/deepcopy-gen@v0.27.2
+	@go install -mod=mod k8s.io/code-generator/cmd/deepcopy-gen@v0.34.1
 
+.PHONY: clientset-install
+clientset-install:
+	@go install -mod=mod k8s.io/code-generator/cmd/client-gen@v0.34.1
+
+.PHONY: lister-install
+lister-install:
+	@go install -mod=mod k8s.io/code-generator/cmd/lister-gen@v0.34.1
+
+.PHONY: informer-install
+informer-install:
+	@go install -mod=mod k8s.io/code-generator/cmd/informer-gen@v0.34.1
+
+# Generate deepcopy (positional input package)
 .PHONY: deepcopy
 deepcopy:
 	@echo "+ Generating deepcopy funcs for $(GEN_SRC)"
 	@deepcopy-gen \
-		--input-dirs $(SRC_PKG)/apis/$(GEN_SRC) \
-		--output-file-base zz_generated.deepcopy \
-		--go-header-file ./buildscripts/custom-boilerplate.go.txt
+		--output-file zz_generated.deepcopy.go \
+		$(SRC_PKG)/apis/$(GEN_SRC)
 
-.PHONY: clientset-install
-clientset-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/client-gen@v0.27.2
-
+# Generate clientset (versioned)
 .PHONY: clientset
 clientset:
 	@echo "+ Generating clientsets for $(GEN_SRC)"
@@ -167,34 +177,29 @@ clientset:
 		--fake-clientset=true \
 		--input $(GEN_SRC) \
 		--input-base $(SRC_PKG)/apis \
-		--clientset-path $(SRC_PKG)/generated/clientset \
-		--go-header-file ./buildscripts/custom-boilerplate.go.txt
+		--clientset-name versioned \
+		--output-dir pkg/generated/clientset \
+		--output-pkg $(SRC_PKG)/generated/clientset
 
-.PHONY: lister-install
-lister-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/lister-gen@v0.27.2
-
+# Generate listers (positional input package, explicit outputs)
 .PHONY: lister
 lister:
 	@echo "+ Generating lister for $(GEN_SRC)"
 	@lister-gen \
-		--input-dirs $(SRC_PKG)/apis/$(GEN_SRC) \
-		--output-package $(SRC_PKG)/generated/lister \
-		--go-header-file ./buildscripts/custom-boilerplate.go.txt
+		--output-dir pkg/generated/lister \
+		--output-pkg $(SRC_PKG)/generated/lister \
+		$(SRC_PKG)/apis/$(GEN_SRC)
 
-.PHONY: informer-install
-informer-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/informer-gen@v0.27.2
-
+# Generate informers (positional input package, explicit outputs)
 .PHONY: informer
 informer:
 	@echo "+ Generating informer for $(GEN_SRC)"
 	@informer-gen \
-		--input-dirs $(SRC_PKG)/apis/$(GEN_SRC) \
-		--versioned-clientset-package $(SRC_PKG)/generated/clientset/internalclientset \
+		--versioned-clientset-package $(SRC_PKG)/generated/clientset/versioned \
 		--listers-package $(SRC_PKG)/generated/lister \
-		--output-package $(SRC_PKG)/generated/informer \
-		--go-header-file ./buildscripts/custom-boilerplate.go.txt
+		--output-dir pkg/generated/informer \
+		--output-pkg $(SRC_PKG)/generated/informer \
+		$(SRC_PKG)/apis/$(GEN_SRC)
 
 manifests:
 	@echo "+ Generating zfs localPV crds"
