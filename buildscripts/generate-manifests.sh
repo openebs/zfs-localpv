@@ -1,44 +1,79 @@
 #!/usr/bin/env bash
-
 set -o errexit
 set -o nounset
 set -o pipefail
 
-SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]:-"$0"}")")"
-ROOT_DIR="$SCRIPT_DIR/.."
-DEPLOY_YAML_DIR="$ROOT_DIR/deploy/yamls"
-HELM_CHART_DIR="$ROOT_DIR/deploy/helm/charts/"
-CRD_CHART_TEMPLATE_DIR="$HELM_CHART_DIR/charts/crds/templates"
-CONTROLLER_GEN=$(which controller-gen)
+# Make unmatched globs expand to nothing (prevents mv errors when no matches)
+shopt -s nullglob
+
+# Zero-width space (U+200B) sanitizer
+ZWSP=$'\u200b'
+sanitize() { printf '%s' "${1//$ZWSP/}"; }
+
+# Resolve important paths and sanitize any hidden U+200B characters
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-"$0"}")" && pwd -P)"
+SCRIPT_DIR="$(sanitize "${SCRIPT_DIR}")"
+ROOT_DIR="$(sanitize "${SCRIPT_DIR}/..")"
+DEPLOY_YAML_DIR="$(sanitize "${ROOT_DIR}/deploy/yamls")"
+HELM_CHART_DIR="$(sanitize "${ROOT_DIR}/deploy/helm/charts")"
+CRD_CHART_TEMPLATE_DIR="$(sanitize "${HELM_CHART_DIR}/charts/crds/templates")"
+
 RELEASE_NAME="openebs"
 RELEASE_NAMESPACE="kube-system"
 
-if [ "$CONTROLLER_GEN" = "" ]; then
-  echo "ERROR: failed to get controller-gen, Please run make bootstrap to install it";
-  exit 1;
+CONTROLLER_GEN="$(command -v controller-gen || true)"
+HELM_BIN="$(command -v helm || true)"
+
+if [[ -z "${CONTROLLER_GEN}" ]]; then
+  echo "ERROR: controller-gen not found. Please run 'make bootstrap' to install it." >&2
+  exit 1
 fi
 
-$CONTROLLER_GEN crd:trivialVersions=false,preserveUnknownFields=false paths=./pkg/apis/... output:crd:artifacts:config="$DEPLOY_YAML_DIR"
+if [[ -z "${HELM_BIN}" ]]; then
+  echo "ERROR: helm not found. Please install Helm (https://helm.sh)." >&2
+  exit 1
+fi
 
-for FILE in "$DEPLOY_YAML_DIR"/zfs.openebs.io_*; do
-  BASE_NAME=$(basename "$FILE" | sed -e 's/^zfs.openebs.io_//' -e 's/s\.yaml$/.yaml/')
-  NEW_FILE="$DEPLOY_YAML_DIR/${BASE_NAME%.yaml}-crd.yaml"
-  # Rename the files generated in the format <name>-crd.yaml
-  mv "$FILE" "$NEW_FILE"
+# Ensure output directories exist
+mkdir -p -- "${DEPLOY_YAML_DIR}" "${CRD_CHART_TEMPLATE_DIR}"
 
-  # Copy the files to the crd subchart templates, in format <name>.yaml
-  TARGET_FILE="$CRD_CHART_TEMPLATE_DIR/${BASE_NAME%.yaml}.yaml"
-  cp "$NEW_FILE" "$TARGET_FILE"
+# If a stray 'yamls' directory with a trailing U+200B exists, consolidate and remove it
+if [[ -d "${DEPLOY_YAML_DIR}${ZWSP}" ]]; then
+  shopt -s dotglob nullglob
+  mkdir -p -- "${DEPLOY_YAML_DIR}"
+  mv -- "${DEPLOY_YAML_DIR}${ZWSP}/"* "${DEPLOY_YAML_DIR}/" 2>/dev/null || true
+  rmdir -- "${DEPLOY_YAML_DIR}${ZWSP}" 2>/dev/null || true
+fi
 
-  # Append the helm configuration to enable disable the keep the crds on uninstall.
-  awk '/controller-gen.kubebuilder.io\/version:/ { print; print "    {{- include \"crds.extraAnnotations\" .Values.zfsLocalPv | nindent 4 }}"; next }1' "$TARGET_FILE" > "$TARGET_FILE.tmp" && mv "$TARGET_FILE.tmp" "$TARGET_FILE"
-  # Append the helm configuration to enable disable the installation of the crds.
-  awk 'BEGIN { print "{{- if .Values.zfsLocalPv.enabled -}}" } { print } END { if (NR > 0) print "{{- end -}}" }' "$TARGET_FILE" > "$TARGET_FILE.tmp" && mv "$TARGET_FILE.tmp" "$TARGET_FILE"
+echo "+ Generating ZFS LocalPV CRDs"
+# Generate v1 CRDs into the sanitized path
+"${CONTROLLER_GEN}" crd:crdVersions=v1 \
+  paths=./pkg/apis/... \
+  output:crd:artifacts:config="${DEPLOY_YAML_DIR}"
+
+# Rename and copy generated CRDs
+for FILE in "${DEPLOY_YAML_DIR}"/zfs.openebs.io_*; do
+  BASE_NAME="$(basename -- "${FILE}" | sed -e 's/^zfs.openebs.io_//' -e 's/s\.yaml$/.yaml/')"
+  NEW_FILE="${DEPLOY_YAML_DIR}/${BASE_NAME%.yaml}-crd.yaml"
+  mv -- "${FILE}" "${NEW_FILE}"
+
+  TARGET_FILE="${CRD_CHART_TEMPLATE_DIR}/${BASE_NAME%.yaml}.yaml"
+  install -m 0644 -- "${NEW_FILE}" "${TARGET_FILE}"
+
+  # Append Helm annotations and enable/disable wrapper
+  awk '/controller-gen.kubebuilder.io\/version:/ { print; print "    {{- include \"crds.extraAnnotations\" .Values.zfsLocalPv | nindent 4 }}"; next }1' \
+    "${TARGET_FILE}" > "${TARGET_FILE}.tmp" && mv -- "${TARGET_FILE}.tmp" "${TARGET_FILE}"
+
+  awk 'BEGIN { print "{{- if .Values.zfsLocalPv.enabled -}}" } { print } END { if (NR > 0) print "{{- end -}}" }' \
+    "${TARGET_FILE}" > "${TARGET_FILE}.tmp" && mv -- "${TARGET_FILE}.tmp" "${TARGET_FILE}"
 done
 
-# Generate the zfs-operator.yaml using the helm chart.
-helm template "$RELEASE_NAME" "$HELM_CHART_DIR" -n "$RELEASE_NAMESPACE" \
+# Render the operator bundle
+"${HELM_BIN}" template "${RELEASE_NAME}" "${HELM_CHART_DIR}" -n "${RELEASE_NAMESPACE}" \
   --set analytics.installerType="zfs-operator" \
   --set crds.zfsLocalPv.keep=false \
   --set crds.csi.volumeSnapshots.keep=false \
-  --set enableHelmMetaLabels=false > "$DEPLOY_YAML_DIR"/../zfs-operator.yaml
+  --set enableHelmMetaLabels=false \
+  > "${ROOT_DIR}/deploy/zfs-operator.yaml"
+
+echo "+ Manifests written to: ${DEPLOY_YAML_DIR} and ${ROOT_DIR}/deploy/zfs-operator.yaml"

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.20.14 AS build
+FROM golang:1.24.7 AS build
 
 ARG BRANCH
 ARG RELEASE_TAG

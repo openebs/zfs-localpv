@@ -1,13 +1,11 @@
 {{- if .Values.zfsLocalPv.enabled -}}
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.0
+    controller-gen.kubebuilder.io/version: v0.19.0
     {{- include "crds.extraAnnotations" .Values.zfsLocalPv | nindent 4 }}
-  creationTimestamp: null
   name: zfsnodes.zfs.openebs.io
 spec:
   group: zfs.openebs.io
@@ -23,20 +21,26 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: ZFSNode records information about all zfs pools available in
-          a node. In general, the openebs node-agent creates the ZFSNode object &
-          periodically synchronizing the zfs pools available in the node. ZFSNode
-          has an owner reference pointing to the corresponding node object.
+        description: |-
+          ZFSNode records information about all zfs pools available
+          in a node. In general, the openebs node-agent creates the ZFSNode
+          object & periodically synchronizing the zfs pools available in the node.
+          ZFSNode has an owner reference pointing to the corresponding node object.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -79,10 +83,4 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 {{- end -}}
