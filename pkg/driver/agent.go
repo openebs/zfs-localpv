@@ -38,7 +38,7 @@ import (
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // node is the server implementation
@@ -56,7 +56,8 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 	// set up signals so we handle the first shutdown signal gracefully
 	// TODO: (tech-debt) Setup signal handler more above, several files want to use stopCh and this function is only allowed to be used once (see #647)
 	// Affected files: pkg/driver/agent.go pkg/driver/controller.go pkg/driver/grpc.go
-	stopCh := signals.SetupSignalHandler()
+	stopCtx := ctrl.SetupSignalHandler()
+	stopCh := stopCtx.Done()
 
 	// start the zfsnode resource watcher
 	go func() {

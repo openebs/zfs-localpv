@@ -22,12 +22,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	zfsapi "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
 	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
+	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
 	csipayload "github.com/openebs/zfs-localpv/pkg/response"
 	"github.com/openebs/zfs-localpv/pkg/version"
@@ -107,7 +107,8 @@ func (cs *controller) init() error {
 	// set up signals so we handle the first shutdown signal gracefully
 	// TODO: (tech-debt) Setup signal handler more above, several files want to use stopCh and this function is only allowed to be used once (see #647)
 	// Affected files: pkg/driver/agent.go pkg/driver/controller.go pkg/driver/grpc.go
-	stopCh := signals.SetupSignalHandler()
+	stopCtx := ctrl.SetupSignalHandler()
+	stopCh := stopCtx.Done()
 
 	cs.k8sNodeInformer = kubeInformerFactory.Core().V1().Nodes().Informer()
 	cs.zfsNodeInformer = openebsInformerfactory.Zfs().V1().ZFSNodes().Informer()

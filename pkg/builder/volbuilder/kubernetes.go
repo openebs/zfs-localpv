@@ -20,7 +20,7 @@ import (
 
 	client "github.com/openebs/lib-csi/pkg/common/kubernetes/client"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
+	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

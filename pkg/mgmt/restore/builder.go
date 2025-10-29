@@ -19,8 +19,8 @@ package restore
 import (
 	"k8s.io/klog/v2"
 
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
-	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset/scheme"
+	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
+	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned/scheme"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
 	listers "github.com/openebs/zfs-localpv/pkg/generated/lister/zfs/v1"
 	corev1 "k8s.io/api/core/v1"

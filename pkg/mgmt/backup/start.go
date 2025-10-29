@@ -24,7 +24,7 @@ import (
 	"time"
 
 	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/internalclientset"
+	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
 	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
