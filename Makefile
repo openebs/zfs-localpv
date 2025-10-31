@@ -8,10 +8,10 @@ VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods \
 # Tools required for different make
 # targets or for development purposes
 EXTERNAL_TOOLS=\
-	golang.org/x/tools/cmd/cover@latest \
-	golang.org/x/lint/golint@latest \
-	github.com/axw/gocov/gocov@latest \
-	github.com/matm/gocov-html/cmd/gocov-html@latest \
+	golang.org/x/tools/cmd/cover@v0.1.0-deprecated \
+	golang.org/x/lint/golint@v0.0.0-20241112194109-818c5a804067 \
+	github.com/axw/gocov/gocov@v1.2.1 \
+	github.com/matm/gocov-html/cmd/gocov-html@v1.4.0 \
 	github.com/onsi/ginkgo/v2/ginkgo@v2.27.1
 
 # The images can be pushed to any docker/image registeries
