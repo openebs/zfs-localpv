@@ -43,6 +43,7 @@ if [[ -d "${DEPLOY_YAML_DIR}${ZWSP}" ]]; then
   mkdir -p -- "${DEPLOY_YAML_DIR}"
   mv -- "${DEPLOY_YAML_DIR}${ZWSP}/"* "${DEPLOY_YAML_DIR}/" 2>/dev/null || true
   rmdir -- "${DEPLOY_YAML_DIR}${ZWSP}" 2>/dev/null || true
+  shopt -u dotglob nullglob
 fi
 
 echo "+ Generating ZFS LocalPV CRDs"
