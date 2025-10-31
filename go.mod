@@ -10,7 +10,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.27.1
 	github.com/onsi/gomega v1.38.2
 	github.com/openebs/google-analytics-4 v0.3.0
-	github.com/openebs/lib-csi v0.9.0
+	github.com/openebs/lib-csi v0.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
