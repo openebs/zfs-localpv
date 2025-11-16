@@ -67,15 +67,15 @@ run_test "Test 9: On tag creation, version to be reflected on release/x.y branch
          --tag "v1.2.0" --dry-run --chart-version "1.2.0-prerelease"
 
 run_test "Test 10: On tag creation, version to be reflected on release/x.y branch, tag is in future" \
-         "For release/x.y branch the current chart version(1.2.0-prerelease)'s X.Y must exactly match X.Y from tag (1.5.0)" \
+         "ERROR: For release/x.y branch the current chart version(1.2.0-prerelease)'s X.Y must exactly match X.Y from tag (1.5.0)" \
          --tag "v1.5.0" --dry-run --chart-version "1.2.0-prerelease"
 
 run_test "Test 11: On tag creation, version to be reflected on release/x.y branch, tag is in past" \
-         "For release/x.y branch the current chart version(1.2.0-prerelease)'s X.Y must exactly match X.Y from tag (1.0.0)" \
+         "ERROR: For release/x.y branch the current chart version(1.2.0-prerelease)'s X.Y must exactly match X.Y from tag (1.0.0)" \
          --tag "v1.0.0" --dry-run --chart-version "1.2.0-prerelease"
 
 run_test "Test 12: On tag creation, version to be reflected on release/x.y branch, the current chart version is not prerelease" \
-         "Chart version(1.2.0-develop) should be a prerelease format to proceed for tag creation flow" \
+         "ERROR: Chart version(1.2.0-develop) should be a prerelease format to proceed for tag creation flow" \
          --tag "v1.0.0" --dry-run --chart-version "1.2.0-develop"       
   
 run_test "Test 13: rc tag, with chart type prerelease" \
