@@ -94,7 +94,7 @@ jobs:
 
       - name: Update the registry and the repository
         run: |
-          nix-shell --pure --run "./scripts/update-reg-repo.sh --registry docker.io/ --namespace ${{ env.IMAGE_ORG }}/zfs-driver" ./shell.nix
+          nix-shell --pure --run "./scripts/update-reg-repo.sh --registry docker.io/ --repository ${{ env.IMAGE_ORG }}/zfs-driver" ./shell.nix
 
       - name: Publish chart via helm-gh-pages
         uses: stefanprodan/helm-gh-pages@master
