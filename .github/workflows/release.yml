@@ -101,3 +101,15 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           charts_dir: ./deploy/helm
+
+      - name: Publish chart via OCI
+        uses: appany/helm-oci-chart-releaser@v0.4.2
+        with:
+          name: zfs-localpv
+          repository: ${{ github.repository_owner }}/charts
+          tag: ${{ env.VERSION }}
+          path: ./deploy/helm/charts
+          registry: ghcr.io
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          update_dependencies: 'false'
