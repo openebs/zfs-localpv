@@ -169,3 +169,6 @@ spec:
       tolerations:
 {{ toYaml .Values.zfsNode.tolerations | indent 8 }}
 {{- end }}
+{{- if .Values.zfsNode.dnsPolicy }}
+      dnsPolicy: {{ .Values.zfsNode.dnsPolicy }}
+{{- end }}
