@@ -3,7 +3,7 @@ entries:
   zfs-localpv:
   - apiVersion: v2
     appVersion: 2.10.0-develop
-    created: "2025-11-27T18:05:35.604967578Z"
+    created: "2025-12-30T13:57:45.64241813Z"
     dependencies:
     - condition: crds.enabled
       name: crds
@@ -11,7 +11,7 @@ entries:
       version: 2.10.0-develop
     description: Helm chart for CSI Driver for dynamic provisioning of ZFS Persistent
       Local Volumes. For instructions on how to use this helm chart, see - https://openebs.github.io/zfs-localpv/
-    digest: 3b8cad107a1ed77e5742fb79310ca624e5cae306196a877d94aa61128c93d2b4
+    digest: 8227d4949f97e70a050b6d25df5c1ba8144a74ecbc7c7c6e8a4464c47b91a7f0
     home: https://openebs.io/
     icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/openebs/icon/color/openebs-icon-color.png
     keywords:
@@ -1453,4 +1453,4 @@ entries:
     urls:
     - https://github.com/openebs/zfs-localpv/releases/download/zfs-localpv-1.3.0/zfs-localpv-1.3.0.tgz
     version: 1.3.0
-generated: "2025-11-27T18:07:02.745361064Z"
+generated: "2025-12-30T13:57:45.640078823Z"
