@@ -94,10 +94,22 @@ jobs:
 
       - name: Update the registry and the repository
         run: |
-          nix-shell --pure --run "./scripts/update-reg-repo.sh --registry docker.io/ --namespace ${{ env.IMAGE_ORG }}/zfs-driver" ./shell.nix
+          nix-shell --pure --run "./scripts/update-reg-repo.sh --registry docker.io/ --repository ${{ env.IMAGE_ORG }}/zfs-driver" ./shell.nix
 
       - name: Publish chart via helm-gh-pages
         uses: stefanprodan/helm-gh-pages@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           charts_dir: ./deploy/helm
+
+      - name: Publish chart via OCI
+        uses: appany/helm-oci-chart-releaser@v0.4.2
+        with:
+          name: zfs-localpv
+          repository: ${{ github.repository_owner }}/charts
+          tag: ${{ env.VERSION }}
+          path: ./deploy/helm/charts
+          registry: ghcr.io
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          update_dependencies: 'false'

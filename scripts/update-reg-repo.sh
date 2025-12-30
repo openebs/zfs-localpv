@@ -37,7 +37,7 @@ while [ "$#" -gt 0 ]; do
       ;;
     --repository)
       shift
-      NEW_NAMESPACE=$1
+      NEW_REPOSITORY=$1
       shift
       ;;
     *)
@@ -51,9 +51,9 @@ if [ -z "${NEW_REGISTRY:-}" ]; then
   log_fatal "Missing required flag: --registry"
 fi
 
-if [ -z "${NEW_NAMESPACE:-}" ]; then
+if [ -z "${NEW_REPOSITORY:-}" ]; then
   log_fatal "Missing required flag: --repository"
 fi
 
 yq_ibl ".zfsPlugin.image.registry = \"$NEW_REGISTRY\"" "$VALUES_YAML"
-yq_ibl ".zfsPlugin.image.repository = \"$NEW_NAMESPACE\"" "$VALUES_YAML"
+yq_ibl ".zfsPlugin.image.repository = \"$NEW_REPOSITORY\"" "$VALUES_YAML"

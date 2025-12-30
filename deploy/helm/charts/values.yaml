@@ -62,6 +62,8 @@ zfsNode:
   allowedTopologyKeys: "All"
   initContainers: []
   additionalVolumes: {}
+  # Pod's DNS policy
+  # dnsPolicy:
 
 # zfsController contains the configurables for
 # the zfs controller deployment
@@ -142,11 +144,11 @@ zfsPlugin:
   image:
     # Make sure that registry name end with a '/'.
     # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
-    registry:
+    registry: docker.io/
     repository: openebs/zfs-driver
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 2.9.0-develop
+    tag: 2.10.0-develop
 
 role: openebs-zfs
 
