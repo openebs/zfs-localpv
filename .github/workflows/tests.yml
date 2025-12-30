@@ -1,0 +1,61 @@
+name: Tests
+
+on:
+  workflow_call:
+    inputs:
+      coverage:
+        description: Upload code coverage
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-go
+
+      - run: make test
+
+      - uses: codecov/codecov-action@v5
+        if: inputs.coverage
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.txt
+          flags: unittests
+
+  bdd-tests:
+    runs-on: ubuntu-22.04
+    needs: ["unit-tests"]
+    strategy:
+      fail-fast: true
+      matrix:
+        kubernetes: [v1.27.3]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-go
+
+      - run: make zfs-driver-image
+
+      - uses: ./.github/actions/setup-minikube
+        with:
+          kubernetes-version: ${{ matrix.kubernetes }}
+
+      - run: make bootstrap
+
+      - env:
+          OPENEBS_NAMESPACE: "openebs"
+        run: |
+          make ci
+          make helm-install
+          make sanity
+
+      - uses: codecov/codecov-action@v5
+        if: inputs.coverage
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./tests/bdd_coverage.txt,./tests/bdd_coverage_custom-node-id.txt
+          flags: bddtests

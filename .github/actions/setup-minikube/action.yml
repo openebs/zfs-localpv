@@ -1,0 +1,34 @@
+name: Setup Minikube K8s Cluster
+
+description: Setup Minikube K8s Cluster
+
+inputs:
+  kubernetes-version:
+    description: Version of K8s to install
+    required: true
+  minikube-version:
+    description: Version of minikube to install
+    required: false
+    default: 1.31.1
+
+runs:
+  using: composite
+  steps:
+    - name: Install zfs utils
+      shell: bash
+      run: sudo apt-get install zfsutils-linux -y
+
+    - name: Setup Minikube-Kubernetes
+      uses: medyagh/setup-minikube@latest
+      with:
+        cache: false
+        minikube-version: ${{ inputs.minikube-version }}
+        driver: none
+        kubernetes-version: ${{ inputs.k8s-version }}
+        cni: calico
+        start-args: "--install-addons=false"
+
+    - name: Setting environment variables
+      shell: bash
+      run: |
+        echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV

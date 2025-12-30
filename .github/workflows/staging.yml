@@ -13,100 +13,25 @@ env:
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    uses: ./.github/workflows/lint.yml
+    with:
+      tag: ${{ inputs.tag }}
 
-      - uses: cachix/install-nix-action@v22
-      - uses: rrbutani/use-nix-shell-action@v1.1.0
-        with:
-          file: shell.nix
-
-      - name: Check if the chart is publishable
-        run: |
-          ./scripts/update-chart-version.sh --tag "${TAG}" --publish-release
-
-      - name: Run chart-testing lint
-        run: ct lint --config ct.yaml
-
-  unit-tests:
-    runs-on: ubuntu-22.04
+  tests:
     needs: ["lint"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.24.7
-          cache: false
-
-      - name: Unit test
-        run: make test
-
-  bdd-tests:
-    runs-on: ubuntu-22.04
-    needs: ["unit-tests"]
-    strategy:
-      matrix:
-        kubernetes: [v1.27.3]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.24.7
-          cache: false
-
-      - name: Build images locally
-        run:  make zfs-driver-image
-
-      - name: Install zfs utils
-        run: sudo apt-get install zfsutils-linux -y
-
-      - name: Setup Minikube-Kubernetes
-        uses: medyagh/setup-minikube@latest
-        with:
-          cache: false
-          minikube-version: 1.31.1
-          driver: none
-          kubernetes-version: ${{ matrix.kubernetes }}
-          cni: calico
-          start-args: "--install-addons=false"
-
-      - name: Set env for kubeconfig
-        run: echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
-
-      - name: bootstrap
-        run: make bootstrap
-
-      - name: Run BDD tests
-        env:
-          OPENEBS_NAMESPACE: "openebs"
-        run: |
-          make ci
-          make helm-install
-          make sanity
+    uses: ./.github/workflows/tests.yml
+    with:
+      coverage: false
 
   csi-driver:
     runs-on: ubuntu-22.04
-    needs: ["bdd-tests"]
+    needs: ["tests"]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v22
-      - name: Pre-populate nix-shell
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
-          nix-shell --pure --run "echo" ./shell.nix
+      - uses: ./.github/actions/setup-nix
+        with:
+          preFetchNix: ./shell.nix
       
       - name: Set Image Org
         run: |
@@ -141,12 +66,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - uses: ./.github/actions/registry-login
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          ghcr-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push driver image
         uses: docker/build-push-action@v5
@@ -167,12 +89,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v22
-      - name: Pre-populate nix-shell
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
-          nix-shell --pure --run "echo" ./shell.nix
+      - uses: ./.github/actions/setup-nix
+        with:
+          preFetchNix: ./shell.nix
 
       - name: Set Image Org
         run: |

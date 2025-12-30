@@ -1,0 +1,60 @@
+name: Linting
+on:
+  workflow_call:
+    inputs:
+      branch-name:
+        description: 'Branch name where workflow is running on'
+        required: false
+        type: string
+      tag:
+        description: 'Tag where workflow is running on'
+        required: false
+        type: string
+      validate-codegen:
+        description: 'Validate codegen'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  go-lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: cachix/install-nix-action@v22
+      - uses: rrbutani/use-nix-shell-action@v1.1.0
+        with:
+          file: shell.nix
+
+      - name: Check if the chart follows a valid semver version
+        if: inputs.branch-name
+        run: ./scripts/validate-chart-version.sh --branch "${{ inputs.branch-name }}"
+
+      - name: Check if the chart is publishable
+        if: inputs.tag
+        run: ./scripts/update-chart-version.sh --tag "${{ inputs.tag }}" --publish-release
+
+      - run: ct lint --config ct.yaml
+
+      - run: make golint
+        if: inputs.branch-name
+
+  validate-codegen:
+    runs-on: ubuntu-22.04
+    if: ${{ inputs.validate-codegen }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-go
+
+      - name: Helm tool installer
+        uses: Azure/setup-helm@v4.2.0
+
+      - name: Verify kubegen
+        run: make verify-kubegen
+
+      - name: Verify manifests
+        run: make verify-manifests

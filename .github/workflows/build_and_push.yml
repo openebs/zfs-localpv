@@ -14,125 +14,20 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    uses: ./.github/workflows/lint.yml
+    with:
+      branch-name: ${{ github.ref_name }}
 
-      - uses: cachix/install-nix-action@v22
-      - uses: rrbutani/use-nix-shell-action@v1.1.0
-        with:
-          file: shell.nix
-
-      - name: Check if the chart follows a valid semver version
-        run: |
-          BRANCH=${{ github.ref_name }}
-          ./scripts/validate-chart-version.sh --branch $BRANCH
-
-      - name: Run chart-testing lint
-        run: ct lint --config ct.yaml
-
-      - name: Run golint
-        run: make golint
-
-  unit-tests:
-    runs-on: ubuntu-22.04
+  tests:
     needs: ["lint"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.24.7
-          cache: false
-
-      - name: Set go env
-        run: |
-          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
-          echo "GOCACHE=$(go env GOCACHE)" >> $GITHUB_ENV
-
-      - name: Unit test
-        run: make test
-
-      - name: Upload Coverage Report
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.txt
-          name: coverage-$(date +%s)
-          flags: unittests
-
-  bdd-tests:
-    runs-on: ubuntu-22.04
-    needs: ["unit-tests"]
-    strategy:
-      fail-fast: true
-      matrix:
-        kubernetes: [v1.27.3]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.24.7
-          cache: false
-
-      - name: Set go env
-        run: |
-          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
-          echo "GOCACHE=$(go env GOCACHE)" >> $GITHUB_ENV
-
-      - name: Build images locally
-        run: make zfs-driver-image
-
-      - name: Install zfs utils
-        run: sudo apt-get install zfsutils-linux -y
-
-      - name: Setup Minikube-Kubernetes
-        uses: medyagh/setup-minikube@latest
-        with:
-          cache: false
-          minikube-version: 1.31.1
-          driver: none
-          kubernetes-version: ${{ matrix.kubernetes }}
-          cni: calico
-          start-args: "--install-addons=false"
-
-      - name: Setting environment variables
-        run: |
-          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
-
-      - name: bootstrap
-        run: make bootstrap
-
-      - name: Running tests
-        env:
-          OPENEBS_NAMESPACE: "openebs"
-        run: |
-          make ci
-          make helm-install
-          make sanity
-
-      - name: Upload CI Test Coverage Report
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./tests/bdd_coverage.txt,./tests/bdd_coverage_custom-node-id.txt
-          name: coverage-bdd_coverage-$(date +%s)
-          flags: bddtests
+    uses: ./.github/workflows/tests.yml
+    secrets: inherit
 
   csi-driver:
     runs-on: ubuntu-22.04
-    needs: ["bdd-tests"]
+    needs: ["tests"]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set Image Org
         run: |
@@ -179,25 +74,13 @@ jobs:
         with:
           version: v0.13.1
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - uses: ./.github/actions/registry-login
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to Quay
-        uses: docker/login-action@v3
-        with:
-          registry: quay.io
-          username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.QUAY_TOKEN }}
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          docker-user: ${{ secrets.DOCKERHUB_USERNAME }}
+          docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
+          quay-user: ${{ secrets.QUAY_USERNAME }}
+          quay-token: ${{ secrets.QUAY_TOKEN }}
+          ghcr-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & Push Image
         uses: docker/build-push-action@v5
