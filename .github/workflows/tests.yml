@@ -23,8 +23,9 @@ jobs:
         if: inputs.coverage
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.txt
+          directory: ./coverage
           flags: unittests
+          fail_ci_if_error: true
 
   bdd-tests:
     runs-on: ubuntu-22.04
@@ -57,5 +58,7 @@ jobs:
         if: inputs.coverage
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
           files: ./tests/bdd_coverage.txt,./tests/bdd_coverage_custom-node-id.txt
           flags: bddtests
+          fail_ci_if_error: true
