@@ -39,6 +39,7 @@ Where: <br />
     - `style`     - formatting, missing semi colons, linting fix etc; no significant production code changes
     - `test`      - adding missing tests, refactoring tests; no production code change
     - `refactor`  - refactoring production code, eg. renaming a variable or function name, there should not be any significant production code changes
+    - `ci`        - for changes to the CI running on github actions
 
 - `scope` is a single word that best describes where the changes fit.
   Most common scopes are like:
