@@ -37,9 +37,13 @@ spec:
       hostNetwork: true
 {{- if .Values.zfsNode.initContainers }}
       initContainers:
+{{- if eq (kindOf .Values.zfsNode.initContainers) "slice" }}
+{{ toYaml .Values.zfsNode.initContainers | indent 10 }}
+{{- else }}
 {{- range $key, $value := .Values.zfsNode.initContainers }}
         - name: {{ $key }}
 {{ toYaml $value | indent 10 }}
+{{- end }}
 {{- end }}
 {{- end }}
       containers:
