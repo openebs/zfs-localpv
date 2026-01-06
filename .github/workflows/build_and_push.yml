@@ -25,7 +25,7 @@ jobs:
 
   csi-driver:
     runs-on: ubuntu-22.04
-    needs: ["tests"]
+    needs: ["lint"]
     steps:
       - uses: actions/checkout@v4
 
@@ -99,7 +99,7 @@ jobs:
 
   release-chart:
     runs-on: ubuntu-22.04
-    needs: ["csi-driver"]
+    needs: ["csi-driver", "tests"]
     steps:
       - uses: actions/checkout@v4
       - name: Publish zfs localpv develop or prerelease helm chart

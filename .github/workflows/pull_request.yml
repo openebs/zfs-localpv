@@ -26,7 +26,7 @@ jobs:
 
   csi-driver:
     runs-on: ubuntu-22.04
-    needs: ["tests"]
+    needs: ["lint"]
     steps:
       - uses: actions/checkout@v4
 
