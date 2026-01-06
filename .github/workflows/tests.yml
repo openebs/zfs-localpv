@@ -34,6 +34,7 @@ jobs:
       fail-fast: true
       matrix:
         kubernetes: [v1.27.3]
+        profile: [regular, custom-node-id]
     steps:
       - uses: actions/checkout@v4
 
@@ -50,9 +51,11 @@ jobs:
       - env:
           OPENEBS_NAMESPACE: "openebs"
         run: |
-          make ci
-          make helm-install
-          make sanity
+          make ci profile=${{ matrix.profile }}
+          if [ "${{ matrix.profile }}" = "regular" ]; then
+            make helm-install
+            make sanity
+          fi
 
       - uses: codecov/codecov-action@v5
         if: inputs.coverage

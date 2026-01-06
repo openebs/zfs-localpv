@@ -234,9 +234,10 @@ image-ref:
 	@echo ${IMAGE_ORG}/${CSI_DRIVER}:${IMAGE_TAG}
 
 .PHONY: ci
+profile ?= regular
 ci:
-	@echo "--> Running ci test";
-	./ci/ci-test.sh run
+	@echo "--> Running ci test with profile: $(profile)"
+	./ci/ci-test.sh run --profile "$(profile)"
 
 .PHONY: helm-install
 helm-install:
