@@ -9,7 +9,7 @@ inputs:
   minikube-version:
     description: Version of minikube to install
     required: false
-    default: 1.31.1
+    default: 1.37.0
 
 runs:
   using: composite
