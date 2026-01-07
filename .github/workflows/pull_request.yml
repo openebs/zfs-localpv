@@ -14,164 +14,21 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    uses: ./.github/workflows/lint.yml
+    with:
+      validate-codegen: true
+      branch-name: ${{ github.event.pull_request.base.ref }}
 
-      - name: Shellcheck
-        uses: reviewdog/action-shellcheck@v1
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-review
-          path: "."
-          pattern: "*.sh"
-
-      - uses: cachix/install-nix-action@v22
-      - uses: rrbutani/use-nix-shell-action@v1.1.0
-        with:
-          file: shell.nix
-
-      - name: Check if the chart follows a valid semver version
-        run: |
-          branch_name="${{ github.event.pull_request.base.ref }}"
-          ./scripts/validate-chart-version.sh --branch $branch_name
-
-      - name: Run chart-testing lint
-        run: ct lint --config ct.yaml
-
-      - name: Run golint
-        run: make golint
-
-  validate_codegen:
-    runs-on: ubuntu-22.04
-    env:
-      GOPATH: ${{ github.workspace }}/go
-      GOBIN: ${{ github.workspace }}/go/bin
-    defaults:
-      run:
-        working-directory: ${{ env.GOPATH }}/src/github.com/openebs/zfs-localpv
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          path: ${{ env.GOPATH }}/src/github.com/openebs/zfs-localpv
-
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.24.7
-          cache: false
-
-      - name: Helm tool installer
-        uses: Azure/setup-helm@v4.2.0
-
-      - name: Verify kubegen
-        run: |
-          make verify-kubegen
-
-      - name: Verify manifests
-        run: |
-          make verify-manifests
-
-  unit-tests:
-    runs-on: ubuntu-22.04
-    needs: ["lint", "validate_codegen"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.24.7
-          cache: false
-
-      - name: Set go env
-        run: |
-          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
-          echo "GOCACHE=$(go env GOCACHE)" >> $GITHUB_ENV
-
-      - name: Unit test
-        run: make test
-
-      - name: Upload Coverage Report
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.txt
-          name: coverage-$(date +%s)
-          flags: unittests
-
-  bdd-tests:
-    runs-on: ubuntu-22.04
-    needs: ["unit-tests"]
-    strategy:
-      fail-fast: true
-      matrix:
-        kubernetes: [v1.27.3]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.24.7
-          cache: false
-
-      - name: Set go env
-        run: |
-          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
-          echo "GOCACHE=$(go env GOCACHE)" >> $GITHUB_ENV
-
-      - name: Build images locally
-        run: make zfs-driver-image
-
-      - name: Install zfs utils
-        run: sudo apt-get install zfsutils-linux -y
-
-      - name: Setup Minikube-Kubernetes
-        uses: medyagh/setup-minikube@latest
-        with:
-          cache: false
-          minikube-version: 1.31.1
-          driver: none
-          kubernetes-version: ${{ matrix.kubernetes }}
-          cni: calico
-          start-args: "--install-addons=false"
-
-      - name: Setting environment variables
-        run: |
-          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
-
-      - name: bootstrap
-        run: make bootstrap
-
-      - name: Running tests
-        env:
-          OPENEBS_NAMESPACE: "openebs"
-        run: |
-          make ci
-          make helm-install
-          make sanity
-
-      - name: Upload CI Test Coverage Report
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./tests/bdd_coverage.txt,./tests/bdd_coverage_custom-node-id.txt
-          name: coverage-bdd_coverage-$(date +%s)
-          flags: bddtests
+  tests:
+    needs: ["lint"]
+    uses: ./.github/workflows/tests.yml
+    secrets: inherit
 
   csi-driver:
     runs-on: ubuntu-22.04
-    needs: ["bdd-tests"]
+    needs: ["lint"]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

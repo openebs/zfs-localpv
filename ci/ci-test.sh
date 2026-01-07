@@ -6,6 +6,8 @@ SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]:-"$0"}")")"
 SNAP_CLASS=deploy/sample/zfssnapclass.yaml
 export OPENEBS_NAMESPACE=${OPENEBS_NAMESPACE:-openebs}
 TEST_DIR="$SCRIPT_DIR"/../tests
+DEFAULT_TEST_PROFILES="regular"
+ALLOWED_TEST_PROFILES="regular custom-node-id all"
 
 CRDS_TO_DELETE_ON_CLEANUP="zfsrestores.zfs.openebs.io zfssnapshots.zfs.openebs.io zfsvolumes.zfs.openebs.io zfsbackups.zfs.openebs.io zfsnodes.zfs.openebs.io"
 
@@ -26,9 +28,10 @@ Options for run:
   -r, --reset                  Clean before running the tests.
   -x, --no-cleanup             Don't cleanup after running the tests.
   -b, --build-always           Build and load the images before running the tests. [ By default image is built if not present only ]
+  -p, --profile      "<str>"   The test profile to run [ default: $DEFAULT_TEST_PROFILES ] [ allowed: $ALLOWED_TEST_PROFILES ]
 
 Examples:
-  $(basename "${0}") run -rxb
+  $(basename "${0}") run -rxb -p "all"
 EOF
 }
 
@@ -37,7 +40,7 @@ echo_err() {
 }
 
 needs_help() {
-  [ -n "$1" ] && echo_err "$1\n"
+  [ -n "${1:-}" ] && echo_err "$1\n"
   help
   exit 1
 }
@@ -274,6 +277,28 @@ maybe_load_image() {
   return 0
 }
 
+set_test_profiles() {
+  local profiles="$1"
+  local set_profiles=""
+
+  for profile in $profiles; do
+    if [[ ! " $ALLOWED_TEST_PROFILES " =~ " $profile " ]]; then
+      needs_help "$profile is not allowed!"
+    fi
+    if [[ ! " $set_profiles " =~ " $profile " ]]; then
+      set_profiles="$set_profiles $profile"
+    fi
+  done
+
+  echo "$set_profiles"
+}
+
+has_profile() {
+  local profiles="$1"
+  local profile="$2"
+
+  [[ " $profiles " =~ " $profile " ]] || [[ " $profiles " =~ " all " ]]
+}
 
 # allow override
 if [ -z "${KUBECONFIG:-}" ]
@@ -285,6 +310,7 @@ COMMAND=
 CLEAN_BEFORE="false"
 CLEAN_AFTER="true"
 BUILD_ALWAYS="false"
+TEST_PROFILES="$DEFAULT_TEST_PROFILES"
 
 while test $# -gt 0; do
   arg="$1"
@@ -304,6 +330,11 @@ while test $# -gt 0; do
       ;;
     -h | --help)
       needs_help
+      ;;
+    -p | --profile)
+      test $# -lt 2 && needs_help "Missing value for the profile argument '$arg'."
+      TEST_PROFILES="$(set_test_profiles "$2")"
+      shift
       ;;
     -*)
       singleLetterOpts="${1:1}"
@@ -350,10 +381,14 @@ case "$COMMAND" in
 
     helm_install
 
-    runTestSuite bdd_coverage.txt "!custom-node-id"
+    if has_profile "$TEST_PROFILES" "regular"; then
+      runTestSuite bdd_coverage.txt "!custom-node-id"
+    fi
 
-    prepareCustomNodeIdEnv
-    runTestSuite bdd_coverage_custom-node-id.txt "custom-node-id"
+    if has_profile "$TEST_PROFILES" "custom-node-id"; then
+      prepareCustomNodeIdEnv
+      runTestSuite bdd_coverage_custom-node-id.txt "custom-node-id"
+    fi
 
     printf "\n\n"
     echo "######### All test cases passed #########"

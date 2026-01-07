@@ -14,23 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v22
-      - name: Pre-populate nix-shell
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
-          nix-shell --pure --run "echo" ./shell.nix
+      - uses: ./.github/actions/setup-nix
+        with:
+          preFetchNix: ./shell.nix
 
       - name: Test the chart version updater script
-        run: |
-            nix-shell --pure --run "./scripts/test-update-chart-version.sh" ./shell.nix
+        run: nix-shell --pure --run "./scripts/test-update-chart-version.sh" ./shell.nix
 
       - name: Modify the chart version based on the tag
         run: |
           nix-shell --pure ./shell.nix --run "./scripts/update-chart-version.sh --tag ${{ github.ref_name }} > /tmp/openebs-file"
           echo "BASE=$(cat /tmp/openebs-file)" >> $GITHUB_ENV
+      
       - name: Create Pull Request to release
-        if:  ${{ env.BASE }}
+        if: ${{ env.BASE }}
         id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
@@ -54,24 +51,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - run: |
-          git checkout develop
+      - run: git checkout develop
 
-      - uses: cachix/install-nix-action@v22
-      - name: Pre-populate nix-shell
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
-          nix-shell --pure --run "echo" ./shell.nix
+      - uses: ./.github/actions/setup-nix
+        with:
+          preFetchNix: ./shell.nix
 
       - name: Test the chart version updater script
-        run: |
-            nix-shell --pure --run "./scripts/test-update-chart-version.sh" ./shell.nix
+        run: nix-shell --pure --run "./scripts/test-update-chart-version.sh" ./shell.nix
 
       - name: Modify the chart version based on the branch name for develop
         run: |
-            branch_name=${{ github.ref_name }}
-            nix-shell --pure --run "./scripts/update-chart-version.sh --branch $branch_name --type develop" ./shell.nix
+          branch_name=${{ github.ref_name }}
+          nix-shell --pure --run "./scripts/update-chart-version.sh --branch $branch_name --type develop" ./shell.nix
 
       - name: Create Pull Request to develop
         id: cpr
@@ -96,16 +88,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v22
-      - name: Pre-populate nix-shell
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
-          nix-shell --pure --run "echo" ./shell.nix
+      - uses: ./.github/actions/setup-nix
+        with:
+          preFetchNix: ./shell.nix
 
       - name: Test the chart version updater script
-        run: |
-            nix-shell --pure --run "./scripts/test-update-chart-version.sh" ./shell.nix
+        run: nix-shell --pure --run "./scripts/test-update-chart-version.sh" ./shell.nix
 
       - name: Modify the chart version based on the branch name for release
         run: |

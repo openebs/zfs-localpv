@@ -1,0 +1,45 @@
+name: Setup Nix
+
+description: GC Disk, install nix
+
+inputs:
+  preFetchNix:
+    description: Pre-run nix-shell for downloading the dependencies
+    required: false
+    default: ""
+  gc:
+    description: Clear up storage from worker
+    required: false
+    default: false
+
+runs:
+  using: composite
+  steps:
+    - name: Disk Garbage Collection
+      shell: bash
+      if: ${{ runner.os == 'Linux' && inputs.gc }}
+      run: |
+        lsblk -fm
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /usr/local/.ghcup
+        sudo rm -rf /opt/hostedtoolcache
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/share/swift
+        lsblk -fm
+    - id: nixpkgs
+      shell: bash
+      run: echo "nix_path=nixpkgs=$(jq -r '.nixpkgs.url' nix/sources.json)" >> $GITHUB_OUTPUT
+    - uses: cachix/install-nix-action@v31.3.0
+      with:
+        nix_path: "${{ steps.nixpkgs.outputs.nix_path }}"
+        install_options: ${{ runner.os == 'Linux' && '--no-daemon' || '' }}
+        extra_nix_config: |
+          keep-env-derivations = true
+          keep-outputs = true
+      env:
+        HOME: /home/runner
+        NIX_PATH: "${{ steps.nixpkgs.outputs.nix_path }}"
+    - name: PreFetch Nix
+      if: ${{ inputs.preFetchNix }}
+      shell: bash
+      run: nix-build ${{ inputs.preFetchNix }}

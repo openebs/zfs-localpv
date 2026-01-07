@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 
 set -e
-echo "" > coverage.txt
+
+TOP_LEVEL=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
+COVERAGE="$TOP_LEVEL/coverage"
+
+mkdir -p "$COVERAGE"
+rm "$COVERAGE"/* 2>/dev/null || :
 
 for d in $(go list ./... | grep -v 'pkg/apis\|pkg/generated\|tests'); do
     #TODO - Include -race while creating the coverage profile.
-    go test -coverprofile=profile.out -covermode=atomic $d
-    if [ -f profile.out ]; then
-        cat profile.out >> coverage.txt
-        rm profile.out
-    fi
+    profile="$COVERAGE/unit-coverage-$(date +%s%N).txt"
+    go test -coverprofile="$profile" -covermode=atomic $d
 done
