@@ -1,0 +1,20 @@
+queue_rules:
+  - name: default
+    update_method: rebase
+    branch_protection_injection_mode: merge
+    update_bot_account: openebs-ci
+merge_queue:
+  max_parallel_checks: 1
+pull_request_rules:
+  - name: auto-label and approve backport PRs
+    conditions:
+      - author=mergify[bot]
+      - title~=\(backport \#[0-9]+\)$
+    actions:
+      label:
+        add:
+          - kind/backport
+      review:
+        type: APPROVE
+        message: "Automatically approved backport PR"
+        bot_account: openebs-ci
