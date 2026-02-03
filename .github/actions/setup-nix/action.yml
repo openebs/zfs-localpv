@@ -11,6 +11,9 @@ inputs:
     description: Clear up storage from worker
     required: false
     default: false
+  enable_kvm:
+    required: false
+    default: false
 
 runs:
   using: composite
@@ -28,18 +31,33 @@ runs:
         lsblk -fm
     - id: nixpkgs
       shell: bash
-      run: echo "nix_path=nixpkgs=$(jq -r '.nixpkgs.url' nix/sources.json)" >> $GITHUB_OUTPUT
+      run: |
+        echo "nix_path=nixpkgs=$(jq -r '.nixpkgs.url' nix/sources.json)" >> $GITHUB_OUTPUT
+        echo "home=${HOME:-/home/runner}" >> $GITHUB_OUTPUT
     - uses: cachix/install-nix-action@v31.3.0
       with:
         nix_path: "${{ steps.nixpkgs.outputs.nix_path }}"
         install_options: ${{ runner.os == 'Linux' && '--no-daemon' || '' }}
+        enable_kvm: ${{ inputs.enable_kvm }}
         extra_nix_config: |
           keep-env-derivations = true
           keep-outputs = true
       env:
-        HOME: /home/runner
+        HOME: ${{ steps.nixpkgs.outputs.home }}
         NIX_PATH: "${{ steps.nixpkgs.outputs.nix_path }}"
     - name: PreFetch Nix
       if: ${{ inputs.preFetchNix }}
       shell: bash
-      run: nix-build ${{ inputs.preFetchNix }}
+      run: |
+        IFS=',' read -ra arr <<< "${{ inputs.preFetchNix }}"
+        for nix in "${arr[@]}"; do
+          echo "::group::Step: nix-build $nix"
+          start=$(date +%s)
+
+          nix-build "$nix"
+
+          end=$(date +%s)
+          echo "::endgroup::"
+
+          echo "⏱️ $nix took $(( end - start ))s"
+        done
