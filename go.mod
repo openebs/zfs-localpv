@@ -1,16 +1,14 @@
 module github.com/openebs/zfs-localpv
 
-go 1.24.0
-
-toolchain go1.24.7
+go 1.24.12
 
 require (
 	github.com/container-storage-interface/spec v1.11.0
 	github.com/kubernetes-csi/csi-lib-utils v0.9.0
 	github.com/onsi/ginkgo/v2 v2.27.1
 	github.com/onsi/gomega v1.38.2
-	github.com/openebs/google-analytics-4 v0.3.0
-	github.com/openebs/lib-csi v0.10.0
+	github.com/openebs/google-analytics-4 v0.4.0
+	github.com/openebs/lib-csi v0.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1

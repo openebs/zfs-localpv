@@ -24,22 +24,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: cachix/install-nix-action@v22
-      - uses: rrbutani/use-nix-shell-action@v1.1.0
+      - uses: ./.github/actions/setup-nix
         with:
-          file: shell.nix
+          preFetchNix: ./shell.nix
 
       - name: Check if the chart follows a valid semver version
         if: inputs.branch-name
-        run: ./scripts/validate-chart-version.sh --branch "${{ inputs.branch-name }}"
+        run: nix-shell --run "./scripts/validate-chart-version.sh --branch ${{ inputs.branch-name }}"
 
       - name: Check if the chart is publishable
         if: inputs.tag
-        run: ./scripts/update-chart-version.sh --tag "${{ inputs.tag }}" --publish-release
+        run: nix-shell --run "./scripts/update-chart-version.sh --tag ${{ inputs.tag }} --publish-release"
 
-      - run: ct lint --config ct.yaml
+      - run: nix-shell --run "ct lint --config ct.yaml"
 
-      - run: make golint
+      - run: nix-shell --run "make golint"
         if: inputs.branch-name
 
   validate-codegen:

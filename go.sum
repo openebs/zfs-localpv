@@ -249,10 +249,10 @@ github.com/onsi/gomega v0.0.0-20170829124025-dcabb60a477c/go.mod h1:C1qb7wdrVGGV
 github.com/onsi/gomega v1.7.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.38.2 h1:eZCjf2xjZAqe+LeWvKb5weQ+NcPwX84kqJ0cZNxok2A=
 github.com/onsi/gomega v1.38.2/go.mod h1:W2MJcYxRGV63b418Ai34Ud0hEdTVXq9NW9+Sx6uXf3k=
-github.com/openebs/google-analytics-4 v0.3.0 h1:rAv9BC476ennyGPWAy4D3vU7TlxEKiynbLUP3VgeBUc=
-github.com/openebs/google-analytics-4 v0.3.0/go.mod h1:lKjvRs6HAYOlOTYjtOUp35iTutoXzRL0hOeVAvLAfZI=
-github.com/openebs/lib-csi v0.10.0 h1:0tCY0J86+qVdkTh7/MvUpqcExegP0TfSpH7G9Tauevs=
-github.com/openebs/lib-csi v0.10.0/go.mod h1:Aw6mFUQT6LMVuJlq04vv6R2bGHdzIeHLXUKvzjIW47M=
+github.com/openebs/google-analytics-4 v0.4.0 h1:MPJMJebub+k2hXiqcXe+HAsALdsVKCuPQrw5SH8AW/g=
+github.com/openebs/google-analytics-4 v0.4.0/go.mod h1:5cx3in+VLQ+29S/s+QvyFwJx01BcX5s2YIIv1/Xu2jw=
+github.com/openebs/lib-csi v0.11.0 h1:kvhikmGI1gwBcupIujUp1P6kIkF7vPvHAN2vl2aBMBA=
+github.com/openebs/lib-csi v0.11.0/go.mod h1:HaSwqKRn9g9NBNi4sR5pLdGuCLNgTS1/uCjixLEbSQ8=
 github.com/peterbourgon/diskv v2.0.1+incompatible/go.mod h1:uqqh8zWWbv1HBMNONnaR/tNboyR3/BZd58JJSHlUSCU=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
