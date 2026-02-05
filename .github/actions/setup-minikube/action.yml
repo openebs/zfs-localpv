@@ -24,7 +24,7 @@ runs:
         cache: false
         minikube-version: ${{ inputs.minikube-version }}
         driver: none
-        kubernetes-version: ${{ inputs.k8s-version }}
+        kubernetes-version: ${{ inputs.kubernetes-version }}
         cni: calico
         start-args: "--install-addons=false"
 

@@ -38,6 +38,8 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.13.1
 
       - name: Build
         uses: docker/build-push-action@v5
