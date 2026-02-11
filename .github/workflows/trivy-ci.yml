@@ -1,0 +1,51 @@
+name: Trivy Check CI
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 3 1,15 * *'
+
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+
+jobs:
+  trivy-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-nix
+        with:
+          preFetchNix: shell.nix
+
+      - name: Helm dependency update
+        run: |
+          nix-shell --run "
+          cd deploy/helm/charts
+          helm dependency update .
+          "
+
+      - name: Render Helm templates
+        run: |
+          nix-shell --run '
+          cd deploy/helm/charts
+          CHART_NAME=$(yq ".name" Chart.yaml)
+          RELEASE_NAME=${RELEASE_NAME:-$CHART_NAME}
+          helm template "$RELEASE_NAME" . > rendered.yaml
+          '
+
+      - name: Trivy Helm misconfiguration scan
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+            scan-type: config
+            scan-ref: deploy/helm/charts/rendered.yaml
+            format: sarif
+            output: deploy/helm/charts/trivy-helm.sarif
+          
+      - name: Upload Helm SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: deploy/helm/charts/trivy-helm.sarif
+          category: trivy-helm
