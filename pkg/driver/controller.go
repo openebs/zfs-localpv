@@ -352,9 +352,9 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 		return "", status.Error(codes.NotFound, err.Error())
 	}
 
-	if vol.Spec.PoolName != pool {
+	if !isSamePool(vol.Spec.PoolName, pool) {
 		return "", status.Errorf(codes.Internal,
-			"clone: different pool src pool %s dst pool %s",
+			"clone to a different pool src pool %s dst pool %s",
 			vol.Spec.PoolName, pool)
 	}
 
@@ -413,7 +413,7 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 		return "", status.Error(codes.NotFound, err.Error())
 	}
 
-	if snap.Spec.PoolName != pool {
+	if !isSamePool(snap.Spec.PoolName, pool) {
 		return "", status.Errorf(codes.Internal,
 			"clone to a different pool src pool %s dst pool %s",
 			snap.Spec.PoolName, pool)
@@ -577,6 +577,12 @@ func (cs *controller) DeleteVolume(
 	sendEventOrIgnore("", volumeID, vol.Spec.Capacity, analytics.VolumeDeprovision)
 
 	return csipayload.NewDeleteVolumeResponseBuilder().Build(), nil
+}
+
+func isSamePool(firstLocation, secondLocation string) bool {
+	firstPool, _, _ := strings.Cut(firstLocation, "/")
+	secondPool, _, _ := strings.Cut(secondLocation, "/")
+	return firstPool == secondPool
 }
 
 func isValidVolumeCapabilities(volCaps []*csi.VolumeCapability) bool {
