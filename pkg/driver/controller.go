@@ -339,36 +339,36 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 }
 
 // CreateVolClone creates the clone from a volume
-func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol string) (string, error) {
+func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVolName string) (string, error) {
 	volName := strings.ToLower(req.GetName())
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
-	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
+	destPoolName := helpers.GetInsensitiveParameter(&parameters, "poolname")
 	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 	volsize := strconv.FormatInt(int64(size), 10)
 
-	vol, err := zfs.GetZFSVolume(srcVol)
+	srcVol, err := zfs.GetZFSVolume(srcVolName)
 	if err != nil {
 		return "", status.Error(codes.NotFound, err.Error())
 	}
 
-	if !isSamePool(vol.Spec.PoolName, pool) {
+	if !isSamePool(srcVol.Spec.PoolName, destPoolName) {
 		return "", status.Errorf(codes.Internal,
 			"clone to a different pool src pool %s dst pool %s",
-			vol.Spec.PoolName, pool)
+			srcVol.Spec.PoolName, destPoolName)
 	}
 
-	if vol.Spec.Capacity != volsize {
+	if srcVol.Spec.Capacity != volsize {
 		return "", status.Error(codes.Internal, "clone: volume size is not matching")
 	}
 
-	selected := vol.Spec.OwnerNodeID
+	selected := srcVol.Spec.OwnerNodeID
 
-	labels := map[string]string{zfs.ZFSSrcVolKey: vol.Name}
+	labels := map[string]string{zfs.ZFSSrcVolKey: srcVol.Name}
 
 	// create the clone from the source volume
 
-	volObj, err := volbuilder.NewBuilder().
+	destVolObj, err := volbuilder.NewBuilder().
 		WithName(volName).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		WithLabels(labels).Build()
@@ -376,11 +376,12 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 		return "", err
 	}
 
-	volObj.Spec = vol.Spec
+	destVolObj.Spec = srcVol.Spec
+	destVolObj.Spec.PoolName = destPoolName
 	// use the snapshot name same as new volname
-	volObj.Spec.SnapName = vol.Name + "@" + volName
+	destVolObj.Spec.SnapName = srcVol.Name + "@" + volName
 
-	_, err = zfs.ProvisionVolume(ctx, volObj)
+	_, err = zfs.ProvisionVolume(ctx, destVolObj)
 	if err != nil {
 		return "", status.Errorf(codes.Internal,
 			"clone: not able to provision the volume err : %s", err.Error())
@@ -394,7 +395,7 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 	volName := strings.ToLower(req.GetName())
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
-	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
+	destPoolName := helpers.GetInsensitiveParameter(&parameters, "poolname")
 	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 	volsize := strconv.FormatInt(int64(size), 10)
 
@@ -413,10 +414,10 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 		return "", status.Error(codes.NotFound, err.Error())
 	}
 
-	if !isSamePool(snap.Spec.PoolName, pool) {
+	if !isSamePool(snap.Spec.PoolName, destPoolName) {
 		return "", status.Errorf(codes.Internal,
 			"clone to a different pool src pool %s dst pool %s",
-			snap.Spec.PoolName, pool)
+			snap.Spec.PoolName, destPoolName)
 	}
 
 	if snap.Spec.Capacity != volsize {
@@ -425,7 +426,7 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 
 	selected := snap.Spec.OwnerNodeID
 
-	volObj, err := volbuilder.NewBuilder().
+	destVolObj, err := volbuilder.NewBuilder().
 		WithName(volName).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		Build()
@@ -433,10 +434,11 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 		return "", err
 	}
 
-	volObj.Spec = snap.Spec
-	volObj.Spec.SnapName = strings.ToLower(snapshot)
+	destVolObj.Spec = snap.Spec
+	destVolObj.Spec.PoolName = destPoolName
+	destVolObj.Spec.SnapName = strings.ToLower(snapshot)
 
-	_, err = zfs.ProvisionVolume(ctx, volObj)
+	_, err = zfs.ProvisionVolume(ctx, destVolObj)
 	if err != nil {
 		return "", status.Errorf(codes.Internal,
 			"not able to provision the clone volume err : %s", err.Error())
