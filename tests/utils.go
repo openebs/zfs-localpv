@@ -306,6 +306,29 @@ func createEncryptedStorageClass() {
 	gomega.Expect(err).To(gomega.BeNil(), "while creating an encrypted storageclass {%s}", scName)
 }
 
+func createStorageClassInDataset(scName string) {
+	var (
+		err error
+	)
+
+	parameters := map[string]string{
+		"poolname": fmt.Sprintf("%s/volumes", POOLNAME),
+		"fstype":   "zfs",
+	}
+
+	ginkgo.By("building a storage class under a dataset")
+	scObj, err = sc.NewBuilder().
+		WithGenerateName(scName).
+		WithVolumeExpansion(true).
+		WithParametersNew(parameters).
+		WithProvisioner(ZFSProvisioner).Build()
+	gomega.Expect(err).ShouldNot(gomega.HaveOccurred(),
+		"while building storageclass obj under a dataset with prefix {%s}", scName)
+
+	scObj, err = SCClient.Create(scObj)
+	gomega.Expect(err).To(gomega.BeNil(), "while creating a storageclass under a dataset {%s}", scName)
+}
+
 // VerifyZFSVolume verify the properties of a zfs-volume
 func VerifyZFSVolume() {
 	ginkgo.By("fetching zfs volume")
