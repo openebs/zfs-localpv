@@ -37,7 +37,7 @@ jobs:
           '
 
       - name: Trivy Helm misconfiguration scan
-        uses: aquasecurity/trivy-action@0.34.2
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
             scan-type: config
             scan-ref: deploy/helm/charts/rendered.yaml
