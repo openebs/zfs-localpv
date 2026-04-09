@@ -264,7 +264,10 @@ func MountFilesystem(vol *apis.ZFSVolume, mount *MountInfo) error {
 	// creating the directory with 0750 permission so that it can be accessed by other person.
 	// if the directory already exist(old k8s), the creator should set the proper permission.
 	if err := os.MkdirAll(mount.MountPath, 0750); err != nil {
-		return status.Errorf(codes.Internal, "Could not create dir {%q}, err: %v", mount.MountPath, err)
+		// the mount may be broken, but present, so proceed to ensure idempotency
+		if !isBrokenMount(mount.MountPath) {
+			return status.Errorf(codes.Internal, "Could not create dir {%q}, err: %v", mount.MountPath, err)
+		}
 	}
 
 	switch vol.Spec.VolumeType {
