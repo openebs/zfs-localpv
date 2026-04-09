@@ -18,6 +18,8 @@ package tests
 
 import (
 	. "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("[zfspv] TEST VOLUME PROVISIONING", func() {
@@ -25,6 +27,7 @@ var _ = Describe("[zfspv] TEST VOLUME PROVISIONING", func() {
 		It("Running zfs volume Creation Test", volumeCreationTest)
 		It("Running zfs volume Creation Test with custom node id", Label("custom-node-id"), volumeCreationTest)
 		It("Running encrypted volume creation test", encryptedVolCreationTest)
+		It("Running zfs volume test with different paths under the same pool", underDatasetVolCreationTest)
 	})
 })
 
@@ -176,6 +179,41 @@ func encryptedVolCreationTest() {
 	deletePVC(pvcNameFS)
 
 	By("Deleting storage class", deleteStorageClass)
+}
+
+func underDatasetVolCreationTest() {
+	By("Creating storage class", createStorageClass)
+	By("Creating storage class with volumes under dataset", func() { createStorageClassInDataset(scName + "-dataset") })
+	By("creating and verifying PVC bound status", func() { createAndVerifyPVC(pvcNameFS) })
+
+	By("Creating and deploying app pod", func() { createDeployVerifyApp(appNameFS, pvcNameFS) })
+	By("verifying ZFSVolume object", VerifyZFSVolume)
+
+	createSnapshot(pvcNameFS, snapNameFS)
+	verifySnapshotCreated(snapNameFS)
+
+	createClone(clonePvcNameFS, snapNameFS, scObj.Name+"-dataset", "Filesystem")
+	By("Creating and deploying clone app pod", func() { createDeployVerifyCloneApp(cloneAppNameFS, clonePvcNameFS) })
+
+	By("Deleting clone application deployment")
+	deleteAppDeployment(cloneAppNameFS)
+	By("Deleting clone pvc")
+	deletePVC(clonePvcNameFS)
+
+	By("Deleting snapshot")
+	deleteSnapshot(pvcNameFS, snapNameFS)
+
+	By("Deleting main application deployment")
+	deleteAppDeployment(appNameFS)
+	By("Deleting main pvc")
+	deletePVC(pvcNameFS)
+
+	By("Deleting storage class", deleteStorageClass)
+	By("Deleting storage class", func() {
+		err := SCClient.Delete(scObj.Name+"-dataset", &metav1.DeleteOptions{})
+		gomega.Expect(err).To(gomega.BeNil(),
+			"while deleting zfs storageclass {%s}", scObj.Name+"-dataset")
+	})
 }
 
 func volumeCreationTest() {

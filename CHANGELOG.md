@@ -1,3 +1,11 @@
+v2.10.0 / TBC
+
+## New Features and Enhancements
+
+- **Support cloning from one dataset/root on a pool to a different dataset/root on the same pool**
+  For a clone to succeed, source and destination need only be on the same pool,
+  they can come from different datasets. [#702](https://github.com/openebs/zfs-localpv/pull/702)
+
 v2.9.0 / TBC
 ========================
 

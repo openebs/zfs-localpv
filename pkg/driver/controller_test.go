@@ -43,3 +43,27 @@ func TestRoundOff(t *testing.T) {
 		})
 	}
 }
+
+func TestIsSamePool(t *testing.T) {
+
+	tests := map[string]struct {
+		first    string
+		second   string
+		expected bool
+	}{
+		"root of same pool":                             {first: "data", second: "data", expected: true},
+		"root and dataset of same pool":                 {first: "data", second: "data/sub1", expected: true},
+		"same dataset of same pool":                     {first: "data/sub1", second: "data/sub1", expected: true},
+		"different datasets of same pool":               {first: "data/sub1", second: "data/sub2", expected: true},
+		"roots of different pools":                      {first: "data", second: "other-data", expected: false},
+		"root and dataset of different pools":           {first: "data", second: "other-data/sub1", expected: false},
+		"identically named datasets of different pools": {first: "data/sub1", second: "other-data/sub1", expected: false},
+		"differently named datasets of different pools": {first: "data/sub1", second: "other-data/sub2", expected: false},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expected, isSamePool(test.first, test.second))
+		})
+	}
+}
