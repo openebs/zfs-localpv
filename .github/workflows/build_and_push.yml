@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: ["lint"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set Image Org
         run: |
@@ -47,7 +47,7 @@ jobs:
 
       - name: Docker meta
         id: docker_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           # add each registry to which the image needs to be pushed here
           images: |
@@ -64,15 +64,15 @@ jobs:
           echo "${{ steps.docker_meta.outputs.tags }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: all
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
-          version: v0.13.1
+          version: v0.33.0
 
       - uses: ./.github/actions/registry-login
         with:
@@ -83,7 +83,7 @@ jobs:
           ghcr-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & Push Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./buildscripts/zfs-driver/zfs-driver.Dockerfile
@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: ["csi-driver", "tests"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Publish zfs localpv develop or prerelease helm chart
         uses: stefanprodan/helm-gh-pages@master
         with:

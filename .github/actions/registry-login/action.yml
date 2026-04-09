@@ -28,14 +28,14 @@ runs:
   using: composite
   steps:
     - name: Login to Docker Hub
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       if: ${{ inputs.docker-user && inputs.docker-token }}
       with:
         username: ${{ inputs.docker-user }}
         password: ${{ inputs.docker-token }}
 
     - name: Login to Quay
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       if: ${{ inputs.quay-user && inputs.quay-token }}
       with:
         registry: quay.io
@@ -43,7 +43,7 @@ runs:
         password: ${{ inputs.quay-token }}
 
     - name: Login to GHCR
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       if: ${{ inputs.ghcr-token }}
       with:
         registry: ghcr.io

@@ -20,7 +20,7 @@ jobs:
   go-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -45,12 +45,12 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ inputs.validate-codegen }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-go
 
       - name: Helm tool installer
-        uses: Azure/setup-helm@v4.2.0
+        uses: Azure/setup-helm@v5
 
       - name: Verify kubegen
         run: make verify-kubegen
