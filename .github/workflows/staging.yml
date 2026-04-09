@@ -24,7 +24,7 @@ jobs:
       coverage: false
 
   csi-driver:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: ["lint"]
     steps:
       - uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
             DBUILD_SITE_URL=https://openebs.io
 
   release-chart:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: ["csi-driver", "tests"]
     steps:
       - uses: actions/checkout@v4

@@ -24,7 +24,7 @@ jobs:
     secrets: inherit
 
   csi-driver:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: ["lint"]
     steps:
       - uses: actions/checkout@v4
@@ -98,7 +98,7 @@ jobs:
             BRANCH=${{ env.BRANCH }}
 
   release-chart:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: ["csi-driver", "tests"]
     steps:
       - uses: actions/checkout@v4

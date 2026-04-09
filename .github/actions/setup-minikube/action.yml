@@ -18,6 +18,10 @@ runs:
       shell: bash
       run: sudo apt-get install zfsutils-linux -y
 
+    - name: Report zfs version
+      shell: bash
+      run: sudo zfs version
+
     - name: Setup Minikube-Kubernetes
       uses: medyagh/setup-minikube@latest
       with:
