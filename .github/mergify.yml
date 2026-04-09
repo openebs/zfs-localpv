@@ -18,3 +18,5 @@ pull_request_rules:
         type: APPROVE
         message: "Automatically approved backport PR"
         bot_account: openebs-ci
+merge_protections_settings:
+  reporting_method: check-runs
