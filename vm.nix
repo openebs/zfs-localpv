@@ -17,6 +17,9 @@ in
         target = ./.;
         cache = "none";
       };
+      ${if (builtins.getEnv "TERMINFO" != "") then "/terminfo" else null } = {
+        target = builtins.getEnv "TERMINFO";
+      };
     };
   };
 
@@ -38,9 +41,6 @@ in
   boot = {
     supportedFilesystems = [ "zfs" ];
     zfs.forceImportRoot = false;
-
-    # See bug https://github.com/openebs/zfs-localpv/issues/614
-    kernelPackages = pkgs.linuxPackages_6_1;
     zfs.package = pkgs.zfs;
   };
 
@@ -62,6 +62,7 @@ in
       role = "server";
       extraFlags = toString [
         "--disable=traefik"
+        "--disable=local-storage"
       ];
     };
   };
@@ -70,10 +71,11 @@ in
     enable = true;
     config = {
       safe = {
-        directory = [ "/zfs" "/zfs/nix/.go/src/github.com/kubernetes-csi/csi-test" "/zfs/nix/.go/src/github.com/kubernetes-csi/csi-test/.git" ];
+        directory = [ "/zfs" ];
       };
     };
   };
+  programs.nix-ld.enable = true;
 
   systemd.tmpfiles.rules = [
     "L+ /usr/local/bin - - - - /run/current-system/sw/bin/"
@@ -85,6 +87,7 @@ in
       CI_K3S = "true";
       GOPATH = "/zfs/nix/.go";
       EDITOR = "vim";
+      TERMINFO = "/terminfo";
     };
 
     shellAliases = {
