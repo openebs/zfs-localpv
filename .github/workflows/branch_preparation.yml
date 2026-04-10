@@ -9,10 +9,10 @@ on:
 
 jobs:
   update_release_branch_after_release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     if: ${{ github.ref_type == 'tag' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-nix
         with:
@@ -29,12 +29,10 @@ jobs:
       - name: Create Pull Request to release
         if: ${{ env.BASE }}
         id: cpr
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v8
         with:
           base: ${{ env.BASE }}
           commit-message: "chore(ci): update helm chart versions and/or git submodules"
-          committer: GitHub <noreply@github.com>
-          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           title: "Prepare release branch after release ${{ github.ref_name }}"
           labels: |
             kind/ci
@@ -45,10 +43,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
  
   update_develop_branch_on_release_branch_creation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     if: ${{ github.ref_type == 'branch' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - run: git checkout develop
@@ -67,12 +65,10 @@ jobs:
 
       - name: Create Pull Request to develop
         id: cpr
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v8
         with:
           base: develop
           commit-message: "chore(ci): update helm chart versions and/or git submodules"
-          committer: GitHub <noreply@github.com>
-          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           title: "Prepare develop branch on ${{ github.ref_name }} creation"
           labels: |
             kind/ci
@@ -83,10 +79,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   prepare_release_branch_on_creation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     if: ${{ github.ref_type == 'branch' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-nix
         with:
@@ -102,12 +98,10 @@ jobs:
 
       - name: Create Pull Request to release
         id: cpr
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v8
         with:
           base: ${{ github.ref_name }}
           commit-message: "chore(ci): update helm chart versions and/or git submodules"
-          committer: GitHub <noreply@github.com>
-          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           title: "Prepare ${{ github.ref_name }} branch"
           labels: |
             kind/ci

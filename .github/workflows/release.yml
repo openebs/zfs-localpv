@@ -7,9 +7,9 @@ on:
 
 jobs:
   release-images-and-chart:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-nix
         with:
@@ -87,7 +87,7 @@ jobs:
           charts_dir: ./deploy/helm
 
       - name: Publish chart via OCI
-        uses: appany/helm-oci-chart-releaser@v0.4.2
+        uses: appany/helm-oci-chart-releaser@v0.5
         with:
           name: zfs-localpv
           repository: ${{ github.repository_owner }}/charts
