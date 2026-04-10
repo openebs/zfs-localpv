@@ -1,3 +1,12 @@
+v2.10.0 / TBC
+========================
+
+## Bug Fixes and Improvements
+
+- **Fixed Shutdown filesystem handling**
+  Make Publish and Unpublish idempotent if the fs is shutdown
+  [#615](https://github.com/openebs/zfs-localpv/issues/615)
+
 v2.9.0 / TBC
 ========================
 

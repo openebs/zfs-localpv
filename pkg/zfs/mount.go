@@ -16,10 +16,12 @@ limitations under the License.
 package zfs
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 
 	mnt "github.com/openebs/lib-csi/pkg/mount"
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
@@ -91,7 +93,10 @@ func UmountVolume(vol *apis.ZFSVolume, targetPath string,
 	}
 
 	if pathExists, pathErr := mount.PathExists(targetPath); pathErr != nil {
-		return fmt.Errorf("Error checking if path exists: %v", pathErr)
+		// If the mount is broken, unmount it since there's nothing else to do anyway
+		if !isBrokenMount(targetPath) {
+			return fmt.Errorf("Error checking if path exists: %v", pathErr)
+		}
 	} else if !pathExists {
 		klog.Warningf(
 			"Warning: Unmount skipped because path does not exist: %v",
@@ -259,7 +264,10 @@ func MountFilesystem(vol *apis.ZFSVolume, mount *MountInfo) error {
 	// creating the directory with 0750 permission so that it can be accessed by other person.
 	// if the directory already exist(old k8s), the creator should set the proper permission.
 	if err := os.MkdirAll(mount.MountPath, 0750); err != nil {
-		return status.Errorf(codes.Internal, "Could not create dir {%q}, err: %v", mount.MountPath, err)
+		// the mount may be broken, but present, so proceed to ensure idempotency
+		if !isBrokenMount(mount.MountPath) {
+			return status.Errorf(codes.Internal, "Could not create dir {%q}, err: %v", mount.MountPath, err)
+		}
 	}
 
 	switch vol.Spec.VolumeType {
@@ -306,4 +314,14 @@ func makeFile(pathname string) error {
 		}
 	}
 	return nil
+}
+
+func isBrokenMount(mountPath string) bool {
+	_, err := os.Stat(mountPath)
+	if err != nil && errors.Is(err, syscall.EIO) {
+		// In case the mount point becomes broken, ex: filesystem shutdown
+		klog.Errorf("MountPath is broken: {%q}, err: %v", mountPath, err)
+		return true
+	}
+	return false
 }
