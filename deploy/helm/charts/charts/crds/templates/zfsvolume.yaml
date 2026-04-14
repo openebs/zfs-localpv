@@ -232,12 +232,20 @@ spec:
             description: VolStatus string that specifies the current state of the
               volume provisioning request.
             properties:
+              message:
+                description: |-
+                  Message is a human-readable description of why the volume is in the
+                  current state. Populated when State is Failed to help operators diagnose
+                  ZFS failures without inspecting node-agent logs.
+                maxLength: 1024
+                type: string
               state:
                 description: |-
                   State specifies the current state of the volume provisioning request.
                   The state "Pending" means that the volume creation request has not
                   processed yet. The state "Ready" means that the volume has been created
-                  and it is ready for the use.
+                  and it is ready for the use. The state "Failed" means provisioning failed
+                  and Message will contain the reason.
                 enum:
                 - Pending
                 - Ready
@@ -445,6 +453,13 @@ spec:
             description: VolStatus string that specifies the current state of the
               volume provisioning request.
             properties:
+              message:
+                description: |-
+                  Message is a human-readable description of why the volume is in the
+                  current state. Populated when State is Failed to help operators diagnose
+                  ZFS failures without inspecting node-agent logs.
+                maxLength: 1024
+                type: string
               state:
                 description: |-
                   State specifies the current state of the volume provisioning request.

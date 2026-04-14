@@ -206,6 +206,13 @@ spec:
             description: SnapStatus string that reflects if the snapshot was created
               successfully
             properties:
+              message:
+                description: |-
+                  Message is a human-readable description of why the snapshot is in the
+                  current state. Populated when State is Failed to help operators diagnose
+                  ZFS failures without inspecting node-agent logs.
+                maxLength: 1024
+                type: string
               state:
                 type: string
             type: object
@@ -385,6 +392,13 @@ spec:
             description: SnapStatus string that reflects if the snapshot was created
               successfully
             properties:
+              message:
+                description: |-
+                  Message is a human-readable description of why the snapshot is in the
+                  current state. Populated when State is Failed to help operators diagnose
+                  ZFS failures without inspecting node-agent logs.
+                maxLength: 1024
+                type: string
               state:
                 type: string
             type: object

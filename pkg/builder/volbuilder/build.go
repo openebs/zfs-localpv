@@ -172,9 +172,20 @@ func (b *Builder) WithVolumeType(vtype string) *Builder {
 	return b
 }
 
-// WithVolumeStatus sets ZFSVolume status
+// WithVolumeStatus sets ZFSVolume status state
 func (b *Builder) WithVolumeStatus(status string) *Builder {
 	b.volume.Object.Status.State = status
+	return b
+}
+
+// WithVolumeStatusMessage sets a human-readable message on the ZFSVolume status.
+// Messages longer than 1024 characters are truncated to keep the CR compact.
+func (b *Builder) WithVolumeStatusMessage(message string) *Builder {
+	const maxLen = 1024
+	if len(message) > maxLen {
+		message = message[:maxLen]
+	}
+	b.volume.Object.Status.Message = message
 	return b
 }
 

@@ -48,5 +48,14 @@ type ZFSSnapshotList struct {
 
 // SnapStatus string that reflects if the snapshot was created successfully
 type SnapStatus struct {
+	// State reflects whether the snapshot was created successfully.
+	// The state "Failed" is accompanied by a human-readable Message.
 	State string `json:"state,omitempty"`
+
+	// Message is a human-readable description of why the snapshot is in the
+	// current state. It is populated when State transitions to Failed and
+	// contains the underlying ZFS error so that operators can diagnose the
+	// failure without inspecting node-agent logs directly.
+	// +kubebuilder:validation:MaxLength=1024
+	Message string `json:"message,omitempty"`
 }

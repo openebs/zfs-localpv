@@ -22,6 +22,7 @@ import (
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	corev1 "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -72,7 +73,7 @@ func (c *ZVController) enqueueZV(obj interface{}) {
 
 }
 
-// synZV is the function which tries to converge to a desired state for the
+// syncZV is the function which tries to converge to a desired state for the
 // ZFSVolume
 func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 	var err error
@@ -100,9 +101,17 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 				err = zfs.CreateVolume(zv)
 			}
 			if err == nil {
-				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusReady)
+				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusReady, "")
 			} else {
-				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusFailed)
+				zfsErr := err
+				c.recorder.Eventf(zv, corev1.EventTypeWarning, "ProvisioningFailed",
+					"ZFS volume operation failed: %v", zfsErr)
+				// Persist the failure reason on the CR so the CSI controller and
+				// operators can read it from status.message without inspecting logs.
+				if updateErr := zfs.UpdateZvolInfo(zv, zfs.ZFSStatusFailed, zfsErr.Error()); updateErr != nil {
+					klog.Errorf("zfs: failed to update status of volume %s to Failed: %v", zv.Name, updateErr)
+				}
+				err = zfsErr
 			}
 		}
 	}

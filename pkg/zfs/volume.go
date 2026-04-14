@@ -152,7 +152,11 @@ func checkVolCreation(ctx context.Context, volname string) (bool, error) {
 			case ZFSStatusReady:
 				return false, nil
 			case ZFSStatusFailed:
-				return false, fmt.Errorf("zfs: volume creation failed")
+				msg := vol.Status.Message
+				if msg == "" {
+					msg = "no details available; check the ZFS node-agent logs"
+				}
+				return false, fmt.Errorf("zfs: volume creation failed: %s", msg)
 			}
 
 			klog.Infof("zfs: waiting for volume %s/%s to be created on nodeid %s",
@@ -284,19 +288,21 @@ func GetZFSVolumeState(volID string) (string, string, error) {
 	return vol.Spec.OwnerNodeID, vol.Status.State, nil
 }
 
-// UpdateZvolInfo updates ZFSVolume CR with node id and finalizer
-func UpdateZvolInfo(vol *apis.ZFSVolume, status string) error {
+// UpdateZvolInfo updates ZFSVolume CR with node id, finalizer, status state and message.
+// message is stored in Status.Message to help operators diagnose failures without
+// having to inspect node-agent logs. Pass an empty string for message on success.
+func UpdateZvolInfo(vol *apis.ZFSVolume, state, message string) error {
 	finalizers := []string{}
 	labels := map[string]string{ZFSNodeKey: NodeID}
 
-	switch status {
-	case ZFSStatusReady:
+	if state == ZFSStatusReady {
 		finalizers = append(finalizers, ZFSFinalizer)
 	}
 
 	newVol, err := volbuilder.BuildFrom(vol).
 		WithFinalizer(finalizers).
-		WithVolumeStatus(status).
+		WithVolumeStatus(state).
+		WithVolumeStatusMessage(message).
 		WithLabels(labels).Build()
 
 	if err != nil {
@@ -355,20 +361,37 @@ func GetZFSSnapshotCapacity(snap *apis.ZFSSnapshot) (int64, error) {
 	return capacity, nil
 }
 
-// UpdateSnapInfo updates ZFSSnapshot CR with node id and finalizer
+// UpdateSnapInfo marks a ZFSSnapshot CR as Ready and attaches the node finalizer.
 func UpdateSnapInfo(snap *apis.ZFSSnapshot) error {
 	finalizers := []string{ZFSFinalizer}
 	labels := map[string]string{ZFSNodeKey: NodeID}
 
 	newSnap, err := snapbuilder.BuildFrom(snap).
 		WithFinalizer(finalizers).
-		WithLabels(labels).Build()
-
-	// set the status to ready
-	newSnap.Status.State = ZFSStatusReady
+		WithLabels(labels).
+		WithSnapStatus(ZFSStatusReady).
+		Build()
 
 	if err != nil {
 		klog.Errorf("Update snapshot failed %s err: %s", snap.Name, err.Error())
+		return err
+	}
+
+	_, err = snapbuilder.NewKubeclient().WithNamespace(OpenEBSNamespace).Update(newSnap)
+	return err
+}
+
+// UpdateSnapStatus updates the ZFSSnapshot status state and message.
+// It is called when snapshot creation fails to surface the ZFS error reason
+// on the CR so that operators can diagnose failures without inspecting node-agent logs.
+func UpdateSnapStatus(snap *apis.ZFSSnapshot, state, message string) error {
+	newSnap, err := snapbuilder.BuildFrom(snap).
+		WithSnapStatus(state).
+		WithSnapStatusMessage(message).
+		Build()
+
+	if err != nil {
+		klog.Errorf("UpdateSnapStatus failed %s err: %s", snap.Name, err.Error())
 		return err
 	}
 

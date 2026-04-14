@@ -108,6 +108,23 @@ func (b *Builder) WithFinalizer(finalizer []string) *Builder {
 	return b
 }
 
+// WithSnapStatus sets the ZFSSnapshot status state
+func (b *Builder) WithSnapStatus(state string) *Builder {
+	b.snap.Object.Status.State = state
+	return b
+}
+
+// WithSnapStatusMessage sets a human-readable message on the ZFSSnapshot status.
+// Messages longer than 1024 characters are truncated to keep the CR compact.
+func (b *Builder) WithSnapStatusMessage(message string) *Builder {
+	const maxLen = 1024
+	if len(message) > maxLen {
+		message = message[:maxLen]
+	}
+	b.snap.Object.Status.Message = message
+	return b
+}
+
 // Build returns ZFSSnapshot API object
 func (b *Builder) Build() (*apis.ZFSSnapshot, error) {
 	if len(b.errs) > 0 {

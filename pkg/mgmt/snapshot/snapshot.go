@@ -22,6 +22,7 @@ import (
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
 	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	corev1 "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -71,7 +72,7 @@ func (c *SnapController) enqueueSnap(obj interface{}) {
 	c.workqueue.Add(key)
 }
 
-// synSnap is the function which tries to converge to a desired state for the
+// syncSnap is the function which tries to converge to a desired state for the
 // ZFSSnapshot
 func (c *SnapController) syncSnap(snap *apis.ZFSSnapshot) error {
 	var err error
@@ -88,12 +89,21 @@ func (c *SnapController) syncSnap(snap *apis.ZFSSnapshot) error {
 			return fmt.Errorf("snapshot: can not destroy, waiting for finalizers to be removed %v", userFin)
 		}
 	} else {
-		// if status is not Ready then it means we are creating
-		// the zfs snapshot.
+		// if status is not Ready then it means we are creating the zfs snapshot.
 		if snap.Status.State != zfs.ZFSStatusReady {
 			err = zfs.CreateSnapshot(snap)
 			if err == nil {
 				err = zfs.UpdateSnapInfo(snap)
+			} else {
+				zfsErr := err
+				c.recorder.Eventf(snap, corev1.EventTypeWarning, "ProvisioningFailed",
+					"ZFS snapshot operation failed: %v", zfsErr)
+				// Persist the failure reason on the CR so operators can read it from
+				// status.message without inspecting node-agent logs.
+				if updateErr := zfs.UpdateSnapStatus(snap, zfs.ZFSStatusFailed, zfsErr.Error()); updateErr != nil {
+					klog.Errorf("zfs: failed to update status of snapshot %s to Failed: %v", snap.Name, updateErr)
+				}
+				err = zfsErr
 			}
 		}
 	}
