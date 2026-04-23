@@ -83,7 +83,10 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 			// destroy only if other finalizers have been removed
 			err = zfs.DestroyVolume(zv)
 			if err == nil {
+				zfs.EmitSuccessEvent(c.recorder, zv, zfs.ReasonDestroyed, "volume destroyed")
 				err = zfs.RemoveVolumeFinalizer(zv)
+			} else {
+				zfs.EmitFailureEvent(c.recorder, zv, zfs.ReasonDestroyFailed, err)
 			}
 		} else {
 			return fmt.Errorf("volume: can not destroy, waiting for finalizers to be removed %v", userFin)
@@ -92,16 +95,26 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 		// if volume has already been created and its state is Ready
 		// then this event is for property change only.
 		if zfs.IsVolumeReady(zv) {
-			err = zfs.SetVolumeProp(zv)
+			if err = zfs.SetVolumeProp(zv); err != nil {
+				zfs.EmitFailureEvent(c.recorder, zv, zfs.ReasonSetPropertyFailed, err)
+			}
 		} else {
+			opReason := zfs.ReasonProvisionFailed
+			successReason := zfs.ReasonProvisioned
+			successMsg := "volume provisioned"
 			if len(zv.Spec.SnapName) > 0 {
 				err = zfs.CreateClone(zv)
+				opReason = zfs.ReasonCloneFailed
+				successReason = zfs.ReasonCloned
+				successMsg = "clone created from " + zv.Spec.SnapName
 			} else {
 				err = zfs.CreateVolume(zv)
 			}
 			if err == nil {
+				zfs.EmitSuccessEvent(c.recorder, zv, successReason, successMsg)
 				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusReady)
 			} else {
+				zfs.EmitFailureEvent(c.recorder, zv, opReason, err)
 				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusFailed)
 			}
 		}

@@ -81,6 +81,8 @@ func (c *BkpController) syncBkp(bkp *apis.ZFSBackup) error {
 		err = zfs.DestoryBackup(bkp)
 		if err == nil {
 			err = zfs.RemoveBkpFinalizer(bkp)
+		} else {
+			zfs.EmitFailureEvent(c.recorder, bkp, zfs.ReasonDestroyFailed, err)
 		}
 	} else {
 		// if status is init then it means we are creating the zfs backup.
@@ -88,9 +90,11 @@ func (c *BkpController) syncBkp(bkp *apis.ZFSBackup) error {
 			err = zfs.CreateBackup(bkp)
 			if err == nil {
 				klog.Infof("backup %s done %s@%s prevsnap [%s]", bkp.Name, bkp.Spec.VolumeName, bkp.Spec.SnapName, bkp.Spec.PrevSnapName)
+				zfs.EmitSuccessEvent(c.recorder, bkp, zfs.ReasonBackupCompleted, "backup completed")
 				err = zfs.UpdateBkpInfo(bkp, apis.BKPZFSStatusDone)
 			} else {
 				klog.Errorf("backup %s failed %s@%s err %v", bkp.Name, bkp.Spec.VolumeName, bkp.Spec.SnapName, err)
+				zfs.EmitFailureEvent(c.recorder, bkp, zfs.ReasonBackupFailed, err)
 				err = zfs.UpdateBkpInfo(bkp, apis.BKPZFSStatusFailed)
 			}
 		}
