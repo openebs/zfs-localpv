@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 )
 
@@ -139,20 +140,24 @@ func checkVolCreation(ctx context.Context, volname string) (bool, error) {
 	for {
 		select {
 		case <-ctx.Done():
-			return true, fmt.Errorf("zfs: context deadline reached")
+			return true, status.Errorf(codes.DeadlineExceeded,
+				"volume %s creation: context deadline reached", volname)
 		case <-timeout.C:
-			return true, fmt.Errorf("zfs: vol creation timeout reached")
+			return true, status.Errorf(codes.DeadlineExceeded,
+				"volume %s creation timed out", volname)
 		default:
 			vol, err := GetZFSVolume(volname)
 			if err != nil {
-				return false, fmt.Errorf("zfs: wait failed, not able to get the volume %s %s", volname, err.Error())
+				return false, status.Errorf(codes.Internal,
+					"volume creation wait failed, not able to get the volume %s: %s", volname, err.Error())
 			}
 
 			switch vol.Status.State {
 			case ZFSStatusReady:
 				return false, nil
 			case ZFSStatusFailed:
-				return false, fmt.Errorf("zfs: volume creation failed")
+				return false, FailureFromEvent(ctx, "ZFSVolume", vol.Name, vol.Namespace, vol.UID,
+					fmt.Sprintf("volume %s creation failed on node %s", volname, vol.Spec.OwnerNodeID))
 			}
 
 			klog.Infof("zfs: waiting for volume %s/%s to be created on nodeid %s",
@@ -161,6 +166,23 @@ func checkVolCreation(ctx context.Context, volname string) (bool, error) {
 			time.Sleep(time.Second)
 		}
 	}
+}
+
+// FailureFromEvent turns a node-reported CR failure into a gRPC status
+// error by looking up the most recent Warning event on the CR. If no
+// event is found (e.g. pre-refactor nodes, or event TTL expiry), the
+// fallbackMsg is returned as codes.Internal so callers always get a
+// meaningful error.
+func FailureFromEvent(ctx context.Context, kind, name, namespace string, uid types.UID, fallbackMsg string) error {
+	reason, message, lerr := LatestWarningEvent(ctx, kind, name, namespace, uid)
+	if lerr != nil {
+		klog.Warningf("event lookup for %s/%s failed: %v", kind, name, lerr)
+		return status.Error(codes.Internal, fallbackMsg)
+	}
+	if reason == "" {
+		return status.Error(codes.Internal, fallbackMsg)
+	}
+	return status.Errorf(ReasonToGRPCCode(reason), "%s: %s", reason, message)
 }
 
 // ProvisionVolume creates a ZFSVolume(zv) CR,
