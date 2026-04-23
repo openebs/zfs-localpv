@@ -395,8 +395,8 @@ func getVolume(volume string) error {
 	ZFSVolArg = append(ZFSVolArg, ZFSListArg, volume)
 
 	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
-	_, err := cmd.CombinedOutput()
-	return err
+	out, err := cmd.CombinedOutput()
+	return NewZFSError("zfs list", volume, err, out)
 }
 
 // CreateVolume creates the zvol/dataset as per
@@ -415,10 +415,9 @@ func CreateVolume(vol *apis.ZFSVolume) error {
 		out, err := cmd.CombinedOutput()
 
 		if err != nil {
-			klog.Errorf(
-				"zfs: could not create volume %v cmd %v error: %s", volume, args, string(out),
-			)
-			return err
+			zerr := NewZFSError("zfs create", volume, err, out)
+			klog.Errorf("zfs: could not create volume %v cmd %v error: %s", volume, args, zerr)
+			return zerr
 		}
 		klog.Infof("created volume %s", volume)
 	} else if err == nil {
@@ -459,10 +458,9 @@ func CreateClone(vol *apis.ZFSVolume) error {
 		out, err := cmd.CombinedOutput()
 
 		if err != nil {
-			klog.Errorf(
-				"zfs: could not clone volume %v cmd %v error: %s", volume, args, string(out),
-			)
-			return err
+			zerr := NewZFSError("zfs clone", volume, err, out)
+			klog.Errorf("zfs: could not clone volume %v cmd %v error: %s", volume, args, zerr)
+			return zerr
 		}
 		klog.Infof("created clone %s", volume)
 	} else if err == nil {
@@ -490,9 +488,10 @@ func SetDatasetMountProp(volume string, mountpath string) error {
 	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		zerr := NewZFSError("zfs set mountpoint", volume, err, out)
 		klog.Errorf("zfs: could not set mountpoint on dataset %v cmd %v error: %s",
-			volume, ZFSVolArg, string(out))
-		return fmt.Errorf("could not set the mountpoint, %s", string(out))
+			volume, ZFSVolArg, zerr)
+		return zerr
 	}
 	return nil
 }
@@ -524,9 +523,10 @@ func MountZFSDataset(vol *apis.ZFSVolume, mountpath string) error {
 		cmd := exec.Command(ZFSVolCmd, MountVolArg...)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
+			zerr := NewZFSError("zfs mount", volume, err, out)
 			klog.Errorf("zfs: could not mount the dataset %v cmd %v error: %s",
-				volume, MountVolArg, string(out))
-			return fmt.Errorf("not able to mount, %s", string(out))
+				volume, MountVolArg, zerr)
+			return zerr
 		}
 	}
 
@@ -563,9 +563,10 @@ func GetVolumeProperty(vol *apis.ZFSVolume, prop string) (string, error) {
 	cmd := exec.Command(ZFSVolCmd, ZFSVolArg...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		zerr := NewZFSError(fmt.Sprintf("zfs get %s", prop), volume, err, out)
 		klog.Errorf("zfs: could not get %s on dataset %v cmd %v error: %s",
-			prop, volume, ZFSVolArg, string(out))
-		return "", fmt.Errorf("zfs get %s failed, %s", prop, string(out))
+			prop, volume, ZFSVolArg, zerr)
+		return "", zerr
 	}
 	val := out[:len(out)-1]
 	return string(val), nil
@@ -602,14 +603,13 @@ func SetVolumeProp(vol *apis.ZFSVolume) error {
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		klog.Errorf(
-			"zfs: could not set property on volume %v cmd %v error: %s", volume, args, string(out),
-		)
-		return err
+		zerr := NewZFSError("zfs set", volume, err, out)
+		klog.Errorf("zfs: could not set property on volume %v cmd %v error: %s", volume, args, zerr)
+		return zerr
 	}
 	klog.Infof("property set on volume %s", volume)
 
-	return err
+	return nil
 }
 
 // DestroyVolume deletes the zfs volume
@@ -637,10 +637,9 @@ func DestroyVolume(vol *apis.ZFSVolume) error {
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		klog.Errorf(
-			"zfs: could not destroy volume %v cmd %v error: %s", volume, args, string(out),
-		)
-		return err
+		zerr := NewZFSError("zfs destroy", volume, err, out)
+		klog.Errorf("zfs: could not destroy volume %v cmd %v error: %s", volume, args, zerr)
+		return zerr
 	}
 
 	if srcVol, ok := vol.Labels[ZFSSrcVolKey]; ok {
@@ -685,10 +684,9 @@ func CreateSnapshot(snap *apis.ZFSSnapshot) error {
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		klog.Errorf(
-			"zfs: could not create snapshot %v@%v cmd %v error: %s", volume, snap.Name, args, string(out),
-		)
-		return err
+		zerr := NewZFSError("zfs snapshot", snapDataset, err, out)
+		klog.Errorf("zfs: could not create snapshot %v@%v cmd %v error: %s", volume, snap.Name, args, zerr)
+		return zerr
 	}
 	klog.Infof("created snapshot %s@%s", volume, snap.Name)
 	return nil
@@ -723,10 +721,9 @@ func DestroySnapshot(snap *apis.ZFSSnapshot) error {
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		klog.Errorf(
-			"zfs: could not destroy snapshot %v@%v cmd %v error: %s", volume, snap.Name, args, string(out),
-		)
-		return err
+		zerr := NewZFSError("zfs destroy snapshot", snapDataset, err, out)
+		klog.Errorf("zfs: could not destroy snapshot %v@%v cmd %v error: %s", volume, snap.Name, args, zerr)
+		return zerr
 	}
 	klog.Infof("deleted snapshot %s@%s", volume, snap.Name)
 	return nil
@@ -763,20 +760,20 @@ func ResizeZFSVolume(vol *apis.ZFSVolume, mountpath string, resizefs bool) error
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		klog.Errorf("zfs: could not resize the volume %v cmd %v error: %s", volume, args, string(out))
+		zerr := NewZFSError("zfs set quota", volume, err, out)
+		klog.Errorf("zfs: could not resize the volume %v cmd %v error: %s", volume, args, zerr)
 		klog.Infof("zfs: reverting the volume quota to %s", oldReservation)
 
 		revertedVol := vol.DeepCopy()
 		revertedVol.Spec.Capacity = oldReservation
 		args := buildVolumeResizeArgs(revertedVol)
 		cmd := exec.Command(ZFSVolCmd, args...)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			klog.Errorf(
-				"zfs: could not revert the volume %v quota cmd %v error: %s", volume, args, string(out),
-			)
+		if out, rerr := cmd.CombinedOutput(); rerr != nil {
+			rzerr := NewZFSError("zfs set quota (revert)", volume, rerr, out)
+			klog.Errorf("zfs: could not revert the volume %v quota cmd %v error: %s", volume, args, rzerr)
 		}
 
-		return err
+		return zerr
 	}
 
 	if resizefs {
@@ -819,12 +816,12 @@ func CreateBackup(bkp *apis.ZFSBackup) error {
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		klog.Errorf(
-			"zfs: could not backup the volume %v cmd %v error: %s", volume, args, string(out),
-		)
+		zerr := NewZFSError("zfs send (backup)", volume, err, out)
+		klog.Errorf("zfs: could not backup the volume %v cmd %v error: %s", volume, args, zerr)
+		return zerr
 	}
 
-	return err
+	return nil
 }
 
 // DestoryBackup deletes the snapshot created
@@ -897,10 +894,9 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		klog.Errorf(
-			"zfs: could not restore the volume %v cmd %v error: %s", volume, args, string(out),
-		)
-		return err
+		zerr := NewZFSError("zfs recv (restore)", volume, err, out)
+		klog.Errorf("zfs: could not restore the volume %v cmd %v error: %s", volume, args, zerr)
+		return zerr
 	}
 
 	/*
@@ -936,8 +932,9 @@ func ListZFSPool() ([]apis.Pool, error) {
 	cmd := exec.Command(ZFSVolCmd, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		klog.Errorf("zfs: could not list zpool cmd %v: %v", args, err)
-		return nil, err
+		zerr := NewZFSError("zfs list (pools)", "", err, output)
+		klog.Errorf("zfs: could not list zpool cmd %v: %s", args, zerr)
+		return nil, zerr
 	}
 	return decodeListOutput(output)
 }
