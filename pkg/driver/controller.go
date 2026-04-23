@@ -197,7 +197,7 @@ func waitForVolDestroy(volname string) error {
 	}
 }
 
-func waitForReadySnapshot(snapname string) error {
+func waitForReadySnapshot(ctx context.Context, snapname string) error {
 	for {
 		snap, err := zfs.GetZFSSnapshot(snapname)
 		if err != nil {
@@ -208,8 +208,17 @@ func waitForReadySnapshot(snapname string) error {
 		switch snap.Status.State {
 		case zfs.ZFSStatusReady:
 			return nil
+		case zfs.ZFSStatusFailed:
+			return status.Errorf(codes.Internal,
+				"snapshot %s creation failed on node %s", snapname, snap.Spec.OwnerNodeID)
 		}
-		time.Sleep(time.Second)
+
+		select {
+		case <-ctx.Done():
+			return status.Errorf(codes.DeadlineExceeded,
+				"snapshot %s creation: context deadline reached", snapname)
+		case <-time.After(time.Second):
+		}
 	}
 }
 
@@ -809,7 +818,7 @@ func (cs *controller) CreateSnapshot(
 	originalParams := req.GetParameters()
 	parameters := helpers.GetCaseInsensitiveMap(&originalParams)
 	if _, ok := parameters["wait"]; ok {
-		if err := waitForReadySnapshot(snapName); err != nil {
+		if err := waitForReadySnapshot(ctx, snapName); err != nil {
 			return nil, err
 		}
 	}

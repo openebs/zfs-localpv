@@ -82,7 +82,10 @@ func (c *SnapController) syncSnap(snap *apis.ZFSSnapshot) error {
 			// destroy only if other finalizers have been removed
 			err = zfs.DestroySnapshot(snap)
 			if err == nil {
+				zfs.EmitSuccessEvent(c.recorder, snap, zfs.ReasonSnapDestroyed, "snapshot destroyed")
 				err = zfs.RemoveSnapFinalizer(snap)
+			} else {
+				zfs.EmitFailureEvent(c.recorder, snap, zfs.ReasonSnapDestroyFailed, err)
 			}
 		} else {
 			return fmt.Errorf("snapshot: can not destroy, waiting for finalizers to be removed %v", userFin)
@@ -93,7 +96,10 @@ func (c *SnapController) syncSnap(snap *apis.ZFSSnapshot) error {
 		if snap.Status.State != zfs.ZFSStatusReady {
 			err = zfs.CreateSnapshot(snap)
 			if err == nil {
+				zfs.EmitSuccessEvent(c.recorder, snap, zfs.ReasonSnapshotted, "snapshot created")
 				err = zfs.UpdateSnapInfo(snap)
+			} else {
+				zfs.EmitFailureEvent(c.recorder, snap, zfs.ReasonSnapshotFailed, err)
 			}
 		}
 	}

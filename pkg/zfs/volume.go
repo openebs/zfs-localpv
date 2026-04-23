@@ -139,20 +139,24 @@ func checkVolCreation(ctx context.Context, volname string) (bool, error) {
 	for {
 		select {
 		case <-ctx.Done():
-			return true, fmt.Errorf("zfs: context deadline reached")
+			return true, status.Errorf(codes.DeadlineExceeded,
+				"volume %s creation: context deadline reached", volname)
 		case <-timeout.C:
-			return true, fmt.Errorf("zfs: vol creation timeout reached")
+			return true, status.Errorf(codes.DeadlineExceeded,
+				"volume %s creation timed out", volname)
 		default:
 			vol, err := GetZFSVolume(volname)
 			if err != nil {
-				return false, fmt.Errorf("zfs: wait failed, not able to get the volume %s %s", volname, err.Error())
+				return false, status.Errorf(codes.Internal,
+					"volume creation wait failed, not able to get the volume %s: %s", volname, err.Error())
 			}
 
 			switch vol.Status.State {
 			case ZFSStatusReady:
 				return false, nil
 			case ZFSStatusFailed:
-				return false, fmt.Errorf("zfs: volume creation failed")
+				return false, status.Errorf(codes.Internal,
+					"volume %s creation failed on node %s", volname, vol.Spec.OwnerNodeID)
 			}
 
 			klog.Infof("zfs: waiting for volume %s/%s to be created on nodeid %s",
