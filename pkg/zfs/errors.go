@@ -19,7 +19,6 @@ package zfs
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 )
 
@@ -148,52 +147,11 @@ func sentinelFor(reason string) error {
 	return nil
 }
 
-// stderrPattern pairs a regex with a fine-grained reason. Patterns are
-// ordered most-specific first so that e.g. "no such pool" wins over
-// "does not exist". All matching is case-insensitive.
-type stderrPattern struct {
-	re     *regexp.Regexp
-	reason string
-}
-
-var stderrPatterns = []stderrPattern{
-	{regexp.MustCompile(`(?i)no\s+such\s+pool`), ReasonPoolNotFound},
-	{regexp.MustCompile(`(?i)pool\s+.*\s+does\s+not\s+exist`), ReasonPoolNotFound},
-	{regexp.MustCompile(`(?i)cannot\s+open\s+'[^']+'[:\s]+no\s+such\s+pool`), ReasonPoolNotFound},
-	{regexp.MustCompile(`(?i)dataset\s+does\s+not\s+exist`), ReasonDatasetNotFound},
-	{regexp.MustCompile(`(?i)cannot\s+open\s+'[^']+'[:\s]+dataset\s+does\s+not\s+exist`), ReasonDatasetNotFound},
-	{regexp.MustCompile(`(?i)filesystem\s+does\s+not\s+exist`), ReasonDatasetNotFound},
-	{regexp.MustCompile(`(?i)snapshot\s+does\s+not\s+exist`), ReasonDatasetNotFound},
-	{regexp.MustCompile(`(?i)dataset\s+already\s+exists`), ReasonDatasetExists},
-	{regexp.MustCompile(`(?i)cannot\s+create\s+'[^']+'[:\s]+dataset\s+already\s+exists`), ReasonDatasetExists},
-	{regexp.MustCompile(`(?i)snapshot\s+already\s+exists`), ReasonDatasetExists},
-	{regexp.MustCompile(`(?i)dataset\s+is\s+busy`), ReasonDatasetBusy},
-	{regexp.MustCompile(`(?i)pool\s+is\s+busy`), ReasonDatasetBusy},
-	{regexp.MustCompile(`(?i)has\s+dependent\s+clones`), ReasonDatasetBusy},
-	{regexp.MustCompile(`(?i)out\s+of\s+space`), ReasonInsufficientSpace},
-	{regexp.MustCompile(`(?i)no\s+space\s+left`), ReasonInsufficientSpace},
-	{regexp.MustCompile(`(?i)quota\s+exceeded`), ReasonInsufficientSpace},
-	{regexp.MustCompile(`(?i)permission\s+denied`), ReasonPermissionDenied},
-	{regexp.MustCompile(`(?i)operation\s+not\s+permitted`), ReasonPermissionDenied},
-	{regexp.MustCompile(`(?i)invalid\s+argument`), ReasonInvalidArgument},
-	{regexp.MustCompile(`(?i)invalid\s+option`), ReasonInvalidArgument},
-	{regexp.MustCompile(`(?i)invalid\s+property`), ReasonInvalidArgument},
-	{regexp.MustCompile(`(?i)bad\s+property`), ReasonInvalidArgument},
-}
-
-// classifyStderr maps a stderr blob from zfs/zpool to a fine-grained
-// reason. Returns ReasonUnknown if no pattern matches.
-func classifyStderr(stderr string) string {
-	for _, p := range stderrPatterns {
-		if p.re.MatchString(stderr) {
-			return p.reason
-		}
-	}
-	return ReasonUnknown
-}
-
 // NewZFSError constructs a classified error from the raw output of a
-// zfs/zpool invocation. If err is nil, NewZFSError returns nil.
+// zfs/zpool invocation. If err is nil, NewZFSError returns nil. The
+// classification is derived from observed ZFS state via classifyByState
+// (see state.go) — stderr is preserved verbatim on the resulting
+// ZFSError for human display but is never parsed.
 func NewZFSError(op, dataset string, err error, stderr []byte) error {
 	if err == nil {
 		return nil
@@ -202,7 +160,7 @@ func NewZFSError(op, dataset string, err error, stderr []byte) error {
 	return &ZFSError{
 		Op:      op,
 		Dataset: dataset,
-		Reason:  classifyStderr(msg),
+		Reason:  classifyByState(op, dataset),
 		Stderr:  msg,
 		Err:     err,
 	}
