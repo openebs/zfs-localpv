@@ -34,7 +34,7 @@ docker.buildx:
 	fi
 	@docker buildx build --platform "${PLATFORMS}" \
 		-t "$(DOCKERX_IMAGE_NAME)" ${BUILD_ARGS} \
-		-f $(PWD)/buildscripts/$(COMPONENT)/$(COMPONENT).Dockerfile \
+		-f $(PWD)/buildscripts/$(COMPONENT)/Dockerfile.buildx \
 		. ${PUSH_ARG}
 	@echo "--> Build docker image: $(DOCKERX_IMAGE_NAME)"
 	@echo

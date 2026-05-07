@@ -1,4 +1,18 @@
-FROM golang:1.24.12 AS build
+# Copyright 2019-2020 The OpenEBS Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+FROM golang:1.26.2-alpine AS build
 
 ARG BRANCH
 ARG RELEASE_TAG
@@ -10,14 +24,13 @@ ENV GO111MODULE=on \
   GOOS=${TARGETOS} \
   GOARCH=${TARGETARCH} \
   GOARM=${TARGETVARIANT} \
-  DEBIAN_FRONTEND=noninteractive \
   PATH="/root/go/bin:${PATH}" \
   BRANCH=${BRANCH} \
   RELEASE_TAG=${RELEASE_TAG}
 
 WORKDIR /go/src/github.com/openebs/zfs-localpv/
 
-RUN apt-get update && apt-get install -y make git
+RUN apk add make git bash gcc musl-dev
 
 COPY go.mod go.sum ./
 # Get dependencies - will also be cached if we won't change mod/sum
@@ -27,12 +40,9 @@ COPY . .
 
 RUN make buildx.csi-driver
 
-FROM ubuntu:18.04
-
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN apt-get update; exit 0
-RUN apt-get -y install rsyslog libssl-dev xfsprogs ca-certificates
-RUN apt-get -y install btrfs-progs netcat
+FROM alpine:3.23.4
+RUN apk add --no-cache rsyslog openssl xfsprogs xfsprogs-extra ca-certificates
+RUN apk add --no-cache btrfs-progs btrfs-progs-extra netcat-openbsd
 
 ARG DBUILD_DATE
 ARG DBUILD_REPO_URL

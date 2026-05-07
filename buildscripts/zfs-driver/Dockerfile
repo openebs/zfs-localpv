@@ -12,20 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:18.04
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN apt-get update; exit 0
-RUN apt-get -y install rsyslog libssl-dev xfsprogs ca-certificates
-RUN apt-get -y install btrfs-progs netcat
+FROM alpine:3.23.4
+RUN apk add --no-cache rsyslog openssl xfsprogs xfsprogs-extra ca-certificates
+RUN apk add --no-cache btrfs-progs btrfs-progs-extra netcat-openbsd
 
 ARG DBUILD_DATE
 ARG DBUILD_REPO_URL
 ARG DBUILD_SITE_URL
 
 COPY zfs-driver /usr/local/bin/
-COPY entrypoint.sh /usr/local/bin/
-
-RUN chmod +x /usr/local/bin/entrypoint.sh
 
 LABEL org.label-schema.name="zfs-driver"
 LABEL org.label-schema.description="OpenEBS ZFS LocalPV Driver"

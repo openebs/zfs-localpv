@@ -12,7 +12,7 @@ EXTERNAL_TOOLS=\
 	golang.org/x/lint/golint@v0.0.0-20241112194109-818c5a804067 \
 	github.com/axw/gocov/gocov@v1.2.1 \
 	github.com/matm/gocov-html/cmd/gocov-html@v1.4.0 \
-	github.com/onsi/ginkgo/v2/ginkgo@v2.27.1
+	github.com/onsi/ginkgo/v2/ginkgo@v2.28.3
 
 # The images can be pushed to any docker/image registeries
 # like docker hub, quay. The registries are specified in
@@ -127,7 +127,7 @@ bootstrap: controller-gen
 
 .PHONY: controller-gen
 controller-gen:
-	@go install -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0
+	@go install -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen@v0.21.0
 
 # SRC_PKG is the path of code files
 SRC_PKG := github.com/openebs/zfs-localpv/pkg
@@ -147,19 +147,19 @@ kubegendelete:
 # Install generators (v0.34.1)
 .PHONY: deepcopy-install
 deepcopy-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/deepcopy-gen@v0.34.1
+	@go install -mod=mod k8s.io/code-generator/cmd/deepcopy-gen@v0.35.4
 
 .PHONY: clientset-install
 clientset-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/client-gen@v0.34.1
+	@go install -mod=mod k8s.io/code-generator/cmd/client-gen@v0.35.4
 
 .PHONY: lister-install
 lister-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/lister-gen@v0.34.1
+	@go install -mod=mod k8s.io/code-generator/cmd/lister-gen@v0.35.4
 
 .PHONY: informer-install
 informer-install:
-	@go install -mod=mod k8s.io/code-generator/cmd/informer-gen@v0.34.1
+	@go install -mod=mod k8s.io/code-generator/cmd/informer-gen@v0.35.4
 
 # Generate deepcopy (positional input package)
 .PHONY: deepcopy
