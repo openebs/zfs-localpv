@@ -7,22 +7,40 @@ v2.10.0 / TBC
   Make Publish and Unpublish idempotent if the fs is shutdown
   [#615](https://github.com/openebs/zfs-localpv/issues/615)
 
-v2.9.0 / TBC
+v2.9.1 / 2026-02-12
 ========================
+## New Features and Enhancements
+- Make zfs-node dnsPolicy configurable by @michaelbeaumont in https://github.com/openebs/zfs-localpv/pull/696
+
+v2.9.0 / 2025-11-18
+========================
+
+This release of **OpenEBS ZFS-LocalPV** introduces critical bug fixes, enhancements to CSI spec compliance, improvements in upgrade testing and backup lifecycle management, as well as several documentation and maintenance updates. It builds on the stability delivered in 2.8.x with a focus on upgrade compatibility, developer usability, and operational observability.
+
+## New Features and Enhancements
+
+- Update Go runtime to 1.24.
+  Bumps up go runtime and all dependents to their latest available releases by @Abhinandan-Purkait  in https://github.com/openebs/zfs-localpv/pull/678
+
+- Allow users to configure CPU and memory requests/limits for all zfs-node and zfs-controller containers via values.yaml, improving resource management and deployment flexibility by @vishalanarase in https://github.com/openebs/zfs-localpv/pull/674
+
+---
 
 ## Bug Fixes and Improvements
 
-- **Fixed Encrypted Volume Cloning**
-  Removed encryption parameters (`-o encryption`, `-o keylocation`, `-o keyformat`) from the `zfs clone` command. These parameters are read-only and cannot be set on clones as they automatically inherit encryption from the parent snapshot.
-  [#675](https://github.com/openebs/zfs-localpv/pull/675)
-- **zfs-node dnsPolicy configuration**
-  Added `zfsNode.dnsPolicy` to control the Pod's DNS policy
-- **Change helm chart value `initContainers` to list**
-  Changed the `initContainers` value in the Helm chart from a map to a list to
-  make ordering easier
-  [#679](https://github.com/openebs/zfs-localpv/pull/679)
+- Removes encryption parameter handling from `buildCloneCreateArgs()` since clones automatically inherit encryption from the parent snapshot and the property cannot be set (it's read-only) by @adamcharnock in https://github.com/openebs/zfs-localpv/pull/675
 
 ---
+
+## Continuous Integration and Maintenance
+
+- Staging CI
+  Introduction of the staging CI, which enables creating a staging build for e2e testing before releasing, the artifacts are then copied over to production build hosts. by @Abhinandan-Purkait
+---
+
+## New Contributors
+* @adamcharnock made their first contribution in https://github.com/openebs/zfs-localpv/pull/675
+* @vishalanarase made their first contribution in https://github.com/openebs/zfs-localpv/pull/674
 
 v2.8.0 / 2025-06-03
 ========================
