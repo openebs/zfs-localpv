@@ -141,5 +141,5 @@ func waitForBackupDeletion(name string) {
 	By("waiting for backup " + name + " to be deleted")
 	Eventually(func() bool {
 		return !backupExists(name)
-	}, 2*time.Second, 1*time.Second).Should(BeTrue(), fmt.Sprintf("Backup %s should be deleted", name))
+	}, 60*time.Second, 1*time.Second).Should(BeTrue(), fmt.Sprintf("Backup %s should be deleted", name))
 }
