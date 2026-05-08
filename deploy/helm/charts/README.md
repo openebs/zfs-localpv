@@ -67,6 +67,11 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 
 | Key                                                                 | Type   | Default Value               | Description                                                                                           |
 |----------------------------------------------------------------------|--------|-----------------------------|-------------------------------------------------------------------------------------------------------|
+| `global.imageRegistry`                                                | string | `""`                        | Global override for container image registry                                                           |
+| `global.imagePullPolicy`                                              | string | `""`                        | Global override for  image pull policy.                                                            |
+| `global.imagePullSecrets`                                             | list   | `[]`                        | Global image pull secrets (merged with local imagePullSecrets and not overridden).                                                                       |
+| `global.analytics.enabled`                                            | bool   | `null`                      | Global override for analytics.                                                                         |
+| `global.kubeletDir`                                                   | string |  `""`                       | Global override for kubelet directory                                                                  |
 | `analytics.enabled`                                                  | bool   | `true`                      | Enables or disables analytics reporting for the chart.                                                 |
 | `analytics.installerType`                                             | string | `"zfs-localpv-helm"`        | Specifies the installer type for analytics.                                                           |
 | `backupGC.enabled`                                                    | bool   | `false`                     | Enables or disables garbage collection for backups.                                                   |
