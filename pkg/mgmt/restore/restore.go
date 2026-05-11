@@ -83,9 +83,11 @@ func (c *RstrController) syncRestore(rstr *apis.ZFSRestore) error {
 			err = zfs.CreateRestore(rstr)
 			if err == nil {
 				klog.Infof("restore %s done %s", rstr.Name, rstr.Spec.VolumeName)
+				zfs.EmitSuccessEvent(c.recorder, rstr, zfs.ReasonRestoreCompleted, "restore completed")
 				err = zfs.UpdateRestoreInfo(rstr, apis.RSTZFSStatusDone)
 			} else {
 				klog.Errorf("restore %s failed %s err %v", rstr.Name, rstr.Spec.VolumeName, err)
+				zfs.EmitFailureEvent(c.recorder, rstr, zfs.ReasonRestoreFailed, err)
 				err = zfs.UpdateRestoreInfo(rstr, apis.RSTZFSStatusFailed)
 			}
 		}
