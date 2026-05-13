@@ -12,3 +12,4 @@ tags
 /tests/bdd_coverage.txt
 /tests/bdd_coverage_custom-node-id.txt
 /nixos.qcow2
+result

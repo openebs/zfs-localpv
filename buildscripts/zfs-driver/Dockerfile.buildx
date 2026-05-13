@@ -1,4 +1,4 @@
-FROM golang:1.24.12 AS build
+FROM golang:1.26.2-alpine AS build
 
 ARG BRANCH
 ARG RELEASE_TAG
@@ -10,14 +10,13 @@ ENV GO111MODULE=on \
   GOOS=${TARGETOS} \
   GOARCH=${TARGETARCH} \
   GOARM=${TARGETVARIANT} \
-  DEBIAN_FRONTEND=noninteractive \
   PATH="/root/go/bin:${PATH}" \
   BRANCH=${BRANCH} \
   RELEASE_TAG=${RELEASE_TAG}
 
 WORKDIR /go/src/github.com/openebs/zfs-localpv/
 
-RUN apt-get update && apt-get install -y make git
+RUN apk add make git bash gcc musl-dev
 
 COPY go.mod go.sum ./
 # Get dependencies - will also be cached if we won't change mod/sum
@@ -27,12 +26,10 @@ COPY . .
 
 RUN make buildx.csi-driver
 
-FROM ubuntu:18.04
-
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN apt-get update; exit 0
-RUN apt-get -y install rsyslog libssl-dev xfsprogs ca-certificates
-RUN apt-get -y install btrfs-progs netcat
+FROM alpine:3.23.4
+RUN apk add --no-cache util-linux
+RUN apk add --no-cache btrfs-progs btrfs-progs-extra xfsprogs xfsprogs-extra e2fsprogs e2fsprogs-extra
+RUN apk add --no-cache ca-certificates rsyslog openssl netcat-openbsd
 
 ARG DBUILD_DATE
 ARG DBUILD_REPO_URL

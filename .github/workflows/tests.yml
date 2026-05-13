@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        kubernetes: [v1.34.3]
+        kubernetes: [v1.35.4]
         profile: [regular, custom-node-id]
     steps:
       - uses: actions/checkout@v6
