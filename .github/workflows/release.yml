@@ -87,7 +87,7 @@ jobs:
           charts_dir: ./deploy/helm
 
       - name: Publish chart via OCI
-        uses: appany/helm-oci-chart-releaser@v0.5
+        uses: appany/helm-oci-chart-releaser@v0.5.0
         with:
           name: zfs-localpv
           repository: ${{ github.repository_owner }}/charts
