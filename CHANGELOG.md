@@ -1,11 +1,71 @@
-v2.10.0 / TBC
+v2.10.0 / 2026-05-19
 ========================
 
-## Bug Fixes and Improvements
+This release of OpenEBS ZFS-LocalPV focuses on Helm chart flexibility, filesystem shutdown handling, release automation, and CI/CD hardening. It also updates the build toolchain and improves the overall developer and release workflow.
 
-- **Fixed Shutdown filesystem handling**
-  Make Publish and Unpublish idempotent if the fs is shutdown
-  [#615](https://github.com/openebs/zfs-localpv/issues/615)
+New Features and Enhancements
+
+ - Helm dnsPolicy configurability
+Made zfs-node dnsPolicy configurable.
+by @michaelbeaumont in PR 690 (https://github.com/openebs/zfs-localpv/pull/690)
+ - Helm initContainers as a list
+Changed initContainers values to be represented as a list.
+by @michaelbeaumont in PR 679 (https://github.com/openebs/zfs-localpv/pull/679)
+ - Helm chart OCI publishing
+Added OCI publishing support for the zfs-localpv Helm chart.
+by @tiagolobocastro in PR 688 (https://github.com/openebs/zfs-localpv/pull/688)
+
+Bug Fixes and Improvements
+
+ - Graceful filesystem shutdown handling
+Improved publish/unpublish behavior when the filesystem is shut down.
+by @tiagolobocastro in PR 706 (https://github.com/openebs/zfs-localpv/pull/706)
+ - Improved ZFS error reporting
+Replaced error classification with verbatim stderr propagation for clearer failures.
+by @Abhinandan-Purkait in PR 710 (https://github.com/openebs/zfs-localpv/pull/710)
+ - Test script update
+Updated the test script for the new log fatal behavior.
+by @Abhinandan-Purkait in PR 681 (https://github.com/openebs/zfs-localpv/pull/681)
+
+Continuous Integration and Maintenance
+
+ - Go and build environment update
+Bumped Go to 1.24.12 and moved the build environment to nixos-25.11.
+by @niladrih in PR 694 (https://github.com/openebs/zfs-localpv/pull/694)
+ - Release workflow fixes
+Fixed registry handling, yq usage, and release workflow behavior.
+by @Abhinandan-Purkait in PR 686 (https://github.com/openebs/zfs-localpv/pull/686)
+ - Workflow action reuse
+Reused actions across workflows to reduce duplication.
+by @tiagolobocastro in PR 692 (https://github.com/openebs/zfs-localpv/pull/692)
+ - Mergify automation
+Enabled Mergify for merge and backport workflows.
+by @tiagolobocastro in PR 693 (https://github.com/openebs/zfs-localpv/pull/693)
+ - Trivy scanning
+Added Trivy scanning to CI.
+by @pchandra19 in PR 697 (https://github.com/openebs/zfs-localpv/pull/697)
+ - Trivy action update
+Updated the Trivy action version.
+by @pchandra19 in PR 704 (https://github.com/openebs/zfs-localpv/pull/704)
+ - Workflow updates
+Upgraded action workflows and related release tooling.
+by @tiagolobocastro in PR 707 (https://github.com/openebs/zfs-localpv/pull/707)
+ - Minikube workflow fix
+Fixed the setup-minikube input parameter name.
+by @niladrih in PR 695 (https://github.com/openebs/zfs-localpv/pull/695)
+ - Chart releaser fixes
+Fixed the appany URL and pointed to the correct chart releaser version.
+by @Abhinandan-Purkait in PR 715 (https://github.com/openebs/zfs-localpv/pull/715), by @Abhinandan-Purkait in PR 719 (https://github.com/openebs/zfs-localpv/pull/719)
+
+New Contributors
+
+ - @michaelbeaumont made their first contribution in PR 690 (https://github.com/openebs/zfs-localpv/pull/690)
+ - @pchandra19 made their first contribution in PR 697 (https://github.com/openebs/zfs-localpv/pull/697)
+ - @mergify[bot] made their first contribution in PR 705 (https://github.com/openebs/zfs-localpv/pull/705)
+ - @krishnaGajabi made their first contribution in PR 700 (https://github.com/openebs/zfs-localpv/pull/700)
+
+Full Changelog: v2.9.1...v2.10.0 (https://github.com/openebs/zfs-localpv/compare/v2.9.1...v2.10.0)
+
 
 v2.9.1 / 2026-02-12
 ========================
