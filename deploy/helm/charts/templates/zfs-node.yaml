@@ -48,7 +48,7 @@ spec:
 {{- end }}
       containers:
         - name: {{ .Values.zfsNode.driverRegistrar.name }}
-          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsNode.driverRegistrar.image "global" .Values.global) }}
+          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsNode.driverRegistrar.image "global" .Values.global) | quote }}
           imagePullPolicy: {{ default .Values.zfsNode.driverRegistrar.image.pullPolicy .Values.global.imagePullPolicy }}
           args:
             - "--v=5"
@@ -80,7 +80,7 @@ spec:
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
-          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsPlugin.image "global" .Values.global) }}
+          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsPlugin.image "global" .Values.global) | quote }}
           imagePullPolicy: {{ default .Values.zfsPlugin.image.pullPolicy .Values.global.imagePullPolicy }}
           args:
             - "--nodename=$(OPENEBS_NODE_NAME)"
