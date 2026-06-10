@@ -44,7 +44,7 @@ spec:
 {{- end }}
       containers:
         - name: {{ .Values.zfsController.resizer.name }}
-          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.resizer.image "global" .Values.global) }}
+          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.resizer.image "global" .Values.global) | quote }}
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
@@ -62,7 +62,7 @@ spec:
           resources:
             {{- toYaml .Values.zfsController.resources | nindent 12 }}
         - name: {{ .Values.zfsController.snapshotter.name }}
-          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.snapshotter.image "global" .Values.global) }}
+          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.snapshotter.image "global" .Values.global) | quote }}
           imagePullPolicy: {{ default .Values.zfsController.snapshotter.image.pullPolicy .Values.global.imagePullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
@@ -79,7 +79,7 @@ spec:
           resources:
             {{- toYaml .Values.zfsController.resources | nindent 12 }}
         - name: {{ .Values.zfsController.snapshotController.name }}
-          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.snapshotController.image "global" .Values.global) }}
+          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.snapshotController.image "global" .Values.global) | quote }}
           args:
             - "--v=5"
             {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
@@ -90,7 +90,7 @@ spec:
           resources:
             {{- toYaml .Values.zfsController.resources | nindent 12 }}
         - name: {{ .Values.zfsController.provisioner.name }}
-          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.provisioner.image "global" .Values.global) }}
+          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.provisioner.image "global" .Values.global) | quote }}
           imagePullPolicy: {{ default .Values.zfsController.provisioner.image.pullPolicy .Values.global.imagePullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
@@ -121,7 +121,7 @@ spec:
           resources:
             {{- toYaml .Values.zfsController.resources | nindent 12 }}
         - name: {{ .Values.zfsPlugin.name }}
-          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsPlugin.image "global" .Values.global) }}
+          image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsPlugin.image "global" .Values.global) | quote }}
           imagePullPolicy: {{ default .Values.zfsPlugin.image.pullPolicy .Values.global.imagePullPolicy }}
           env:
             - name: OPENEBS_CONTROLLER_DRIVER
