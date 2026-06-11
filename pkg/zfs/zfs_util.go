@@ -78,12 +78,14 @@ func runCmd(cmd *exec.Cmd, dataset string) ([]byte, error) {
 func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
 	if oldVol.Spec.VolumeType == VolTypeDataset &&
 		newVol.Spec.VolumeType == VolTypeDataset &&
-		oldVol.Spec.RecordSize != newVol.Spec.RecordSize {
+		(oldVol.Spec.RecordSize != newVol.Spec.RecordSize ||
+			oldVol.Spec.ATime != newVol.Spec.ATime) {
 		return true
 	}
 
 	return oldVol.Spec.Compression != newVol.Spec.Compression ||
-		oldVol.Spec.Dedup != newVol.Spec.Dedup
+		oldVol.Spec.Dedup != newVol.Spec.Dedup ||
+		oldVol.Spec.LogBias != newVol.Spec.LogBias
 }
 
 // GetVolumeType returns the volume type
@@ -126,6 +128,10 @@ func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
 		compressionProperty := "compression=" + vol.Spec.Compression
 		ZFSVolArg = append(ZFSVolArg, "-o", compressionProperty)
 	}
+	if len(vol.Spec.LogBias) != 0 {
+		logbiasProperty := "logbias=" + vol.Spec.LogBias
+		ZFSVolArg = append(ZFSVolArg, "-o", logbiasProperty)
+	}
 	if len(vol.Spec.Encryption) != 0 {
 		encryptionProperty := "encryption=" + vol.Spec.Encryption
 		ZFSVolArg = append(ZFSVolArg, "-o", encryptionProperty)
@@ -162,6 +168,10 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 			recordsizeProperty := "recordsize=" + vol.Spec.RecordSize
 			ZFSVolArg = append(ZFSVolArg, "-o", recordsizeProperty)
 		}
+		if len(vol.Spec.ATime) != 0 {
+			atimeProperty := "atime=" + vol.Spec.ATime
+			ZFSVolArg = append(ZFSVolArg, "-o", atimeProperty)
+		}
 		if vol.Spec.ThinProvision == "no" {
 			ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty(vol.Spec.QuotaType, vol.Spec.Capacity))
 		}
@@ -175,6 +185,10 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 	if len(vol.Spec.Compression) != 0 {
 		compressionProperty := "compression=" + vol.Spec.Compression
 		ZFSVolArg = append(ZFSVolArg, "-o", compressionProperty)
+	}
+	if len(vol.Spec.LogBias) != 0 {
+		logbiasProperty := "logbias=" + vol.Spec.LogBias
+		ZFSVolArg = append(ZFSVolArg, "-o", logbiasProperty)
 	}
 	// Note: Encryption parameters (encryption, keylocation, keyformat) are NOT set when cloning.
 	// ZFS clones automatically inherit encryption settings from the parent snapshot.
@@ -226,6 +240,10 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 		recordsizeProperty := "recordsize=" + vol.Spec.RecordSize
 		ZFSVolArg = append(ZFSVolArg, "-o", recordsizeProperty)
 	}
+	if len(vol.Spec.ATime) != 0 {
+		atimeProperty := "atime=" + vol.Spec.ATime
+		ZFSVolArg = append(ZFSVolArg, "-o", atimeProperty)
+	}
 	if vol.Spec.ThinProvision == "no" {
 		ZFSVolArg = append(ZFSVolArg, "-o", reservationProperty(vol.Spec.QuotaType, vol.Spec.Capacity))
 	}
@@ -236,6 +254,10 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 	if len(vol.Spec.Compression) != 0 {
 		compressionProperty := "compression=" + vol.Spec.Compression
 		ZFSVolArg = append(ZFSVolArg, "-o", compressionProperty)
+	}
+	if len(vol.Spec.LogBias) != 0 {
+		logbiasProperty := "logbias=" + vol.Spec.LogBias
+		ZFSVolArg = append(ZFSVolArg, "-o", logbiasProperty)
 	}
 	if len(vol.Spec.Encryption) != 0 {
 		encryptionProperty := "encryption=" + vol.Spec.Encryption
@@ -271,6 +293,12 @@ func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 		ZFSVolArg = append(ZFSVolArg, recordsizeProperty)
 	}
 
+	if vol.Spec.VolumeType == VolTypeDataset &&
+		len(vol.Spec.ATime) != 0 {
+		atimeProperty := "atime=" + vol.Spec.ATime
+		ZFSVolArg = append(ZFSVolArg, atimeProperty)
+	}
+
 	if len(vol.Spec.Dedup) != 0 {
 		dedupProperty := "dedup=" + vol.Spec.Dedup
 		ZFSVolArg = append(ZFSVolArg, dedupProperty)
@@ -278,6 +306,10 @@ func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 	if len(vol.Spec.Compression) != 0 {
 		compressionProperty := "compression=" + vol.Spec.Compression
 		ZFSVolArg = append(ZFSVolArg, compressionProperty)
+	}
+	if len(vol.Spec.LogBias) != 0 {
+		logbiasProperty := "logbias=" + vol.Spec.LogBias
+		ZFSVolArg = append(ZFSVolArg, logbiasProperty)
 	}
 
 	ZFSVolArg = append(ZFSVolArg, volume)
@@ -361,6 +393,9 @@ func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) ([]string, error) {
 		if len(rstr.VolSpec.RecordSize) != 0 {
 			ZFSRecvParam += " -o recordsize=" + rstr.VolSpec.RecordSize
 		}
+		if len(rstr.VolSpec.ATime) != 0 {
+			ZFSRecvParam += " -o atime=" + rstr.VolSpec.ATime
+		}
 		if rstr.VolSpec.ThinProvision == "no" {
 			ZFSRecvParam += " -o reservation=" + rstr.VolSpec.Capacity
 		}
@@ -372,6 +407,9 @@ func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) ([]string, error) {
 	}
 	if len(rstr.VolSpec.Compression) != 0 {
 		ZFSRecvParam += " -o compression=" + rstr.VolSpec.Compression
+	}
+	if len(rstr.VolSpec.LogBias) != 0 {
+		ZFSRecvParam += " -o logbias=" + rstr.VolSpec.LogBias
 	}
 	if len(rstr.VolSpec.Encryption) != 0 {
 		ZFSRecvParam += " -o encryption=" + rstr.VolSpec.Encryption
@@ -591,8 +629,10 @@ func SetVolumeProp(vol *apis.ZFSVolume) error {
 
 	if len(vol.Spec.Compression) == 0 &&
 		len(vol.Spec.Dedup) == 0 &&
+		len(vol.Spec.LogBias) == 0 &&
 		(vol.Spec.VolumeType != VolTypeDataset ||
-			len(vol.Spec.RecordSize) == 0) {
+			(len(vol.Spec.RecordSize) == 0 &&
+				len(vol.Spec.ATime) == 0)) {
 		//nothing to set, just return
 		return nil
 	}

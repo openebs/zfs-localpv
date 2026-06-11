@@ -16,6 +16,7 @@ metadata:
 value: 900001000
 globalDefault: false
 description: "This priority class should be used for the CStor CSI driver node deployment only."
+
 ---
 # Source: zfs-localpv/templates/rbac.yaml
 kind: ServiceAccount
@@ -65,6 +66,7 @@ data:
     else
       chroot /host "zfs" "$@"
     fi
+
 ---
 # Source: zfs-localpv/charts/crds/templates/csi-volume-snapshot-class.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -1391,6 +1393,18 @@ spec:
               In case of Cloned volumes, the parameters are assigned the same values
               as the source volume.
             properties:
+              atime:
+                description: |-
+                  ATime controls whether the access time for files is updated when they are read.
+                  Turning this property off ("off") avoids producing write traffic when reading files,
+                  which can result in significant performance gains for read-heavy workloads.
+                  This is a filesystem (dataset) only property and is ignored for zvols.
+                  ATime property can be edited after the volume has been created.
+                  Default Value: on.
+                enum:
+                - "on"
+                - "off"
+                type: string
               capacity:
                 description: Capacity of the volume
                 minLength: 1
@@ -1457,6 +1471,18 @@ spec:
                 type: string
               keylocation:
                 description: KeyLocation is the location of key for the encryption
+                type: string
+              logbias:
+                description: |-
+                  LogBias provides a hint to ZFS about how to handle synchronous requests for this volume.
+                  If set to "latency" (the default), ZFS uses the pool's separate log devices, if any, to handle
+                  the requests at low latency. If set to "throughput", ZFS does not use the separate log devices,
+                  instead it optimizes synchronous operations for global pool throughput and efficient use of resources.
+                  LogBias property can be edited after the volume has been created.
+                  Default Value: latency.
+                enum:
+                - latency
+                - throughput
                 type: string
               ownerNodeID:
                 description: |-
@@ -1601,6 +1627,18 @@ spec:
               In case of Cloned volumes, the parameters are assigned the same values
               as the source volume.
             properties:
+              atime:
+                description: |-
+                  ATime controls whether the access time for files is updated when they are read.
+                  Turning this property off ("off") avoids producing write traffic when reading files,
+                  which can result in significant performance gains for read-heavy workloads.
+                  This is a filesystem (dataset) only property and is ignored for zvols.
+                  ATime property can be edited after the volume has been created.
+                  Default Value: on.
+                enum:
+                - "on"
+                - "off"
+                type: string
               capacity:
                 description: Capacity of the volume
                 minLength: 1
@@ -1667,6 +1705,18 @@ spec:
                 type: string
               keylocation:
                 description: KeyLocation is the location of key for the encryption
+                type: string
+              logbias:
+                description: |-
+                  LogBias provides a hint to ZFS about how to handle synchronous requests for this volume.
+                  If set to "latency" (the default), ZFS uses the pool's separate log devices, if any, to handle
+                  the requests at low latency. If set to "throughput", ZFS does not use the separate log devices,
+                  instead it optimizes synchronous operations for global pool throughput and efficient use of resources.
+                  LogBias property can be edited after the volume has been created.
+                  Default Value: latency.
+                enum:
+                - latency
+                - throughput
                 type: string
               ownerNodeID:
                 description: |-
@@ -2023,6 +2073,18 @@ spec:
               In case of Cloned volumes, the parameters are assigned the same values
               as the source volume.
             properties:
+              atime:
+                description: |-
+                  ATime controls whether the access time for files is updated when they are read.
+                  Turning this property off ("off") avoids producing write traffic when reading files,
+                  which can result in significant performance gains for read-heavy workloads.
+                  This is a filesystem (dataset) only property and is ignored for zvols.
+                  ATime property can be edited after the volume has been created.
+                  Default Value: on.
+                enum:
+                - "on"
+                - "off"
+                type: string
               capacity:
                 description: Capacity of the volume
                 minLength: 1
@@ -2089,6 +2151,18 @@ spec:
                 type: string
               keylocation:
                 description: KeyLocation is the location of key for the encryption
+                type: string
+              logbias:
+                description: |-
+                  LogBias provides a hint to ZFS about how to handle synchronous requests for this volume.
+                  If set to "latency" (the default), ZFS uses the pool's separate log devices, if any, to handle
+                  the requests at low latency. If set to "throughput", ZFS does not use the separate log devices,
+                  instead it optimizes synchronous operations for global pool throughput and efficient use of resources.
+                  LogBias property can be edited after the volume has been created.
+                  Default Value: latency.
+                enum:
+                - latency
+                - throughput
                 type: string
               ownerNodeID:
                 description: |-
@@ -2589,6 +2663,7 @@ roleRef:
   kind: ClusterRole
   name: openebs-zfs-driver-registrar-role
   apiGroup: rbac.authorization.k8s.io
+
 ---
 # Source: zfs-localpv/templates/zfs-node.yaml
 kind: DaemonSet
@@ -2729,6 +2804,7 @@ spec:
           hostPath:
             path: "/var/lib/kubelet/"
             type: Directory
+
 ---
 # Source: zfs-localpv/templates/zfs-controller.yaml
 apiVersion: apps/v1
@@ -2854,6 +2930,7 @@ spec:
       volumes:
         - name: socket-dir
           emptyDir: {}
+
 ---
 # Source: zfs-localpv/templates/csidriver.yaml
 # Create the CSI Driver object

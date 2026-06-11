@@ -41,6 +41,18 @@ Deduplication is the process for removing redundant data at the block level, red
 
 allowed values: "on", "off"
 
+### atime (*optional* parameter)
+
+ATime controls whether the access time for files is updated when they are read. Setting it to "off" avoids producing write traffic when reading files, which can give a significant performance gain for read-heavy workloads. This is a filesystem (dataset) only property and is ignored for volumes (zvols).
+
+allowed values: "on", "off"
+
+### logbias (*optional* parameter)
+
+LogBias provides a hint to ZFS about how to handle synchronous requests for this volume. With "latency" (the default) ZFS uses the pool's separate log devices (SLOG), if any, to handle the requests at low latency. With "throughput" ZFS does not use the separate log devices and instead optimizes synchronous operations for global pool throughput; on pools without a SLOG this also avoids the in-pool ZIL double-write, which benefits write-heavy workloads such as databases.
+
+allowed values: "latency", "throughput"
+
 ### thinprovision (*optional* parameter)
 
 ThinProvision describes whether space reservation for the source volume is required or not. The value "yes" indicates that volume should be thin provisioned and "no" means thick provisioning of the volume. If thinProvision is set to "yes" then volume can be provisioned even if the ZPOOL does not have the enough capacity. If thinProvision is set to "no" then volume can be provisioned only if the ZPOOL has enough capacity and capacity required by volume can be reserved.
@@ -76,6 +88,9 @@ metadata:
 allowVolumeExpansion: true
 parameters:
  recordsize: "128k"
+ compression: "lz4"
+ atime: "off"
+ logbias: "throughput"
  thinprovision: "no"
  fstype: "zfs"
  poolname: "zfspv-pool"

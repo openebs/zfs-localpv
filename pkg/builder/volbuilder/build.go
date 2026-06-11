@@ -133,6 +133,18 @@ func (b *Builder) WithDedup(dedup string) *Builder {
 	return b
 }
 
+// WithATime sets the atime property of ZFSVolume
+func (b *Builder) WithATime(atime string) *Builder {
+	b.volume.Object.Spec.ATime = atime
+	return b
+}
+
+// WithLogBias sets the logbias property of ZFSVolume
+func (b *Builder) WithLogBias(logbias string) *Builder {
+	b.volume.Object.Spec.LogBias = logbias
+	return b
+}
+
 // WithThinProv sets if ZFSVolume needs to be thin provisioned
 func (b *Builder) WithThinProv(thinprov string) *Builder {
 	b.volume.Object.Spec.ThinProvision = thinprov

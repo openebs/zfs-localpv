@@ -123,6 +123,24 @@ type VolumeInfo struct {
 	// +kubebuilder:validation:Enum=on;off
 	Dedup string `json:"dedup,omitempty"`
 
+	// ATime controls whether the access time for files is updated when they are read.
+	// Turning this property off ("off") avoids producing write traffic when reading files,
+	// which can result in significant performance gains for read-heavy workloads.
+	// This is a filesystem (dataset) only property and is ignored for zvols.
+	// ATime property can be edited after the volume has been created.
+	// Default Value: on.
+	// +kubebuilder:validation:Enum=on;off
+	ATime string `json:"atime,omitempty"`
+
+	// LogBias provides a hint to ZFS about how to handle synchronous requests for this volume.
+	// If set to "latency" (the default), ZFS uses the pool's separate log devices, if any, to handle
+	// the requests at low latency. If set to "throughput", ZFS does not use the separate log devices,
+	// instead it optimizes synchronous operations for global pool throughput and efficient use of resources.
+	// LogBias property can be edited after the volume has been created.
+	// Default Value: latency.
+	// +kubebuilder:validation:Enum=latency;throughput
+	LogBias string `json:"logbias,omitempty"`
+
 	// Enabling the encryption feature allows for the creation of
 	// encrypted filesystems and volumes. ZFS will encrypt file and zvol data,
 	// file attributes, ACLs, permission bits, directory listings, FUID mappings,
