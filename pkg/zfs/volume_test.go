@@ -1,6 +1,7 @@
 package zfs
 
 import (
+	"strings"
 	"testing"
 
 	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
@@ -153,6 +154,148 @@ func TestBuildCloneCreateArgs(t *testing.T) {
 					t.Errorf("Clone command should NOT include encryption parameter: %q", arg)
 				}
 			}
+		})
+	}
+}
+
+func assertArgs(t *testing.T, got, expected []string) {
+	t.Helper()
+	if len(got) != len(expected) {
+		t.Fatalf("Expected %d arguments, got %d\nExpected: %v\nGot: %v",
+			len(expected), len(got), expected, got)
+	}
+	for i, arg := range got {
+		if arg != expected[i] {
+			t.Errorf("Argument %d: expected %q, got %q", i, expected[i], arg)
+		}
+	}
+}
+
+func TestBuildDatasetCreateArgs(t *testing.T) {
+	tests := []struct {
+		name     string
+		vol      *apis.ZFSVolume
+		expected []string
+	}{
+		{
+			name: "atime and logbias are set on dataset creation",
+			vol: &apis.ZFSVolume{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-vol"},
+				Spec: apis.VolumeInfo{
+					PoolName:      "testpool",
+					VolumeType:    "DATASET",
+					Capacity:      "10G",
+					RecordSize:    "16k",
+					ATime:         "off",
+					Compression:   "lz4",
+					LogBias:       "throughput",
+					ThinProvision: "yes",
+				},
+			},
+			expected: []string{"create", "-o", "quota=10G", "-o", "recordsize=16k", "-o", "atime=off", "-o", "compression=lz4", "-o", "logbias=throughput", "-o", "mountpoint=legacy", "testpool/test-vol"},
+		},
+		{
+			name: "atime and logbias omitted when unset",
+			vol: &apis.ZFSVolume{
+				ObjectMeta: metav1.ObjectMeta{Name: "plain-vol"},
+				Spec: apis.VolumeInfo{
+					PoolName:      "testpool",
+					VolumeType:    "DATASET",
+					Capacity:      "10G",
+					ThinProvision: "yes",
+				},
+			},
+			expected: []string{"create", "-o", "quota=10G", "-o", "mountpoint=legacy", "testpool/plain-vol"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assertArgs(t, buildDatasetCreateArgs(tt.vol), tt.expected)
+		})
+	}
+}
+
+func TestBuildZvolCreateArgs(t *testing.T) {
+	vol := &apis.ZFSVolume{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-zvol"},
+		Spec: apis.VolumeInfo{
+			PoolName:      "testpool",
+			VolumeType:    "ZVOL",
+			Capacity:      "10G",
+			VolBlockSize:  "8k",
+			Compression:   "lz4",
+			ATime:         "off", // must be ignored for zvols
+			LogBias:       "throughput",
+			ThinProvision: "yes",
+		},
+	}
+	expected := []string{"create", "-s", "-V", "10G", "-b", "8k", "-o", "compression=lz4", "-o", "logbias=throughput", "testpool/test-zvol"}
+	assertArgs(t, buildZvolCreateArgs(vol), expected)
+}
+
+func TestBuildVolumeRestoreArgs(t *testing.T) {
+	rstr := &apis.ZFSRestore{
+		Spec: apis.ZFSRestoreSpec{RestoreSrc: "10.0.0.1:9000", VolumeName: "test-vol"},
+		VolSpec: apis.VolumeInfo{
+			PoolName:    "testpool",
+			VolumeType:  "DATASET",
+			Capacity:    "10G",
+			RecordSize:  "16k",
+			ATime:       "off",
+			Compression: "lz4",
+			LogBias:     "throughput",
+		},
+	}
+	args, err := buildVolumeRestoreArgs(rstr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	cmd := strings.Join(args, " ")
+	for _, want := range []string{"-o atime=off", "-o logbias=throughput"} {
+		if !strings.Contains(cmd, want) {
+			t.Errorf("restore command missing %q\ngot: %s", want, cmd)
+		}
+	}
+}
+
+func TestBuildVolumeSetArgs(t *testing.T) {
+	tests := []struct {
+		name     string
+		vol      *apis.ZFSVolume
+		expected []string
+	}{
+		{
+			name: "atime (dataset) and logbias are emitted on set",
+			vol: &apis.ZFSVolume{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-vol"},
+				Spec: apis.VolumeInfo{
+					PoolName:    "testpool",
+					VolumeType:  "DATASET",
+					RecordSize:  "16k",
+					ATime:       "off",
+					Compression: "lz4",
+					LogBias:     "throughput",
+				},
+			},
+			expected: []string{"set", "recordsize=16k", "atime=off", "compression=lz4", "logbias=throughput", "testpool/test-vol"},
+		},
+		{
+			name: "atime is skipped for zvol, logbias still applies",
+			vol: &apis.ZFSVolume{
+				ObjectMeta: metav1.ObjectMeta{Name: "zvol-vol"},
+				Spec: apis.VolumeInfo{
+					PoolName:   "testpool",
+					VolumeType: "ZVOL",
+					ATime:      "off",
+					LogBias:    "throughput",
+				},
+			},
+			expected: []string{"set", "logbias=throughput", "testpool/zvol-vol"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assertArgs(t, buildVolumeSetArgs(tt.vol), tt.expected)
 		})
 	}
 }

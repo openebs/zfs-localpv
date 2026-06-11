@@ -238,6 +238,8 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 	bs := parameters["volblocksize"]
 	compression := parameters["compression"]
 	dedup := parameters["dedup"]
+	atime := parameters["atime"]
+	logbias := parameters["logbias"]
 	encr := parameters["encryption"]
 	kf := parameters["keyformat"]
 	kl := parameters["keylocation"]
@@ -307,6 +309,8 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		WithFsType(fstype).
 		WithQuotaType(quotatype).
 		WithShared(shared).
+		WithATime(atime).
+		WithLogBias(logbias).
 		WithCompression(compression).Build()
 
 	if err != nil {
