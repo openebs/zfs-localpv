@@ -69,6 +69,12 @@ var (
 	cloneAppNameFS    = "busybox-zfspv-clone-fs"
 	cloneAppNameBlock = "busybox-zfspv-clone-block"
 
+	volumeClonePvcNameFS = "zfspv-pvc-vol-clone-fs"
+	volumeCloneAppNameFS = "busybox-zfspv-vol-clone-fs"
+
+	volumeClonePvcNameBlock = "zfspv-pvc-vol-clone-block"
+	volumeCloneAppNameBlock = "busybox-zfspv-vol-clone-block"
+
 	pvFromRetainZV  = "pv-from-retain-zv"
 	pvcFromRetainZV = "pvc-from-retain-zv"
 
