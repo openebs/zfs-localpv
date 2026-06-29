@@ -17,6 +17,10 @@ limitations under the License.
 package tests
 
 import (
+	"fmt"
+	"sort"
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 )
 
@@ -40,17 +44,32 @@ func exhaustiveVolumeTests(parameters map[string]string) {
 	fstype := parameters["fstype"]
 	create(parameters)
 	snapshotAndCloneCreate()
+	volumeCloneCreate()
 	// btrfs does not support online resize
 	if fstype != "btrfs" {
 		By("Resizing the PVC", func() { resizeAndVerifyPVC(pvcNameFS) })
 	}
 	snapshotAndCloneCleanUp()
+	volumeCloneCleanUp()
 	cleanUp()
+}
+
+func formatParams(parameters map[string]string) string {
+	keys := make([]string, 0, len(parameters))
+	for k := range parameters {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(parameters))
+	for _, k := range keys {
+		parts = append(parts, k+"="+parameters[k])
+	}
+	return strings.Join(parts, ", ")
 }
 
 // Creates the resources
 func create(parameters map[string]string) {
-	By("####### Creating the storage class : " + parameters["fstype"] + " #######")
+	By(fmt.Sprintf("####### Creating the storage class : %s #######", formatParams(parameters)))
 	createFstypeStorageClass(parameters)
 	By("creating and verifying PVC bound status", func() { createAndVerifyPVC(pvcNameFS) })
 	By("Creating and deploying app pod", func() { createDeployVerifyApp(appNameFS, pvcNameFS) })
@@ -74,6 +93,20 @@ func snapshotAndCloneCleanUp() {
 	deleteSnapshot(pvcNameFS, snapNameFS)
 }
 
+// Creates the volume clone resources
+func volumeCloneCreate() {
+	createVolumeClone(volumeClonePvcNameFS, pvcNameFS, scObj.Name, "Filesystem")
+	By("Creating and deploying volume clone app pod", func() {
+		createDeployVerifyCloneApp(volumeCloneAppNameFS, volumeClonePvcNameFS)
+	})
+}
+
+// Removes the volume clone resources
+func volumeCloneCleanUp() {
+	deleteAppDeployment(volumeCloneAppNameFS)
+	deletePVC(volumeClonePvcNameFS)
+}
+
 // Removes the resources
 func cleanUp() {
 	deleteAppDeployment(appNameFS)
@@ -92,8 +125,20 @@ func blockVolCreationTest() {
 	createSnapshot(pvcNameBlock, snapNameBlock)
 	verifySnapshotCreated(snapNameBlock)
 
+	By("creating volume clone from block pvc", func() {
+		createVolumeClone(volumeClonePvcNameBlock, pvcNameBlock, scObj.Name, "Block")
+	})
+	By("Creating and deploying volume clone app pod", func() {
+		createDeployVerifyCloneApp(volumeCloneAppNameBlock, volumeClonePvcNameBlock)
+	})
+
 	createClone(clonePvcNameBlock, snapNameBlock, scObj.Name, "Block")
 	By("Creating and deploying clone app pod", func() { createDeployVerifyCloneApp(cloneAppNameBlock, clonePvcNameBlock) })
+
+	By("Deleting volume clone application deployment")
+	deleteAppDeployment(volumeCloneAppNameBlock)
+	By("Deleting volume clone pvc")
+	deletePVC(volumeClonePvcNameBlock)
 
 	By("Deleting main application deployment")
 	deleteAppDeployment(appNameBlock)
@@ -125,6 +170,23 @@ func blockVolCreationWithReclaimRetainTest() {
 
 	createSnapshot(pvcNameBlock, snapNameBlock)
 	verifySnapshotCreated(snapNameBlock)
+
+	By("creating volume clone from block pvc", func() {
+		createVolumeClone(volumeClonePvcNameBlock, pvcNameBlock, scObj.Name, "Block")
+	})
+	By("Creating and deploying volume clone app pod", func() {
+		createDeployVerifyCloneApp(volumeCloneAppNameBlock, volumeClonePvcNameBlock)
+	})
+	By("Deleting volume clone application deployment")
+	deleteAppDeployment(volumeCloneAppNameBlock)
+	By("Deleting volume clone pvc")
+	volumeCloneZVName := getZVName(volumeClonePvcNameBlock)
+	deletePVC(volumeClonePvcNameBlock)
+	// The volume clone uses the Retain reclaim policy SC, so the external-provisioner
+	// never calls CSI DeleteVolume. The ZFSVolume CR and ZFS clone data remain on disk.
+	// Explicitly delete the ZV so the ZFS clone is destroyed before we try to destroy
+	// the parent volume (which would fail with "volume has dependent clones").
+	By("Deleting volume clone ZV for cleanup", func() { DeleteZV(volumeCloneZVName) })
 
 	zvName := getZVName(pvcNameBlock)
 	By("Deleting main pvc", func() { deletePVC(pvcNameBlock) })
@@ -169,6 +231,17 @@ func encryptedVolCreationTest() {
 
 	By("Deleting snapshot")
 	deleteSnapshot(pvcNameFS, snapNameFS)
+
+	By("creating volume clone from encrypted pvc", func() {
+		createVolumeClone(volumeClonePvcNameFS, pvcNameFS, scObj.Name, "Filesystem")
+	})
+	By("Creating and deploying volume clone app pod", func() {
+		createDeployVerifyCloneApp(volumeCloneAppNameFS, volumeClonePvcNameFS)
+	})
+	By("Deleting volume clone application deployment")
+	deleteAppDeployment(volumeCloneAppNameFS)
+	By("Deleting volume clone pvc")
+	deletePVC(volumeClonePvcNameFS)
 
 	By("Deleting main application deployment")
 	deleteAppDeployment(appNameFS)

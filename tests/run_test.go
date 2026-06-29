@@ -53,6 +53,23 @@ spec:
   volumeMode: #volumemode
   storageClassName: #storageclass
 `
+
+	volumeCloneYAML = `apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: #pvcname
+spec:
+  dataSource:
+    name: #sourcepvcname
+    kind: PersistentVolumeClaim
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeMode: #volumemode
+  storageClassName: #storageclass
+`
 )
 
 func execAtLocal(cmd string, input []byte, args ...string) ([]byte, []byte, error) {
@@ -100,6 +117,18 @@ func createClone(clonepvc, snapname, storageclass, mode string) {
 	By("creating clone volume from snapshot " + snapname)
 
 	syaml := strings.Replace(cloneYAML, "#snapname", snapname, -1)
+	cyaml := strings.Replace(syaml, "#pvcname", clonepvc, -1)
+	myaml := strings.Replace(cyaml, "#volumemode", mode, -1)
+	yaml := strings.Replace(myaml, "#storageclass", storageclass, -1)
+
+	stdout, stderr, err := kubectlWithInput([]byte(yaml), "apply", "-n", OpenEBSNamespace, "-f", "-")
+	Expect(err).ShouldNot(HaveOccurred(), "stdout=%s, stderr=%s", stdout, stderr)
+}
+
+func createVolumeClone(clonepvc, sourcepvc, storageclass, mode string) {
+	By("creating clone volume from pvc " + sourcepvc)
+
+	syaml := strings.Replace(volumeCloneYAML, "#sourcepvcname", sourcepvc, -1)
 	cyaml := strings.Replace(syaml, "#pvcname", clonepvc, -1)
 	myaml := strings.Replace(cyaml, "#volumemode", mode, -1)
 	yaml := strings.Replace(myaml, "#storageclass", storageclass, -1)
