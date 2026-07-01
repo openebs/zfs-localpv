@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-nix
         with:
@@ -37,7 +37,7 @@ jobs:
           '
 
       - name: Trivy Helm misconfiguration scan
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
             scan-type: config
             scan-ref: deploy/helm/charts/rendered.yaml
