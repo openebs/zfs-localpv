@@ -246,15 +246,97 @@ func TestBuildVolumeRestoreArgs(t *testing.T) {
 			LogBias:     "throughput",
 		},
 	}
-	args, err := buildVolumeRestoreArgs(rstr)
+	ncArgs, recvArgs, err := buildVolumeRestoreArgs(rstr)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	cmd := strings.Join(args, " ")
+	nc := strings.Join(ncArgs, " ")
+	if want := "-w 3 10.0.0.1 9000"; nc != want {
+		t.Errorf("nc args = %q, want %q", nc, want)
+	}
+	cmd := strings.Join(recvArgs, " ")
 	for _, want := range []string{"-o atime=off", "-o logbias=throughput"} {
 		if !strings.Contains(cmd, want) {
-			t.Errorf("restore command missing %q\ngot: %s", want, cmd)
+			t.Errorf("restore recv command missing %q\ngot: %s", want, cmd)
 		}
+	}
+}
+
+// TestBuildVolumeBackupArgsSnapTokenization checks that a prevSnapName
+// containing special characters ends up as a single argv element of `zfs send`,
+// never split into separate tokens.
+func TestBuildVolumeBackupArgsSnapTokenization(t *testing.T) {
+	name := "snap with spaces; and & chars"
+	bkp := &apis.ZFSBackup{
+		Spec: apis.ZFSBackupSpec{
+			BackupDest:   "10.0.0.1:9000",
+			SnapName:     "snap1",
+			PrevSnapName: name,
+		},
+	}
+	vol := &apis.ZFSVolume{
+		Spec: apis.VolumeInfo{PoolName: "zfspv-pool"},
+	}
+	vol.Name = "pvc-test"
+
+	sendArgs, ncArgs, err := buildVolumeBackupArgs(bkp, vol)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// The value must appear verbatim as exactly one argv element.
+	wantSnap := "zfspv-pool/pvc-test@" + name
+	found := false
+	for _, a := range sendArgs {
+		if a == wantSnap {
+			found = true
+		}
+		if a == name {
+			t.Errorf("value leaked as a bare argv element: %q", a)
+		}
+	}
+	if !found {
+		t.Errorf("expected value contained in a single snap argument %q, got args: %#v", wantSnap, sendArgs)
+	}
+	if sendArgs[0] != ZFSSendArg {
+		t.Errorf("send args[0] = %q, want %q", sendArgs[0], ZFSSendArg)
+	}
+	if want := "-w 3 10.0.0.1 9000"; strings.Join(ncArgs, " ") != want {
+		t.Errorf("nc args = %q, want %q", strings.Join(ncArgs, " "), want)
+	}
+}
+
+// TestBuildVolumeRestoreArgsPropertyTokenization checks that a keylocation
+// value containing special characters stays a single argv element following its
+// own "-o" flag.
+func TestBuildVolumeRestoreArgsPropertyTokenization(t *testing.T) {
+	value := "file:///tmp/key; and & chars"
+	rstr := &apis.ZFSRestore{
+		Spec: apis.ZFSRestoreSpec{RestoreSrc: "10.0.0.1:9000", VolumeName: "test-vol"},
+		VolSpec: apis.VolumeInfo{
+			PoolName:    "zfspv-pool",
+			KeyLocation: value,
+		},
+	}
+
+	_, recvArgs, err := buildVolumeRestoreArgs(rstr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// keylocation=<value> must be a single argv element following its own "-o".
+	want := "keylocation=" + value
+	found := false
+	for i, a := range recvArgs {
+		if a == want {
+			found = true
+			if i == 0 || recvArgs[i-1] != "-o" {
+				t.Errorf("keylocation value not preceded by its own -o flag: %#v", recvArgs)
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected keylocation value as a single argv element %q, got: %#v", want, recvArgs)
 	}
 }
 

@@ -18,6 +18,7 @@ package zfs
 
 import (
 	"bufio"
+	"bytes"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -62,6 +63,9 @@ const (
 	VolTypeZVol    = "ZVOL"
 )
 
+// NetCatCmd streams backup/restore data to/from the remote endpoint.
+const NetCatCmd = "nc"
+
 // runCmd executes cmd, logs the invocation at V(4) and full output at V(5),
 // and returns combined stdout+stderr. Use this instead of cmd.CombinedOutput()
 // throughout this package so verbosity can be tuned with --v.
@@ -72,6 +76,52 @@ func runCmd(cmd *exec.Cmd, dataset string) ([]byte, error) {
 		klog.V(5).Infof("zfs: command %v on %q output: %s", cmd.Args, dataset, strings.TrimSpace(string(out)))
 	}
 	return out, err
+}
+
+// runPipe wires src's stdout to dst's stdin via an in-process pipe. Success is
+// decided by dst alone; an src failure is logged but does not fail the
+// pipeline. Returned bytes are src's stderr followed by dst's stdout+stderr.
+func runPipe(src, dst *exec.Cmd, dataset string) ([]byte, error) {
+	klog.V(4).Infof("zfs: executing %v | %v on %q", src.Args, dst.Args, dataset)
+
+	pipe, err := src.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	dst.Stdin = pipe
+
+	// Separate buffers: os/exec only serializes concurrent writes when Stdout
+	// and Stderr of the same Cmd are the identical writer.
+	var srcErr, dstOut bytes.Buffer
+	src.Stderr = &srcErr
+	dst.Stdout = &dstOut
+	dst.Stderr = &dstOut
+
+	if err := src.Start(); err != nil {
+		return nil, err
+	}
+	if err := dst.Start(); err != nil {
+		// Nothing will read src's stdout now; kill it so it can't block on a
+		// full pipe buffer forever.
+		_ = src.Process.Kill()
+		_ = src.Wait()
+		return srcErr.Bytes(), err
+	}
+
+	// Wait src first so its stdout closes (EOF to dst), then wait dst.
+	srcWaitErr := src.Wait()
+	dstWaitErr := dst.Wait()
+
+	// Both Waits returned, so copying goroutines are done; buffers are race-free.
+	out := append(srcErr.Bytes(), dstOut.Bytes()...)
+
+	if srcWaitErr != nil {
+		klog.V(5).Infof("zfs: pipe src %v on %q exited with error: %v", src.Args, dataset, srcWaitErr)
+	}
+	if dstWaitErr != nil {
+		klog.V(5).Infof("zfs: pipe %v | %v on %q output: %s", src.Args, dst.Args, dataset, strings.TrimSpace(string(out)))
+	}
+	return out, dstWaitErr
 }
 
 // PropertyChanged return whether volume property is changed
@@ -342,90 +392,87 @@ func buildVolumeResizeArgs(vol *apis.ZFSVolume) []string {
 	return ZFSVolArg
 }
 
-// buildVolumeBackupArgs returns volume send command for sending the zfs volume
-func buildVolumeBackupArgs(bkp *apis.ZFSBackup, vol *apis.ZFSVolume) ([]string, error) {
-	var ZFSVolArg []string
+// buildVolumeBackupArgs returns the argv vectors for the `zfs send` and `nc`
+// processes of the backup pipeline, connected via runPipe.
+func buildVolumeBackupArgs(bkp *apis.ZFSBackup, vol *apis.ZFSVolume) (sendArgs []string, ncArgs []string, err error) {
 	backupDest := bkp.Spec.BackupDest
 
 	bkpAddr := strings.Split(backupDest, ":")
 	if len(bkpAddr) != 2 {
-		return ZFSVolArg, fmt.Errorf("zfs: invalid backup server address %s", backupDest)
+		return nil, nil, fmt.Errorf("zfs: invalid backup server address %s", backupDest)
 	}
 
 	curSnap := vol.Spec.PoolName + "/" + vol.Name + "@" + bkp.Spec.SnapName
 
-	remote := " | nc -w 3 " + bkpAddr[0] + " " + bkpAddr[1]
-
-	cmd := ZFSVolCmd + " "
-
+	sendArgs = []string{ZFSSendArg}
 	if len(bkp.Spec.PrevSnapName) > 0 {
 		prevSnap := vol.Spec.PoolName + "/" + vol.Name + "@" + bkp.Spec.PrevSnapName
 		// do incremental send
-		cmd += ZFSSendArg + " -i " + prevSnap + " " + curSnap + " " + remote
+		sendArgs = append(sendArgs, "-i", prevSnap, curSnap)
 	} else {
-		cmd += ZFSSendArg + " " + curSnap + remote
+		sendArgs = append(sendArgs, curSnap)
 	}
 
-	ZFSVolArg = append(ZFSVolArg, "-c", cmd)
+	ncArgs = []string{"-w", "3", bkpAddr[0], bkpAddr[1]}
 
-	return ZFSVolArg, nil
+	return sendArgs, ncArgs, nil
 }
 
-// buildVolumeRestoreArgs returns volume recv command for receiving the zfs volume
-func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) ([]string, error) {
-	var ZFSVolArg []string
-	var ZFSRecvParam string
+// buildVolumeRestoreArgs returns the argv vectors for the `nc` and `zfs recv`
+// processes of the restore pipeline, connected via runPipe. Each
+// `-o property=value` pair is two separate argv elements.
+func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) (ncArgs []string, recvArgs []string, err error) {
 	restoreSrc := rstr.Spec.RestoreSrc
 
 	volume := rstr.VolSpec.PoolName + "/" + rstr.Spec.VolumeName
 
 	rstrAddr := strings.Split(restoreSrc, ":")
 	if len(rstrAddr) != 2 {
-		return ZFSVolArg, fmt.Errorf("zfs: invalid restore server address %s", restoreSrc)
+		return nil, nil, fmt.Errorf("zfs: invalid restore server address %s", restoreSrc)
 	}
 
-	source := "nc -w 3 " + rstrAddr[0] + " " + rstrAddr[1] + " | "
+	ncArgs = []string{"-w", "3", rstrAddr[0], rstrAddr[1]}
+
+	recvArgs = []string{ZFSRecvArg}
 
 	if rstr.VolSpec.VolumeType == VolTypeDataset {
 		if len(rstr.VolSpec.Capacity) != 0 {
-			ZFSRecvParam += " -o " + quotaProperty(rstr.VolSpec.QuotaType) + "=" + rstr.VolSpec.Capacity
+			recvArgs = append(recvArgs, "-o", quotaProperty(rstr.VolSpec.QuotaType)+"="+rstr.VolSpec.Capacity)
 		}
 		if len(rstr.VolSpec.RecordSize) != 0 {
-			ZFSRecvParam += " -o recordsize=" + rstr.VolSpec.RecordSize
+			recvArgs = append(recvArgs, "-o", "recordsize="+rstr.VolSpec.RecordSize)
 		}
 		if len(rstr.VolSpec.ATime) != 0 {
-			ZFSRecvParam += " -o atime=" + rstr.VolSpec.ATime
+			recvArgs = append(recvArgs, "-o", "atime="+rstr.VolSpec.ATime)
 		}
 		if rstr.VolSpec.ThinProvision == "no" {
-			ZFSRecvParam += " -o reservation=" + rstr.VolSpec.Capacity
+			recvArgs = append(recvArgs, "-o", "reservation="+rstr.VolSpec.Capacity)
 		}
-		ZFSRecvParam += " -o mountpoint=legacy"
+		recvArgs = append(recvArgs, "-o", "mountpoint=legacy")
 	}
 
 	if len(rstr.VolSpec.Dedup) != 0 {
-		ZFSRecvParam += " -o dedup=" + rstr.VolSpec.Dedup
+		recvArgs = append(recvArgs, "-o", "dedup="+rstr.VolSpec.Dedup)
 	}
 	if len(rstr.VolSpec.Compression) != 0 {
-		ZFSRecvParam += " -o compression=" + rstr.VolSpec.Compression
+		recvArgs = append(recvArgs, "-o", "compression="+rstr.VolSpec.Compression)
 	}
 	if len(rstr.VolSpec.LogBias) != 0 {
-		ZFSRecvParam += " -o logbias=" + rstr.VolSpec.LogBias
+		recvArgs = append(recvArgs, "-o", "logbias="+rstr.VolSpec.LogBias)
 	}
 	if len(rstr.VolSpec.Encryption) != 0 {
-		ZFSRecvParam += " -o encryption=" + rstr.VolSpec.Encryption
+		recvArgs = append(recvArgs, "-o", "encryption="+rstr.VolSpec.Encryption)
 	}
 	if len(rstr.VolSpec.KeyLocation) != 0 {
-		ZFSRecvParam += " -o keylocation=" + rstr.VolSpec.KeyLocation
+		recvArgs = append(recvArgs, "-o", "keylocation="+rstr.VolSpec.KeyLocation)
 	}
 	if len(rstr.VolSpec.KeyFormat) != 0 {
-		ZFSRecvParam += " -o keyformat=" + rstr.VolSpec.KeyFormat
+		recvArgs = append(recvArgs, "-o", "keyformat="+rstr.VolSpec.KeyFormat)
 	}
 
-	cmd := source + ZFSVolCmd + " " + ZFSRecvArg + ZFSRecvParam + " -F " + volume
+	recvArgs = append(recvArgs, "-F", volume)
 
-	ZFSVolArg = append(ZFSVolArg, "-c", cmd)
-
-	return ZFSVolArg, nil
+	return ncArgs, recvArgs, nil
 }
 
 // buildVolumeDestroyArgs returns volume destroy command along with attributes as a string array
@@ -860,16 +907,18 @@ func CreateBackup(bkp *apis.ZFSBackup) error {
 		return err
 	}
 
-	args, err := buildVolumeBackupArgs(bkp, vol)
+	sendArgs, ncArgs, err := buildVolumeBackupArgs(bkp, vol)
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command("bash", args...)
-	out, err := runCmd(cmd, volume)
+	// zfs send ... | nc <host> <port>
+	sendCmd := exec.Command(ZFSVolCmd, sendArgs...)
+	ncCmd := exec.Command(NetCatCmd, ncArgs...)
+	out, err := runPipe(sendCmd, ncCmd, volume)
 
 	if err != nil {
 		zerr := NewZFSError("zfs send (backup)", volume, err, out)
-		klog.Errorf("zfs: could not backup the volume %v cmd %v error: %s", volume, args, zerr)
+		klog.Errorf("zfs: could not backup the volume %v cmd %v | %v error: %s", volume, sendCmd.Args, ncCmd.Args, zerr)
 		return zerr
 	}
 
@@ -935,19 +984,21 @@ func CreateRestore(rstr *apis.ZFSRestore) error {
 		}
 		rstr.VolSpec = vol.Spec
 	}
-	args, err := buildVolumeRestoreArgs(rstr)
+	ncArgs, recvArgs, err := buildVolumeRestoreArgs(rstr)
 	if err != nil {
 		return err
 	}
 
 	volume := rstr.VolSpec.PoolName + "/" + rstr.Spec.VolumeName
 
-	cmd := exec.Command("bash", args...)
-	out, err := runCmd(cmd, volume)
+	// nc <host> <port> | zfs recv ...
+	ncCmd := exec.Command(NetCatCmd, ncArgs...)
+	recvCmd := exec.Command(ZFSVolCmd, recvArgs...)
+	out, err := runPipe(ncCmd, recvCmd, volume)
 
 	if err != nil {
 		zerr := NewZFSError("zfs recv (restore)", volume, err, out)
-		klog.Errorf("zfs: could not restore the volume %v cmd %v error: %s", volume, args, zerr)
+		klog.Errorf("zfs: could not restore the volume %v cmd %v | %v error: %s", volume, ncCmd.Args, recvCmd.Args, zerr)
 		return zerr
 	}
 
