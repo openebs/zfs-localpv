@@ -29,6 +29,7 @@ var _ = Describe("[zfspv] TEST VOLUME PROVISIONING", func() {
 		It("Running zfs volume Creation Test", volumeCreationTest)
 		It("Running zfs volume Creation Test with custom node id", Label("custom-node-id"), volumeCreationTest)
 		It("Running encrypted volume creation test", encryptedVolCreationTest)
+		It("Running shared volume tests", fsVolCreationWithSharedParameterTest)
 	})
 })
 
@@ -37,6 +38,31 @@ func fsVolCreationTest() {
 	for _, params := range storageClass {
 		exhaustiveVolumeTests(params)
 	}
+}
+
+func fsVolCreationWithSharedParameterTest() {
+	storageClass := getSharedStorageClassParameters()
+	for _, params := range storageClass {
+		SharedVolumeTests(params)
+	}
+}
+
+func SharedVolumeTests(parameters map[string]string) {
+	sharedParam := parameters["shared"]
+	By(fmt.Sprintf("####### Creating the storage class with shared parameter : %s #######", formatParams(parameters)))
+	By("Creating Storage Class", func() { createFstypeStorageClass(parameters) })
+	By("creating and verifying PVC bound status", func() { createAndVerifyPVC(pvcNameFS) })
+	By("Creating and deploying app pod", func() { createDeployVerifyApp(appNameFS, pvcNameFS) })
+	if sharedParam == "yes" {
+		By("Creating and deploying app pod sharing the same PVC", func() { createDeployVerifyApp(appNameFSShared, pvcNameFS) })
+	} else {
+		By("Creating a second app pod expected to fail mounting the non-shared PVC", func() { createAndDeployAppPod(appNameFSShared, pvcNameFS) })
+		By("verifying second app pod never becomes running", func() { verifyAppPodNotRunning(appNameFSShared) })
+	}
+	By("Deleting main application deployment", func() { deleteAppDeployment(appNameFS) })
+	By("Deleting application deployment using shared volume", func() { deleteAppDeployment(appNameFSShared) })
+	By("Deleting shared pvc", func() { deletePVC(pvcNameFS) })
+	By("Deleting storage class", deleteStorageClass)
 }
 
 // Test to cater create, snapshot, clone and delete resources

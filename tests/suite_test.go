@@ -57,8 +57,9 @@ var (
 	pvcNameFS    = "zfspv-pvc-fs"
 	pvcNameBlock = "zfspv-pvc-block"
 
-	appNameFS    = "busybox-zfspv-fs"
-	appNameBlock = "busybox-zfspv-block"
+	appNameFS       = "busybox-zfspv-fs"
+	appNameBlock    = "busybox-zfspv-block"
+	appNameFSShared = "busybox-zfspv-fs-shared"
 
 	snapNameFS    = "zfspv-snap-fs"
 	snapNameBlock = "zfspv-snap-block"
