@@ -19,6 +19,9 @@ jobs:
 
   tests:
     needs: ["lint"]
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/tests.yml
     with:
       coverage: false
@@ -27,7 +30,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: ["lint"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-nix
         with:
@@ -89,7 +92,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: ["csi-driver", "tests"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-nix
         with:
