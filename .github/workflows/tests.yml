@@ -12,6 +12,9 @@ on:
 jobs:
   unit-tests:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v7
 
@@ -25,7 +28,7 @@ jobs:
       - uses: codecov/codecov-action@v7
         if: inputs.coverage
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           directory: ./coverage
           flags: unittests
           fail_ci_if_error: true
@@ -33,6 +36,9 @@ jobs:
 
   bdd-tests:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
     needs: ["unit-tests"]
     strategy:
       fail-fast: true
@@ -64,7 +70,7 @@ jobs:
       - uses: codecov/codecov-action@v7
         if: inputs.coverage
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           disable_search: true
           files: ./tests/bdd_coverage.txt,./tests/bdd_coverage_custom-node-id.txt
           flags: bddtests
