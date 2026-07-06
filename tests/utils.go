@@ -686,6 +686,29 @@ func verifyAppPodRunning(appname string) {
 	gomega.Expect(status).To(gomega.Equal(true), "while checking status of pod {%s}", appPod.Items[0].Name)
 }
 
+func verifyAppPodNotRunning(appname string) {
+	var err error
+	gomega.Eventually(func() bool {
+		appPod, err = PodClient.WithNamespace(OpenEBSNamespace).
+			List(metav1.ListOptions{LabelSelector: "role=test,appName=" + appname})
+		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+		return len(appPod.Items) == 1
+	}, 60, 5).Should(gomega.BeTrue())
+
+	status := IsPodNotRunningConsistently(OpenEBSNamespace, appPod.Items[0].Name)
+	gomega.Expect(status).To(gomega.Equal(true),
+		"pod %s should never become running when shared=no", appPod.Items[0].Name)
+}
+
+// IsPodNotRunningConsistently returns true only if the pod stays out of Running for the window
+func IsPodNotRunningConsistently(namespace, podName string) bool {
+	return gomega.Consistently(func() bool {
+		p, err := PodClient.WithNamespace(namespace).Get(podName, metav1.GetOptions{})
+		gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+		return pod.NewForAPIObject(p).IsRunning()
+	}, 30, 5).Should(gomega.BeFalse())
+}
+
 func deleteAppDeployment(appname string) {
 	err := DeployClient.WithNamespace(OpenEBSNamespace).
 		Delete(appname, &metav1.DeleteOptions{})
@@ -807,6 +830,32 @@ func getStoragClassParams() []map[string]string {
 			"compression": "lz4",
 		},
 	}
+}
+
+func getSharedStorageClassParameters() []map[string]string {
+	return []map[string]string{
+		{
+			"fstype": "zfs",
+			"shared": "yes",
+		},
+		{
+			"fstype": "ext4",
+			"shared": "yes",
+		},
+		{
+			"fstype": "xfs",
+			"shared": "yes",
+		},
+		{
+			"fstype": "btrfs",
+			"shared": "yes",
+		},
+		{
+			"fstype": "zfs",
+			"shared": "no",
+		},
+	}
+
 }
 
 // IsZVPresentConsistently checks if the zfs volume is present or not consistently
