@@ -159,10 +159,10 @@ func (ns *node) NodePublishVolume(
 	switch req.GetVolumeCapability().GetAccessType().(type) {
 	case *csi.VolumeCapability_Block:
 		// attempt block mount operation on the requested path
-		err = zfs.MountBlock(vol, mountInfo)
+		err = zfs.MountBlock(ctx, vol, mountInfo)
 	case *csi.VolumeCapability_Mount:
 		// attempt filesystem mount operation on the requested path
-		err = zfs.MountFilesystem(vol, mountInfo)
+		err = zfs.MountFilesystem(ctx, vol, mountInfo)
 	}
 
 	if err != nil {
