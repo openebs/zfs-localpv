@@ -151,6 +151,12 @@ rules:
   - apiGroups: ["*"]
     resources: ["zfsvolumes", "zfssnapshots", "zfsbackups", "zfsrestores", "zfsnodes"]
     verbs: ["get", "list", "watch", "create", "update", "patch"]
+  # Read the per-volume encryption key referenced by a PVC. Only "get" (not
+  # "list") is granted to limit blast radius, but this is still cluster-wide as
+  # the referenced Secret can live in any PVC namespace.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
