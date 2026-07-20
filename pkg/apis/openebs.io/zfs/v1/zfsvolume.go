@@ -56,6 +56,19 @@ type ZFSVolumeList struct {
 	Items []ZFSVolume `json:"items"`
 }
 
+// EncryptionKeyReference points to the Kubernetes Secret that holds a volume's
+// per-volume encryption key. The key is stored under the Secret's "key" data
+// field as 64 hex characters (a 32-byte key).
+type EncryptionKeyReference struct {
+	// Name is the name of the Secret.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Namespace is the namespace of the Secret: the PVC's namespace for a Secret
+	// referenced by the PVC, the driver namespace for a generated key.
+	Namespace string `json:"namespace,omitempty"`
+}
+
 // VolumeInfo defines ZFS volume parameters for all modes in which
 // ZFS volumes can be created like - ZFS volume with filesystem,
 // ZFS Volume exposed as zfs or ZFS volume exposed as raw block device.
@@ -163,6 +176,11 @@ type VolumeInfo struct {
 	// The supported KeyFormats are passphrase, raw, hex.
 	// +kubebuilder:validation:Enum=passphrase;raw;hex
 	KeyFormat string `json:"keyformat,omitempty"`
+
+	// EncryptionKeyRef references the Kubernetes Secret that holds the per-volume
+	// encryption key. The node agent reads it to create and to load-key the
+	// volume. The key material itself is never stored in this CR.
+	EncryptionKeyRef *EncryptionKeyReference `json:"encryptionKeyRef,omitempty"`
 
 	// ThinProvision describes whether space reservation for the source volume is required or not.
 	// The value "yes" indicates that volume should be thin provisioned and "no" means thick provisioning of the volume.
