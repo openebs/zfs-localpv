@@ -211,7 +211,10 @@ func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
 		encryptionProperty := "encryption=" + vol.Spec.Encryption
 		ZFSVolArg = append(ZFSVolArg, "-o", encryptionProperty)
 	}
-	if len(vol.Spec.KeyLocation) != 0 {
+	// a managed key is piped to zfs create on stdin
+	if UsesManagedKey(vol) {
+		ZFSVolArg = append(ZFSVolArg, "-o", "keylocation=prompt")
+	} else if len(vol.Spec.KeyLocation) != 0 {
 		keyLocation := "keylocation=" + vol.Spec.KeyLocation
 		ZFSVolArg = append(ZFSVolArg, "-o", keyLocation)
 	}
@@ -350,7 +353,10 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 		encryptionProperty := "encryption=" + vol.Spec.Encryption
 		ZFSVolArg = append(ZFSVolArg, "-o", encryptionProperty)
 	}
-	if len(vol.Spec.KeyLocation) != 0 {
+	// a managed key is piped to zfs create on stdin
+	if UsesManagedKey(vol) {
+		ZFSVolArg = append(ZFSVolArg, "-o", "keylocation=prompt")
+	} else if len(vol.Spec.KeyLocation) != 0 {
 		keyLocation := "keylocation=" + vol.Spec.KeyLocation
 		ZFSVolArg = append(ZFSVolArg, "-o", keyLocation)
 	}
@@ -552,6 +558,19 @@ func CreateVolume(vol *apis.ZFSVolume) error {
 			args = buildZvolCreateArgs(vol)
 		}
 		cmd := exec.Command(ZFSVolCmd, args...)
+
+		// the key is fed on stdin, never written to the CR or the node disk
+		if UsesManagedKey(vol) && len(vol.Spec.Encryption) != 0 {
+			ctx, cancel := apiContext()
+			key, kerr := FetchEncryptionKey(ctx, vol)
+			cancel()
+			if kerr != nil {
+				klog.Errorf("zfs: could not resolve encryption key for %v error: %s", volume, kerr)
+				return kerr
+			}
+			cmd.Stdin = strings.NewReader(key + "\n")
+		}
+
 		out, err := runCmd(cmd, volume)
 
 		if err != nil {
