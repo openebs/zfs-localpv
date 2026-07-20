@@ -1,0 +1,47 @@
+# Example: per-PV ZFS native encryption with a per-PVC key from a Kubernetes Secret.
+#
+# How it works:
+#   * The StorageClass turns on ZFS encryption (encryption: aes-256-gcm).
+#   * The PVC references a Secret via the annotation
+#     encryption.openebs.io/secret-name. That Secret (in the PVC namespace)
+#     holds the 32-byte key as 64 hex characters under the data key "key".
+#   * The zfs-localpv node agent reads the Secret and feeds the key to
+#     `zfs create` / `zfs load-key` over stdin. The key is never written to the
+#     ZFSVolume CR or the node disk. It does live in the Secret you create here
+#     (i.e. in etcd, base64) — enable etcd encryption at rest if that matters.
+#
+# Requirements:
+#   * The external-provisioner runs with --extra-create-metadata=true (default).
+#   * The node DaemonSet has RBAC to "get" Secrets (added by the chart).
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-zfspv-encrypted
+allowVolumeExpansion: true
+parameters:
+  poolname: "zfspv-pool"
+  fstype: "ext4"
+  encryption: "aes-256-gcm"
+provisioner: zfs.csi.openebs.io
+---
+# Create the key Secret first, with a fresh random 32-byte key (64 hex chars).
+# Never use a key copied from an example:
+#   kubectl -n default create secret generic csi-encryption-key \
+#     --from-literal=key="$(openssl rand -hex 32)"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: csi-zfspv-encrypted
+  namespace: default
+  annotations:
+    # Names the Secret (in this PVC's namespace) holding the hex encryption key.
+    encryption.openebs.io/secret-name: "csi-encryption-key"
+spec:
+  storageClassName: openebs-zfspv-encrypted
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
