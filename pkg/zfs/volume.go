@@ -70,6 +70,12 @@ const (
 	FormatOptionsKey string = "openebs.io/format-options"
 	// ZFSCasTypeName for the name of the cas-type
 	ZFSCasTypeName string = "localpv-zfs"
+	// OpenEBSEncryptedKey is the PV attribute telling how the driver encrypts a volume.
+	OpenEBSEncryptedKey string = "openebs.io/encrypted"
+	// EncryptedVolume marks a volume with its own key source.
+	EncryptedVolume string = "volume"
+	// EncryptedStorageClass marks a volume using the StorageClass keylocation.
+	EncryptedStorageClass string = "storageclass"
 )
 
 var (
@@ -509,4 +515,23 @@ func IsVolumeEligibleForDeletion(volumeName string) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+// EncryptionEnabled reports whether an encryption property value enables
+// encryption: unset and "off" do not.
+func EncryptionEnabled(encryption string) bool {
+	return encryption != "" && encryption != "off"
+}
+
+// EncryptedMarker returns the OpenEBSEncryptedKey value of vol, or "" when the
+// driver does not set its key up (e.g. a volume only encrypted by its pool or
+// parent dataset).
+func EncryptedMarker(vol *apis.ZFSVolume) string {
+	switch {
+	case vol.Spec.EncryptionKeyRef != nil:
+		return EncryptedVolume
+	case EncryptionEnabled(vol.Spec.Encryption) && vol.Spec.KeyLocation != "":
+		return EncryptedStorageClass
+	}
+	return ""
 }
