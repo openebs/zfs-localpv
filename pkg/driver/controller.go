@@ -222,6 +222,19 @@ func waitForReadySnapshot(ctx context.Context, snapname string) error {
 	}
 }
 
+// pvcEncryptionSecretName returns the Secret named by the secret-name annotation,
+// or "" if unset. An empty annotation is an error.
+func pvcEncryptionSecretName(annotations map[string]string) (string, error) {
+	name, ok := annotations[zfs.PVCEncryptionSecretAnnotation]
+	if !ok {
+		return "", nil
+	}
+	if strings.TrimSpace(name) == "" {
+		return "", fmt.Errorf("the %q annotation is set but empty", zfs.PVCEncryptionSecretAnnotation)
+	}
+	return name, nil
+}
+
 // CreateZFSVolume create new zfs volume from csi volume request
 func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*zfsapi.ZFSVolume, error) {
 	volName := strings.ToLower(req.GetName())
@@ -277,6 +290,50 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*zfsapi
 			}
 			return vol, nil
 		}
+	}
+
+	// Per-volume key source of a new volume: the Secret named by the PVC
+	// annotation. It requires `encryption`: fail closed.
+	var pvcSecretName string
+	if pvcName != "" && pvcNamespace != "" {
+		pvc, perr := zfs.GetPVC(ctx, pvcNamespace, pvcName)
+		if perr != nil {
+			// the PVC may name its own key: never guess
+			return nil, status.Errorf(codes.Internal,
+				"failed to get pvc %s/%s: %s", pvcNamespace, pvcName, perr.Error())
+		}
+		name, aerr := pvcEncryptionSecretName(pvc.Annotations)
+		if aerr != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "pvc %s/%s: %s",
+				pvcNamespace, pvcName, aerr.Error())
+		}
+		pvcSecretName = name
+	}
+
+	// fail closed: never create a plaintext volume when a key source is requested
+	if pvcSecretName != "" && !zfs.EncryptionEnabled(encr) {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"an encryption key source was requested (secret-name annotation) "+
+				"but the StorageClass does not enable the 'encryption' parameter; "+
+				"refusing to create an unencrypted volume")
+	}
+
+	var encKeySecretName, encKeySecretNamespace string
+	if pvcSecretName != "" {
+		// fail fast on a missing or malformed key
+		if err := zfs.ValidateEncryptionSecret(ctx, pvcSecretName, pvcNamespace); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"encryption key secret referenced by pvc %s/%s is invalid: %s",
+				pvcNamespace, pvcName, err.Error())
+		}
+		encKeySecretName = pvcSecretName
+		encKeySecretNamespace = pvcNamespace
+	}
+
+	// managed keys are hex, fed on stdin: no legacy keylocation on the CR
+	if encKeySecretName != "" {
+		kf = "hex"
+		kl = ""
 	}
 
 	// rejects a storageclass setting both pool parameters or neither, and folds
@@ -362,6 +419,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*zfsapi
 		WithEncryption(encr).
 		WithKeyFormat(kf).
 		WithKeyLocation(kl).
+		WithEncryptionKeySecret(encKeySecretName, encKeySecretNamespace).
 		WithThinProv(tp).
 		WithVolumeType(vtype).
 		WithVolumeStatus(zfs.ZFSStatusPending).
@@ -438,6 +496,43 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*zfsapi
 		"not able to provision the volume, nodes %v, err : %s", prfList, err.Error())
 }
 
+// cloneKeyConflict returns an error when a clone's or a restore's PVC names
+// another key than its source's: a clone always uses its source's key.
+func cloneKeyConflict(src *zfsapi.EncryptionKeyReference, annotations map[string]string, pvcNamespace string) error {
+	name, err := pvcEncryptionSecretName(annotations)
+	if err != nil || name == "" {
+		return err
+	}
+	if src == nil || src.Name != name || src.Namespace != pvcNamespace {
+		return fmt.Errorf("the %q annotation names Secret %s/%s, but a clone or a restore "+
+			"always uses its source's encryption key", zfs.PVCEncryptionSecretAnnotation, pvcNamespace, name)
+	}
+	return nil
+}
+
+// checkCloneKeySource rejects a new clone or restore whose PVC names another key
+// than its source's.
+func checkCloneKeySource(ctx context.Context, volName string, src *zfsapi.EncryptionKeyReference,
+	pvcNamespace, pvcName string) error {
+	if pvcName == "" || pvcNamespace == "" {
+		return nil
+	}
+	// a retried request for an existing clone does not depend on its PVC
+	if _, err := zfs.GetZFSVolume(volName); err == nil {
+		return nil
+	}
+	pvc, err := zfs.GetPVC(ctx, pvcNamespace, pvcName)
+	if err != nil {
+		return status.Errorf(codes.Internal, "clone: failed to get pvc %s/%s: %s",
+			pvcNamespace, pvcName, err.Error())
+	}
+	if err := cloneKeyConflict(src, pvc.Annotations, pvcNamespace); err != nil {
+		return status.Errorf(codes.InvalidArgument, "clone: pvc %s/%s: %s",
+			pvcNamespace, pvcName, err.Error())
+	}
+	return nil
+}
+
 // CreateVolClone creates the clone from a volume
 func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol string) (*zfsapi.ZFSVolume, error) {
 	volName := strings.ToLower(req.GetName())
@@ -473,6 +568,10 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 
 	if vol.Spec.Capacity != volsize {
 		return nil, status.Error(codes.Internal, "clone: volume size is not matching")
+	}
+
+	if err := checkCloneKeySource(ctx, volName, vol.Spec.EncryptionKeyRef, pvcNamespace, pvcName); err != nil {
+		return nil, err
 	}
 
 	labels := map[string]string{zfs.ZFSSrcVolKey: vol.Name}
@@ -553,6 +652,11 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 		return nil, status.Error(codes.Internal, "clone volume size is not matching")
 	}
 
+	// a snapshot carries its volume's spec, key source included
+	if err := checkCloneKeySource(ctx, volName, snap.Spec.EncryptionKeyRef, pvcNamespace, pvcName); err != nil {
+		return nil, err
+	}
+
 	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
 		WithPVCName(pvcName).
@@ -627,6 +731,11 @@ func (cs *controller) CreateVolume(
 	// the node agent formats the volume, hand it the options of the storage class
 	if formatOptions := helpers.GetInsensitiveParameter(&parameters, "formatoptions"); formatOptions != "" {
 		cntx[zfs.FormatOptionsKey] = formatOptions
+	}
+
+	// surface encryption on the PV, never the key
+	if marker := zfs.EncryptedMarker(vol); marker != "" {
+		cntx[zfs.OpenEBSEncryptedKey] = marker
 	}
 
 	return csipayload.NewCreateVolumeResponseBuilder().
