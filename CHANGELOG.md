@@ -1,3 +1,16 @@
+v2.12.0 / yyyy-mm-dd
+========================
+
+New Features and Enhancements
+
+ - PVC and VolumeSnapshot identification properties
+Newly created ZFS datasets receive the ZFS user properties
+`openebs.io:pv-name`, `openebs.io:pvc-name`, and `openebs.io:pvc-namespace` to
+help identify which PersistentVolumeClaim and PersistentVolume they are
+associated with. Similarly, newly created snapshots identify their associated
+VolumeSnapshot and VolumeSnapshotContent with the user properties
+`openebs.io:vs-name`, `openebs.io:vs-namespace` and `openebs.io:vsc-name`.
+
 v2.10.0 / 2026-05-19
 ========================
 

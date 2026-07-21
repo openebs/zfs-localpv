@@ -91,6 +91,9 @@ func (c *SnapController) syncSnap(snap *apis.ZFSSnapshot) error {
 			return fmt.Errorf("snapshot: can not destroy, waiting for finalizers to be removed %v", userFin)
 		}
 	} else {
+		if err = snap.Spec.Validate(); err != nil {
+			return fmt.Errorf("snapshot is invalid: %w", err)
+		}
 		// if status is not Ready then it means we are creating
 		// the zfs snapshot.
 		if snap.Status.State != zfs.ZFSStatusReady {

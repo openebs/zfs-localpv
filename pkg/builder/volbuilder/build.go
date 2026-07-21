@@ -17,8 +17,11 @@ limitations under the License.
 package volbuilder
 
 import (
+	"strings"
+
 	"github.com/openebs/lib-csi/pkg/common/errors"
 	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	zfsutil "github.com/openebs/zfs-localpv/v2/pkg/zfs/util"
 )
 
 // MarkForDeletionAnnotation is the annotation key
@@ -269,6 +272,63 @@ func (b *Builder) WithLabels(labels map[string]string) *Builder {
 func (b *Builder) WithFinalizer(finalizer []string) *Builder {
 	b.volume.Object.Finalizers = append(b.volume.Object.Finalizers, finalizer...)
 	return b
+}
+
+// WithUserProperties sets user properties on the volume
+func (b *Builder) WithUserProperties(props map[string]string) *Builder {
+	if b.volume.Object.Spec.UserProperties == nil {
+		b.volume.Object.Spec.UserProperties = make(map[string]string)
+	}
+	for name, value := range props {
+		if err := zfsutil.ValidateUserProperty(name, value); err != nil {
+			b.errs = append(
+				b.errs,
+				errors.Wrap(err, "failed to build zfs volume object: invalid user property"),
+			)
+			continue
+		}
+		if strings.HasPrefix(name, "openebs.io:") {
+			b.errs = append(
+				b.errs,
+				errors.Errorf("failed to build zfs volume object: user property '%s' is reserved", name),
+			)
+			continue
+		}
+		b.volume.Object.Spec.UserProperties[name] = value
+	}
+
+	return b
+}
+
+// WithReservedUserProp sets a reserved (prefix "openebs.io:") user property on the volume
+func (b *Builder) WithReservedUserProp(name string, value string) *Builder {
+	if b.volume.Object.Spec.UserProperties == nil {
+		b.volume.Object.Spec.UserProperties = make(map[string]string)
+	}
+	if err := zfsutil.ValidateUserProperty(name, value); err != nil {
+		b.errs = append(
+			b.errs,
+			errors.Wrap(err, "failed to build zfs volume object: invalid user property"),
+		)
+	}
+
+	b.volume.Object.Spec.UserProperties[name] = value
+	return b
+}
+
+// WithPVCName sets "openebs.io:pvc-name" user property on the volume
+func (b *Builder) WithPVCName(pvc string) *Builder {
+	return b.WithReservedUserProp("openebs.io:pvc-name", pvc)
+}
+
+// WithPVCNamespace sets "openebs.io:pvc-namespace" user property on the volume
+func (b *Builder) WithPVCNamespace(pvc string) *Builder {
+	return b.WithReservedUserProp("openebs.io:pvc-namespace", pvc)
+}
+
+// WithPVName sets "openebs.io:pv-name" user property on the volume
+func (b *Builder) WithPVName(pvc string) *Builder {
+	return b.WithReservedUserProp("openebs.io:pv-name", pvc)
 }
 
 // Build returns ZFSVolume API object

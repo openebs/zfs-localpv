@@ -17,6 +17,10 @@ limitations under the License.
 package v1
 
 import (
+	"strings"
+
+	"github.com/openebs/lib-csi/pkg/common/errors"
+	zfsutil "github.com/openebs/zfs-localpv/v2/pkg/zfs/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -201,6 +205,11 @@ type VolumeInfo struct {
 	// the volumes to be mounted by more than one pods.
 	// +kubebuilder:validation:Enum=yes;no
 	Shared string `json:"shared,omitempty"`
+
+	// UserProperties specifies userproperties that should be set on the
+	// dataset. Keys and values must conform to the requirements for user
+	// properties outlined in zfsprops(7).
+	UserProperties map[string]string `json:"userProperties,omitempty"`
 }
 
 // VolStatus string that specifies the current state of the volume provisioning request.
@@ -211,4 +220,20 @@ type VolStatus struct {
 	// and it is ready for the use.
 	// +kubebuilder:validation:Enum=Pending;Ready;Failed
 	State string `json:"state,omitempty"`
+}
+
+// Validate checks that the VolumeInfo is valid, namely that:
+//   - UserProperties conform to the requirements in zfsprops(7)
+//   - all UserProperties have prefix `openebs.io:` (XXX: at least until we
+//     support arbitrary user properties)
+func (v *VolumeInfo) Validate() error {
+	for name, value := range v.UserProperties {
+		if err := zfsutil.ValidateUserProperty(name, value); err != nil {
+			return err
+		}
+		if !strings.HasPrefix(name, "openebs.io:") {
+			return errors.Errorf("user property '%s' does not have prefix `openebs.io:`")
+		}
+	}
+	return nil
 }

@@ -66,6 +66,7 @@ spec:
           imagePullPolicy: {{ default .Values.zfsController.snapshotter.image.pullPolicy .Values.global.imagePullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
+            - "--extra-create-metadata=true"
             {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
           {{- range .Values.zfsController.snapshotter.extraArgs }}
             - {{ tpl . $ | quote }}
