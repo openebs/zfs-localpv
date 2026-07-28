@@ -23,10 +23,27 @@ func newPool(name string, free, used int64) apis.Pool {
 	}
 }
 
+// Builds a ZFSNode CR as the node agent does without a custom node
+// id: the CR is named after the node and owned by it, so name == id.
 func newZFSNode(name string, pools ...apis.Pool) apis.ZFSNode {
+	return newCustomIDZFSNode(name, name, pools...)
+}
+
+// Builds a ZFSNode CR for a node running with a custom node
+// id: the CR is named after the id, while the owner reference still names the
+// kubernetes node, which is what the scheduler works with.
+func newCustomIDZFSNode(nodeid, nodename string, pools ...apis.Pool) apis.ZFSNode {
 	return apis.ZFSNode{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "openebs"},
-		Pools:      pools,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nodeid,
+			Namespace: "openebs",
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: "v1",
+				Kind:       "Node",
+				Name:       nodename,
+			}},
+		},
+		Pools: pools,
 	}
 }
 
@@ -140,7 +157,46 @@ func TestReservesSpace(t *testing.T) {
 	}
 }
 
+func TestK8sNodeName(t *testing.T) {
+	tests := map[string]struct {
+		node     apis.ZFSNode
+		expected string
+	}{
+		"no custom node id, name == id": {
+			node:     newZFSNode("node1"),
+			expected: "node1",
+		},
+		"custom node id, the owner reference names the node": {
+			node:     newCustomIDZFSNode("node1-custom-id", "node1"),
+			expected: "node1",
+		},
+		"no owner reference falls back to the CR name": {
+			node:     apis.ZFSNode{ObjectMeta: metav1.ObjectMeta{Name: "node1"}},
+			expected: "node1",
+		},
+		"a non node owner reference is ignored": {
+			node: apis.ZFSNode{ObjectMeta: metav1.ObjectMeta{
+				Name:            "node1-custom-id",
+				OwnerReferences: []metav1.OwnerReference{{Kind: "Pod", Name: "some-pod"}},
+			}},
+			expected: "node1-custom-id",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expected, k8sNodeName(test.node))
+		})
+	}
+}
+
 func TestVolumeWeightedMap(t *testing.T) {
+	nodelist := []apis.ZFSNode{
+		newZFSNode("node1"),
+		newZFSNode("node2"),
+		newZFSNode("node3"),
+	}
+
 	zvlist := []apis.ZFSVolume{
 		newZFSVolume("node1", "zfspv-pool-a"),
 		newZFSVolume("node1", "zfspv-pool-a"),
@@ -171,10 +227,34 @@ func TestVolumeWeightedMap(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			nmap := volumeWeightedMap(zvlist, regexp.MustCompile(test.pattern))
+			nmap := volumeWeightedMap(zvlist, nodelist, regexp.MustCompile(test.pattern))
 			assert.Equal(t, test.expected, nmap)
 		})
 	}
+}
+
+// the volume count has to land under the node NAME, since that is what lib-csi's
+// scheduler looks up, while a volume records the node ID of its node
+func TestVolumeWeightedMapCustomNodeID(t *testing.T) {
+	nodelist := []apis.ZFSNode{
+		newCustomIDZFSNode("node1-custom-id", "node1"),
+		newCustomIDZFSNode("node2-custom-id", "node2"),
+	}
+	zvlist := []apis.ZFSVolume{
+		newZFSVolume("node1-custom-id", "zfspv-pool-a"),
+		newZFSVolume("node1-custom-id", "zfspv-pool-a"),
+		newZFSVolume("node2-custom-id", "zfspv-pool-b"),
+		// a volume whose node has no ZFSNode CR falls back to its node id
+		newZFSVolume("node3-custom-id", "zfspv-pool-c"),
+	}
+
+	nmap := volumeWeightedMap(zvlist, nodelist, regexp.MustCompile("^zfspv-pool-"))
+
+	assert.Equal(t, map[string]int64{
+		"node1":           2,
+		"node2":           1,
+		"node3-custom-id": 1,
+	}, nmap)
 }
 
 func TestCapacityWeightedMap(t *testing.T) {
@@ -215,6 +295,20 @@ func TestCapacityWeightedMap(t *testing.T) {
 			assert.Equal(t, test.expected, nmap)
 		})
 	}
+}
+
+// with a custom node id the ZFSNode CR is named after the id, but the weight
+// still has to be keyed by the node name, otherwise lib-csi finds no key, treats
+// every node as least loaded and the weighting silently stops working
+func TestCapacityWeightedMapCustomNodeID(t *testing.T) {
+	nodelist := []apis.ZFSNode{
+		newCustomIDZFSNode("node1-custom-id", "node1", newPool("zfspv-pool-a", 90*Gi, 10*Gi)),
+		newCustomIDZFSNode("node2-custom-id", "node2", newPool("zfspv-pool-b", 70*Gi, 30*Gi)),
+	}
+
+	nmap := capacityWeightedMap(nodelist, regexp.MustCompile("^zfspv-pool-"))
+
+	assert.Equal(t, map[string]int64{"node1": 10 * Gi, "node2": 30 * Gi}, nmap)
 }
 
 func TestSuitableNodes(t *testing.T) {
@@ -272,6 +366,21 @@ func TestSuitableNodes(t *testing.T) {
 			assert.Equal(t, test.wantMatched, matched)
 		})
 	}
+}
+
+// the suitable set is intersected with the scheduler's output, which holds node
+// names, so a custom node id must not leak into it — keying it by the id would
+// intersect to nothing and fail every space reserving volume
+func TestSuitableNodesCustomNodeID(t *testing.T) {
+	nodelist := []apis.ZFSNode{
+		newCustomIDZFSNode("node1-custom-id", "node1", newPool("zfspv-pool-a", 40*Gi, 60*Gi)),
+		newCustomIDZFSNode("node2-custom-id", "node2", newPool("zfspv-pool-b", 5*Gi, 95*Gi)),
+	}
+
+	suitable, matched := suitableNodes(nodelist, regexp.MustCompile("^zfspv-pool-"), 20*Gi)
+
+	assert.Equal(t, map[string]bool{"node1": true}, suitable)
+	assert.True(t, matched)
 }
 
 func TestPoolForNode(t *testing.T) {

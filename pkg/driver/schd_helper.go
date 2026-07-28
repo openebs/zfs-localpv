@@ -40,12 +40,17 @@ const (
 	CapacityWeighted = "CapacityWeighted"
 )
 
-// The node keys used by all the helpers below are the node IDs (the value of
-// the openebs.io/nodeid topology label), which is what ZFSVolume records in
-// Spec.OwnerNodeID and what the ZFSNode CR is named after. Note that lib-csi's
-// scheduler works with kubernetes node *names*, so the caller has to map a node
-// name to its node ID (zfs.GetNodeID) before looking it up in the suitable set
-// or asking resolvePool for the concrete pool.
+// Returns the name of the kubernetes node this ZFSNode belongs to,
+// read from the owner reference the node agent maintains and falling back to the
+// CR name.
+func k8sNodeName(node apis.ZFSNode) string {
+	for _, ref := range node.OwnerReferences {
+		if ref.Kind == "Node" {
+			return ref.Name
+		}
+	}
+	return node.Name
+}
 
 // Returns the pool part of a "poolname" parameter, which may name a
 // pool ("zpool") or a dataset below it ("zpool/k8s/localpv").
@@ -101,13 +106,8 @@ func listZFSNodes() ([]apis.ZFSNode, error) {
 	return nodelist.Items, nil
 }
 
-// getVolumeWeightedMap goes through all the volumes provisioned into a pool
-// matching the pattern and creates the node mapping of the volume count.
-// It returns a map which has nodes as key and volumes present
-// on the nodes as corresponding value.
-//
-// This is an ordering input for the scheduler only, it does not decide whether
-// a node can hold the volume, see getSuitableNodes for that.
+// Returns the node name to volume count mapping for the
+// volumes provisioned into a pool matching the pattern.
 func getVolumeWeightedMap(pattern *regexp.Regexp) (map[string]int64, error) {
 	zvlist, err := volbuilder.NewKubeclient().
 		WithNamespace(zfs.OpenEBSNamespace).
@@ -117,33 +117,46 @@ func getVolumeWeightedMap(pattern *regexp.Regexp) (map[string]int64, error) {
 		return map[string]int64{}, err
 	}
 
-	return volumeWeightedMap(zvlist.Items, pattern), nil
+	// a volume records the node id of its node, the ZFSNode CRs are what maps
+	// that back to the node name the scheduler works with
+	nodelist, err := listZFSNodes()
+	if err != nil {
+		return map[string]int64{}, err
+	}
+
+	return volumeWeightedMap(zvlist.Items, nodelist, pattern), nil
 }
 
-func volumeWeightedMap(zvlist []apis.ZFSVolume, pattern *regexp.Regexp) map[string]int64 {
+// Counts the volumes in a matching pool per node, translating
+// the node id a volume records back to its node name.
+func volumeWeightedMap(zvlist []apis.ZFSVolume, nodelist []apis.ZFSNode, pattern *regexp.Regexp) map[string]int64 {
+	nodename := map[string]string{}
+	for _, node := range nodelist {
+		nodename[node.Name] = k8sNodeName(node)
+	}
+
 	nmap := map[string]int64{}
 
 	// create the map of the volume count for the matching pools
 	for _, zv := range zvlist {
-		if pattern.MatchString(poolRoot(zv.Spec.PoolName)) {
-			nmap[zv.Spec.OwnerNodeID]++
+		if !pattern.MatchString(poolRoot(zv.Spec.PoolName)) {
+			continue
 		}
+		node, ok := nodename[zv.Spec.OwnerNodeID]
+		if !ok {
+			// no ZFSNode CR for the volume's node, its node id is the best
+			// guess at the node name
+			node = zv.Spec.OwnerNodeID
+		}
+		nmap[node]++
 	}
 
 	return nmap
 }
 
-// getCapacityWeightedMap goes through the pools advertised by every node and
-// creates the node mapping of the capacity used by the pools matching the
-// pattern. It returns a map which has nodes as key and the used capacity of
-// the matching pools as corresponding value. The scheduler will use this map
-// and picks the node which is less weighted.
-//
-// The weight is the pool's real on disk usage as reported by the ZFSNode CR,
-// so it also accounts for the data which was not provisioned by this driver.
-// Every node with a matching pool gets an entry, even when the pools are empty,
-// so that the ordering is not distorted: lib-csi's scheduler moves the nodes
-// missing from the map to the front of the list.
+// Returns the node name to used capacity mapping for the
+// pools matching the pattern, as the ZFSNode CR reports it, so it also accounts
+// for data which was not provisioned by this driver.
 func getCapacityWeightedMap(pattern *regexp.Regexp) (map[string]int64, error) {
 	nodelist, err := listZFSNodes()
 	if err != nil {
@@ -153,13 +166,14 @@ func getCapacityWeightedMap(pattern *regexp.Regexp) (map[string]int64, error) {
 	return capacityWeightedMap(nodelist, pattern), nil
 }
 
+// Sums the used capacity of a node's matching pools.
 func capacityWeightedMap(nodelist []apis.ZFSNode, pattern *regexp.Regexp) map[string]int64 {
 	nmap := map[string]int64{}
 
 	for _, node := range nodelist {
 		for _, pool := range node.Pools {
 			if pattern.MatchString(pool.Name) {
-				nmap[node.Name] += pool.Used.Value()
+				nmap[k8sNodeName(node)] += pool.Used.Value()
 			}
 		}
 	}
@@ -179,20 +193,10 @@ func getNodeMap(schd string, pattern *regexp.Regexp) (map[string]int64, error) {
 	return getCapacityWeightedMap(pattern)
 }
 
-// getSuitableNodes returns the set of nodes which have a pool matching the
-// pattern with more than `size` bytes free, along with `matched`, which tells
-// whether any pool matched the pattern at all, the fit aside.
-//
-// A single pool has to hold the whole reservation, the free capacity is not
-// summed across the pools of a node. The caller intersects this set with the
-// node list returned by the scheduler for the volumes which reserve space (see
-// reservesSpace), and uses `matched` to tell an exhausted pool (matched, but
-// nothing fits) apart from a storageclass which names a pool that does not
-// exist anywhere (not matched).
-//
-// The check is best effort: the free capacity on the ZFSNode CR is a periodic
-// snapshot and two concurrent creates can both pass it, so "zfs create" stays
-// the final arbiter.
+// Returns the names of the nodes whose roomiest matching pool
+// has more than `size` bytes free, and whether any pool matched the pattern at
+// all. The fit is best effort, as the free capacity on the ZFSNode CR is a
+// periodic snapshot, so "zfs create" stays the final arbiter.
 func getSuitableNodes(pattern *regexp.Regexp, size int64) (map[string]bool, bool, error) {
 	nodelist, err := listZFSNodes()
 	if err != nil {
@@ -203,6 +207,10 @@ func getSuitableNodes(pattern *regexp.Regexp, size int64) (map[string]bool, bool
 	return suitable, matched, nil
 }
 
+// Reports which nodes have a matching pool with more than `size`
+// bytes free, and whether any pool matched the pattern at all. A single pool has
+// to hold the whole reservation, so the free capacity is not summed across the
+// pools of a node.
 func suitableNodes(nodelist []apis.ZFSNode, pattern *regexp.Regexp, size int64) (map[string]bool, bool) {
 	suitable := map[string]bool{}
 	matched := false
@@ -219,24 +227,21 @@ func suitableNodes(nodelist []apis.ZFSNode, pattern *regexp.Regexp, size int64) 
 			}
 		}
 		if maxFree > size {
-			suitable[node.Name] = true
+			suitable[k8sNodeName(node)] = true
 		}
 	}
 
 	return suitable, matched
 }
 
-// resolvePool returns the pool matching the pattern on the given node which has
-// the most free capacity, or an empty string when no pool on the node matches.
-//
-// This is how a poolpattern is turned into the concrete pool stored in
-// ZFSVolume.Spec.PoolName. It is not used for the fixed poolname case, where
-// the parameter is used as it is, since it can carry a dataset path
-// ("zpool/k8s/localpv") which the ZFSNode CR does not advertise.
-func resolvePool(node string, pattern *regexp.Regexp) (string, error) {
+// Returns the matching pool with the most free capacity on the given
+// node, or an empty string when no pool on the node matches, turning a
+// poolpattern into the concrete pool stored in ZFSVolume.Spec.PoolName. `nodeid`
+// is the node id, since the ZFSNode CR is named after it.
+func resolvePool(nodeid string, pattern *regexp.Regexp) (string, error) {
 	zfsNode, err := nodebuilder.NewKubeclient().
 		WithNamespace(zfs.OpenEBSNamespace).
-		Get(node, metav1.GetOptions{})
+		Get(nodeid, metav1.GetOptions{})
 
 	if err != nil {
 		return "", err
