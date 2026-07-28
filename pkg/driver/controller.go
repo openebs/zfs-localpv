@@ -274,7 +274,14 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		}
 	}
 
-	nmap, err := getNodeMap(schld, pool)
+	// the pool parameters are matched as a single regular expression, an exact
+	// name being an anchored, quoted one
+	pattern, err := compilePoolPattern(pool, "")
+	if err != nil {
+		return "", status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	nmap, err := getNodeMap(schld, pattern)
 	if err != nil {
 		return "", status.Errorf(codes.Internal, "get node map failed : %s", err.Error())
 	}
