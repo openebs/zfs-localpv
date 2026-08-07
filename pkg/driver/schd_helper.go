@@ -19,6 +19,7 @@ package driver
 import (
 	"errors"
 	"fmt"
+	"math"
 	"regexp"
 	"strings"
 
@@ -38,6 +39,9 @@ const (
 	// pick the node where the matching pools have occupied less capacity
 	// this will be the default scheduler when none provided
 	CapacityWeighted = "CapacityWeighted"
+
+	// pick the node whose matching pool has the most free space
+	SpaceWeighted = "SpaceWeighted"
 )
 
 // Returns the name of the kubernetes node this ZFSNode belongs to,
@@ -181,13 +185,47 @@ func capacityWeightedMap(nodelist []apis.ZFSNode, pattern *regexp.Regexp) map[st
 	return nmap
 }
 
-// getNodeMap returns the node mapping for the given scheduling algorithm
+// Returns the node name to weight mapping which orders the
+// nodes by the free capacity of their roomiest matching pool, so that the volume
+// goes to the node with the most room left rather than the least written to.
+func getSpaceWeightedMap(pattern *regexp.Regexp) (map[string]int64, error) {
+	nodelist, err := listZFSNodes()
+	if err != nil {
+		return map[string]int64{}, err
+	}
+
+	return spaceWeightedMap(nodelist, pattern), nil
+}
+
+// Inverts the free capacity of each node's roomiest matching
+// pool into a weight.
+func spaceWeightedMap(nodelist []apis.ZFSNode, pattern *regexp.Regexp) map[string]int64 {
+	nmap := map[string]int64{}
+
+	for _, node := range nodelist {
+		pool, free := maxFreePool(node.Pools, pattern)
+		if pool == "" {
+			continue
+		}
+		// the scheduler prefers the node with the lowest weight, so the free
+		// capacity is inverted: the more space a node has left, the less loaded
+		// it looks. A node whose matching pool is full keeps its entry, at
+		// math.MaxInt64, so that it sorts last instead of being front loaded.
+		nmap[k8sNodeName(node)] = math.MaxInt64 - free
+	}
+
+	return nmap
+}
+
+// Returns the node mapping for the given scheduling algorithm
 func getNodeMap(schd string, pattern *regexp.Regexp) (map[string]int64, error) {
 	switch schd {
 	case VolumeWeighted:
 		return getVolumeWeightedMap(pattern)
 	case CapacityWeighted:
 		return getCapacityWeightedMap(pattern)
+	case SpaceWeighted:
+		return getSpaceWeightedMap(pattern)
 	}
 	// return CapacityWeighted(default) if not specified
 	return getCapacityWeightedMap(pattern)
@@ -216,17 +254,12 @@ func suitableNodes(nodelist []apis.ZFSNode, pattern *regexp.Regexp, size int64) 
 	matched := false
 
 	for _, node := range nodelist {
-		var maxFree int64
-		for _, pool := range node.Pools {
-			if !pattern.MatchString(pool.Name) {
-				continue
-			}
-			matched = true
-			if free := pool.Free.Value(); free > maxFree {
-				maxFree = free
-			}
+		pool, free := maxFreePool(node.Pools, pattern)
+		if pool == "" {
+			continue
 		}
-		if maxFree > size {
+		matched = true
+		if free > size {
 			suitable[k8sNodeName(node)] = true
 		}
 	}
@@ -247,10 +280,15 @@ func resolvePool(nodeid string, pattern *regexp.Regexp) (string, error) {
 		return "", err
 	}
 
-	return poolForNode(zfsNode.Pools, pattern), nil
+	pool, _ := maxFreePool(zfsNode.Pools, pattern)
+	return pool, nil
 }
 
-func poolForNode(pools []apis.Pool, pattern *regexp.Regexp) string {
+// Returns the pool matching the pattern with the most free capacity
+// along with that capacity, or an empty name when no pool matches. It is the one
+// definition of "the node's roomiest matching pool", shared by resolvePool,
+// suitableNodes and spaceWeightedMap.
+func maxFreePool(pools []apis.Pool, pattern *regexp.Regexp) (string, int64) {
 	var (
 		selected string
 		maxFree  int64
@@ -265,5 +303,5 @@ func poolForNode(pools []apis.Pool, pattern *regexp.Regexp) string {
 		}
 	}
 
-	return selected
+	return selected, maxFree
 }

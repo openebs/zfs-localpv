@@ -1,7 +1,9 @@
 package driver
 
 import (
+	"math"
 	"regexp"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -311,6 +313,86 @@ func TestCapacityWeightedMapCustomNodeID(t *testing.T) {
 	assert.Equal(t, map[string]int64{"node1": 10 * Gi, "node2": 30 * Gi}, nmap)
 }
 
+func TestSpaceWeightedMap(t *testing.T) {
+	nodelist := []apis.ZFSNode{
+		newZFSNode("node1", newPool("zfspv-pool-a", 90*Gi, 10*Gi), newPool("other-pool", 500*Gi, 0)),
+		// the roomiest matching pool decides, the free capacity of a node's
+		// pools is not summed: node2 has 100Gi free in total but no single pool
+		// with more than 60Gi
+		newZFSNode("node2", newPool("zfspv-pool-b", 60*Gi, 40*Gi), newPool("zfspv-pool-c", 40*Gi, 60*Gi)),
+		// a node whose only matching pool is full keeps its entry, so that the
+		// scheduler sorts it last instead of treating it as unweighted and
+		// moving it to the front
+		newZFSNode("node3", newPool("zfspv-pool-d", 0, 100*Gi)),
+		newZFSNode("node4", newPool("other-pool", 100*Gi, 0)),
+	}
+
+	tests := map[string]struct {
+		pattern  string
+		expected map[string]int64
+	}{
+		"free capacity is inverted into a weight": {
+			pattern: "^zfspv-pool-",
+			expected: map[string]int64{
+				"node1": math.MaxInt64 - 90*Gi,
+				"node2": math.MaxInt64 - 60*Gi,
+				"node3": math.MaxInt64,
+			},
+		},
+		"only the matching pool counts": {
+			pattern:  "^other-pool$",
+			expected: map[string]int64{"node1": math.MaxInt64 - 500*Gi, "node4": math.MaxInt64 - 100*Gi},
+		},
+		"no match": {
+			pattern:  "^nosuch$",
+			expected: map[string]int64{},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			nmap := spaceWeightedMap(nodelist, regexp.MustCompile(test.pattern))
+			assert.Equal(t, test.expected, nmap)
+		})
+	}
+}
+
+// the weight is only useful if lib-csi's ascending sort turns it back into
+// most-free-first, which is what the inversion is there for
+func TestSpaceWeightedMapOrdersByMostFree(t *testing.T) {
+	nodelist := []apis.ZFSNode{
+		newZFSNode("half-full", newPool("zfspv-pool-a", 50*Gi, 50*Gi)),
+		newZFSNode("full", newPool("zfspv-pool-b", 0, 100*Gi)),
+		newZFSNode("empty", newPool("zfspv-pool-c", 100*Gi, 0)),
+	}
+
+	nmap := spaceWeightedMap(nodelist, regexp.MustCompile("^zfspv-pool-"))
+
+	nodes := make([]string, 0, len(nmap))
+	for node := range nmap {
+		nodes = append(nodes, node)
+	}
+	sort.Slice(nodes, func(i, j int) bool { return nmap[nodes[i]] < nmap[nodes[j]] })
+
+	assert.Equal(t, []string{"empty", "half-full", "full"}, nodes)
+}
+
+// with a custom node id the ZFSNode CR is named after the id, but the weight
+// still has to be keyed by the node name for lib-csi to find it
+func TestSpaceWeightedMapCustomNodeID(t *testing.T) {
+	nodelist := []apis.ZFSNode{
+		newCustomIDZFSNode("node1-custom-id", "node1", newPool("zfspv-pool-a", 90*Gi, 10*Gi)),
+		newCustomIDZFSNode("node2-custom-id", "node2", newPool("zfspv-pool-b", 70*Gi, 30*Gi)),
+	}
+
+	nmap := spaceWeightedMap(nodelist, regexp.MustCompile("^zfspv-pool-"))
+
+	assert.Equal(t, map[string]int64{
+		"node1": math.MaxInt64 - 90*Gi,
+		"node2": math.MaxInt64 - 70*Gi,
+	}, nmap)
+}
+
 func TestSuitableNodes(t *testing.T) {
 	nodelist := []apis.ZFSNode{
 		newZFSNode("node1", newPool("zfspv-pool-a", 10*Gi, 90*Gi)),
@@ -383,26 +465,30 @@ func TestSuitableNodesCustomNodeID(t *testing.T) {
 	assert.True(t, matched)
 }
 
-func TestPoolForNode(t *testing.T) {
+func TestMaxFreePool(t *testing.T) {
 	tests := map[string]struct {
-		pools    []apis.Pool
-		pattern  string
-		expected string
+		pools        []apis.Pool
+		pattern      string
+		expected     string
+		expectedFree int64
 	}{
 		"the matching pool with the most free capacity wins": {
-			pools:    []apis.Pool{newPool("zfspv-pool-a", 10*Gi, 90*Gi), newPool("zfspv-pool-b", 60*Gi, 40*Gi), newPool("zfspv-pool-c", 30*Gi, 70*Gi)},
-			pattern:  "^zfspv-pool-",
-			expected: "zfspv-pool-b",
+			pools:        []apis.Pool{newPool("zfspv-pool-a", 10*Gi, 90*Gi), newPool("zfspv-pool-b", 60*Gi, 40*Gi), newPool("zfspv-pool-c", 30*Gi, 70*Gi)},
+			pattern:      "^zfspv-pool-",
+			expected:     "zfspv-pool-b",
+			expectedFree: 60 * Gi,
 		},
 		"a bigger non matching pool is ignored": {
-			pools:    []apis.Pool{newPool("zfspv-pool-a", 10*Gi, 90*Gi), newPool("other-pool", 90*Gi, 10*Gi)},
-			pattern:  "^zfspv-pool-",
-			expected: "zfspv-pool-a",
+			pools:        []apis.Pool{newPool("zfspv-pool-a", 10*Gi, 90*Gi), newPool("other-pool", 90*Gi, 10*Gi)},
+			pattern:      "^zfspv-pool-",
+			expected:     "zfspv-pool-a",
+			expectedFree: 10 * Gi,
 		},
 		"a full matching pool is still selected": {
-			pools:    []apis.Pool{newPool("zfspv-pool-a", 0, 100*Gi)},
-			pattern:  "^zfspv-pool-",
-			expected: "zfspv-pool-a",
+			pools:        []apis.Pool{newPool("zfspv-pool-a", 0, 100*Gi)},
+			pattern:      "^zfspv-pool-",
+			expected:     "zfspv-pool-a",
+			expectedFree: 0,
 		},
 		"no pool matches": {
 			pools:    []apis.Pool{newPool("other-pool", 90*Gi, 10*Gi)},
@@ -418,7 +504,9 @@ func TestPoolForNode(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, test.expected, poolForNode(test.pools, regexp.MustCompile(test.pattern)))
+			pool, free := maxFreePool(test.pools, regexp.MustCompile(test.pattern))
+			assert.Equal(t, test.expected, pool)
+			assert.Equal(t, test.expectedFree, free)
 		})
 	}
 }
