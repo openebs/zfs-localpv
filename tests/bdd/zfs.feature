@@ -276,3 +276,10 @@ Feature: Validate volume provisioning for fsType zfs, ext4, xfs, btrfs
       |  xfs   |    yes        |
       |  zfs   |               |
       |  xfs   |               |
+
+  Scenario: SpaceWeighted applies to a fixed poolname
+    Given a multi node cluster where every node carries a pool named zfspv-pool-a
+    And a storage class is created with poolname as zfspv-pool-a and scheduler as SpaceWeighted
+    And zfspv-pool-a on one node has more free space than zfspv-pool-a on another node
+    When pvc is created referencing this same storage class
+    Then the zfsvolume must be provisioned on the node whose zfspv-pool-a has the most free space
