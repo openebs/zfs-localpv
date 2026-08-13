@@ -1,4 +1,4 @@
-FROM alpine:3.23.4
+FROM alpine:3.23.5
 RUN apk add --no-cache util-linux
 RUN apk add --no-cache btrfs-progs btrfs-progs-extra xfsprogs xfsprogs-extra e2fsprogs e2fsprogs-extra
 RUN apk add --no-cache ca-certificates rsyslog openssl netcat-openbsd
