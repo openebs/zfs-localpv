@@ -3,6 +3,10 @@ queue_rules:
     update_method: rebase
     branch_protection_injection_mode: merge
     update_bot_account: openebs-ci
+    merge_conditions:
+      - check-success = ci
+    queue_conditions:
+      - check-success = ci
 merge_queue:
   max_parallel_checks: 1
 pull_request_rules:
