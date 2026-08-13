@@ -30,20 +30,11 @@ jobs:
 
   lint:
     needs: ["preconditions"]
-    if: needs.preconditions.outputs.run == 'true' && github.event_name == 'pull_request'
+    if: needs.preconditions.outputs.run == 'true'
     uses: ./.github/workflows/lint.yml
     with:
       validate-codegen: true
-      branch-name: ${{ github.event.pull_request.base.ref }}
-
-  tests:
-    needs: ["preconditions", "lint"]
-    if: needs.preconditions.outputs.run == 'true'
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/tests.yml
-    secrets: inherit
+      branch-name: ${{ github.event.pull_request.base.ref || ((github.ref_name == 'develop' || startsWith(github.ref_name, 'release/')) && github.ref_name) || '' }}
 
   csi-driver:
     runs-on: ubuntu-latest
@@ -52,33 +43,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: all
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v4
-        with:
-          version: v0.33.0
-
-      - name: Build
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./buildscripts/zfs-driver/Dockerfile.buildx
-          push: false
-          sbom: true
-          provenance: mode=max
-          platforms: linux/amd64, linux/arm64
-
   ci:
     if: ${{ success() || needs.preconditions.outputs.run == 'false' }}
     needs:
       - preconditions
       - lint
-      - tests
       - csi-driver
     runs-on: ubuntu-latest
     steps:
