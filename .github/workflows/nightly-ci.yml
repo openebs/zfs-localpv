@@ -1,0 +1,19 @@
+name: Nightly CI
+on:
+  workflow_dispatch:
+
+jobs:
+  ci:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pull_request.yml
+    secrets: inherit
+  nightly-ci:
+    if: ${{ success() }}
+    needs:
+      - ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI succeeded
+        run: exit 0
