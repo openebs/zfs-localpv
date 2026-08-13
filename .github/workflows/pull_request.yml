@@ -5,16 +5,40 @@ on:
     branches:
       - develop
       - "release/**"
+  workflow_call:
 
 jobs:
+  preconditions:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.filter.outputs.relevant == 'true' || github.event_name != 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Detect relevant changes
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            relevant:
+              - '**'
+              - '!*.md'
+              - '!changelogs/**'
+              - '!docs/**'
+              - '!design/**'
+              - '!LICENSE'
+              - '!MAINTAINERS'
+
   lint:
+    needs: ["preconditions"]
+    if: needs.preconditions.outputs.run == 'true' && github.event_name == 'pull_request'
     uses: ./.github/workflows/lint.yml
     with:
       validate-codegen: true
       branch-name: ${{ github.event.pull_request.base.ref }}
 
   tests:
-    needs: ["lint"]
+    needs: ["preconditions", "lint"]
+    if: needs.preconditions.outputs.run == 'true'
     permissions:
       contents: read
       id-token: write
@@ -23,7 +47,8 @@ jobs:
 
   csi-driver:
     runs-on: ubuntu-latest
-    needs: ["lint"]
+    needs: ["preconditions", "lint"]
+    if: needs.preconditions.outputs.run == 'true'
     steps:
       - uses: actions/checkout@v7
 
@@ -45,3 +70,15 @@ jobs:
           file: ./buildscripts/zfs-driver/Dockerfile.buildx
           push: false
           platforms: linux/amd64, linux/arm64
+
+  ci:
+    if: ${{ success() || needs.preconditions.outputs.run == 'false' }}
+    needs:
+      - preconditions
+      - lint
+      - tests
+      - csi-driver
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI succeeded
+        run: exit 0
