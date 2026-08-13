@@ -20,14 +20,19 @@ runs:
   steps:
     - name: Disk Garbage Collection
       shell: bash
-      if: ${{ runner.os == 'Linux' && inputs.gc }}
+      if: ${{ runner.os == 'Linux' && inputs.gc == 'true' }}
       run: |
         lsblk -fm
+        echo "::group::Step: GC Disk"
+        start=$(date +%s)
         sudo rm -rf /usr/local/lib/android
         sudo rm -rf /usr/local/.ghcup
         sudo rm -rf /opt/hostedtoolcache
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf /usr/share/swift
+        end=$(date +%s)
+        echo "::endgroup::"
+        echo "⏱️ GC took $(( end - start ))s"
         lsblk -fm
     - id: nixpkgs
       shell: bash
