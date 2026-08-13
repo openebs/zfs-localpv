@@ -19,6 +19,7 @@ on:
 jobs:
   go-lint:
     runs-on: ubuntu-latest
+    if: ${{ inputs.branch-name != '' || inputs.tag != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
