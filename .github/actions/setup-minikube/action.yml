@@ -22,6 +22,10 @@ runs:
       shell: bash
       run: sudo zfs version
 
+    - name: Ensure CNI config directory exists
+      shell: bash
+      run: sudo mkdir -p /etc/cni/net.d
+
     - name: Setup Minikube-Kubernetes
       uses: medyagh/setup-minikube@latest
       with:
