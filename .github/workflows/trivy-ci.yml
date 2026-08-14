@@ -45,7 +45,7 @@ jobs:
             output: deploy/helm/charts/trivy-helm.sarif
           
       - name: Upload Helm SARIF
-        uses: github/codeql-action/upload-sarif@v4.37.3
+        uses: github/codeql-action/upload-sarif@v4.37.6
         with:
           sarif_file: deploy/helm/charts/trivy-helm.sarif
           category: trivy-helm
