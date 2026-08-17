@@ -16,7 +16,6 @@ metadata:
 value: 900001000
 globalDefault: false
 description: "This priority class should be used for the CStor CSI driver node deployment only."
-
 ---
 # Source: zfs-localpv/templates/rbac.yaml
 kind: ServiceAccount
@@ -25,7 +24,7 @@ metadata:
   name: openebs-zfs-controller-sa
   namespace: kube-system
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -38,7 +37,7 @@ metadata:
   name: openebs-zfs-node-sa
   namespace: kube-system
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -51,7 +50,7 @@ metadata:
   name: openebs-zfspv-bin
   namespace: kube-system # should be the same namespace where it is getting mounted
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -66,7 +65,6 @@ data:
     else
       chroot /host "zfs" "$@"
     fi
-
 ---
 # Source: zfs-localpv/charts/crds/templates/csi-volume-snapshot-class.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -2490,7 +2488,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-provisioner-role
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2542,7 +2540,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-snapshotter-role
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2588,7 +2586,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-driver-registrar-role
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -2610,7 +2608,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-provisioner-binding
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2630,7 +2628,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-snapshotter-binding
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2650,7 +2648,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openebs-zfs-driver-registrar-binding
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -2663,7 +2661,6 @@ roleRef:
   kind: ClusterRole
   name: openebs-zfs-driver-registrar-role
   apiGroup: rbac.authorization.k8s.io
-
 ---
 # Source: zfs-localpv/templates/zfs-node.yaml
 kind: DaemonSet
@@ -2672,7 +2669,7 @@ metadata:
   name: openebs-zfs-localpv-node
   namespace: kube-system
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     name: "openebs-zfs-node"
     app: "openebs-zfs-node"
@@ -2688,7 +2685,7 @@ spec:
   template:
     metadata:
       labels:
-        openebs.io/version: "2.11.0-develop"
+        openebs.io/version: "2.11.0-prerelease"
         role: "openebs-zfs"
         name: "openebs-zfs-node"
         app: "openebs-zfs-node"
@@ -2701,7 +2698,7 @@ spec:
       hostNetwork: true
       containers:
         - name: csi-node-driver-registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
+          image: "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0"
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -2733,7 +2730,7 @@ spec:
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
-          image: docker.io/openebs/zfs-driver:2.11.0-develop
+          image: "docker.io/openebs/zfs-driver:2.11.0-prerelease"
           imagePullPolicy: IfNotPresent
           args:
             - "--nodename=$(OPENEBS_NODE_NAME)"
@@ -2804,7 +2801,6 @@ spec:
           hostPath:
             path: "/var/lib/kubelet/"
             type: Directory
-
 ---
 # Source: zfs-localpv/templates/zfs-controller.yaml
 apiVersion: apps/v1
@@ -2813,7 +2809,7 @@ metadata:
   name: openebs-zfs-localpv-controller
   namespace: kube-system
   labels:
-    openebs.io/version: "2.11.0-develop"
+    openebs.io/version: "2.11.0-prerelease"
     role: "openebs-zfs"
     app: "openebs-zfs-controller"
     component: "openebs-zfs-controller"
@@ -2827,7 +2823,7 @@ spec:
   template:
     metadata:
       labels:
-        openebs.io/version: "2.11.0-develop"
+        openebs.io/version: "2.11.0-prerelease"
         role: "openebs-zfs"
         app: "openebs-zfs-controller"
         component: "openebs-zfs-controller"
@@ -2841,7 +2837,7 @@ spec:
       serviceAccountName: openebs-zfs-controller-sa
       containers:
         - name: csi-resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.13.2
+          image: "registry.k8s.io/sig-storage/csi-resizer:v1.13.2"
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"            
@@ -2855,7 +2851,7 @@ spec:
           resources:
             {}
         - name: csi-snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0
+          image: "registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0"
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"            
@@ -2868,14 +2864,14 @@ spec:
           resources:
             {}
         - name: snapshot-controller
-          image: registry.k8s.io/sig-storage/snapshot-controller:v8.2.0
+          image: "registry.k8s.io/sig-storage/snapshot-controller:v8.2.0"
           args:
             - "--v=5"            
           imagePullPolicy: IfNotPresent
           resources:
             {}
         - name: csi-provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v5.2.0
+          image: "registry.k8s.io/sig-storage/csi-provisioner:v5.2.0"
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -2902,7 +2898,7 @@ spec:
           resources:
             {}
         - name: openebs-zfs-plugin
-          image: docker.io/openebs/zfs-driver:2.11.0-develop
+          image: "docker.io/openebs/zfs-driver:2.11.0-prerelease"
           imagePullPolicy: IfNotPresent
           env:
             - name: OPENEBS_CONTROLLER_DRIVER
@@ -2930,7 +2926,6 @@ spec:
       volumes:
         - name: socket-dir
           emptyDir: {}
-
 ---
 # Source: zfs-localpv/templates/csidriver.yaml
 # Create the CSI Driver object
