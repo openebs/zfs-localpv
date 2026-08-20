@@ -2,7 +2,7 @@
 
 ### poolname (*must* parameter)
 
-poolname specifies the name of the pool where the volume has been created. The *poolname* is the must argument. It should be noted that *poolname* can either be the root dataset or a child dataset e.g.
+poolname specifies the name of the pool where the volume has been created. The *poolname* is the must argument. It should be noted that *poolname* can either be the root dataset or a child dataset e.g. hello
 ```
 poolname: "zfspv-pool"
 poolname: "zfspv-pool/child"
