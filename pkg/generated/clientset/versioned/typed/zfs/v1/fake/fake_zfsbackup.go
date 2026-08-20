@@ -3,8 +3,8 @@
 package fake
 
 import (
-	v1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	zfsv1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned/typed/zfs/v1"
+	v1 "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	zfsv1 "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned/typed/zfs/v1"
 	gentype "k8s.io/client-go/gentype"
 )
 

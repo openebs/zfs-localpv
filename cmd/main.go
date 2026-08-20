@@ -22,10 +22,10 @@ import (
 	"log"
 	"os"
 
-	config "github.com/openebs/zfs-localpv/pkg/config"
-	"github.com/openebs/zfs-localpv/pkg/driver"
-	"github.com/openebs/zfs-localpv/pkg/version"
-	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	config "github.com/openebs/zfs-localpv/v2/pkg/config"
+	"github.com/openebs/zfs-localpv/v2/pkg/driver"
+	"github.com/openebs/zfs-localpv/v2/pkg/version"
+	zfs "github.com/openebs/zfs-localpv/v2/pkg/zfs"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 )

@@ -3,7 +3,7 @@
 package v1
 
 import (
-	zfsv1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	zfsv1 "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	listers "k8s.io/client-go/listers"
 	cache "k8s.io/client-go/tools/cache"

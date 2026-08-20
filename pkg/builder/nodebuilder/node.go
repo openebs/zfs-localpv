@@ -17,7 +17,7 @@ limitations under the License.
 package nodebuilder
 
 import (
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

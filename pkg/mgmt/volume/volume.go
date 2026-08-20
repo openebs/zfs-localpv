@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"time"
 
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	zfs "github.com/openebs/zfs-localpv/v2/pkg/zfs"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"

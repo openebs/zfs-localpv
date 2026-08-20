@@ -6,7 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	zfsapi "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	zfsapi "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

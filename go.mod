@@ -1,4 +1,4 @@
-module github.com/openebs/zfs-localpv
+module github.com/openebs/zfs-localpv/v2
 
 go 1.26.2
 

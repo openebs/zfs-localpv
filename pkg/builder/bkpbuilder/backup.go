@@ -15,7 +15,7 @@
 package bkpbuilder
 
 import (
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 )
 
 // ZFSBackup is a wrapper over
