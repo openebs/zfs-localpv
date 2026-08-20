@@ -24,7 +24,7 @@ import (
 	"syscall"
 
 	mnt "github.com/openebs/lib-csi/pkg/mount"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/klog/v2"

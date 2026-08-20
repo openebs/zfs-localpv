@@ -30,9 +30,9 @@ import (
 	"time"
 
 	k8sapi "github.com/openebs/lib-csi/pkg/client/k8s"
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
-	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
-	"github.com/openebs/zfs-localpv/pkg/zfs"
+	clientset "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned"
+	informers "github.com/openebs/zfs-localpv/v2/pkg/generated/informer/externalversions"
+	"github.com/openebs/zfs-localpv/v2/pkg/zfs"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"

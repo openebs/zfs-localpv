@@ -3,8 +3,8 @@
 package zfs
 
 import (
-	internalinterfaces "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/internalinterfaces"
-	v1 "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/zfs/v1"
+	internalinterfaces "github.com/openebs/zfs-localpv/v2/pkg/generated/informer/externalversions/internalinterfaces"
+	v1 "github.com/openebs/zfs-localpv/v2/pkg/generated/informer/externalversions/zfs/v1"
 )
 
 // Interface provides access to each of this group's versions.

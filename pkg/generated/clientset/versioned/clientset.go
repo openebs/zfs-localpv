@@ -6,7 +6,7 @@ import (
 	fmt "fmt"
 	http "net/http"
 
-	zfsv1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned/typed/zfs/v1"
+	zfsv1 "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned/typed/zfs/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

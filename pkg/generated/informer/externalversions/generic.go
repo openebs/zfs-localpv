@@ -5,7 +5,7 @@ package externalversions
 import (
 	fmt "fmt"
 
-	v1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	v1 "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )

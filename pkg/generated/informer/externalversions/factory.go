@@ -7,9 +7,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
-	internalinterfaces "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/internalinterfaces"
-	zfs "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/zfs"
+	versioned "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned"
+	internalinterfaces "github.com/openebs/zfs-localpv/v2/pkg/generated/informer/externalversions/internalinterfaces"
+	zfs "github.com/openebs/zfs-localpv/v2/pkg/generated/informer/externalversions/zfs"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
