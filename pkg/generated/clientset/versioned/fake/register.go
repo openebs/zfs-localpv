@@ -3,7 +3,7 @@
 package fake
 
 import (
-	zfsv1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	zfsv1 "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

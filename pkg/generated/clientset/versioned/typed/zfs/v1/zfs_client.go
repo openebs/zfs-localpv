@@ -5,8 +5,8 @@ package v1
 import (
 	http "net/http"
 
-	zfsv1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	scheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned/scheme"
+	zfsv1 "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	scheme "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

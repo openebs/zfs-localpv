@@ -11,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	zfs "github.com/openebs/zfs-localpv/v2/pkg/zfs"
 )
 
 // Builds a ZFSNode pool entry with the given free/used capacity in bytes.

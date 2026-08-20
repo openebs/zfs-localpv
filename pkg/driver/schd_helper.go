@@ -25,10 +25,10 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	"github.com/openebs/zfs-localpv/pkg/builder/nodebuilder"
-	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
-	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	"github.com/openebs/zfs-localpv/v2/pkg/builder/nodebuilder"
+	"github.com/openebs/zfs-localpv/v2/pkg/builder/volbuilder"
+	zfs "github.com/openebs/zfs-localpv/v2/pkg/zfs"
 )
 
 // scheduling algorithm constants

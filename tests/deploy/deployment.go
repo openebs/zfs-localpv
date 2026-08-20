@@ -15,8 +15,8 @@ package deploy
 
 import (
 	"github.com/openebs/lib-csi/pkg/common/errors"
-	templatespec "github.com/openebs/zfs-localpv/tests/pts"
-	"github.com/openebs/zfs-localpv/tests/stringer"
+	templatespec "github.com/openebs/zfs-localpv/v2/tests/pts"
+	"github.com/openebs/zfs-localpv/v2/tests/stringer"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

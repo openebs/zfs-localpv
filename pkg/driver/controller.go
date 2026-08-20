@@ -24,14 +24,14 @@ import (
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	zfsapi "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	"github.com/openebs/zfs-localpv/pkg/builder/snapbuilder"
-	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
-	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
-	csipayload "github.com/openebs/zfs-localpv/pkg/response"
-	"github.com/openebs/zfs-localpv/pkg/version"
-	"github.com/openebs/zfs-localpv/pkg/zfs"
+	zfsapi "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	"github.com/openebs/zfs-localpv/v2/pkg/builder/snapbuilder"
+	"github.com/openebs/zfs-localpv/v2/pkg/builder/volbuilder"
+	clientset "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned"
+	informers "github.com/openebs/zfs-localpv/v2/pkg/generated/informer/externalversions"
+	csipayload "github.com/openebs/zfs-localpv/v2/pkg/response"
+	"github.com/openebs/zfs-localpv/v2/pkg/version"
+	"github.com/openebs/zfs-localpv/v2/pkg/zfs"
 )
 
 // size constants

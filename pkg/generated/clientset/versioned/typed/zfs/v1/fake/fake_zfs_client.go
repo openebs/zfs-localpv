@@ -3,7 +3,7 @@
 package fake
 
 import (
-	v1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned/typed/zfs/v1"
+	v1 "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned/typed/zfs/v1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
