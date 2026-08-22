@@ -234,6 +234,10 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 	originalParams := req.GetParameters()
 	parameters := helpers.GetCaseInsensitiveMap(&originalParams)
 
+	pvcName := helpers.GetInsensitiveParameter(&originalParams, "csi.storage.k8s.io/pvc/name")
+	pvcNamespace := helpers.GetInsensitiveParameter(&originalParams, "csi.storage.k8s.io/pvc/namespace")
+	pvName := helpers.GetInsensitiveParameter(&originalParams, "csi.storage.k8s.io/pv/name")
+
 	rs := parameters["recordsize"]
 	bs := parameters["volblocksize"]
 	compression := parameters["compression"]
@@ -302,6 +306,9 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 
 	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
+		WithPVCName(pvcName).
+		WithPVCNamespace(pvcNamespace).
+		WithPVName(pvName).
 		WithCapacity(capacity).
 		WithRecordSize(rs).
 		WithVolBlockSize(bs).
@@ -318,7 +325,8 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		WithShared(shared).
 		WithATime(atime).
 		WithLogBias(logbias).
-		WithCompression(compression).Build()
+		WithCompression(compression).
+		Build()
 
 	if err != nil {
 		return "", status.Error(codes.Internal, err.Error())
@@ -367,6 +375,10 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 	volsize := strconv.FormatInt(int64(size), 10)
 
+	pvcName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/name")
+	pvcNamespace := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/namespace")
+	pvName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pv/name")
+
 	vol, err := zfs.GetZFSVolume(srcVol)
 	if err != nil {
 		return "", status.Error(codes.NotFound, err.Error())
@@ -390,13 +402,19 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 
 	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
+		WithPVCName(pvcName).
+		WithPVCNamespace(pvcNamespace).
+		WithPVName(pvName).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		WithLabels(labels).Build()
 	if err != nil {
 		return "", err
 	}
 
+	// make sure not to override the reserved userprops set by the builder
+	userProps := volObj.Spec.UserProperties
 	volObj.Spec = vol.Spec
+	volObj.Spec.UserProperties = userProps
 	// use the snapshot name same as new volname
 	volObj.Spec.SnapName = vol.Name + "@" + volName
 
@@ -417,6 +435,10 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
 	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 	volsize := strconv.FormatInt(int64(size), 10)
+
+	pvcName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/name")
+	pvcNamespace := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/namespace")
+	pvName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pv/name")
 
 	snapshotID := strings.Split(snapshot, "@")
 	if len(snapshotID) != 2 {
@@ -447,13 +469,19 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 
 	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
+		WithPVCName(pvcName).
+		WithPVCNamespace(pvcNamespace).
+		WithPVName(pvName).
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		Build()
 	if err != nil {
 		return "", err
 	}
 
+	// make sure not to override the reserved userprops set by the builder
+	userProps := volObj.Spec.UserProperties
 	volObj.Spec = snap.Spec
+	volObj.Spec.UserProperties = userProps
 	volObj.Spec.SnapName = strings.ToLower(snapshot)
 
 	_, err = zfs.ProvisionVolume(ctx, volObj)
@@ -779,6 +807,12 @@ func (cs *controller) CreateSnapshot(
 	unlock := cs.volumeLock.LockVolumeWithSnapshot(volumeID, snapName)
 	defer unlock()
 
+	originalParams := req.GetParameters()
+
+	vsName := helpers.GetInsensitiveParameter(&originalParams, "csi.storage.k8s.io/volumesnapshot/name")
+	vsNamespace := helpers.GetInsensitiveParameter(&originalParams, "csi.storage.k8s.io/volumesnapshot/namespace")
+	vscName := helpers.GetInsensitiveParameter(&originalParams, "csi.storage.k8s.io/volumesnapshotcontent/name")
+
 	snapTimeStamp := time.Now().Unix()
 	var state string
 	if snapObj, err := zfs.GetZFSSnapshot(snapName); err == nil {
@@ -807,6 +841,9 @@ func (cs *controller) CreateSnapshot(
 	labels := map[string]string{zfs.ZFSVolKey: vol.Name}
 	snapObj, err := snapbuilder.NewBuilder().
 		WithName(snapName).
+		WithVSName(vsName).
+		WithVSNamespace(vsNamespace).
+		WithVSCName(vscName).
 		WithLabels(labels).Build()
 	if err != nil {
 		return nil, status.Errorf(
@@ -816,7 +853,10 @@ func (cs *controller) CreateSnapshot(
 			err.Error(),
 		)
 	}
+	// make sure not to override the reserved userprops set by the builder
+	userProps := snapObj.Spec.UserProperties
 	snapObj.Spec = vol.Spec
+	snapObj.Spec.UserProperties = userProps
 	snapObj.Status.State = zfs.ZFSStatusPending
 	if err := zfs.ProvisionSnapshot(snapObj); err != nil {
 		return nil, status.Errorf(
@@ -826,7 +866,6 @@ func (cs *controller) CreateSnapshot(
 			err.Error(),
 		)
 	}
-	originalParams := req.GetParameters()
 	parameters := helpers.GetCaseInsensitiveMap(&originalParams)
 	if _, ok := parameters["wait"]; ok {
 		if err := waitForReadySnapshot(ctx, snapName); err != nil {

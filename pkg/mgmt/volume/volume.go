@@ -92,6 +92,9 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 			return fmt.Errorf("volume: can not destroy, waiting for finalizers to be removed %v", userFin)
 		}
 	} else {
+		if err = zv.Spec.Validate(); err != nil {
+			return fmt.Errorf("volume is invalid: %w", err)
+		}
 		// if volume has already been created and its state is Ready
 		// then this event is for property change only.
 		if zfs.IsVolumeReady(zv) {

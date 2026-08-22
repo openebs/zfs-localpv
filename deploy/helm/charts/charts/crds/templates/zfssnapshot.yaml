@@ -200,6 +200,14 @@ spec:
                 - "yes"
                 - "no"
                 type: string
+              userProperties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  UserProperties specifies userproperties that should be set on the
+                  dataset. Keys and values must conform to the requirements for user
+                  properties outlined in zfsprops(7).
+                type: object
               volblocksize:
                 description: |-
                   VolBlockSize specifies the block size for the zvol.

@@ -24,6 +24,7 @@ import (
 	"strconv"
 
 	"fmt"
+	"maps"
 	"os"
 	"time"
 
@@ -135,7 +136,8 @@ func PropertyChanged(oldVol *apis.ZFSVolume, newVol *apis.ZFSVolume) bool {
 
 	return oldVol.Spec.Compression != newVol.Spec.Compression ||
 		oldVol.Spec.Dedup != newVol.Spec.Dedup ||
-		oldVol.Spec.LogBias != newVol.Spec.LogBias
+		oldVol.Spec.LogBias != newVol.Spec.LogBias ||
+		!maps.Equal(oldVol.Spec.UserProperties, newVol.Spec.UserProperties)
 }
 
 // GetVolumeType returns the volume type
@@ -194,6 +196,9 @@ func buildZvolCreateArgs(vol *apis.ZFSVolume) []string {
 		keyFormat := "keyformat=" + vol.Spec.KeyFormat
 		ZFSVolArg = append(ZFSVolArg, "-o", keyFormat)
 	}
+	for name, value := range vol.Spec.UserProperties {
+		ZFSVolArg = append(ZFSVolArg, "-o", fmt.Sprintf("%s=%s", name, value))
+	}
 
 	ZFSVolArg = append(ZFSVolArg, volume)
 
@@ -240,6 +245,9 @@ func buildCloneCreateArgs(vol *apis.ZFSVolume) []string {
 		logbiasProperty := "logbias=" + vol.Spec.LogBias
 		ZFSVolArg = append(ZFSVolArg, "-o", logbiasProperty)
 	}
+	for name, value := range vol.Spec.UserProperties {
+		ZFSVolArg = append(ZFSVolArg, "-o", fmt.Sprintf("%s=%s", name, value))
+	}
 	// Note: Encryption parameters (encryption, keylocation, keyformat) are NOT set when cloning.
 	// ZFS clones automatically inherit encryption settings from the parent snapshot.
 	// The encryption property is read-only on clones and attempting to set it will fail with
@@ -256,7 +264,13 @@ func buildZFSSnapCreateArgs(snap *apis.ZFSSnapshot) []string {
 	volname := snap.Labels[ZFSVolKey]
 	snapDataset := snap.Spec.PoolName + "/" + volname + "@" + snap.Name
 
-	ZFSSnapArg = append(ZFSSnapArg, ZFSSnapshotArg, snapDataset)
+	ZFSSnapArg = append(ZFSSnapArg, ZFSSnapshotArg)
+
+	for name, value := range snap.Spec.UserProperties {
+		ZFSSnapArg = append(ZFSSnapArg, "-o", fmt.Sprintf("%s=%s", name, value))
+	}
+
+	ZFSSnapArg = append(ZFSSnapArg, snapDataset)
 
 	return ZFSSnapArg
 }
@@ -321,6 +335,9 @@ func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 		keyFormat := "keyformat=" + vol.Spec.KeyFormat
 		ZFSVolArg = append(ZFSVolArg, "-o", keyFormat)
 	}
+	for name, value := range vol.Spec.UserProperties {
+		ZFSVolArg = append(ZFSVolArg, "-o", fmt.Sprintf("%s=%s", name, value))
+	}
 
 	// set the mount path to none, by default zfs mounts it to the default dataset path
 	ZFSVolArg = append(ZFSVolArg, "-o", "mountpoint=legacy", volume)
@@ -360,6 +377,9 @@ func buildVolumeSetArgs(vol *apis.ZFSVolume) []string {
 	if len(vol.Spec.LogBias) != 0 {
 		logbiasProperty := "logbias=" + vol.Spec.LogBias
 		ZFSVolArg = append(ZFSVolArg, logbiasProperty)
+	}
+	for name, value := range vol.Spec.UserProperties {
+		ZFSVolArg = append(ZFSVolArg, fmt.Sprintf("%s=%s", name, value))
 	}
 
 	ZFSVolArg = append(ZFSVolArg, volume)
@@ -677,6 +697,7 @@ func SetVolumeProp(vol *apis.ZFSVolume) error {
 	if len(vol.Spec.Compression) == 0 &&
 		len(vol.Spec.Dedup) == 0 &&
 		len(vol.Spec.LogBias) == 0 &&
+		len(vol.Spec.UserProperties) == 0 &&
 		(vol.Spec.VolumeType != VolTypeDataset ||
 			(len(vol.Spec.RecordSize) == 0 &&
 				len(vol.Spec.ATime) == 0)) {

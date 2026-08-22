@@ -17,8 +17,11 @@ limitations under the License.
 package snapbuilder
 
 import (
+	"strings"
+
 	"github.com/openebs/lib-csi/pkg/common/errors"
 	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	zfsutil "github.com/openebs/zfs-localpv/v2/pkg/zfs/util"
 )
 
 // Builder is the builder object for ZFSSnapshot
@@ -106,6 +109,63 @@ func (b *Builder) WithLabels(labels map[string]string) *Builder {
 func (b *Builder) WithFinalizer(finalizer []string) *Builder {
 	b.snap.Object.Finalizers = append(b.snap.Object.Finalizers, finalizer...)
 	return b
+}
+
+// WithUserProperties sets user properties on the snapshot
+func (b *Builder) WithUserProperties(props map[string]string) *Builder {
+	if b.snap.Object.Spec.UserProperties == nil {
+		b.snap.Object.Spec.UserProperties = make(map[string]string)
+	}
+	for name, value := range props {
+		if err := zfsutil.ValidateUserProperty(name, value); err != nil {
+			b.errs = append(
+				b.errs,
+				errors.Wrap(err, "failed to build zfs snapshot object: invalid user property"),
+			)
+			continue
+		}
+		if strings.HasPrefix(name, "openebs.io:") {
+			b.errs = append(
+				b.errs,
+				errors.Errorf("failed to build zfs snapshot object: user property '%s' is reserved", name),
+			)
+			continue
+		}
+		b.snap.Object.Spec.UserProperties[name] = value
+	}
+
+	return b
+}
+
+// WithReservedUserProp sets a reserved (prefix "openebs.io:") user property on the snapshot
+func (b *Builder) WithReservedUserProp(name string, value string) *Builder {
+	if b.snap.Object.Spec.UserProperties == nil {
+		b.snap.Object.Spec.UserProperties = make(map[string]string)
+	}
+	if err := zfsutil.ValidateUserProperty(name, value); err != nil {
+		b.errs = append(
+			b.errs,
+			errors.Wrap(err, "failed to build zfs snapshot object: invalid user property"),
+		)
+	}
+
+	b.snap.Object.Spec.UserProperties[name] = value
+	return b
+}
+
+// WithVSName sets "openebs.io:vs-name" user property on the snapshot
+func (b *Builder) WithVSName(pvc string) *Builder {
+	return b.WithReservedUserProp("openebs.io:vs-name", pvc)
+}
+
+// WithVSNamespace sets "openebs.io:vs-namespace" user property on the snapshot
+func (b *Builder) WithVSNamespace(pvc string) *Builder {
+	return b.WithReservedUserProp("openebs.io:vs-namespace", pvc)
+}
+
+// WithVSCName sets "openebs.io:vsc-name" user property on the snapshot
+func (b *Builder) WithVSCName(pvc string) *Builder {
+	return b.WithReservedUserProp("openebs.io:vsc-name", pvc)
 }
 
 // Build returns ZFSSnapshot API object

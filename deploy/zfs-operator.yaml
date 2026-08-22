@@ -1541,6 +1541,14 @@ spec:
                 - "yes"
                 - "no"
                 type: string
+              userProperties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  UserProperties specifies userproperties that should be set on the
+                  dataset. Keys and values must conform to the requirements for user
+                  properties outlined in zfsprops(7).
+                type: object
               volblocksize:
                 description: |-
                   VolBlockSize specifies the block size for the zvol.
@@ -1775,6 +1783,14 @@ spec:
                 - "yes"
                 - "no"
                 type: string
+              userProperties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  UserProperties specifies userproperties that should be set on the
+                  dataset. Keys and values must conform to the requirements for user
+                  properties outlined in zfsprops(7).
+                type: object
               volblocksize:
                 description: |-
                   VolBlockSize specifies the block size for the zvol.
@@ -2221,6 +2237,14 @@ spec:
                 - "yes"
                 - "no"
                 type: string
+              userProperties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  UserProperties specifies userproperties that should be set on the
+                  dataset. Keys and values must conform to the requirements for user
+                  properties outlined in zfsprops(7).
+                type: object
               volblocksize:
                 description: |-
                   VolBlockSize specifies the block size for the zvol.
@@ -2854,7 +2878,8 @@ spec:
           image: "registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0"
           imagePullPolicy: IfNotPresent
           args:
-            - "--csi-address=$(ADDRESS)"            
+            - "--csi-address=$(ADDRESS)"
+            - "--extra-create-metadata=true"            
           env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
