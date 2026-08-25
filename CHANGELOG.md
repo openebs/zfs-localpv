@@ -11,6 +11,67 @@ associated with. Similarly, newly created snapshots identify their associated
 VolumeSnapshot and VolumeSnapshotContent with the user properties
 `openebs.io:vs-name`, `openebs.io:vs-namespace` and `openebs.io:vsc-name`.
 
+v2.11.0 / 2026-08-18
+========================
+
+This release of OpenEBS ZFS-LocalPV adds new StorageClass tuning options, improves Helm chart flexibility, fixes image rendering, and expands CI coverage and release automation.
+
+New Features and Enhancements
+
+ - StorageClass atime and logbias support
+Added atime and logbias parameters for controlling ZFS dataset and volume behavior.
+by @firecow in PR 723 (https://github.com/openebs/zfs-localpv/pull/723)
+ - Helm analytics global overrides
+Added global override support for gaid and gakey, consistent with other OpenEBS local engine charts.
+by @krishnaGajabi in PR 722 (https://github.com/openebs/zfs-localpv/pull/722)
+ - Optional snapshot controller
+Added a Helm option to disable the bundled snapshot controller when one is already managed at the cluster level.
+by @aclerici38 in PR 742 (https://github.com/openebs/zfs-localpv/pull/742)
+
+Bug Fixes and Improvements
+
+ - Image URL rendering fix
+Quoted image URLs in rendered manifests to support registries containing YAML-special characters.
+by @krishnaGajabi in PR 724 (https://github.com/openebs/zfs-localpv/pull/724)
+ - CSI driver and chart releaser fixes
+Corrected the CSI driver Dockerfile location and chart releaser version.
+by @Abhinandan-Purkait in PR 718 (https://github.com/openebs/zfs-localpv/pull/718)
+
+Testing and Continuous Integration
+
+ - Expanded volume test coverage
+Added CI tests for cloning volumes and provisioning shared volumes.
+by @krishnaGajabi in PR 729 (https://github.com/openebs/zfs-localpv/pull/729), PR 732 (https://github.com/openebs/zfs-localpv/pull/732)
+ - Pool-pattern provisioning coverage
+Added a BDD specification for pool-pattern-based volume provisioning.
+by @krishnaGajabi in PR 738 (https://github.com/openebs/zfs-localpv/pull/738)
+ - Nightly CI
+Enabled nightly CI runs to improve continuous validation.
+by @tiagolobocastro in PR 744 (https://github.com/openebs/zfs-localpv/pull/744)
+
+Build and Maintenance
+
+ - Go toolchain and dependency updates
+Updated the Go toolchain and refreshed project dependencies.
+by @Abhinandan-Purkait in PR 709 (https://github.com/openebs/zfs-localpv/pull/709)
+ - Container base image update
+Updated the Dockerfile base image to version 3.23.5.
+by @Abhinandan-Purkait in PR 745 (https://github.com/openebs/zfs-localpv/pull/745)
+ - Security and GitHub Actions updates
+Updated GitHub Actions dependencies and security-sensitive Go dependencies, including golang.org/x/net and google.golang.org/grpc.
+by @dependabot[bot] in PR 731 (https://github.com/openebs/zfs-localpv/pull/731), PR 733 (https://github.com/openebs/zfs-localpv/pull/733), PR 737 (https://github.com/openebs/zfs-localpv/pull/737), PR 741 (https://github.com/openebs/zfs-localpv/pull/741), PR 747 (https://github.com/openebs/zfs-localpv/pull/747)
+ - Dependabot configuration synchronization
+Synchronized the repository's Dependabot configuration.
+by @openebs-ci in PR 730 (https://github.com/openebs/zfs-localpv/pull/730), PR 746 (https://github.com/openebs/zfs-localpv/pull/746)
+ - Documentation and release preparation
+Updated the changelog and prepared the development and release branches for v2.11.
+by @Abhinandan-Purkait in PR 721 (https://github.com/openebs/zfs-localpv/pull/721), by @github-actions[bot] in PR 711 (https://github.com/openebs/zfs-localpv/pull/711), PR 748 (https://github.com/openebs/zfs-localpv/pull/748)
+
+New Contributors
+
+ - @firecow made their first contribution in PR 723 (https://github.com/openebs/zfs-localpv/pull/723)
+ - @aclerici38 made their first contribution in PR 742 (https://github.com/openebs/zfs-localpv/pull/742)
+
 v2.10.0 / 2026-05-19
 ========================
 
