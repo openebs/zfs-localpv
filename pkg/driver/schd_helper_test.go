@@ -510,3 +510,198 @@ func TestMaxFreePool(t *testing.T) {
 		})
 	}
 }
+
+// the algorithm which orders the nodes has to order the pools of the chosen
+// node too, so that a storageclass is not given its node by one metric and its
+// pool by another
+func TestPoolForNodeByAlgorithm(t *testing.T) {
+	// pool-a is the least used, pool-c has the most free space, pool-b holds the
+	// fewest volumes, so every algorithm picks a different pool
+	pools := []apis.Pool{
+		newPool("zfspv-pool-a", 20*Gi, 10*Gi),
+		newPool("zfspv-pool-b", 40*Gi, 60*Gi),
+		newPool("zfspv-pool-c", 80*Gi, 30*Gi),
+		newPool("other-pool", 500*Gi, 0),
+	}
+	zvlist := []apis.ZFSVolume{
+		newZFSVolume("node1", "zfspv-pool-a"),
+		newZFSVolume("node1", "zfspv-pool-a"),
+		newZFSVolume("node1", "zfspv-pool-b"),
+		newZFSVolume("node1", "zfspv-pool-c"),
+		newZFSVolume("node1", "zfspv-pool-c"),
+		// another node's volumes must not weigh this node's pools
+		newZFSVolume("node2", "zfspv-pool-b"),
+		newZFSVolume("node2", "zfspv-pool-b"),
+	}
+
+	tests := map[string]struct {
+		schd     string
+		expected string
+	}{
+		"CapacityWeighted picks the least used pool":            {schd: CapacityWeighted, expected: "zfspv-pool-a"},
+		"SpaceWeighted picks the pool with the most free space": {schd: SpaceWeighted, expected: "zfspv-pool-c"},
+		"VolumeWeighted picks the pool with the fewest volumes": {schd: VolumeWeighted, expected: "zfspv-pool-b"},
+		"an unset scheduler behaves as CapacityWeighted":        {schd: "", expected: "zfspv-pool-a"},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			pmap := poolWeightMap(test.schd, pools)
+			if test.schd == VolumeWeighted {
+				pmap = poolVolumeMap(zvlist, "node1")
+			}
+
+			pool := poolForNode(pools, regexp.MustCompile("^zfspv-pool-"), 0, pmap)
+			assert.Equal(t, test.expected, pool)
+		})
+	}
+}
+
+func TestPoolForNode(t *testing.T) {
+	pools := []apis.Pool{
+		newPool("zfspv-pool-a", 10*Gi, 20*Gi),
+		newPool("zfspv-pool-b", 600*Gi, 400*Gi),
+	}
+	// CapacityWeighted: pool-a is the least used, but only pool-b can hold a
+	// large reservation
+	pmap := poolWeightMap(CapacityWeighted, pools)
+
+	tests := map[string]struct {
+		pools    []apis.Pool
+		pattern  string
+		minFree  int64
+		pmap     map[string]int64
+		expected string
+	}{
+		"the lowest weighted matching pool wins": {
+			pools: pools, pattern: "^zfspv-pool-", minFree: 0, pmap: pmap,
+			expected: "zfspv-pool-a",
+		},
+		"a pool which cannot hold the reservation is skipped": {
+			pools: pools, pattern: "^zfspv-pool-", minFree: 50 * Gi, pmap: pmap,
+			expected: "zfspv-pool-b",
+		},
+		// the fit is a strict >, as it is for the nodes in suitableNodes
+		"a pool with exactly the requested free space does not qualify": {
+			pools: pools, pattern: "^zfspv-pool-a$", minFree: 10 * Gi, pmap: pmap,
+			expected: "",
+		},
+		"no matching pool can hold the reservation": {
+			pools: pools, pattern: "^zfspv-pool-", minFree: 900 * Gi, pmap: pmap,
+			expected: "",
+		},
+		"a full pool is still eligible for a volume which reserves nothing": {
+			pools:   []apis.Pool{newPool("zfspv-pool-a", 0, 100*Gi)},
+			pattern: "^zfspv-pool-", minFree: 0, pmap: map[string]int64{},
+			expected: "zfspv-pool-a",
+		},
+		// ZFSNode.Pools is sorted by name, so the first pool on a tie is the
+		// lowest named one and the choice is deterministic without a tie-break
+		"a tie keeps the first pool": {
+			pools:   []apis.Pool{newPool("zfspv-pool-a", 10*Gi, 5*Gi), newPool("zfspv-pool-b", 90*Gi, 5*Gi)},
+			pattern: "^zfspv-pool-", minFree: 0,
+			pmap:     map[string]int64{"zfspv-pool-a": 7, "zfspv-pool-b": 7},
+			expected: "zfspv-pool-a",
+		},
+		"a bigger non matching pool is ignored": {
+			pools:   []apis.Pool{newPool("zfspv-pool-a", 10*Gi, 90*Gi), newPool("other-pool", 90*Gi, 1*Gi)},
+			pattern: "^zfspv-pool-", minFree: 0,
+			pmap:     map[string]int64{"zfspv-pool-a": 90 * Gi, "other-pool": 1 * Gi},
+			expected: "zfspv-pool-a",
+		},
+		"no pool matches": {
+			pools: pools, pattern: "^nosuch", minFree: 0, pmap: pmap,
+			expected: "",
+		},
+		"node without pools": {
+			pools: nil, pattern: "^zfspv-pool-", minFree: 0, pmap: map[string]int64{},
+			expected: "",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			pool := poolForNode(test.pools, regexp.MustCompile(test.pattern), test.minFree, test.pmap)
+			assert.Equal(t, test.expected, pool)
+		})
+	}
+}
+
+func TestPoolWeightMap(t *testing.T) {
+	pools := []apis.Pool{
+		newPool("zfspv-pool-a", 10*Gi, 90*Gi),
+		newPool("zfspv-pool-b", 60*Gi, 40*Gi),
+	}
+
+	assert.Equal(t, map[string]int64{
+		"zfspv-pool-a": 90 * Gi,
+		"zfspv-pool-b": 40 * Gi,
+	}, poolWeightMap(CapacityWeighted, pools))
+
+	// free space is inverted, as the lowest weight wins
+	assert.Equal(t, map[string]int64{
+		"zfspv-pool-a": math.MaxInt64 - 10*Gi,
+		"zfspv-pool-b": math.MaxInt64 - 60*Gi,
+	}, poolWeightMap(SpaceWeighted, pools))
+}
+
+func TestPoolVolumeMap(t *testing.T) {
+	zvlist := []apis.ZFSVolume{
+		newZFSVolume("node1", "zfspv-pool-a"),
+		newZFSVolume("node1", "zfspv-pool-a"),
+		// a dataset path is counted against its pool root
+		newZFSVolume("node1", "zfspv-pool-b/k8s/localpv"),
+		newZFSVolume("node2", "zfspv-pool-a"),
+	}
+
+	assert.Equal(t, map[string]int64{
+		"zfspv-pool-a": 2,
+		"zfspv-pool-b": 1,
+	}, poolVolumeMap(zvlist, "node1"))
+
+	assert.Equal(t, map[string]int64{}, poolVolumeMap(zvlist, "node3"))
+}
+
+func TestFilterKeep(t *testing.T) {
+	tests := map[string]struct {
+		nodes    []string
+		keep     map[string]bool
+		expected []string
+	}{
+		// the scheduler hands over the nodes least loaded first, the ones which
+		// survive the filter have to stay in that order
+		"the weighted order of the survivors is preserved": {
+			nodes:    []string{"node3", "node1", "node2"},
+			keep:     map[string]bool{"node1": true, "node2": true, "node3": true},
+			expected: []string{"node3", "node1", "node2"},
+		},
+		// this is the whole point of filtering here instead of leaving the node
+		// out of the weight map, where lib-csi would move it to the front
+		"an unsuitable node is dropped, not promoted": {
+			nodes:    []string{"node3", "node1", "node2"},
+			keep:     map[string]bool{"node1": true, "node2": true},
+			expected: []string{"node1", "node2"},
+		},
+		"nothing fits": {
+			nodes:    []string{"node1", "node2"},
+			keep:     map[string]bool{},
+			expected: []string{},
+		},
+		"a suitable node outside the topology stays out": {
+			nodes:    []string{"node1"},
+			keep:     map[string]bool{"node1": true, "node2": true},
+			expected: []string{"node1"},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expected, filterKeep(test.nodes, test.keep))
+		})
+	}
+}
+
+func TestPoolDesc(t *testing.T) {
+	assert.Equal(t, `poolname "zpool/k8s/localpv"`, poolDesc("zpool/k8s/localpv", ""))
+	assert.Equal(t, `poolpattern "zfspv-pool.*"`, poolDesc("", "zfspv-pool.*"))
+}
