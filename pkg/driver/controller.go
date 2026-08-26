@@ -223,7 +223,7 @@ func waitForReadySnapshot(ctx context.Context, snapname string) error {
 }
 
 // CreateZFSVolume create new zfs volume from csi volume request
-func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string, error) {
+func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string, string, error) {
 	volName := strings.ToLower(req.GetName())
 	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 
@@ -263,19 +263,19 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		if vol.DeletionTimestamp != nil {
 			if _, ok := parameters["wait"]; ok {
 				if err := waitForVolDestroy(volName); err != nil {
-					return "", err
+					return "", "", err
 				}
 			}
 		} else {
 			if vol.Spec.Capacity != capacity {
-				return "", status.Errorf(codes.AlreadyExists,
+				return "", "", status.Errorf(codes.AlreadyExists,
 					"volume %s already present", volName)
 			}
 			if vol.Status.State != zfs.ZFSStatusReady {
-				return "", status.Errorf(codes.Aborted,
+				return "", "", status.Errorf(codes.Aborted,
 					"volume %s request already pending", volName)
 			}
-			return vol.Spec.OwnerNodeID, nil
+			return vol.Spec.OwnerNodeID, vol.Spec.PoolName, nil
 		}
 	}
 
@@ -283,12 +283,12 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 	// name being an anchored, quoted one
 	pattern, err := compilePoolPattern(pool, poolpattern)
 	if err != nil {
-		return "", status.Error(codes.InvalidArgument, err.Error())
+		return "", "", status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	nmap, err := getNodeMap(schld, pattern)
 	if err != nil {
-		return "", status.Errorf(codes.Internal, "get node map failed : %s", err.Error())
+		return "", "", status.Errorf(codes.Internal, "get node map failed : %s", err.Error())
 	}
 
 	var prfList []string
@@ -302,7 +302,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 	}
 
 	if len(prfList) == 0 {
-		return "", status.Error(codes.Internal, "scheduler failed, node list is empty for creating the PV")
+		return "", "", status.Error(codes.Internal, "scheduler failed, node list is empty for creating the PV")
 	}
 
 	reserves := reservesSpace(vtype, tp)
@@ -322,14 +322,14 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 
 		suitable, matched, serr = getSuitableNodes(pattern, size)
 		if serr != nil {
-			return "", status.Errorf(codes.Internal, "get suitable nodes failed : %s", serr.Error())
+			return "", "", status.Errorf(codes.Internal, "get suitable nodes failed : %s", serr.Error())
 		}
 
 		// retrying will not fix a pattern which matches no pool anywhere. Only a
 		// poolpattern is held to this, since a fixed poolname is used as it is
 		// and "zfs create" stays its arbiter even when an agent is behind.
 		if poolpattern != "" && !matched {
-			return "", status.Errorf(codes.FailedPrecondition,
+			return "", "", status.Errorf(codes.FailedPrecondition,
 				"no pool matching %s is present on any node, volume %s",
 				poolDesc(pool, poolpattern), volName)
 		}
@@ -344,7 +344,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		if prfList = filterKeep(prfList, suitable); len(prfList) == 0 {
 			// the pools are there but full: external-provisioner retries with a
 			// backoff and reschedules once a node has room
-			return "", status.Errorf(codes.ResourceExhausted,
+			return "", "", status.Errorf(codes.ResourceExhausted,
 				"no pool matching %s has %d bytes free, volume %s",
 				poolDesc(pool, poolpattern), size, volName)
 		}
@@ -374,7 +374,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		Build()
 
 	if err != nil {
-		return "", status.Error(codes.Internal, err.Error())
+		return "", "", status.Error(codes.Internal, err.Error())
 	}
 
 	klog.Infof("zfs: trying volume creation %s in %s on nodes %v", volName, poolDesc(pool, poolpattern), prfList)
@@ -420,7 +420,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 
 		timeout, err = zfs.ProvisionVolume(ctx, vol)
 		if err == nil {
-			return nodeid, nil
+			return nodeid, volPool, nil
 		}
 
 		// if timeout reached, return the error and let csi retry the volume creation
@@ -434,16 +434,17 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		zfs.DeleteVolume(volName) // ignore error
 	}
 
-	return "", status.Errorf(codes.Internal,
+	return "", "", status.Errorf(codes.Internal,
 		"not able to provision the volume, nodes %v, err : %s", prfList, err.Error())
 }
 
 // CreateVolClone creates the clone from a volume
-func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol string) (string, error) {
+func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol string) (string, string, error) {
 	volName := strings.ToLower(req.GetName())
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
 	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
+	poolpattern := helpers.GetInsensitiveParameter(&parameters, "poolpattern")
 	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 	volsize := strconv.FormatInt(int64(size), 10)
 
@@ -451,19 +452,26 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 	pvcNamespace := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/namespace")
 	pvName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pv/name")
 
-	vol, err := zfs.GetZFSVolume(srcVol)
+	pattern, err := compilePoolPattern(pool, poolpattern)
 	if err != nil {
-		return "", status.Error(codes.NotFound, err.Error())
+		return "", "", status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if vol.Spec.PoolName != pool {
-		return "", status.Errorf(codes.Internal,
-			"clone: different pool src pool %s dst pool %s",
-			vol.Spec.PoolName, pool)
+	vol, err := zfs.GetZFSVolume(srcVol)
+	if err != nil {
+		return "", "", status.Error(codes.NotFound, err.Error())
+	}
+
+	// ZFS cannot clone across pools, so the pool is inherited with the spec
+	// below and only checked here. Retrying will not widen the storageclass
+	if !sourcePoolAllowed(vol.Spec.PoolName, pool, pattern) {
+		return "", "", status.Errorf(codes.FailedPrecondition,
+			"clone: source pool %s is not covered by %s",
+			vol.Spec.PoolName, poolDesc(pool, poolpattern))
 	}
 
 	if vol.Spec.Capacity != volsize {
-		return "", status.Error(codes.Internal, "clone: volume size is not matching")
+		return "", "", status.Error(codes.Internal, "clone: volume size is not matching")
 	}
 
 	selected := vol.Spec.OwnerNodeID
@@ -480,7 +488,7 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		WithLabels(labels).Build()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// make sure not to override the reserved userprops set by the builder
@@ -492,19 +500,20 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 
 	_, err = zfs.ProvisionVolume(ctx, volObj)
 	if err != nil {
-		return "", status.Errorf(codes.Internal,
+		return "", "", status.Errorf(codes.Internal,
 			"clone: not able to provision the volume err : %s", err.Error())
 	}
 
-	return selected, nil
+	return selected, volObj.Spec.PoolName, nil
 }
 
 // CreateSnapClone creates the clone from a snapshot
-func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot string) (string, error) {
+func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot string) (string, string, error) {
 	volName := strings.ToLower(req.GetName())
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
 	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
+	poolpattern := helpers.GetInsensitiveParameter(&parameters, "poolpattern")
 	size := getRoundedCapacity(req.GetCapacityRange().RequiredBytes)
 	volsize := strconv.FormatInt(int64(size), 10)
 
@@ -512,9 +521,14 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 	pvcNamespace := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/namespace")
 	pvName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pv/name")
 
+	pattern, err := compilePoolPattern(pool, poolpattern)
+	if err != nil {
+		return "", "", status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	snapshotID := strings.Split(snapshot, "@")
 	if len(snapshotID) != 2 {
-		return "", status.Errorf(
+		return "", "", status.Errorf(
 			codes.NotFound,
 			"snap name is not valid %s, {%s}",
 			snapshot,
@@ -524,17 +538,19 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 
 	snap, err := zfs.GetZFSSnapshot(snapshotID[1])
 	if err != nil {
-		return "", status.Error(codes.NotFound, err.Error())
+		return "", "", status.Error(codes.NotFound, err.Error())
 	}
 
-	if snap.Spec.PoolName != pool {
-		return "", status.Errorf(codes.Internal,
-			"clone to a different pool src pool %s dst pool %s",
-			snap.Spec.PoolName, pool)
+	// the restore lands in the snapshot's pool, inherited with the spec below
+	// and only checked here. Retrying will not widen the storageclass
+	if !sourcePoolAllowed(snap.Spec.PoolName, pool, pattern) {
+		return "", "", status.Errorf(codes.FailedPrecondition,
+			"clone: snapshot pool %s is not covered by %s",
+			snap.Spec.PoolName, poolDesc(pool, poolpattern))
 	}
 
 	if snap.Spec.Capacity != volsize {
-		return "", status.Error(codes.Internal, "clone volume size is not matching")
+		return "", "", status.Error(codes.Internal, "clone volume size is not matching")
 	}
 
 	selected := snap.Spec.OwnerNodeID
@@ -547,7 +563,7 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 		WithVolumeStatus(zfs.ZFSStatusPending).
 		Build()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// make sure not to override the reserved userprops set by the builder
@@ -558,11 +574,11 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 
 	_, err = zfs.ProvisionVolume(ctx, volObj)
 	if err != nil {
-		return "", status.Errorf(codes.Internal,
+		return "", "", status.Errorf(codes.Internal,
 			"not able to provision the clone volume err : %s", err.Error())
 	}
 
-	return selected, nil
+	return selected, volObj.Spec.PoolName, nil
 }
 
 // CreateVolume provisions a volume
@@ -572,7 +588,7 @@ func (cs *controller) CreateVolume(
 ) (*csi.CreateVolumeResponse, error) {
 
 	var err error
-	var selectedNodeID string
+	var selectedNodeID, selectedPool string
 
 	if err = cs.validateVolumeCreateReq(req); err != nil {
 		return nil, err
@@ -581,7 +597,6 @@ func (cs *controller) CreateVolume(
 	volName := strings.ToLower(req.GetName())
 	parameters := req.GetParameters()
 	// lower case keys, cf CreateZFSVolume()
-	pool := helpers.GetInsensitiveParameter(&parameters, "poolname")
 	size := getRoundedCapacity(req.GetCapacityRange().GetRequiredBytes())
 	contentSource := req.GetVolumeContentSource()
 	pvcName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/name")
@@ -592,24 +607,24 @@ func (cs *controller) CreateVolume(
 	if contentSource != nil && contentSource.GetSnapshot() != nil {
 		snapshotID := contentSource.GetSnapshot().GetSnapshotId()
 
-		selectedNodeID, err = CreateSnapClone(ctx, req, snapshotID)
+		selectedNodeID, selectedPool, err = CreateSnapClone(ctx, req, snapshotID)
 	} else if contentSource != nil && contentSource.GetVolume() != nil {
 		srcVol := contentSource.GetVolume().GetVolumeId()
-		selectedNodeID, err = CreateVolClone(ctx, req, srcVol)
+		selectedNodeID, selectedPool, err = CreateVolClone(ctx, req, srcVol)
 	} else {
-		selectedNodeID, err = CreateZFSVolume(ctx, req)
+		selectedNodeID, selectedPool, err = CreateZFSVolume(ctx, req)
 	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	klog.Infof("created the volume %s/%s on node %s", pool, volName, selectedNodeID)
+	klog.Infof("created the volume %s/%s on node %s", selectedPool, volName, selectedNodeID)
 
 	sendEventOrIgnore(pvcName, volName, strconv.FormatInt(int64(size), 10), analytics.VolumeProvision)
 
 	topology := map[string]string{zfs.ZFSTopologyKey: selectedNodeID}
-	cntx := map[string]string{zfs.PoolNameKey: pool, zfs.OpenEBSCasTypeKey: zfs.ZFSCasTypeName}
+	cntx := map[string]string{zfs.PoolNameKey: selectedPool, zfs.OpenEBSCasTypeKey: zfs.ZFSCasTypeName}
 
 	return csipayload.NewCreateVolumeResponseBuilder().
 		WithName(volName).
@@ -1111,29 +1126,19 @@ func (cs *controller) GetCapacity(
 
 	params := req.GetParameters()
 
-	poolParam := helpers.GetInsensitiveParameter(&params, "poolname")
+	poolname := helpers.GetInsensitiveParameter(&params, "poolname")
+	poolpattern := helpers.GetInsensitiveParameter(&params, "poolpattern")
 
-	// The "poolname" parameter can either be the name of a ZFS pool
-	// (e.g. "zpool"), or a path to a child dataset (e.g. "zpool/k8s/localpv").
-	//
-	// We parse the "poolname" parameter so the name of the ZFS pool and the
-	// path to the dataset is available separately.
-	//
-	// The dataset path is not used now. It could be used later to query the
-	// capacity of the child dataset, which could be smaller than the capacity
-	// of the whole pool.
-	//
-	// This is necessary because capacity calculation currently only works with
-	// ZFS pool names. This is why it always returns the capacitry of the whole
-	// pool, even if the child dataset given as the "poolname" parameter has a
-	// smaller capacity than the whole pool.
-	poolname, _ := func() (string, string) {
-		poolParamSliced := strings.SplitN(poolParam, "/", 2)
-		if len(poolParamSliced) == 2 {
-			return poolParamSliced[0], poolParamSliced[1]
-		}
-		return poolParamSliced[0], ""
-	}()
+	// pools are matched by their root, so a "poolname" naming a child dataset
+	// reports the whole pool's capacity rather than the dataset's quota
+	pattern, err := compilePoolPattern(poolname, poolpattern)
+	if err != nil {
+		// a storageclass declaring no pool, or both, provisions nothing. It is
+		// logged quietly, as this is polled, and CreateVolume is where the
+		// misconfiguration is reported as InvalidArgument
+		klog.V(4).Infof("GetCapacity: %v", err)
+		return &csi.GetCapacityResponse{AvailableCapacity: 0}, nil
+	}
 
 	var availableCapacity int64
 	for _, nodeName := range nodeNames {
@@ -1152,17 +1157,12 @@ func (cs *controller) GetCapacity(
 		}
 		zfsNode := v.(*zfsapi.ZFSNode)
 		// rather than summing all free capacity, we are calculating maximum
-		// zv size that gets fit in given pool.
+		// zv size that gets fit in given pool, so the node's roomiest matching
+		// pool decides: a volume lands in a single pool.
 		// See https://github.com/kubernetes/enhancements/tree/master/keps/sig-storage/1472-storage-capacity-tracking#available-capacity-vs-maximum-volume-size &
 		// https://github.com/container-storage-interface/spec/issues/432 for more details
-		for _, zpool := range zfsNode.Pools {
-			if zpool.Name != poolname {
-				continue
-			}
-			freeCapacity := zpool.Free.Value()
-			if availableCapacity < freeCapacity {
-				availableCapacity = freeCapacity
-			}
+		if _, freeCapacity := maxFreePool(zfsNode.Pools, pattern); availableCapacity < freeCapacity {
+			availableCapacity = freeCapacity
 		}
 	}
 

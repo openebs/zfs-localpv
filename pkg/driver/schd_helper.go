@@ -94,6 +94,17 @@ func poolDesc(poolname, poolpattern string) string {
 	return fmt.Sprintf("poolname %q", poolname)
 }
 
+// Reports whether the pool a clone's source lives in is covered by what the
+// storageclass declares. A clone always lands in the source's pool, so this
+// only validates. A poolname is compared as it is, dataset path included, a
+// poolpattern against the source pool's root.
+func sourcePoolAllowed(srcPool, poolname string, pattern *regexp.Regexp) bool {
+	if poolname != "" {
+		return srcPool == poolname
+	}
+	return pattern.MatchString(poolRoot(srcPool))
+}
+
 // Reports whether the volume gets a ZFS reservation and so has to
 // fit in a pool's free capacity at create time. A zvol reserves unless it is
 // created sparse; a dataset carries a quota, which is a limit and not a
