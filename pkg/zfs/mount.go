@@ -57,7 +57,8 @@ type MountInfo struct {
 func FormatAndMountZvol(devicePath string, mountInfo *MountInfo) error {
 	mounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: utilexec.New()}
 
-	err := mounter.FormatAndMount(devicePath, mountInfo.MountPath, mountInfo.FSType, mountInfo.MountOptions)
+	err := mounter.FormatAndMountSensitiveWithFormatOptions(devicePath, mountInfo.MountPath,
+		mountInfo.FSType, mountInfo.MountOptions, nil, MkfsOptions(mountInfo.FSType))
 	if err != nil {
 		klog.Errorf(
 			"zfspv: failed to mount volume %s [%s] to %s, error %v",

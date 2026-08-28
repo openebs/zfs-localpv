@@ -53,6 +53,10 @@ type node struct {
 func NewNode(d *CSIDriver) csi.NodeServer {
 	var ControllerMutex = sync.RWMutex{}
 
+	// find out how the filesystems of this node have to be formatted, the
+	// answer holds for as long as this agent runs
+	zfs.DetectMkfsOptions()
+
 	// set up signals so we handle the first shutdown signal gracefully
 	// TODO: (tech-debt) Setup signal handler more above, several files want to use stopCh and this function is only allowed to be used once (see #647)
 	// Affected files: pkg/driver/agent.go pkg/driver/controller.go pkg/driver/grpc.go
