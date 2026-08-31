@@ -248,6 +248,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 	kf := parameters["keyformat"]
 	kl := parameters["keylocation"]
 	pool := parameters["poolname"]
+	poolpattern := parameters["poolpattern"]
 	tp := parameters["thinprovision"]
 	schld := parameters["scheduler"]
 	fstype := parameters["fstype"]
@@ -280,7 +281,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 
 	// the pool parameters are matched as a single regular expression, an exact
 	// name being an anchored, quoted one
-	pattern, err := compilePoolPattern(pool, "")
+	pattern, err := compilePoolPattern(pool, poolpattern)
 	if err != nil {
 		return "", status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -304,6 +305,51 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		return "", status.Error(codes.Internal, "scheduler failed, node list is empty for creating the PV")
 	}
 
+	reserves := reservesSpace(vtype, tp)
+
+	// resolvePool only picks among the pools which can hold the reservation
+	var minFree int64
+	if reserves {
+		minFree = size
+	}
+
+	// only a poolpattern or a reservation needs the pools the agents reported,
+	// so a thin volume on a fixed poolname never waits on that report
+	var suitable map[string]bool
+	if poolpattern != "" || reserves {
+		var matched bool
+		var serr error
+
+		suitable, matched, serr = getSuitableNodes(pattern, size)
+		if serr != nil {
+			return "", status.Errorf(codes.Internal, "get suitable nodes failed : %s", serr.Error())
+		}
+
+		// retrying will not fix a pattern which matches no pool anywhere. Only a
+		// poolpattern is held to this, since a fixed poolname is used as it is
+		// and "zfs create" stays its arbiter even when an agent is behind.
+		if poolpattern != "" && !matched {
+			return "", status.Errorf(codes.FailedPrecondition,
+				"no pool matching %s is present on any node, volume %s",
+				poolDesc(pool, poolpattern), volName)
+		}
+	}
+
+	// the scheduler orders the nodes but never drops one, so the nodes which
+	// cannot hold the reservation are filtered out of its output here. The fit
+	// is best effort: the capacity is the pool root's, ignoring a dataset quota
+	// under a poolname, and the ZFSNode capacity is a periodic snapshot, so a
+	// create which slips through still fails on the node and CSI retries.
+	if reserves {
+		if prfList = filterKeep(prfList, suitable); len(prfList) == 0 {
+			// the pools are there but full: external-provisioner retries with a
+			// backoff and reschedules once a node has room
+			return "", status.Errorf(codes.ResourceExhausted,
+				"no pool matching %s has %d bytes free, volume %s",
+				poolDesc(pool, poolpattern), size, volName)
+		}
+	}
+
 	volObj, err := volbuilder.NewBuilder().
 		WithName(volName).
 		WithPVCName(pvcName).
@@ -312,7 +358,6 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		WithCapacity(capacity).
 		WithRecordSize(rs).
 		WithVolBlockSize(bs).
-		WithPoolName(pool).
 		WithDedup(dedup).
 		WithEncryption(encr).
 		WithKeyFormat(kf).
@@ -332,17 +377,44 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (string,
 		return "", status.Error(codes.Internal, err.Error())
 	}
 
-	klog.Infof("zfs: trying volume creation %s/%s on node %s", pool, volName, prfList)
+	klog.Infof("zfs: trying volume creation %s in %s on nodes %v", volName, poolDesc(pool, poolpattern), prfList)
 
 	// try volume creation sequentially on all nodes
 	for _, node := range prfList {
 		var nodeid string
 		nodeid, err = zfs.GetNodeID(node)
 		if err != nil {
+			klog.Warningf("zfs: volume %s skipping node %s, no node id : %s", volName, node, err.Error())
 			continue
 		}
 
-		vol, _ := volbuilder.BuildFrom(volObj).WithOwnerNodeID(nodeid).WithVolumeStatus(zfs.ZFSStatusPending).Build()
+		// a poolname is used as it is, since it can carry a dataset path the
+		// ZFSNode CR does not advertise. A poolpattern resolves against the
+		// pools of the node picked, so the agent finds the pool on it.
+		volPool := pool
+		if poolpattern != "" {
+			if volPool, err = resolvePool(schld, nodeid, pattern, minFree); err != nil {
+				klog.Warningf("zfs: volume %s skipping node %s, pool lookup failed : %s", volName, node, err.Error())
+				continue
+			}
+			if volPool == "" {
+				// only reachable when the volume was not fit filtered
+				err = fmt.Errorf("no pool matching poolpattern %q on node %s", poolpattern, node)
+				klog.Warningf("zfs: volume %s skipping node %s : %s", volName, node, err.Error())
+				continue
+			}
+		}
+
+		var vol *zfsapi.ZFSVolume
+		vol, err = volbuilder.BuildFrom(volObj).
+			WithOwnerNodeID(nodeid).
+			WithPoolName(volPool).
+			WithVolumeStatus(zfs.ZFSStatusPending).Build()
+		if err != nil {
+			continue
+		}
+
+		klog.Infof("zfs: creating volume %s/%s on node %s", volPool, volName, node)
 
 		timeout := false
 

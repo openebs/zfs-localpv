@@ -85,6 +85,15 @@ func compilePoolPattern(poolname, poolpattern string) (*regexp.Regexp, error) {
 	return nil, errors.New("either poolname or poolpattern must be set")
 }
 
+// Names the pool selector as the storageclass declares it, for the errors and
+// the logs, where the compiled pattern would read back as "^zpool$".
+func poolDesc(poolname, poolpattern string) string {
+	if poolpattern != "" {
+		return fmt.Sprintf("poolpattern %q", poolpattern)
+	}
+	return fmt.Sprintf("poolname %q", poolname)
+}
+
 // Reports whether the volume gets a ZFS reservation and so has to
 // fit in a pool's free capacity at create time. A zvol reserves unless it is
 // created sparse; a dataset carries a quota, which is a limit and not a
@@ -241,6 +250,13 @@ func getSuitableNodes(pattern *regexp.Regexp, size int64) (map[string]bool, bool
 		return nil, false, err
 	}
 
+	// no node has reported its pools yet, which is not the same thing as a
+	// storageclass naming a pool that is present nowhere: the caller must not
+	// report a transient state as a misconfiguration
+	if len(nodelist) == 0 {
+		return nil, false, errors.New("no ZFSNode found, the node agents have not reported their pools yet")
+	}
+
 	suitable, matched := suitableNodes(nodelist, pattern, size)
 	return suitable, matched, nil
 }
@@ -267,11 +283,26 @@ func suitableNodes(nodelist []apis.ZFSNode, pattern *regexp.Regexp, size int64) 
 	return suitable, matched
 }
 
-// Returns the matching pool with the most free capacity on the given
-// node, or an empty string when no pool on the node matches, turning a
-// poolpattern into the concrete pool stored in ZFSVolume.Spec.PoolName. `nodeid`
-// is the node id, since the ZFSNode CR is named after it.
-func resolvePool(nodeid string, pattern *regexp.Regexp) (string, error) {
+// Drops the nodes which are not in keep, preserving the order of the rest.
+// Omitting them from the weight map would not do: lib-csi takes its candidates
+// from the topology and front loads a node which the map does not mention.
+func filterKeep(nodes []string, keep map[string]bool) []string {
+	filtered := []string{}
+
+	for _, node := range nodes {
+		if keep[node] {
+			filtered = append(filtered, node)
+		}
+	}
+
+	return filtered
+}
+
+// Resolves a poolpattern to the pool stored in ZFSVolume.Spec.PoolName: the
+// one the scheduling algorithm prefers on the node, "" when none qualifies.
+// minFree is the volume size for a reserving volume and 0 otherwise. nodeid is
+// the node id, since the ZFSNode CR is named after it.
+func resolvePool(schd, nodeid string, pattern *regexp.Regexp, minFree int64) (string, error) {
 	zfsNode, err := nodebuilder.NewKubeclient().
 		WithNamespace(zfs.OpenEBSNamespace).
 		Get(nodeid, metav1.GetOptions{})
@@ -280,8 +311,89 @@ func resolvePool(nodeid string, pattern *regexp.Regexp) (string, error) {
 		return "", err
 	}
 
-	pool, _ := maxFreePool(zfsNode.Pools, pattern)
-	return pool, nil
+	pmap, err := getPoolMap(schd, nodeid, zfsNode.Pools)
+	if err != nil {
+		return "", err
+	}
+
+	return poolForNode(zfsNode.Pools, pattern, minFree, pmap), nil
+}
+
+// Returns the pool weights for the given scheduling algorithm, the per pool
+// counterpart of getNodeMap.
+func getPoolMap(schd, nodeid string, pools []apis.Pool) (map[string]int64, error) {
+	if schd == VolumeWeighted {
+		return getPoolVolumeMap(nodeid)
+	}
+
+	return poolWeightMap(schd, pools), nil
+}
+
+// Weighs each pool by its used capacity, or by its inverted free capacity
+// under SpaceWeighted, as spaceWeightedMap does for the nodes.
+func poolWeightMap(schd string, pools []apis.Pool) map[string]int64 {
+	pmap := map[string]int64{}
+
+	for _, pool := range pools {
+		// CapacityWeighted is the default, as in getNodeMap
+		weight := pool.Used.Value()
+		if schd == SpaceWeighted {
+			weight = math.MaxInt64 - pool.Free.Value()
+		}
+		pmap[pool.Name] = weight
+	}
+
+	return pmap
+}
+
+// Returns the volume count of each pool of a node.
+func getPoolVolumeMap(nodeid string) (map[string]int64, error) {
+	zvlist, err := volbuilder.NewKubeclient().
+		WithNamespace(zfs.OpenEBSNamespace).
+		List(metav1.ListOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return poolVolumeMap(zvlist.Items, nodeid), nil
+}
+
+// Counts the volumes of one node per pool root.
+func poolVolumeMap(zvlist []apis.ZFSVolume, nodeid string) map[string]int64 {
+	pmap := map[string]int64{}
+
+	for _, zv := range zvlist {
+		if zv.Spec.OwnerNodeID == nodeid {
+			pmap[poolRoot(zv.Spec.PoolName)]++
+		}
+	}
+
+	return pmap
+}
+
+// Returns the matching pool with the lowest weight and more than minFree bytes
+// free, "" when none qualifies. A tie keeps the first pool, the lowest named
+// one, since the node agent lists the pools sorted by name.
+func poolForNode(pools []apis.Pool, pattern *regexp.Regexp, minFree int64, pmap map[string]int64) string {
+	var (
+		selected  string
+		selWeight int64
+	)
+
+	for _, pool := range pools {
+		if !pattern.MatchString(pool.Name) {
+			continue
+		}
+		if minFree > 0 && pool.Free.Value() <= minFree {
+			continue
+		}
+		if weight := pmap[pool.Name]; selected == "" || weight < selWeight {
+			selected, selWeight = pool.Name, weight
+		}
+	}
+
+	return selected
 }
 
 // Returns the pool matching the pattern with the most free capacity
