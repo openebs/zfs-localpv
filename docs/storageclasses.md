@@ -2,12 +2,27 @@
 
 ### poolname (*must* parameter)
 
-poolname specifies the name of the pool where the volume has been created. The *poolname* is the must argument. It should be noted that *poolname* can either be the root dataset or a child dataset e.g.
+poolname specifies the name of the pool where the volume has been created. Exactly one of *poolname* and *poolpattern* must be set; a storage class that sets both, or neither, is rejected when a volume is provisioned. It should be noted that *poolname* can either be the root dataset or a child dataset e.g.
 ```
 poolname: "zfspv-pool"
 poolname: "zfspv-pool/child"
 ```
 Also the dataset provided under `poolname` must exist on *all the nodes* with the name given in the storage class.
+
+### poolpattern (*must* parameter, if poolname is not set)
+
+poolpattern selects the pool by a regular expression instead of naming one exactly, so that a single storage class can serve nodes whose pools are named differently, or a node that has more than one pool. It is the ZFS counterpart of the *vgpattern* parameter in lvm-localpv, a ZFS pool being the analog of an LVM volume group.
+
+```
+poolpattern: "zfspv-pool.*"
+poolpattern: "^tank[0-9]+$"
+```
+
+The expression is [RE2](https://github.com/google/re2/wiki/Syntax) and is **unanchored**, the same as *vgpattern*: `pool` matches `zfspv-pool` and `other-pool` alike. Anchor it with `^...$` when an exact set is wanted.
+
+It is matched against the **pool** name only, never a dataset path, since that is what each node reports. A storage class cannot use *poolpattern* to select a child dataset; use *poolname* for that.
+
+Unlike *poolname*, a matching pool does not have to exist on every node — the driver only places volumes on the nodes that have one, and reports a node's capacity from its matching pools. Which of several matching pools on a node is used depends on the [scheduler](#storageclass-with-k8s-scheduler) parameter. The pool that is chosen is recorded on the volume, so it never changes afterwards, and a clone or a restore always stays in the pool of its source.
 
 ### fstype (*optional* parameter)
 
@@ -124,6 +139,35 @@ Here, we can mention any fstype we want. As of 0.9 release, the driver supports 
 
 We have the thinprovision option as “yes” in the StorageClass, which means that it does not reserve the space for all the volumes provisioned using this StorageClass. We can set it to “no” if we want to reserve the space for the provisioned volumes.
 
+### StorageClass Selecting Pools by Pattern
+
+A storage class normally names one pool, which means the pool has to be called the same thing on every node. Where that is not practical — nodes built at different times, or a node with one pool per disk — *poolpattern* lets one storage class cover a family of pools:
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+ name: openebs-zfspv-pattern
+allowVolumeExpansion: true
+parameters:
+ fstype: "zfs"
+ poolpattern: "^zfspv-pool-.*"
+ scheduler: "SpaceWeighted"
+provisioner: zfs.csi.openebs.io
+volumeBindingMode: WaitForFirstConsumer
+```
+
+This class provisions into any pool whose name starts with `zfspv-pool-`, so a node with `zfspv-pool-a` and another with `zfspv-pool-b` are both usable, and a node carrying both is free to use either. The `scheduler` parameter decides which node is picked and, among that node's matching pools, which pool the volume goes into — here the one with the most free space.
+
+Note that the pattern is unanchored unless you anchor it. `poolpattern: "pool"` would also match a pool called `system-pool`, so anchor with `^...$` when the set should be exact.
+
+The chosen pool is written to the PersistentVolume, so it is visible in `spec.csi.volumeAttributes` and never changes for the life of the volume:
+
+```console
+$ kubectl get pv pvc-1f0e3dad-... -o jsonpath='{.spec.csi.volumeAttributes.openebs\.io/poolname}'
+zfspv-pool-b
+```
+
 ### StorageClass for Sharing the Persistence Volumes
 
 By default, the LocalPV-ZFS driver does not allow Volumes to be mounted by more than one pod. Even if we try to do that, only one Pod will come into the running state, and the other Pod will be in ContainerCreating state, and it will be failing on the mount.
@@ -162,14 +206,16 @@ Here, we have to note that all the Pods using that volume will come to the same 
 
 ### StorageClass With k8s Scheduler
 
-The LocalPV-ZFS Driver has two types of its own scheduling logic, VolumeWeighted and CapacityWeighted (Supported from zfs-driver:1.3.0+). To choose any one of the scheduler add scheduler parameter in storage class and give its value accordingly.
+The LocalPV-ZFS Driver has three types of its own scheduling logic, VolumeWeighted and CapacityWeighted (Supported from zfs-driver:1.3.0+) and SpaceWeighted. To choose any one of the scheduler add scheduler parameter in storage class and give its value accordingly.
 ```
 parameters:
  scheduler: "VolumeWeighted"
  fstype: "zfs"
  poolname: "zfspv-pool"
 ```
-CapacityWeighted is the default scheduler in zfs-localpv driver, so even if we don't use scheduler parameter in storage-class, driver will pick the node where total provisioned volumes have occupied less capacity from the given pool. On the other hand for using VolumeWeighted scheduler, we have to specify it under scheduler parameter in storage-class. Then driver will pick the node to create volume where ZFS Pool is less loaded with the volumes. Here, it just checks the volume count and creates the volume where less volume is configured in a given ZFS Pool. It does not account for other factors like available CPU or memory while making scheduling decisions.
+CapacityWeighted is the default scheduler in zfs-localpv driver, so even if we don't use scheduler parameter in storage-class, driver will pick the node where the pool has less capacity used. On the other hand for using VolumeWeighted scheduler, we have to specify it under scheduler parameter in storage-class. Then driver will pick the node to create volume where ZFS Pool is less loaded with the volumes. Here, it just checks the volume count and creates the volume where less volume is configured in a given ZFS Pool. SpaceWeighted picks the node whose pool has the most free space left, which is the better choice when the pools differ widely in size, since the other two order by what has already been written rather than by the room that is left. None of them account for other factors like available CPU or memory while making scheduling decisions.
+
+When the storage class selects pools with *poolpattern*, the chosen node may have more than one matching pool, and the same algorithm decides which one the volume goes into: the least used pool, the pool with the fewest volumes, or the pool with the most free space. See [the scheduler guide](./scheduler.md) for how free capacity restricts the choice for volumes that reserve space.
 
 In case where you want to use node selector/affinity rules on the application pod or have CPU/Memory constraints, the Kubernetes scheduler should be used. To make use of Kubernetes scheduler, we can set the volumeBindingMode as WaitForFirstConsumer in the storage class:
 
