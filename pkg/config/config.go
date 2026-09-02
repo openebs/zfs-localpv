@@ -41,6 +41,11 @@ type Config struct {
 	// which node drivers are running. This is used
 	// to set the topologies for the driver
 	Nodename string
+
+	// DefaultFormatOptions holds the "<fstype>=<options>" mkfs
+	// options this node uses when the storage class of the
+	// volume does not set any
+	DefaultFormatOptions []string
 }
 
 // Default returns a new instance of config

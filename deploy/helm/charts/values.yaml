@@ -36,6 +36,20 @@ loggingLabels:
 # the zfs node daemonset
 zfsNode:
   componentName: openebs-zfs-node
+  # defaultFormatOptions are the extra mkfs options a node uses for a
+  # filesystem when the StorageClass of the volume does not set formatOptions.
+  # The formatOptions of a StorageClass replace the default of its filesystem,
+  # the two are not merged. Keys are the filesystem types the driver formats
+  # (ext2, ext3, ext4, xfs, btrfs), values are the space separated mkfs
+  # options of that filesystem given as one string, for example:
+  #   defaultFormatOptions:
+  #     ext4: "-m 0 -O ^orphan_file"
+  #     xfs: "-i nrext64=0"
+  # The chart sets none. One case where an option is needed: mkfs.xfs 6.5 and
+  # above set nrext64 by default and only kernel 5.19 and above can mount such
+  # a filesystem, so on a cluster with nodes running older kernels give xfs
+  # "-i nrext64=0".
+  defaultFormatOptions: {}
   driverRegistrar:
     name: "csi-node-driver-registrar"
     image:

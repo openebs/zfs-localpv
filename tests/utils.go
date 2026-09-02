@@ -612,6 +612,89 @@ func createAndDeployAppPod(appname string, pvcname string) {
 	)
 }
 
+/*
+ * verifyFormatOptions runs a pod that compares the block size of the mounted
+ * filesystem with the one asked for with formatOptions in the storage class.
+ * The pod exits 0 on a match and 1 otherwise and is not restarted, so its phase
+ * carries the result: a wrong block size means the options never reached mkfs.
+ */
+func verifyFormatOptions(podName, pvcName, blockSize string) {
+	check := fmt.Sprintf(
+		"got=$(stat -fc %%s /mnt/datadir); "+
+			"echo \"block size $got, expected %s\"; "+
+			"test \"$got\" = \"%s\"",
+		blockSize, blockSize,
+	)
+
+	checkerPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: OpenEBSNamespace,
+			Labels:    map[string]string{"role": "test", "appName": podName},
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy: corev1.RestartPolicyNever,
+			Containers: []corev1.Container{
+				{
+					Name:            "busybox",
+					Image:           "busybox",
+					ImagePullPolicy: corev1.PullIfNotPresent,
+					Command:         []string{"sh", "-c", check},
+					VolumeMounts: []corev1.VolumeMount{
+						{Name: "datavol1", MountPath: "/mnt/datadir"},
+					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name: "datavol1",
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: pvcName,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, err := PodClient.WithNamespace(OpenEBSNamespace).Create(checkerPod)
+	gomega.Expect(err).ShouldNot(
+		gomega.HaveOccurred(),
+		"while creating pod {%s} in namespace {%s}",
+		podName,
+		OpenEBSNamespace,
+	)
+
+	var phase corev1.PodPhase
+	gomega.Eventually(func() corev1.PodPhase {
+		p, err := PodClient.WithNamespace(OpenEBSNamespace).Get(podName, metav1.GetOptions{})
+		gomega.Expect(err).ShouldNot(gomega.HaveOccurred(), "while getting pod {%s}", podName)
+
+		phase = p.Status.Phase
+
+		return phase
+	},
+		300, 5).
+		Should(gomega.Or(gomega.Equal(corev1.PodSucceeded), gomega.Equal(corev1.PodFailed)),
+			"while waiting for pod {%s} to finish", podName)
+
+	gomega.Expect(phase).To(gomega.Equal(corev1.PodSucceeded),
+		"while checking the block size of the volume of pvc {%s}, the expected format options did not reach mkfs",
+		pvcName)
+}
+
+// deleteFormatOptionsCheckerPod removes the pod of verifyFormatOptions
+func deleteFormatOptionsCheckerPod(podName string) {
+	err := PodClient.WithNamespace(OpenEBSNamespace).Delete(podName, &metav1.DeleteOptions{})
+	gomega.Expect(err).ShouldNot(
+		gomega.HaveOccurred(),
+		"while deleting pod {%s} in namespace {%s}",
+		podName,
+		OpenEBSNamespace,
+	)
+}
+
 func createAndDeployBlockAppPod(appName, pvcName string) {
 	var err error
 	labels := map[string]string{
