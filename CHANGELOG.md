@@ -3,6 +3,38 @@ v2.12.0 / yyyy-mm-dd
 
 New Features and Enhancements
 
+ - Pool pattern based volume provisioning
+StorageClasses may now select the ZFS pool with a regular expression, using the
+new `poolpattern` parameter in place of `poolname`, so that a single
+StorageClass can serve nodes whose pools are named differently or a node that
+has more than one pool. Exactly one of `poolname` and `poolpattern` must be set.
+The scheduler picks the pool among the matching pools on the chosen node, and
+the resolved pool is recorded on the volume, so clones and restores stay in the
+pool of their source.
+ - SpaceWeighted scheduler
+Added a third scheduling algorithm, `SpaceWeighted`, which orders nodes by the
+free space left in their pool rather than by what has already been written into
+it. `CapacityWeighted` remains the default.
+
+Behaviour Changes
+
+ - The `CapacityWeighted` scheduler now weighs a node by the pool's real used
+capacity as reported by the node agent, rather than by the summed capacity of
+the volumes this driver provisioned, so it also accounts for data written
+outside the driver. Node ordering may differ from previous releases for existing
+StorageClasses.
+ - A volume that reserves space is now placed only where the reservation fits,
+and provisioning fails immediately with `ResourceExhausted` when no pool has the
+room, or `FailedPrecondition` when no pool matches the StorageClass at all,
+instead of repeatedly attempting a create that cannot succeed. Thin volumes are
+unaffected.
+ - Cloning or restoring outside the pool the StorageClass declares now fails
+with `FailedPrecondition` rather than `Internal`, since retrying cannot fix it.
+ - `CreateZFSVolume`, `CreateVolClone` and `CreateSnapClone` in `pkg/driver`
+return the resolved pool in addition to the node. These are exported, so the
+change is source incompatible for anything importing the package; it has no
+effect on the driver as deployed.
+
  - PVC and VolumeSnapshot identification properties
 Newly created ZFS datasets receive the ZFS user properties
 `openebs.io:pv-name`, `openebs.io:pvc-name`, and `openebs.io:pvc-namespace` to
