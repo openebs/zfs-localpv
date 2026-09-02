@@ -38,7 +38,7 @@ runs:
       shell: bash
       run: |
         echo "nix_path=nixpkgs=$(jq -r '.nixpkgs.url' nix/sources.json)" >> $GITHUB_OUTPUT
-    - uses: cachix/install-nix-action@v31.11.0
+    - uses: cachix/install-nix-action@v31.11.1
       with:
         nix_path: "${{ steps.nixpkgs.outputs.nix_path }}"
         install_options: ${{ runner.os == 'Linux' && '--no-daemon' || '' }}
