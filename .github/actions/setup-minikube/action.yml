@@ -16,7 +16,9 @@ runs:
   steps:
     - name: Install zfs utils
       shell: bash
-      run: sudo apt-get install zfsutils-linux -y
+      run: |
+        sudo apt-get update
+        sudo apt-get install zfsutils-linux -y
 
     - name: Report zfs version
       shell: bash
