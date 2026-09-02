@@ -17,6 +17,18 @@ accordingly. FsType can not be modified once volume has been provisioned. If fst
 
 allowed values: "zfs", "ext2", "ext3", "ext4", "xfs", "btrfs"
 
+### formatOptions (*optional* parameter)
+
+formatOptions specifies the extra options passed to mkfs when the volume is formatted on first use, given as one space separated string. It is ignored if fstype is "zfs", where nothing is formatted. The options are used as they are, so they have to be the ones of the mkfs of the given fstype.
+
+```
+formatOptions: "-m 0 -O ^orphan_file"
+```
+
+If a StorageClass does not set it, the node agent uses the default of that fstype, given to it with the `--default-format-options=<fstype>=<options>` option, `zfsNode.defaultFormatOptions` in the helm chart. The value of a StorageClass replaces the default of its fstype, the two are not merged.
+
+The chart sets no default. One case where an option is needed: on a cluster where some nodes run a kernel older than 5.19, set `zfsNode.defaultFormatOptions.xfs` to `-i nrext64=0`, because mkfs.xfs 6.5 and above turn nrext64 on and such kernels can not mount a filesystem with it.
+
 ### recordsize (*optional* parameter)
 
 This parameter is applicable if fstype provided is "zfs" otherwise it will be ignored. It specifies a suggested block size for files in the file system.

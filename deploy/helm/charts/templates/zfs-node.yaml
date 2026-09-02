@@ -86,6 +86,11 @@ spec:
             - "--nodename=$(OPENEBS_NODE_NAME)"
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_NODE_DRIVER)"
+            {{- range $fstype, $options := .Values.zfsNode.defaultFormatOptions }}
+            {{- if $options }}
+            - "--default-format-options={{ $fstype }}={{ $options }}"
+            {{- end }}
+            {{- end }}
           env:
             - name: OPENEBS_NODE_NAME
               valueFrom:

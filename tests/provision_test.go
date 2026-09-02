@@ -30,6 +30,7 @@ var _ = Describe("[zfspv] TEST VOLUME PROVISIONING", func() {
 		It("Running zfs volume Creation Test with custom node id", Label("custom-node-id"), volumeCreationTest)
 		It("Running encrypted volume creation test", encryptedVolCreationTest)
 		It("Running shared volume tests", fsVolCreationWithSharedParameterTest)
+		It("Running format options test", formatOptionsTest)
 	})
 })
 
@@ -38,6 +39,47 @@ func fsVolCreationTest() {
 	for _, params := range storageClass {
 		exhaustiveVolumeTests(params)
 	}
+}
+
+/*
+ * formatOptionsTest provisions two volumes, with ext4, whose block size option
+ * needs nothing of the kernel. The storage class of the first leaves
+ * formatOptions out, so the filesystem has to be made with the ext4 node
+ * default that ci-test.sh gives the agent. The storage class of the second
+ * asks mkfs for another block size, which has to replace that default.
+ */
+func formatOptionsTest() {
+	// the block size of the ext4 entry ci-test.sh sets
+	// zfsNode.defaultFormatOptions to
+	const defaultBlockSize = "2048"
+	// the block size asked for by the storage class, replacing the default
+	const scBlockSize = "1024"
+
+	parameters := map[string]string{
+		"fstype": "ext4",
+	}
+
+	By(fmt.Sprintf("####### Creating the storage class without formatOptions : %s #######", formatParams(parameters)))
+	By("Creating Storage Class", func() { createFstypeStorageClass(parameters) })
+	By("creating and verifying PVC bound status", func() { createAndVerifyPVC(pvcNameFormatOptionsDefault) })
+	By("verifying the filesystem was made with the block size of the node default", func() {
+		verifyFormatOptions(appNameFormatOptionsDefault, pvcNameFormatOptionsDefault, defaultBlockSize)
+	})
+	By("Deleting the checker pod", func() { deleteFormatOptionsCheckerPod(appNameFormatOptionsDefault) })
+	By("Deleting pvc", func() { deletePVC(pvcNameFormatOptionsDefault) })
+	By("Deleting storage class", deleteStorageClass)
+
+	parameters["formatOptions"] = "-b " + scBlockSize
+
+	By(fmt.Sprintf("####### Creating the storage class with formatOptions : %s #######", formatParams(parameters)))
+	By("Creating Storage Class", func() { createFstypeStorageClass(parameters) })
+	By("creating and verifying PVC bound status", func() { createAndVerifyPVC(pvcNameFormatOptions) })
+	By("verifying the filesystem was made with the block size of the storage class, not the node default", func() {
+		verifyFormatOptions(appNameFormatOptions, pvcNameFormatOptions, scBlockSize)
+	})
+	By("Deleting the checker pod", func() { deleteFormatOptionsCheckerPod(appNameFormatOptions) })
+	By("Deleting pvc", func() { deletePVC(pvcNameFormatOptions) })
+	By("Deleting storage class", deleteStorageClass)
 }
 
 func fsVolCreationWithSharedParameterTest() {

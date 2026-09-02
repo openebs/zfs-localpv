@@ -504,6 +504,11 @@ func (cs *controller) CreateVolume(
 	topology := map[string]string{zfs.ZFSTopologyKey: selectedNodeID}
 	cntx := map[string]string{zfs.PoolNameKey: pool, zfs.OpenEBSCasTypeKey: zfs.ZFSCasTypeName}
 
+	// the node agent formats the volume, hand it the options of the storage class
+	if formatOptions := helpers.GetInsensitiveParameter(&parameters, "formatoptions"); formatOptions != "" {
+		cntx[zfs.FormatOptionsKey] = formatOptions
+	}
+
 	return csipayload.NewCreateVolumeResponseBuilder().
 		WithName(volName).
 		WithCapacity(size).

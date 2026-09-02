@@ -57,6 +57,12 @@ var (
 	pvcNameFS    = "zfspv-pvc-fs"
 	pvcNameBlock = "zfspv-pvc-block"
 
+	pvcNameFormatOptions = "zfspv-pvc-format-options"
+	appNameFormatOptions = "busybox-zfspv-format-options"
+
+	pvcNameFormatOptionsDefault = "zfspv-pvc-format-options-default"
+	appNameFormatOptionsDefault = "busybox-zfspv-format-options-default"
+
 	appNameFS       = "busybox-zfspv-fs"
 	appNameBlock    = "busybox-zfspv-block"
 	appNameFSShared = "busybox-zfspv-fs-shared"

@@ -118,6 +118,8 @@ func GetVolAndMountInfo(
 		mountinfo.MountOptions = append(mountinfo.MountOptions, "ro")
 	}
 
+	mountinfo.FormatOptions = zfs.FormatOptions(mountinfo.FSType, req.GetVolumeContext()[zfs.FormatOptionsKey])
+
 	volName := strings.ToLower(req.GetVolumeId())
 
 	getOptions := metav1.GetOptions{}

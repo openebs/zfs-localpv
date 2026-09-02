@@ -184,7 +184,7 @@ helm_install() {
   sudo dd if=/dev/urandom of=/etc/zfs/keys/zfspool0.key bs=32 count=1
   sudo chmod 600 /etc/zfs/keys/zfspool0.key
 
-  helm install zfs-localpv ./deploy/helm/charts -n "$OPENEBS_NAMESPACE" --create-namespace --set zfsPlugin.image.pullPolicy=Never --set analytics.enabled=false --set backupGC.enabled=true
+  helm install zfs-localpv ./deploy/helm/charts -n "$OPENEBS_NAMESPACE" --create-namespace --set zfsPlugin.image.pullPolicy=Never --set analytics.enabled=false --set backupGC.enabled=true --set 'zfsNode.defaultFormatOptions.ext4=-b 2048'
   kubectl apply -f "$SNAP_CLASS"
 
   waitForZFSDriver
