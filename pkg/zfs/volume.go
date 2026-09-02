@@ -64,6 +64,10 @@ const (
 	ZFSStatusReady string = "Ready"
 	// OpenEBSCasTypeKey for the cas-type label
 	OpenEBSCasTypeKey string = "openebs.io/cas-type"
+
+	// FormatOptionsKey carries the extra mkfs options of the storage class
+	// from the controller to the node agent
+	FormatOptionsKey string = "openebs.io/format-options"
 	// ZFSCasTypeName for the name of the cas-type
 	ZFSCasTypeName string = "localpv-zfs"
 )

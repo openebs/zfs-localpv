@@ -51,13 +51,24 @@ type MountInfo struct {
 	// MountOptions specifies the options with
 	// which mount needs to be attempted
 	MountOptions []string `json:"mountOptions"`
+
+	// FormatOptions specifies the extra options passed to mkfs when the
+	// volume is formatted on first use
+	FormatOptions []string `json:"formatOptions"`
 }
 
 // FormatAndMountZvol formats and mounts the created volume to the desired mount path
 func FormatAndMountZvol(devicePath string, mountInfo *MountInfo) error {
 	mounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: utilexec.New()}
 
-	err := mounter.FormatAndMount(devicePath, mountInfo.MountPath, mountInfo.FSType, mountInfo.MountOptions)
+	err := mounter.FormatAndMountSensitiveWithFormatOptions(
+		devicePath,
+		mountInfo.MountPath,
+		mountInfo.FSType,
+		mountInfo.MountOptions,
+		nil, // sensitiveOptions
+		mountInfo.FormatOptions,
+	)
 	if err != nil {
 		klog.Errorf(
 			"zfspv: failed to mount volume %s [%s] to %s, error %v",
