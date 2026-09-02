@@ -232,7 +232,7 @@ func (v *VolumeInfo) Validate() error {
 			return err
 		}
 		if !strings.HasPrefix(name, "openebs.io:") {
-			return errors.Errorf("user property '%s' does not have prefix `openebs.io:`")
+			return errors.Errorf("user property '%s' does not have prefix `openebs.io:`", name)
 		}
 	}
 	return nil
