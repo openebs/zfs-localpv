@@ -31,7 +31,7 @@ import (
 
 	"github.com/openebs/lib-csi/pkg/btrfs"
 	"github.com/openebs/lib-csi/pkg/xfs"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"

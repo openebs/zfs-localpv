@@ -3,9 +3,9 @@
 package fake
 
 import (
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
-	zfsv1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned/typed/zfs/v1"
-	fakezfsv1 "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned/typed/zfs/v1/fake"
+	clientset "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned"
+	zfsv1 "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned/typed/zfs/v1"
+	fakezfsv1 "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned/typed/zfs/v1/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"

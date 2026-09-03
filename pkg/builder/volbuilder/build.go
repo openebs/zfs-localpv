@@ -18,7 +18,7 @@ package volbuilder
 
 import (
 	"github.com/openebs/lib-csi/pkg/common/errors"
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 )
 
 // MarkForDeletionAnnotation is the annotation key

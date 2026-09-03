@@ -130,7 +130,7 @@ controller-gen:
 	@go install -mod=mod sigs.k8s.io/controller-tools/cmd/controller-gen@v0.21.0
 
 # SRC_PKG is the path of code files
-SRC_PKG := github.com/openebs/zfs-localpv/pkg
+SRC_PKG := github.com/openebs/zfs-localpv/v2/pkg
 
 # code generation for custom resources
 .PHONY: kubegen

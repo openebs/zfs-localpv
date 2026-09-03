@@ -82,10 +82,10 @@ if [ "$GOOS" = "windows" ]; then
     output_name+='.exe'
 fi
 env GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build -mod=mod -ldflags \
-    "-X github.com/openebs/zfs-localpv/pkg/version.GitCommit=${GIT_COMMIT} \
+    "-X github.com/openebs/zfs-localpv/v2/pkg/version.GitCommit=${GIT_COMMIT} \
     -X main.CtlName='${CTLNAME}' \
-    -X github.com/openebs/zfs-localpv/pkg/version.Version=${VERSION} \
-    -X github.com/openebs/zfs-localpv/pkg/version.VersionMeta=${VERSION_META}"\
+    -X github.com/openebs/zfs-localpv/v2/pkg/version.Version=${VERSION} \
+    -X github.com/openebs/zfs-localpv/v2/pkg/version.VersionMeta=${VERSION_META}"\
     -o "$output_name"\
     ./cmd
 

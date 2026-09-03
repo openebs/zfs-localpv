@@ -3,7 +3,7 @@
 package v1
 
 import (
-	internalinterfaces "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions/internalinterfaces"
+	internalinterfaces "github.com/openebs/zfs-localpv/v2/pkg/generated/informer/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

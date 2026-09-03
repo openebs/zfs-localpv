@@ -17,11 +17,11 @@ limitations under the License.
 package driver
 
 import (
-	"github.com/openebs/zfs-localpv/pkg/builder/volbuilder"
+	"github.com/openebs/zfs-localpv/v2/pkg/builder/volbuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strconv"
 
-	zfs "github.com/openebs/zfs-localpv/pkg/zfs"
+	zfs "github.com/openebs/zfs-localpv/v2/pkg/zfs"
 )
 
 // scheduling algorithm constants

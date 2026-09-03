@@ -19,7 +19,7 @@ package zfs
 import (
 	"os/exec"
 
-	apis "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
+	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 	"k8s.io/klog/v2"
 	"k8s.io/mount-utils"
 )

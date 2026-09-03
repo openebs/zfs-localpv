@@ -5,8 +5,8 @@ package v1
 import (
 	context "context"
 
-	zfsv1 "github.com/openebs/zfs-localpv/pkg/apis/openebs.io/zfs/v1"
-	scheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned/scheme"
+	zfsv1 "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	scheme "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

@@ -17,10 +17,10 @@ limitations under the License.
 package volume
 
 import (
-	clientset "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned"
-	openebsScheme "github.com/openebs/zfs-localpv/pkg/generated/clientset/versioned/scheme"
-	informers "github.com/openebs/zfs-localpv/pkg/generated/informer/externalversions"
-	listers "github.com/openebs/zfs-localpv/pkg/generated/lister/zfs/v1"
+	clientset "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned"
+	openebsScheme "github.com/openebs/zfs-localpv/v2/pkg/generated/clientset/versioned/scheme"
+	informers "github.com/openebs/zfs-localpv/v2/pkg/generated/informer/externalversions"
+	listers "github.com/openebs/zfs-localpv/v2/pkg/generated/lister/zfs/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
