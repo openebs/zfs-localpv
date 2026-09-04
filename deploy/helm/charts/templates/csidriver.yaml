@@ -8,3 +8,4 @@ spec:
   attachRequired: false
   podInfoOnMount: false
   storageCapacity: {{ .Values.feature.storageCapacity }}
+  seLinuxMount: true
