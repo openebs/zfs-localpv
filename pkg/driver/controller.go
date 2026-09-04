@@ -279,9 +279,9 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*zfsapi
 		}
 	}
 
-	// the pool parameters are matched as a single regular expression, an exact
-	// name being an anchored, quoted one
-	pattern, err := compilePoolPattern(pool, poolpattern)
+	// rejects a storageclass setting both pool parameters or neither, and folds
+	// the one it sets into a single expression, an exact name being anchored
+	pattern, err := parsePoolParams(pool, poolpattern)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -452,7 +452,8 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 	pvcNamespace := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/namespace")
 	pvName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pv/name")
 
-	pattern, err := compilePoolPattern(pool, poolpattern)
+	// rejects a storageclass setting both pool parameters or neither
+	pattern, err := parsePoolParams(pool, poolpattern)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -519,7 +520,8 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 	pvcNamespace := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pvc/namespace")
 	pvName := helpers.GetInsensitiveParameter(&parameters, "csi.storage.k8s.io/pv/name")
 
-	pattern, err := compilePoolPattern(pool, poolpattern)
+	// rejects a storageclass setting both pool parameters or neither
+	pattern, err := parsePoolParams(pool, poolpattern)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -1127,7 +1129,7 @@ func (cs *controller) GetCapacity(
 
 	// pools are matched by their root, so a "poolname" naming a child dataset
 	// reports the whole pool's capacity rather than the dataset's quota
-	pattern, err := compilePoolPattern(poolname, poolpattern)
+	pattern, err := parsePoolParams(poolname, poolpattern)
 	if err != nil {
 		// a storageclass declaring no pool, or both, provisions nothing. It is
 		// logged quietly, as this is polled, and CreateVolume is where the

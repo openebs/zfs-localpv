@@ -76,7 +76,7 @@ func TestPoolRoot(t *testing.T) {
 	}
 }
 
-func TestCompilePoolPattern(t *testing.T) {
+func TestParsePoolParams(t *testing.T) {
 	tests := map[string]struct {
 		poolname    string
 		poolpattern string
@@ -116,7 +116,7 @@ func TestCompilePoolPattern(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			pattern, err := compilePoolPattern(test.poolname, test.poolpattern)
+			pattern, err := parsePoolParams(test.poolname, test.poolpattern)
 			if test.wantErr {
 				assert.Error(t, err)
 				return
@@ -178,7 +178,7 @@ func TestSourcePoolAllowed(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			pattern, err := compilePoolPattern(test.poolname, test.poolpattern)
+			pattern, err := parsePoolParams(test.poolname, test.poolpattern)
 			require.NoError(t, err)
 			assert.Equal(t, test.allowed,
 				sourcePoolAllowed(test.srcPool, test.poolname, pattern))
