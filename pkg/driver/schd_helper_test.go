@@ -76,7 +76,7 @@ func TestPoolRoot(t *testing.T) {
 	}
 }
 
-func TestCompilePoolPattern(t *testing.T) {
+func TestParsePoolParams(t *testing.T) {
 	tests := map[string]struct {
 		poolname    string
 		poolpattern string
@@ -116,7 +116,7 @@ func TestCompilePoolPattern(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			pattern, err := compilePoolPattern(test.poolname, test.poolpattern)
+			pattern, err := parsePoolParams(test.poolname, test.poolpattern)
 			if test.wantErr {
 				assert.Error(t, err)
 				return
@@ -129,6 +129,59 @@ func TestCompilePoolPattern(t *testing.T) {
 			for _, p := range test.notMatches {
 				assert.False(t, pattern.MatchString(p), "%q should not match %s", p, pattern)
 			}
+		})
+	}
+}
+
+// the clone guard only validates where the source already lives, since a clone
+// is always created in the pool of its source
+func TestSourcePoolAllowed(t *testing.T) {
+	tests := map[string]struct {
+		srcPool     string
+		poolname    string
+		poolpattern string
+		allowed     bool
+	}{
+		"exact poolname, the same pool": {
+			srcPool: "zfspv-pool", poolname: "zfspv-pool", allowed: true,
+		},
+		"exact poolname, another pool": {
+			srcPool: "other-pool", poolname: "zfspv-pool", allowed: false,
+		},
+		// a poolname may carry a dataset path, and the check stays exact on the
+		// whole value, the way it was before poolpattern existed
+		"poolname with a dataset path, the same path": {
+			srcPool: "zpool/k8s/localpv", poolname: "zpool/k8s/localpv", allowed: true,
+		},
+		"poolname with a dataset path, source is the pool root": {
+			srcPool: "zpool", poolname: "zpool/k8s/localpv", allowed: false,
+		},
+		"poolname with a dataset path, source is another dataset": {
+			srcPool: "zpool/k8s/other", poolname: "zpool/k8s/localpv", allowed: false,
+		},
+		// a poolpattern is matched against the source pool's root
+		"poolpattern matching the source pool": {
+			srcPool: "zfspv-pool-b", poolpattern: "^zfspv-pool-", allowed: true,
+		},
+		"poolpattern matching the root of a source dataset path": {
+			srcPool: "zfspv-pool-b/k8s/localpv", poolpattern: "^zfspv-pool-", allowed: true,
+		},
+		"poolpattern not matching the source pool": {
+			srcPool: "other-pool", poolpattern: "^zfspv-pool-", allowed: false,
+		},
+		// a poolpattern is unanchored, like lvm-localpv's vgpattern, so it covers
+		// every pool whose name contains it. Users anchor with ^...$ to narrow it
+		"unanchored poolpattern covering another pool as a substring": {
+			srcPool: "other-pool", poolpattern: "pool", allowed: true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			pattern, err := parsePoolParams(test.poolname, test.poolpattern)
+			require.NoError(t, err)
+			assert.Equal(t, test.allowed,
+				sourcePoolAllowed(test.srcPool, test.poolname, pattern))
 		})
 	}
 }

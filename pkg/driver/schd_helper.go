@@ -62,11 +62,11 @@ func poolRoot(poolname string) string {
 	return strings.SplitN(poolname, "/", 2)[0]
 }
 
-// Folds the "poolname" and "poolpattern" storageclass
-// parameters into one regular expression matched against pool roots. Exactly one
-// of them must be set: poolpattern compiles as given, poolname as an anchored
-// exact match.
-func compilePoolPattern(poolname, poolpattern string) (*regexp.Regexp, error) {
+// Rejects a storageclass which sets both of the "poolname" and "poolpattern"
+// parameters or neither, and folds the one it does set into a single regular
+// expression matched against pool roots. A poolpattern compiles as given, a
+// poolname as an anchored exact match.
+func parsePoolParams(poolname, poolpattern string) (*regexp.Regexp, error) {
 	switch {
 	case poolname != "" && poolpattern != "":
 		return nil, errors.New("poolname and poolpattern are mutually exclusive, set only one of them")
@@ -92,6 +92,17 @@ func poolDesc(poolname, poolpattern string) string {
 		return fmt.Sprintf("poolpattern %q", poolpattern)
 	}
 	return fmt.Sprintf("poolname %q", poolname)
+}
+
+// Reports whether the pool a clone's source lives in is covered by what the
+// storageclass declares. A clone always lands in the source's pool, so this
+// only validates. A poolname is compared as it is, dataset path included, a
+// poolpattern against the source pool's root.
+func sourcePoolAllowed(srcPool, poolname string, pattern *regexp.Regexp) bool {
+	if poolname != "" {
+		return srcPool == poolname
+	}
+	return pattern.MatchString(poolRoot(srcPool))
 }
 
 // Reports whether the volume gets a ZFS reservation and so has to
