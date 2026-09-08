@@ -1,0 +1,32 @@
+# Provisioning into a family of pools selected by a regular expression, rather
+# than one pool named exactly. Useful when the pools are named differently from
+# node to node, or when a node has one pool per disk.
+#
+# Exactly one of poolname and poolpattern may be set.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-zfspv-pattern
+allowVolumeExpansion: true
+parameters:
+  fstype: "zfs"
+  # any pool whose name starts with "zfspv-pool-". The expression is unanchored,
+  # so anchor it with ^...$ when the set of pools should be exact
+  poolpattern: "^zfspv-pool-.*"
+  # picks the node, and the pool among the matching pools on that node.
+  # One of VolumeWeighted, CapacityWeighted (default) or SpaceWeighted
+  scheduler: "SpaceWeighted"
+provisioner: zfs.csi.openebs.io
+volumeBindingMode: WaitForFirstConsumer
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: csi-zfspv-pattern
+spec:
+  storageClassName: openebs-zfspv-pattern
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
