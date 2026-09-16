@@ -1,11 +1,36 @@
 queue_rules:
+  # Fork pull requests, matched first so they never pick up `update_bot_account`.
+  # GitHub refuses an OAuth token on its rebase API for a fork, so rebasing on
+  # behalf of a user means impersonating them to force-push the contributor's
+  # branch. Mergify does not do that (and removed the git-based fallback), so
+  # the update is pushed by the Mergify app itself.
+  #
+  # `merge_conditions` must stay identical to `queue_conditions` (in every
+  # queue), otherwise Mergify treats it as a two-step CI and checks the pull
+  # request on a draft PR rather than in place, which "Require branches to be up
+  # to date before merging" does not allow.
+  - name: fork
+    update_method: rebase
+    branch_protection_injection_mode: merge
+    batch_size: 1
+    queue_conditions:
+      - check-success = ci
+      - from-fork
+    merge_conditions:
+      - check-success = ci
+      - from-fork
+  # Pull requests from branches in this repository, which includes the
+  # bot-created ones (dependabot). "Require branches to be up to date before
+  # merging" is not compatible with update_method=rebase for bot-created pull
+  # requests unless `update_bot_account` is set.
   - name: default
     update_method: rebase
     branch_protection_injection_mode: merge
+    batch_size: 1
     update_bot_account: openebs-ci
-    merge_conditions:
-      - check-success = ci
     queue_conditions:
+      - check-success = ci
+    merge_conditions:
       - check-success = ci
 merge_queue:
   max_parallel_checks: 1
