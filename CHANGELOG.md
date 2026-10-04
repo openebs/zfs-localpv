@@ -1,3 +1,117 @@
+<<<<<<< HEAD
+=======
+v2.12.0 / yyyy-mm-dd
+========================
+
+New Features and Enhancements
+
+ - Pool pattern based volume provisioning
+StorageClasses may now select the ZFS pool with a regular expression, using the
+new `poolpattern` parameter in place of `poolname`, so that a single
+StorageClass can serve nodes whose pools are named differently or a node that
+has more than one pool. Exactly one of `poolname` and `poolpattern` must be set.
+The scheduler picks the pool among the matching pools on the chosen node, and
+the resolved pool is recorded on the volume, so clones and restores stay in the
+pool of their source.
+ - SpaceWeighted scheduler
+Added a third scheduling algorithm, `SpaceWeighted`, which orders nodes by the
+free space left in their pool rather than by what has already been written into
+it. `CapacityWeighted` remains the default.
+
+Behaviour Changes
+
+ - The `CapacityWeighted` scheduler now weighs a node by the pool's real used
+capacity as reported by the node agent, rather than by the summed capacity of
+the volumes this driver provisioned, so it also accounts for data written
+outside the driver. Node ordering may differ from previous releases for existing
+StorageClasses.
+ - A volume that reserves space is now placed only where the reservation fits,
+and provisioning fails immediately with `ResourceExhausted` when no pool has the
+room, or `FailedPrecondition` when no pool matches the StorageClass at all,
+instead of repeatedly attempting a create that cannot succeed. Thin volumes are
+unaffected.
+ - Cloning or restoring outside the pool the StorageClass declares now fails
+with `InvalidArgument` rather than `Internal`. A clone lives in the pool of its
+source and that pool never changes, so the combination cannot become valid.
+ - `CreateZFSVolume`, `CreateVolClone` and `CreateSnapClone` in `pkg/driver`
+return the provisioned `ZFSVolume` rather than the node id. These are exported,
+so the change is source incompatible for anything importing the package; it has
+no effect on the driver as deployed.
+ - Backup and restore pipeline failures now stop the peer
+When either process exits with an error, the driver stops its peer and marks
+the `ZFSBackup` or `ZFSRestore` as `Failed` instead of leaving it in `Init` or
+reporting it as `Done`.
+
+ - PVC and VolumeSnapshot identification properties
+Newly created ZFS datasets receive the ZFS user properties
+`openebs.io:pv-name`, `openebs.io:pvc-name`, and `openebs.io:pvc-namespace` to
+help identify which PersistentVolumeClaim and PersistentVolume they are
+associated with. Similarly, newly created snapshots identify their associated
+VolumeSnapshot and VolumeSnapshotContent with the user properties
+`openebs.io:vs-name`, `openebs.io:vs-namespace` and `openebs.io:vsc-name`.
+
+v2.11.0 / 2026-08-18
+========================
+
+This release of OpenEBS ZFS-LocalPV adds new StorageClass tuning options, improves Helm chart flexibility, fixes image rendering, and expands CI coverage and release automation.
+
+New Features and Enhancements
+
+ - StorageClass atime and logbias support
+Added atime and logbias parameters for controlling ZFS dataset and volume behavior.
+by @firecow in PR 723 (https://github.com/openebs/zfs-localpv/pull/723)
+ - Helm analytics global overrides
+Added global override support for gaid and gakey, consistent with other OpenEBS local engine charts.
+by @krishnaGajabi in PR 722 (https://github.com/openebs/zfs-localpv/pull/722)
+ - Optional snapshot controller
+Added a Helm option to disable the bundled snapshot controller when one is already managed at the cluster level.
+by @aclerici38 in PR 742 (https://github.com/openebs/zfs-localpv/pull/742)
+
+Bug Fixes and Improvements
+
+ - Image URL rendering fix
+Quoted image URLs in rendered manifests to support registries containing YAML-special characters.
+by @krishnaGajabi in PR 724 (https://github.com/openebs/zfs-localpv/pull/724)
+ - CSI driver and chart releaser fixes
+Corrected the CSI driver Dockerfile location and chart releaser version.
+by @Abhinandan-Purkait in PR 718 (https://github.com/openebs/zfs-localpv/pull/718)
+
+Testing and Continuous Integration
+
+ - Expanded volume test coverage
+Added CI tests for cloning volumes and provisioning shared volumes.
+by @krishnaGajabi in PR 729 (https://github.com/openebs/zfs-localpv/pull/729), PR 732 (https://github.com/openebs/zfs-localpv/pull/732)
+ - Pool-pattern provisioning coverage
+Added a BDD specification for pool-pattern-based volume provisioning.
+by @krishnaGajabi in PR 738 (https://github.com/openebs/zfs-localpv/pull/738)
+ - Nightly CI
+Enabled nightly CI runs to improve continuous validation.
+by @tiagolobocastro in PR 744 (https://github.com/openebs/zfs-localpv/pull/744)
+
+Build and Maintenance
+
+ - Go toolchain and dependency updates
+Updated the Go toolchain and refreshed project dependencies.
+by @Abhinandan-Purkait in PR 709 (https://github.com/openebs/zfs-localpv/pull/709)
+ - Container base image update
+Updated the Dockerfile base image to version 3.23.5.
+by @Abhinandan-Purkait in PR 745 (https://github.com/openebs/zfs-localpv/pull/745)
+ - Security and GitHub Actions updates
+Updated GitHub Actions dependencies and security-sensitive Go dependencies, including golang.org/x/net and google.golang.org/grpc.
+by @dependabot[bot] in PR 731 (https://github.com/openebs/zfs-localpv/pull/731), PR 733 (https://github.com/openebs/zfs-localpv/pull/733), PR 737 (https://github.com/openebs/zfs-localpv/pull/737), PR 741 (https://github.com/openebs/zfs-localpv/pull/741), PR 747 (https://github.com/openebs/zfs-localpv/pull/747)
+ - Dependabot configuration synchronization
+Synchronized the repository's Dependabot configuration.
+by @openebs-ci in PR 730 (https://github.com/openebs/zfs-localpv/pull/730), PR 746 (https://github.com/openebs/zfs-localpv/pull/746)
+ - Documentation and release preparation
+Updated the changelog and prepared the development and release branches for v2.11.
+by @Abhinandan-Purkait in PR 721 (https://github.com/openebs/zfs-localpv/pull/721), by @github-actions[bot] in PR 711 (https://github.com/openebs/zfs-localpv/pull/711), PR 748 (https://github.com/openebs/zfs-localpv/pull/748)
+
+New Contributors
+
+ - @firecow made their first contribution in PR 723 (https://github.com/openebs/zfs-localpv/pull/723)
+ - @aclerici38 made their first contribution in PR 742 (https://github.com/openebs/zfs-localpv/pull/742)
+
+>>>>>>> 0aa82c9 (fix(backup): report and stop the backup pipeline when either side fails)
 v2.10.0 / 2026-05-19
 ========================
 
