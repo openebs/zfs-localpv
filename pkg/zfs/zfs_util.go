@@ -19,6 +19,7 @@ package zfs
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -79,17 +80,21 @@ func runCmd(cmd *exec.Cmd, dataset string) ([]byte, error) {
 	return out, err
 }
 
-// runPipe wires src's stdout to dst's stdin via an in-process pipe. Success is
-// decided by dst alone; an src failure is logged but does not fail the
-// pipeline. Returned bytes are src's stderr followed by dst's stdout+stderr.
+// runPipe connects src stdout to dst stdin. Both children must succeed.
+// Returned bytes are src stderr followed by dst stdout and stderr.
 func runPipe(src, dst *exec.Cmd, dataset string) ([]byte, error) {
 	klog.V(4).Infof("zfs: executing %v | %v on %q", src.Args, dst.Args, dataset)
 
-	pipe, err := src.StdoutPipe()
+	reader, writer, err := os.Pipe()
 	if err != nil {
 		return nil, err
 	}
-	dst.Stdin = pipe
+	// The parent owns both ends. A retained writer prevents EOF at dst, and
+	// a retained reader prevents EPIPE when dst exits before src finishes.
+	defer reader.Close()
+	defer writer.Close()
+	src.Stdout = writer
+	dst.Stdin = reader
 
 	// Separate buffers: os/exec only serializes concurrent writes when Stdout
 	// and Stderr of the same Cmd are the identical writer.
@@ -99,30 +104,48 @@ func runPipe(src, dst *exec.Cmd, dataset string) ([]byte, error) {
 	dst.Stderr = &dstOut
 
 	if err := src.Start(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("zfs: pipe source start %v: %w", src.Args, err)
 	}
+	_ = writer.Close()
 	if err := dst.Start(); err != nil {
 		// Nothing will read src's stdout now; kill it so it can't block on a
 		// full pipe buffer forever.
+		_ = reader.Close()
 		_ = src.Process.Kill()
 		_ = src.Wait()
-		return srcErr.Bytes(), err
+		return srcErr.Bytes(), fmt.Errorf("zfs: pipe destination start %v: %w", dst.Args, err)
+	}
+	_ = reader.Close()
+
+	// Observe both children independently: on failure cancel the peer even if
+	// it is idle rather than blocked on pipe IO. A successful source exit must
+	// not interrupt the destination's draining/finalization.
+	type exitResult struct {
+		side      string
+		cmd, peer *exec.Cmd
+		err       error
+	}
+	exits := make(chan exitResult, 2)
+	go func() { exits <- exitResult{"source", src, dst, src.Wait()} }()
+	go func() { exits <- exitResult{"destination", dst, src, dst.Wait()} }()
+
+	var waitErrors []error
+	for range 2 {
+		exit := <-exits
+		if exit.err != nil {
+			_ = exit.peer.Process.Kill()
+			// Keep failures in observation order, ahead of peer cancellation.
+			waitErrors = append(waitErrors, fmt.Errorf("zfs: pipe %s %v: %w", exit.side, exit.cmd.Args, exit.err))
+		}
 	}
 
-	// Wait src first so its stdout closes (EOF to dst), then wait dst.
-	srcWaitErr := src.Wait()
-	dstWaitErr := dst.Wait()
-
-	// Both Waits returned, so copying goroutines are done; buffers are race-free.
+	// All os/exec copying goroutines have completed before buffers are read.
 	out := append(srcErr.Bytes(), dstOut.Bytes()...)
-
-	if srcWaitErr != nil {
-		klog.V(5).Infof("zfs: pipe src %v on %q exited with error: %v", src.Args, dataset, srcWaitErr)
+	err = errors.Join(waitErrors...)
+	if err != nil {
+		klog.V(5).Infof("zfs: pipe %v | %v on %q error: %v; output: %s", src.Args, dst.Args, dataset, err, strings.TrimSpace(string(out)))
 	}
-	if dstWaitErr != nil {
-		klog.V(5).Infof("zfs: pipe %v | %v on %q output: %s", src.Args, dst.Args, dataset, strings.TrimSpace(string(out)))
-	}
-	return out, dstWaitErr
+	return out, err
 }
 
 // PropertyChanged return whether volume property is changed
