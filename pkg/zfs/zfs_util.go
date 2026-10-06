@@ -57,6 +57,7 @@ const (
 	ZFSSnapshotArg = "snapshot"
 	ZFSSendArg     = "send"
 	ZFSRecvArg     = "recv"
+	ZFSPromoteArg  = "promote"
 )
 
 // constants to define volume type
