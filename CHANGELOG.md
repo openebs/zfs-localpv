@@ -35,6 +35,10 @@ source and that pool never changes, so the combination cannot become valid.
 return the provisioned `ZFSVolume` rather than the node id. These are exported,
 so the change is source incompatible for anything importing the package; it has
 no effect on the driver as deployed.
+ - Backup and restore pipeline failures now stop the peer
+When either process exits with an error, the driver stops its peer and marks
+the `ZFSBackup` or `ZFSRestore` as `Failed` instead of leaving it in `Init` or
+reporting it as `Done`.
 
  - PVC and VolumeSnapshot identification properties
 Newly created ZFS datasets receive the ZFS user properties
