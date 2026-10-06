@@ -1,3 +1,121 @@
+v2.11.2 / 2026-10-06
+========================
+
+This patch release of OpenEBS ZFS-LocalPV fixes backup and restore pipelines so failures are reported promptly and do not leave peer processes running.
+
+Bug Fixes and Improvements
+
+ - Backup and restore pipeline failure handling
+When either process in a backup or restore pipeline exits with an error, the driver now stops its peer and marks the `ZFSBackup` or `ZFSRestore` as `Failed` instead of leaving it in `Init` or reporting it as `Done`.
+by @linkvt in PR 777 (https://github.com/openebs/zfs-localpv/pull/777)
+
+Full Changelog: v2.11.1...v2.11.2 (https://github.com/openebs/zfs-localpv/compare/v2.11.1...v2.11.2)
+
+v2.11.1 / 2026-09-04
+========================
+
+This patch release of OpenEBS ZFS-LocalPV adds a formatOptions StorageClass parameter for controlling how filesystem-backed volumes are formatted, moves the Go module to a /v2 import path, and fixes CI setup issues.
+
+New Features and Enhancements
+
+ - StorageClass formatOptions and node agent defaults
+Added a formatOptions StorageClass parameter carrying the extra mkfs options used when a volume is formatted on first use, and a --default-format-options node agent flag (zfsNode.defaultFormatOptions in the helm chart) holding per-filesystem defaults applied when a StorageClass sets none. A StorageClass value replaces the default of its filesystem, the two are not merged. The parameter is ignored when fstype is "zfs", where nothing is formatted.
+by @Abhinandan-Purkait in PR 760 (https://github.com/openebs/zfs-localpv/pull/760)
+
+Upgrade Notes
+
+ - Note for users on older kernels
+mkfs.xfs 6.5 and above enable the nrext64 feature by default, and only kernel 5.19 and above can mount a filesystem that has it. On a cluster where any node runs an older kernel, XFS volumes formatted by a newer mkfs.xfs will fail to mount on those nodes. Set the XFS default on the node agent so such volumes are formatted without the feature:
+
+    zfsNode:
+      defaultFormatOptions:
+        xfs: "-i nrext64=0"
+
+The same can be set per StorageClass with formatOptions: "-i nrext64=0", which replaces the node default for volumes of that class. The equivalent applies to any other mkfs feature a newer e2fsprogs or xfsprogs turns on that the running kernel cannot mount, for example formatOptions: "-m 0 -O ^orphan_file" for ext4. The chart ships no defaults, so clusters on kernel 5.19 and above need no change.
+
+ - Go module path is now /v2
+The module path changed from github.com/openebs/zfs-localpv to github.com/openebs/zfs-localpv/v2 to satisfy semantic import versioning. This affects only projects that import this repository as a Go library; update your import paths and go.mod requirement accordingly. It does not affect the driver, the helm chart, or existing volumes.
+by @Abhinandan-Purkait in PR 756 (https://github.com/openebs/zfs-localpv/pull/756)
+
+Testing and Continuous Integration
+
+ - formatOptions coverage
+Extended the BDD suite to provision a volume that takes the node agent's ext4 default and one whose StorageClass replaces that default.
+by @Abhinandan-Purkait in PR 760 (https://github.com/openebs/zfs-localpv/pull/760)
+ - Nix setup action fix
+Removed the hard-coded HOME override from the Nix setup action, which broke on runners whose user does not match the hard-coded path.
+by @rohan2794 in PR 754 (https://github.com/openebs/zfs-localpv/pull/754)
+ - Package installation fix
+Added apt-get update before apt-get install in CI.
+by @niladrih in PR 764 (https://github.com/openebs/zfs-localpv/pull/764)
+
+New Contributors
+
+ - @rohan2794 made their first contribution in PR 754 (https://github.com/openebs/zfs-localpv/pull/754)
+
+Full Changelog: v2.11.0...v2.11.1 (https://github.com/openebs/zfs-localpv/compare/v2.11.0...v2.11.1)
+
+v2.11.0 / 2026-08-18
+========================
+
+This release of OpenEBS ZFS-LocalPV adds new StorageClass tuning options, improves Helm chart flexibility, fixes image rendering, and expands CI coverage and release automation.
+
+New Features and Enhancements
+
+ - StorageClass atime and logbias support
+Added atime and logbias parameters for controlling ZFS dataset and volume behavior.
+by @firecow in PR 723 (https://github.com/openebs/zfs-localpv/pull/723)
+ - Helm analytics global overrides
+Added global override support for gaid and gakey, consistent with other OpenEBS local engine charts.
+by @krishnaGajabi in PR 722 (https://github.com/openebs/zfs-localpv/pull/722)
+ - Optional snapshot controller
+Added a Helm option to disable the bundled snapshot controller when one is already managed at the cluster level.
+by @aclerici38 in PR 742 (https://github.com/openebs/zfs-localpv/pull/742)
+
+Bug Fixes and Improvements
+
+ - Image URL rendering fix
+Quoted image URLs in rendered manifests to support registries containing YAML-special characters.
+by @krishnaGajabi in PR 724 (https://github.com/openebs/zfs-localpv/pull/724)
+ - CSI driver and chart releaser fixes
+Corrected the CSI driver Dockerfile location and chart releaser version.
+by @Abhinandan-Purkait in PR 718 (https://github.com/openebs/zfs-localpv/pull/718)
+
+Testing and Continuous Integration
+
+ - Expanded volume test coverage
+Added CI tests for cloning volumes and provisioning shared volumes.
+by @krishnaGajabi in PR 729 (https://github.com/openebs/zfs-localpv/pull/729), PR 732 (https://github.com/openebs/zfs-localpv/pull/732)
+ - Pool-pattern provisioning coverage
+Added a BDD specification for pool-pattern-based volume provisioning.
+by @krishnaGajabi in PR 738 (https://github.com/openebs/zfs-localpv/pull/738)
+ - Nightly CI
+Enabled nightly CI runs to improve continuous validation.
+by @tiagolobocastro in PR 744 (https://github.com/openebs/zfs-localpv/pull/744)
+
+Build and Maintenance
+
+ - Go toolchain and dependency updates
+Updated the Go toolchain and refreshed project dependencies.
+by @Abhinandan-Purkait in PR 709 (https://github.com/openebs/zfs-localpv/pull/709)
+ - Container base image update
+Updated the Dockerfile base image to version 3.23.5.
+by @Abhinandan-Purkait in PR 745 (https://github.com/openebs/zfs-localpv/pull/745)
+ - Security and GitHub Actions updates
+Updated GitHub Actions dependencies and security-sensitive Go dependencies, including golang.org/x/net and google.golang.org/grpc.
+by @dependabot[bot] in PR 731 (https://github.com/openebs/zfs-localpv/pull/731), PR 733 (https://github.com/openebs/zfs-localpv/pull/733), PR 737 (https://github.com/openebs/zfs-localpv/pull/737), PR 741 (https://github.com/openebs/zfs-localpv/pull/741), PR 747 (https://github.com/openebs/zfs-localpv/pull/747)
+ - Dependabot configuration synchronization
+Synchronized the repository's Dependabot configuration.
+by @openebs-ci in PR 730 (https://github.com/openebs/zfs-localpv/pull/730), PR 746 (https://github.com/openebs/zfs-localpv/pull/746)
+ - Documentation and release preparation
+Updated the changelog and prepared the development and release branches for v2.11.
+by @Abhinandan-Purkait in PR 721 (https://github.com/openebs/zfs-localpv/pull/721), by @github-actions[bot] in PR 711 (https://github.com/openebs/zfs-localpv/pull/711), PR 748 (https://github.com/openebs/zfs-localpv/pull/748)
+
+New Contributors
+
+ - @firecow made their first contribution in PR 723 (https://github.com/openebs/zfs-localpv/pull/723)
+ - @aclerici38 made their first contribution in PR 742 (https://github.com/openebs/zfs-localpv/pull/742)
+
 v2.10.0 / 2026-05-19
 ========================
 
