@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	zfsapi "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	"github.com/openebs/zfs-localpv/v2/pkg/builder/volbuilder"
 	"github.com/openebs/zfs-localpv/v2/pkg/zfs"
 )
 
@@ -190,6 +191,26 @@ func writeStatus(w http.ResponseWriter, err *k8serror.StatusError) {
 	_ = json.NewEncoder(w).Encode(status)
 }
 
+func testVolume(name string, markedForDeletion bool) *zfsapi.ZFSVolume {
+	vol := &zfsapi.ZFSVolume{
+		TypeMeta: metav1.TypeMeta{APIVersion: "zfs.openebs.io/v1", Kind: "ZFSVolume"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: testNamespace,
+		},
+		Spec: zfsapi.VolumeInfo{
+			PoolName:    testPool,
+			Capacity:    testCapacity,
+			OwnerNodeID: "node-1",
+		},
+		Status: zfsapi.VolStatus{State: zfs.ZFSStatusReady},
+	}
+	if markedForDeletion {
+		vol.Annotations = map[string]string{volbuilder.MarkForDeletionAnnotation: "true"}
+	}
+	return vol
+}
+
 // testSnapshot returns a ZFSSnapshot labelled with volume, or unlabelled if
 // volume is empty
 func testSnapshot(name, volume string) *zfsapi.ZFSSnapshot {
@@ -240,6 +261,65 @@ func TestCreateSnapCloneUsesSnapshotLabel(t *testing.T) {
 			api.get(t, "zfsvolumes", "pvc-clone", &vol)
 			if vol.Spec.SnapName != test.wantSnap {
 				t.Fatalf("clone source: want %s, got %s", test.wantSnap, vol.Spec.SnapName)
+			}
+		})
+	}
+}
+
+func TestDeleteSnapshotUsesSnapshotLabel(t *testing.T) {
+	tests := map[string]struct {
+		volumes     []*zfsapi.ZFSVolume
+		snapshots   []*zfsapi.ZFSSnapshot
+		wantVolumes []string
+		goneVolumes []string
+	}{
+		// the handle's volume pvc-a, a clone of pvc-b since the promote,
+		// is already deleted, and pvc-b holds another snapshot
+		"promoted, handle volume gone": {
+			volumes:     []*zfsapi.ZFSVolume{testVolume("pvc-b", false)},
+			snapshots:   []*zfsapi.ZFSSnapshot{testSnapshot("snapshot-1", "pvc-b"), testSnapshot("snapshot-2", "pvc-b")},
+			wantVolumes: []string{"pvc-b"},
+		},
+		// the last snapshot of a deleted volume takes the volume with it;
+		// the handle's volume is left alone
+		"promoted, last snapshot of a deleted volume": {
+			volumes:     []*zfsapi.ZFSVolume{testVolume("pvc-a", true), testVolume("pvc-b", true)},
+			snapshots:   []*zfsapi.ZFSSnapshot{testSnapshot("snapshot-1", "pvc-b"), testSnapshot("snapshot-2", "pvc-a")},
+			wantVolumes: []string{"pvc-a"},
+			goneVolumes: []string{"pvc-b"},
+		},
+		"labelled volume gone": {
+			snapshots: []*zfsapi.ZFSSnapshot{testSnapshot("snapshot-1", "pvc-b")},
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			api := newFakeAPIServer(t)
+			for _, vol := range test.volumes {
+				api.add(t, "zfsvolumes", vol)
+			}
+			for _, snap := range test.snapshots {
+				api.add(t, "zfssnapshots", snap)
+			}
+
+			cs := &controller{volumeLock: newVolumeLock()}
+			req := &csi.DeleteSnapshotRequest{SnapshotId: "pvc-a@snapshot-1"}
+			if _, err := cs.DeleteSnapshot(context.Background(), req); err != nil {
+				t.Fatal(err)
+			}
+
+			if api.has("zfssnapshots", "snapshot-1") {
+				t.Error("ZFSSnapshot snapshot-1 not deleted")
+			}
+			for _, name := range test.wantVolumes {
+				if !api.has("zfsvolumes", name) {
+					t.Errorf("ZFSVolume %s deleted", name)
+				}
+			}
+			for _, name := range test.goneVolumes {
+				if api.has("zfsvolumes", name) {
+					t.Errorf("ZFSVolume %s not deleted", name)
+				}
 			}
 		})
 	}

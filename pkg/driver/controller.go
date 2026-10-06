@@ -1015,8 +1015,13 @@ func (cs *controller) DeleteSnapshot(
 		// should succeed when an invalid snapshot id is used
 		return &csi.DeleteSnapshotResponse{}, nil
 	}
+	// resolve the snapshot's volume before locking, so the lock covers the
+	// volume whose snapshots are counted below
 	volumeID := snapshotID[0]
-	unlock := cs.volumeLock.LockVolumeWithSnapshot(snapshotID[0], snapshotID[1])
+	if snap, err := zfs.GetZFSSnapshot(snapshotID[1]); err == nil {
+		volumeID = snapshotVolume(snap, volumeID)
+	}
+	unlock := cs.volumeLock.LockVolumeWithSnapshot(volumeID, snapshotID[1])
 	defer unlock()
 
 	// verify if the snapshot has already been deleted
