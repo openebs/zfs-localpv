@@ -14,6 +14,7 @@ type ZfsV1Interface interface {
 	RESTClient() rest.Interface
 	ZFSBackupsGetter
 	ZFSNodesGetter
+	ZFSPromotesGetter
 	ZFSRestoresGetter
 	ZFSSnapshotsGetter
 	ZFSVolumesGetter
@@ -30,6 +31,10 @@ func (c *ZfsV1Client) ZFSBackups(namespace string) ZFSBackupInterface {
 
 func (c *ZfsV1Client) ZFSNodes(namespace string) ZFSNodeInterface {
 	return newZFSNodes(c, namespace)
+}
+
+func (c *ZfsV1Client) ZFSPromotes(namespace string) ZFSPromoteInterface {
+	return newZFSPromotes(c, namespace)
 }
 
 func (c *ZfsV1Client) ZFSRestores(namespace string) ZFSRestoreInterface {

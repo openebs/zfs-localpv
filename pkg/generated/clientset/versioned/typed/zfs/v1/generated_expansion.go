@@ -6,6 +6,8 @@ type ZFSBackupExpansion interface{}
 
 type ZFSNodeExpansion interface{}
 
+type ZFSPromoteExpansion interface{}
+
 type ZFSRestoreExpansion interface{}
 
 type ZFSSnapshotExpansion interface{}
