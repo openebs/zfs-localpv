@@ -506,6 +506,18 @@ func CreateVolClone(ctx context.Context, req *csi.CreateVolumeRequest, srcVol st
 	return volObj, nil
 }
 
+// snapshotVolume returns the volume a snapshot belongs to: the one its
+// ZFSSnapshot is labelled with. A zfs promote moves the snapshot to the
+// promoted clone, while the CSI snapshot handle (<volume>@<snapshot>) keeps
+// naming the volume it was taken from. The handle's volume is the fallback
+// for a ZFSSnapshot without the label.
+func snapshotVolume(snap *zfsapi.ZFSSnapshot, handleVolume string) string {
+	if volume := snap.Labels[zfs.ZFSVolKey]; volume != "" {
+		return volume
+	}
+	return handleVolume
+}
+
 // CreateSnapClone creates the clone from a snapshot
 func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot string) (*zfsapi.ZFSVolume, error) {
 	volName := strings.ToLower(req.GetName())
@@ -568,7 +580,7 @@ func CreateSnapClone(ctx context.Context, req *csi.CreateVolumeRequest, snapshot
 	userProps := volObj.Spec.UserProperties
 	volObj.Spec = snap.Spec
 	volObj.Spec.UserProperties = userProps
-	volObj.Spec.SnapName = strings.ToLower(snapshot)
+	volObj.Spec.SnapName = strings.ToLower(snapshotVolume(snap, snapshotID[0]) + "@" + snapshotID[1])
 
 	_, err = zfs.ProvisionVolume(ctx, volObj)
 	if err != nil {
