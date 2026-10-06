@@ -1,54 +1,59 @@
-<<<<<<< HEAD
-=======
-v2.12.0 / yyyy-mm-dd
+v2.11.2 / 2026-10-06
 ========================
+
+This patch release of OpenEBS ZFS-LocalPV fixes backup and restore pipelines so failures are reported promptly and do not leave peer processes running.
+
+Bug Fixes and Improvements
+
+ - Backup and restore pipeline failure handling
+When either process in a backup or restore pipeline exits with an error, the driver now stops its peer and marks the `ZFSBackup` or `ZFSRestore` as `Failed` instead of leaving it in `Init` or reporting it as `Done`.
+by @linkvt in PR 777 (https://github.com/openebs/zfs-localpv/pull/777)
+
+Full Changelog: v2.11.1...v2.11.2 (https://github.com/openebs/zfs-localpv/compare/v2.11.1...v2.11.2)
+
+v2.11.1 / 2026-09-04
+========================
+
+This patch release of OpenEBS ZFS-LocalPV adds a formatOptions StorageClass parameter for controlling how filesystem-backed volumes are formatted, moves the Go module to a /v2 import path, and fixes CI setup issues.
 
 New Features and Enhancements
 
- - Pool pattern based volume provisioning
-StorageClasses may now select the ZFS pool with a regular expression, using the
-new `poolpattern` parameter in place of `poolname`, so that a single
-StorageClass can serve nodes whose pools are named differently or a node that
-has more than one pool. Exactly one of `poolname` and `poolpattern` must be set.
-The scheduler picks the pool among the matching pools on the chosen node, and
-the resolved pool is recorded on the volume, so clones and restores stay in the
-pool of their source.
- - SpaceWeighted scheduler
-Added a third scheduling algorithm, `SpaceWeighted`, which orders nodes by the
-free space left in their pool rather than by what has already been written into
-it. `CapacityWeighted` remains the default.
+ - StorageClass formatOptions and node agent defaults
+Added a formatOptions StorageClass parameter carrying the extra mkfs options used when a volume is formatted on first use, and a --default-format-options node agent flag (zfsNode.defaultFormatOptions in the helm chart) holding per-filesystem defaults applied when a StorageClass sets none. A StorageClass value replaces the default of its filesystem, the two are not merged. The parameter is ignored when fstype is "zfs", where nothing is formatted.
+by @Abhinandan-Purkait in PR 760 (https://github.com/openebs/zfs-localpv/pull/760)
 
-Behaviour Changes
+Upgrade Notes
 
- - The `CapacityWeighted` scheduler now weighs a node by the pool's real used
-capacity as reported by the node agent, rather than by the summed capacity of
-the volumes this driver provisioned, so it also accounts for data written
-outside the driver. Node ordering may differ from previous releases for existing
-StorageClasses.
- - A volume that reserves space is now placed only where the reservation fits,
-and provisioning fails immediately with `ResourceExhausted` when no pool has the
-room, or `FailedPrecondition` when no pool matches the StorageClass at all,
-instead of repeatedly attempting a create that cannot succeed. Thin volumes are
-unaffected.
- - Cloning or restoring outside the pool the StorageClass declares now fails
-with `InvalidArgument` rather than `Internal`. A clone lives in the pool of its
-source and that pool never changes, so the combination cannot become valid.
- - `CreateZFSVolume`, `CreateVolClone` and `CreateSnapClone` in `pkg/driver`
-return the provisioned `ZFSVolume` rather than the node id. These are exported,
-so the change is source incompatible for anything importing the package; it has
-no effect on the driver as deployed.
- - Backup and restore pipeline failures now stop the peer
-When either process exits with an error, the driver stops its peer and marks
-the `ZFSBackup` or `ZFSRestore` as `Failed` instead of leaving it in `Init` or
-reporting it as `Done`.
+ - Note for users on older kernels
+mkfs.xfs 6.5 and above enable the nrext64 feature by default, and only kernel 5.19 and above can mount a filesystem that has it. On a cluster where any node runs an older kernel, XFS volumes formatted by a newer mkfs.xfs will fail to mount on those nodes. Set the XFS default on the node agent so such volumes are formatted without the feature:
 
- - PVC and VolumeSnapshot identification properties
-Newly created ZFS datasets receive the ZFS user properties
-`openebs.io:pv-name`, `openebs.io:pvc-name`, and `openebs.io:pvc-namespace` to
-help identify which PersistentVolumeClaim and PersistentVolume they are
-associated with. Similarly, newly created snapshots identify their associated
-VolumeSnapshot and VolumeSnapshotContent with the user properties
-`openebs.io:vs-name`, `openebs.io:vs-namespace` and `openebs.io:vsc-name`.
+    zfsNode:
+      defaultFormatOptions:
+        xfs: "-i nrext64=0"
+
+The same can be set per StorageClass with formatOptions: "-i nrext64=0", which replaces the node default for volumes of that class. The equivalent applies to any other mkfs feature a newer e2fsprogs or xfsprogs turns on that the running kernel cannot mount, for example formatOptions: "-m 0 -O ^orphan_file" for ext4. The chart ships no defaults, so clusters on kernel 5.19 and above need no change.
+
+ - Go module path is now /v2
+The module path changed from github.com/openebs/zfs-localpv to github.com/openebs/zfs-localpv/v2 to satisfy semantic import versioning. This affects only projects that import this repository as a Go library; update your import paths and go.mod requirement accordingly. It does not affect the driver, the helm chart, or existing volumes.
+by @Abhinandan-Purkait in PR 756 (https://github.com/openebs/zfs-localpv/pull/756)
+
+Testing and Continuous Integration
+
+ - formatOptions coverage
+Extended the BDD suite to provision a volume that takes the node agent's ext4 default and one whose StorageClass replaces that default.
+by @Abhinandan-Purkait in PR 760 (https://github.com/openebs/zfs-localpv/pull/760)
+ - Nix setup action fix
+Removed the hard-coded HOME override from the Nix setup action, which broke on runners whose user does not match the hard-coded path.
+by @rohan2794 in PR 754 (https://github.com/openebs/zfs-localpv/pull/754)
+ - Package installation fix
+Added apt-get update before apt-get install in CI.
+by @niladrih in PR 764 (https://github.com/openebs/zfs-localpv/pull/764)
+
+New Contributors
+
+ - @rohan2794 made their first contribution in PR 754 (https://github.com/openebs/zfs-localpv/pull/754)
+
+Full Changelog: v2.11.0...v2.11.1 (https://github.com/openebs/zfs-localpv/compare/v2.11.0...v2.11.1)
 
 v2.11.0 / 2026-08-18
 ========================
@@ -111,7 +116,6 @@ New Contributors
  - @firecow made their first contribution in PR 723 (https://github.com/openebs/zfs-localpv/pull/723)
  - @aclerici38 made their first contribution in PR 742 (https://github.com/openebs/zfs-localpv/pull/742)
 
->>>>>>> 0aa82c9 (fix(backup): report and stop the backup pipeline when either side fails)
 v2.10.0 / 2026-05-19
 ========================
 
