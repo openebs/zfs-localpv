@@ -46,7 +46,7 @@ spec:
         - name: {{ .Values.zfsController.resizer.name }}
           image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.resizer.image "global" .Values.global) | quote }}
           args:
-            - "--v=5"
+            - "--v={{ include "zfslocalpv.common.logLevel" (dict "component" .Values.zfsController.resizer "commonLevel" .Values.logLevel "defaultLevel" 5) }}"
             - "--csi-address=$(ADDRESS)"
             {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
           {{- range .Values.zfsController.resizer.extraArgs }}
@@ -65,6 +65,9 @@ spec:
           image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.snapshotter.image "global" .Values.global) | quote }}
           imagePullPolicy: {{ default .Values.zfsController.snapshotter.image.pullPolicy .Values.global.imagePullPolicy }}
           args:
+            {{- with include "zfslocalpv.common.logLevel" (dict "component" .Values.zfsController.snapshotter "commonLevel" .Values.logLevel) }}
+            - "--v={{ . }}"
+            {{- end }}
             - "--csi-address=$(ADDRESS)"
             - "--extra-create-metadata=true"
             {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
@@ -83,7 +86,7 @@ spec:
         - name: {{ .Values.zfsController.snapshotController.name }}
           image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.snapshotController.image "global" .Values.global) | quote }}
           args:
-            - "--v=5"
+            - "--v={{ include "zfslocalpv.common.logLevel" (dict "component" .Values.zfsController.snapshotController "commonLevel" .Values.logLevel "defaultLevel" 5) }}"
             {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
           {{- range .Values.zfsController.snapshotController.extraArgs }}
             - {{ tpl . $ | quote }}
@@ -97,7 +100,7 @@ spec:
           imagePullPolicy: {{ default .Values.zfsController.provisioner.image.pullPolicy .Values.global.imagePullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
-            - "--v=5"
+            - "--v={{ include "zfslocalpv.common.logLevel" (dict "component" .Values.zfsController.provisioner "commonLevel" .Values.logLevel "defaultLevel" 5) }}"
             - "--feature-gates=Topology=true"
             - "--strict-topology"
             - "--enable-capacity={{ .Values.feature.storageCapacity }}"
@@ -160,6 +163,9 @@ spec:
             - name: OPENEBS_IO_ENABLE_BACKUP_GC
               value: "{{ .Values.backupGC.enabled }}"
           args :
+            {{- with include "zfslocalpv.common.logLevel" (dict "component" .Values.zfsController "commonLevel" .Values.logLevel) }}
+            - "--v={{ . }}"
+            {{- end }}
             - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
             - "--plugin=$(OPENEBS_CONTROLLER_DRIVER)"
           volumeMounts:

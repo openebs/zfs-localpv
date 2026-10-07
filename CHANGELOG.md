@@ -3,6 +3,12 @@ v2.12.0 / yyyy-mm-dd
 
 New Features and Enhancements
 
+ - Configurable container log verbosity
+The Helm chart now accepts a common `logLevel` for the ZFS controller, node
+plugin and all CSI sidecars, with optional per-component overrides.
+Unset levels preserve existing defaults; explicit `0` is supported.
+The ZFS driver now registers its klog flags so `--v` can control verbosity.
+
  - Pool pattern based volume provisioning
 StorageClasses may now select the ZFS pool with a regular expression, using the
 new `poolpattern` parameter in place of `poolname`, so that a single

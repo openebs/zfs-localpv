@@ -81,6 +81,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `feature.storageCapacity`                                             | bool   | `true`                      | Enables or disables storage capacity tracking feature.                                                |
 | `imagePullSecrets`                                                    | list   | `[]`                        | List of secrets to use when pulling images from private registries.                                    |
 | `loggingLabels."openebs.io/logging"`                                  | string | `"true"`                    | Enables or disables logging for OpenEBS components.                                                   |
+| `logLevel`                                                           | int/null | `null`                    | Common klog verbosity (`--v`) for ZFS controller/node and all CSI sidecars. Unset preserves existing defaults; individual levels, including `0`, take precedence. |
 | `rbac.pspEnabled`                                                     | bool   | `false`                     | Enables or disables the creation of PodSecurityPolicy resources.                                       |
 | `role`                                                                | string | `"openebs-zfs"`             | Specifies the role for the OpenEBS ZFS component.                                                     |
 | `serviceAccount.zfsController.create`                                 | bool   | `true`                      | Specifies whether a service account should be created for the ZFS controller.                          |
@@ -92,6 +93,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.annotations`                                           | map    | `{}`                        | Annotations to add to the ZFS controller pods.                                                         |
 | `zfsController.componentName`                                         | string | `"openebs-zfs-controller"`  | Name of the ZFS controller component.                                                                  |
 | `zfsController.initContainers`                                        | list   | `[]`                        | List of init containers to run before the ZFS controller pods.                                         |
+| `zfsController.logLevel`                                              | int/null | `null`                    | ZFS controller plugin verbosity; inherits `logLevel`, otherwise the binary default (`0`). |
 | `zfsController.nodeSelector`                                          | map    | `{}`                        | Node selector for scheduling ZFS controller pods.                                                      |
 | `zfsController.podAnnotations`                                        | map    | `{}`                        | Annotations to add to the ZFS controller pods.                                                         |
 | `zfsController.podLabels.name`                                        | string | `"openebs-zfs-controller"`  | Labels to add to the ZFS controller pods.                                                              |
@@ -102,6 +104,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.provisioner.image.registry`                            | string | `"registry.k8s.io/"`        | Image registry for the CSI provisioner.                                                                |
 | `zfsController.provisioner.image.repository`                          | string | `"sig-storage/csi-provisioner"` | Image repository for the CSI provisioner.                                                              |
 | `zfsController.provisioner.image.tag`                                 | string | `"v5.2.0"`                  | Image tag for the CSI provisioner.                                                                      |
+| `zfsController.provisioner.logLevel`                                  | int/null | `null`                    | CSI provisioner verbosity; inherits `logLevel`, otherwise `5`. |
 | `zfsController.provisioner.name`                                      | string | `"csi-provisioner"`         | Name of the CSI provisioner container.                                                                 |
 | `zfsController.replicas`                                              | int    | `1`                         | Number of replicas for the ZFS controller deployment.                                                  |
 | `zfsController.resizer.extraArgs`                                     | list   | `[]`                        | Additional arguments to pass to the CSI resizer.                                                       |
@@ -109,6 +112,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.resizer.image.registry`                                | string | `"registry.k8s.io/"`        | Image registry for the CSI resizer.                                                                    |
 | `zfsController.resizer.image.repository`                              | string | `"sig-storage/csi-resizer"` | Image repository for the CSI resizer.                                                                  |
 | `zfsController.resizer.image.tag`                                     | string | `"v1.13.2"`                 | Image tag for the CSI resizer.                                                                          |
+| `zfsController.resizer.logLevel`                                      | int/null | `null`                    | CSI resizer verbosity; inherits `logLevel`, otherwise `5`. |
 | `zfsController.resizer.name`                                          | string | `"csi-resizer"`             | Name of the CSI resizer container.                                                                     |
 | `zfsController.resources`                                             | map    | `{}`                        | Resource requests and limits for the ZFS controller pods.                                               |
 | `zfsController.securityContext`                                       | map    | `{}`                        | Security context for the ZFS controller pods.                                                          |
@@ -118,7 +122,11 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.snapshotController.image.registry`                     | string | `"registry.k8s.io/"`        | Image registry for the snapshot controller.                                                             |
 | `zfsController.snapshotController.image.repository`                   | string | `"sig-storage/snapshot-controller"` | Image repository for the snapshot controller.                                                           |
 | `zfsController.snapshotController.image.tag`                          | string | `"v8.2.0"`                  | Image tag for the snapshot controller. 
+| `zfsController.snapshotController.logLevel`                           | int/null | `null`                    | Snapshot controller verbosity; inherits `logLevel`, otherwise `5`. |
+| `zfsController.snapshotter.logLevel`                                  | int/null | `null`                    | CSI snapshotter verbosity; inherits `logLevel`, otherwise the binary default (`0`). |
 | `zfsNode.defaultFormatOptions`                                        | map    | `{}`                        | Extra mkfs options per filesystem, used when the StorageClass of a volume does not set `formatOptions`. A StorageClass value replaces the default of its filesystem, the two are not merged. Keys are the formatted filesystem types (ext2, ext3, ext4, xfs, btrfs), values the space separated mkfs options of that filesystem as one string, e.g. `{"ext4": "-m 0", "xfs": "-i nrext64=0"}`. |
+| `zfsNode.driverRegistrar.logLevel`                                    | int/null | `null`                    | CSI node driver registrar verbosity; inherits `logLevel`, otherwise `5`. |
+| `zfsNode.logLevel`                                                    | int/null | `null`                    | ZFS node plugin verbosity; inherits `logLevel`, otherwise the binary default (`0`). |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
