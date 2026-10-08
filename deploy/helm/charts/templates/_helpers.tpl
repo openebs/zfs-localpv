@@ -162,6 +162,20 @@ Ensure that the path to kubelet ends with a slash
 {{- end }}
 
 {{/*
+Resolve component, common, then legacy verbosity; unlike default, preserve 0.
+An empty result leaves the binary's default unchanged.
+*/}}
+{{- define "zfslocalpv.common.logLevel" -}}
+{{- if not (kindIs "invalid" .component.logLevel) -}}
+{{- .component.logLevel -}}
+{{- else if not (kindIs "invalid" .commonLevel) -}}
+{{- .commonLevel -}}
+{{- else if not (kindIs "invalid" .defaultLevel) -}}
+{{- .defaultLevel -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Creates the image URL ie registry/repository:tag
 */}}
 {{- define "zfslocalpv.common.image" -}}

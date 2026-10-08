@@ -32,10 +32,16 @@ rbac:
 loggingLabels:
   openebs.io/logging: "true"
 
+# Common klog verbosity for ZFS controller/node and all CSI sidecars.
+# null preserves existing defaults; individual settings take precedence, including 0.
+logLevel: null
+
 # zfsNode contains the configurables for
 # the zfs node daemonset
 zfsNode:
   componentName: openebs-zfs-node
+  # ZFS node plugin verbosity; null inherits logLevel, or the binary default (0).
+  logLevel: null
   # defaultFormatOptions are the extra mkfs options a node uses for a
   # filesystem when the StorageClass of the volume does not set formatOptions.
   # The formatOptions of a StorageClass replace the default of its filesystem,
@@ -52,6 +58,8 @@ zfsNode:
   defaultFormatOptions: {}
   driverRegistrar:
     name: "csi-node-driver-registrar"
+    # null inherits logLevel, or 5 when the common level is unset.
+    logLevel: null
     image:
       # Make sure that registry name end with a '/'.
       # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
@@ -99,11 +107,15 @@ zfsNode:
 # the zfs controller deployment
 zfsController:
   componentName: openebs-zfs-controller
+  # ZFS controller plugin verbosity; null inherits logLevel, or the binary default (0).
+  logLevel: null
   initContainers: []
   additionalVolumes: {}
   replicas: 1
   resizer:
     name: "csi-resizer"
+    # null inherits logLevel, or 5 when the common level is unset.
+    logLevel: null
     image:
       # Make sure that registry name end with a '/'.
       # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
@@ -115,6 +127,8 @@ zfsController:
     extraArgs: []
   snapshotter:
     name: "csi-snapshotter"
+    # null inherits logLevel, or the binary default (0).
+    logLevel: null
     image:
       # Make sure that registry name end with a '/'.
       # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
@@ -127,6 +141,8 @@ zfsController:
   snapshotController:
     enabled: true
     name: "snapshot-controller"
+    # null inherits logLevel, or 5 when the common level is unset.
+    logLevel: null
     image:
       # Make sure that registry name end with a '/'.
       # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect
@@ -138,6 +154,8 @@ zfsController:
     extraArgs: []
   provisioner:
     name: "csi-provisioner"
+    # null inherits logLevel, or 5 when the common level is unset.
+    logLevel: null
     image:
       # Make sure that registry name end with a '/'.
       # For example : registry.k8s.io/ is a correct value here and quay.io is incorrect

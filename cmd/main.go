@@ -39,6 +39,7 @@ import (
  * to pass --plugin=agent.
  */
 func main() {
+	klog.InitFlags(nil)
 	_ = flag.CommandLine.Parse([]string{})
 	var config = config.Default()
 
