@@ -29,6 +29,7 @@ import (
 	"github.com/openebs/zfs-localpv/v2/pkg/builder/volbuilder"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 )
@@ -497,6 +498,10 @@ func MarkForDeletion(volumeName string) error {
 func IsVolumeEligibleForDeletion(volumeName string) (bool, error) {
 
 	zfsVol, err := GetZFSVolume(volumeName)
+	if k8serrors.IsNotFound(err) {
+		// nothing left to delete
+		return false, nil
+	}
 	if err != nil {
 		return false, status.Errorf(
 			codes.Internal,
