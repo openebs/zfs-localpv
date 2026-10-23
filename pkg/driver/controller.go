@@ -832,6 +832,10 @@ func (cs *controller) ControllerExpandVolume(
 			Build(), nil
 	}
 
+	if err := cs.checkExpandCapacity(vol, updatedSize-volsize); err != nil {
+		return nil, err
+	}
+
 	if err := zfs.ResizeVolume(vol, updatedSize); err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -844,6 +848,51 @@ func (cs *controller) ControllerExpandVolume(
 		WithCapacityBytes(updatedSize).
 		WithNodeExpansionRequired(true).
 		Build(), nil
+}
+
+// checkExpandCapacity fails with ResourceExhausted when the additional space an
+// expansion needs does not fit in the free capacity of the volume's pool, so
+// that the ZFSVolume is not updated with a size that can never be satisfied.
+// The check relies on the capacity reported by the node's ZFSNode, and is
+// skipped whenever that information is not available.
+func (cs *controller) checkExpandCapacity(vol *zfsapi.ZFSVolume, additional int64) error {
+	mappedNodeID, err := zfs.GetNodeID(vol.Spec.OwnerNodeID)
+	if err != nil {
+		mappedNodeID = vol.Spec.OwnerNodeID
+	}
+	v, exists, err := cs.zfsNodeInformer.GetIndexer().GetByKey(zfs.OpenEBSNamespace + "/" + mappedNodeID)
+	if err != nil || !exists {
+		return nil
+	}
+	zfsNode, ok := v.(*zfsapi.ZFSNode)
+	if !ok {
+		return nil
+	}
+	return verifyExpandCapacity(zfsNode.Pools, vol, additional)
+}
+
+// verifyExpandCapacity checks the additional space against the free capacity of
+// the pool the volume lives in. A thin provisioned volume reserves no space, so
+// it is never rejected.
+func verifyExpandCapacity(pools []zfsapi.Pool, vol *zfsapi.ZFSVolume, additional int64) error {
+	if vol.Spec.ThinProvision == "yes" || additional <= 0 {
+		return nil
+	}
+	pool := poolRoot(vol.Spec.PoolName)
+	for _, p := range pools {
+		if p.Name != pool {
+			continue
+		}
+		if free := p.Free.Value(); additional > free {
+			return status.Errorf(
+				codes.ResourceExhausted,
+				"ControllerExpandVolume: expanding %s needs %d more bytes but pool %s has only %d bytes free",
+				vol.Name, additional, pool, free,
+			)
+		}
+		return nil
+	}
+	return nil
 }
 
 func verifySnapshotRequest(req *csi.CreateSnapshotRequest) error {
