@@ -20,6 +20,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	zfsapi "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 )
 
 func TestRoundOff(t *testing.T) {
@@ -40,6 +46,40 @@ func TestRoundOff(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, test.expected, getRoundedCapacity(test.input))
+		})
+	}
+}
+
+func TestVerifyExpandCapacity(t *testing.T) {
+	pools := []zfsapi.Pool{
+		{Name: "zpool", Free: *resource.NewQuantity(10*Gi, resource.BinarySI)},
+		{Name: "other", Free: *resource.NewQuantity(100*Gi, resource.BinarySI)},
+	}
+	newVol := func(pool, thin string) *zfsapi.ZFSVolume {
+		return &zfsapi.ZFSVolume{
+			ObjectMeta: metav1.ObjectMeta{Name: "pvc-1"},
+			Spec:       zfsapi.VolumeInfo{PoolName: pool, ThinProvision: thin},
+		}
+	}
+
+	tests := map[string]struct {
+		vol        *zfsapi.ZFSVolume
+		additional int64
+		code       codes.Code
+	}{
+		"fits in the pool":                  {vol: newVol("zpool", "no"), additional: 5 * Gi, code: codes.OK},
+		"exactly the free capacity":         {vol: newVol("zpool", "no"), additional: 10 * Gi, code: codes.OK},
+		"exceeds the free capacity":         {vol: newVol("zpool", "no"), additional: 10*Gi + 1, code: codes.ResourceExhausted},
+		"dataset below the pool":            {vol: newVol("zpool/k8s", "no"), additional: 20 * Gi, code: codes.ResourceExhausted},
+		"thin provisioned is not checked":   {vol: newVol("zpool", "yes"), additional: 20 * Gi, code: codes.OK},
+		"unknown pool is not checked":       {vol: newVol("missing", "no"), additional: 20 * Gi, code: codes.OK},
+		"nothing additional is not checked": {vol: newVol("zpool", "no"), additional: 0, code: codes.OK},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			err := verifyExpandCapacity(pools, test.vol, test.additional)
+			assert.Equal(t, test.code, status.Code(err))
 		})
 	}
 }
