@@ -489,7 +489,7 @@ func buildVolumeRestoreArgs(rstr *apis.ZFSRestore) (ncArgs []string, recvArgs []
 			recvArgs = append(recvArgs, "-o", "atime="+rstr.VolSpec.ATime)
 		}
 		if rstr.VolSpec.ThinProvision == "no" {
-			recvArgs = append(recvArgs, "-o", "reservation="+rstr.VolSpec.Capacity)
+			recvArgs = append(recvArgs, "-o", reservationProperty(rstr.VolSpec.QuotaType, rstr.VolSpec.Capacity))
 		}
 		recvArgs = append(recvArgs, "-o", "mountpoint=legacy")
 	}

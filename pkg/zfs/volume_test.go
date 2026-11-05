@@ -262,6 +262,41 @@ func TestBuildVolumeRestoreArgs(t *testing.T) {
 	}
 }
 
+// TestBuildVolumeRestoreArgsReservation checks that a thick provisioned
+// dataset restore reserves its space with the property that matches its
+// quota type, as create, clone and resize do.
+func TestBuildVolumeRestoreArgsReservation(t *testing.T) {
+	tests := []struct {
+		name      string
+		quotaType string
+		want      string
+	}{
+		{"empty quotaType reserves with reservation", "", "reservation=10G"},
+		{"quota reserves with reservation", "quota", "reservation=10G"},
+		{"refquota reserves with refreservation", "refquota", "refreservation=10G"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rstr := &apis.ZFSRestore{
+				Spec: apis.ZFSRestoreSpec{RestoreSrc: "10.0.0.1:9000", VolumeName: "test-vol"},
+				VolSpec: apis.VolumeInfo{
+					PoolName:      "testpool",
+					VolumeType:    "DATASET",
+					Capacity:      "10G",
+					QuotaType:     tt.quotaType,
+					ThinProvision: "no",
+				},
+			}
+			_, recvArgs, err := buildVolumeRestoreArgs(rstr)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			expected := []string{"recv", "-o", quotaProperty(tt.quotaType) + "=10G", "-o", tt.want, "-o", "mountpoint=legacy", "-F", "testpool/test-vol"}
+			assertArgs(t, recvArgs, expected)
+		})
+	}
+}
+
 // TestBuildVolumeBackupArgsSnapTokenization checks that a prevSnapName
 // containing special characters ends up as a single argv element of `zfs send`,
 // never split into separate tokens.

@@ -54,6 +54,9 @@ resize while the dataset or zvol kept its old size.
 When either process exits with an error, the driver stops its peer and marks
 the `ZFSBackup` or `ZFSRestore` as `Failed` instead of leaving it in `Init` or
 reporting it as `Done`.
+ - A thick provisioned dataset restored with the `refquota` quota type now
+reserves its space with `refreservation`, as a newly created or cloned volume
+does, instead of `reservation`.
 
  - PVC and VolumeSnapshot identification properties
 Newly created ZFS datasets receive the ZFS user properties
