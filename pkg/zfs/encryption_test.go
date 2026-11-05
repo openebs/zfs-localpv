@@ -17,7 +17,6 @@ limitations under the License.
 package zfs
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
@@ -104,26 +103,22 @@ func TestBuildCreateArgs_ManagedKey(t *testing.T) {
 	})
 }
 
-func TestLoadKeyError(t *testing.T) {
-	exit := errors.New("exit status 255")
+func TestCheckManagedKeySpec(t *testing.T) {
+	ref := &apis.EncryptionKeyReference{Name: "db-key", Namespace: "apps"}
 	tests := []struct {
 		name    string
-		out     string
-		err     error
-		wantErr string
+		spec    apis.VolumeInfo
+		wantErr bool
 	}{
-		{"loaded", "", nil, ""},
-		{"loaded concurrently", "Key load error: Key already loaded for 'pool/pvc-a'.", exit, ""},
-		{"wrong key", "Key load error: Incorrect key provided for 'pool/pvc-a'.", exit, "is incorrect"},
-		{"other failure", "cannot open 'pool/pvc-a': dataset does not exist", exit, "zfs load-key"},
+		{"key Secret with encryption", apis.VolumeInfo{Encryption: "aes-256-gcm", EncryptionKeyRef: ref}, false},
+		{"no key Secret", apis.VolumeInfo{Encryption: "off"}, false},
+		{"key Secret with encryption off", apis.VolumeInfo{Encryption: "off", EncryptionKeyRef: ref}, true},
+		{"key Secret without encryption", apis.VolumeInfo{EncryptionKeyRef: ref}, true},
 	}
 	for _, tt := range tests {
-		err := loadKeyError("pool/pvc-a", []byte(tt.out), tt.err)
-		switch {
-		case tt.wantErr == "" && err != nil:
-			t.Errorf("%s: loadKeyError = %v, want nil", tt.name, err)
-		case tt.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tt.wantErr)):
-			t.Errorf("%s: loadKeyError = %v, want an error containing %q", tt.name, err, tt.wantErr)
+		err := checkManagedKeySpec(&apis.ZFSVolume{Spec: tt.spec})
+		if (err != nil) != tt.wantErr {
+			t.Errorf("%s: checkManagedKeySpec = %v, want error %v", tt.name, err, tt.wantErr)
 		}
 	}
 }

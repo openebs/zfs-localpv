@@ -99,9 +99,9 @@ contain a valid 64-char hex key, provisioning fails immediately with a clear
 A PVC that cannot be read also fails the provisioning (it is retried), since it
 may name its own key.
 Likewise, if a key stops matching its dataset (an altered Secret, or a wrong
-key), `zfs load-key` is rejected and the mount fails with a clear "encryption
-key … is incorrect … may have been changed" error rather than silently mounting
-nothing.
+key), `zfs load-key` is rejected and the mount fails with an error naming the
+Secret and giving the reason from ZFS (`Incorrect key provided`), rather than
+silently mounting nothing.
 
 Full example: [`deploy/sample/encrypted-pvc.yaml`](../deploy/sample/encrypted-pvc.yaml).
 

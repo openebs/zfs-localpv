@@ -148,32 +148,30 @@ func loadKeyForDataset(ctx context.Context, vol *apis.ZFSVolume, dataset string)
 	cmd := exec.Command(ZFSVolCmd, ZFSLoadKeyArg, root)
 	cmd.Stdin = strings.NewReader(key + "\n")
 	out, err := runCmd(cmd, root)
-	if err = loadKeyError(root, out, err); err != nil {
-		return err
+	if err != nil {
+		// a concurrent load-key (clones, mounts after a reboot) may have won the race
+		if status, serr := getDatasetProperty(root, "keystatus"); serr == nil && status == "available" {
+			klog.Infof("zfs: encryption key already loaded for %s", root)
+			return nil
+		}
+		ref := vol.Spec.EncryptionKeyRef
+		zerr := NewZFSError("zfs load-key", root, err, out)
+		klog.Errorf("zfs: could not load the encryption key of %s from Secret %s/%s: %s", root, ref.Namespace, ref.Name, zerr)
+		return fmt.Errorf("zfs: could not load the encryption key of %s from Secret %s/%s: %w", root, ref.Namespace, ref.Name, zerr)
 	}
 	klog.Infof("zfs: loaded encryption key for %s", root)
 	return nil
 }
 
-// loadKeyError classifies the outcome of `zfs load-key` on root.
-func loadKeyError(root string, out []byte, err error) error {
-	if err == nil {
-		return nil
+// checkManagedKeySpec rejects a volume that references a key Secret without
+// enabling encryption, which the controller never creates (e.g. a hand-edited CR).
+func checkManagedKeySpec(vol *apis.ZFSVolume) error {
+	if UsesManagedKey(vol) && !EncryptionEnabled(vol.Spec.Encryption) {
+		ref := vol.Spec.EncryptionKeyRef
+		return fmt.Errorf("zfs: volume %s references the encryption key Secret %s/%s but its encryption is %q",
+			vol.Name, ref.Namespace, ref.Name, vol.Spec.Encryption)
 	}
-	// NOTE: these checks match OpenZFS messages; revisit on major ZFS bumps.
-	// A concurrent load-key (clones, mounts after a reboot) may have won the race.
-	if strings.Contains(string(out), "Key already loaded") {
-		klog.Infof("zfs: encryption key already loaded for %s", root)
-		return nil
-	}
-	// a valid but wrong key, e.g. a Secret changed after the volume was created
-	if strings.Contains(string(out), "Incorrect key") {
-		klog.Errorf("zfs: incorrect encryption key for %v: %s", root, strings.TrimSpace(string(out)))
-		return fmt.Errorf("zfs: encryption key for %s is incorrect — the referenced Secret does not match the dataset and may have been changed; the volume cannot be unlocked with it", root)
-	}
-	zerr := NewZFSError("zfs load-key", root, err, out)
-	klog.Errorf("zfs: could not load key for %v error: %s", root, zerr)
-	return zerr
+	return nil
 }
 
 // EnsureKeyLoaded loads vol's key before it is mounted: the keys of
