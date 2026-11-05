@@ -9,6 +9,11 @@ plugin and all CSI sidecars, with optional per-component overrides.
 Unset levels preserve existing defaults; explicit `0` is supported.
 The ZFS driver now registers its klog flags so `--v` can control verbosity.
 
+ - Chart update strategies
+The Helm chart now renders `zfsNode.updateStrategy` on the node DaemonSet and
+`zfsController.updateStrategy` on the controller Deployment. Both values were
+documented but ignored. The defaults render the same strategies as before.
+
  - Pool pattern based volume provisioning
 StorageClasses may now select the ZFS pool with a regular expression, using the
 new `poolpattern` parameter in place of `poolname`, so that a single

@@ -124,9 +124,11 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.snapshotController.image.tag`                          | string | `"v8.2.0"`                  | Image tag for the snapshot controller. 
 | `zfsController.snapshotController.logLevel`                           | int/null | `null`                    | Snapshot controller verbosity; inherits `logLevel`, otherwise `5`. |
 | `zfsController.snapshotter.logLevel`                                  | int/null | `null`                    | CSI snapshotter verbosity; inherits `logLevel`, otherwise the binary default (`0`). |
+| `zfsController.updateStrategy`                                        | map    | `{"type":"RollingUpdate"}`  | Deployment strategy of the ZFS controller. |
 | `zfsNode.defaultFormatOptions`                                        | map    | `{}`                        | Extra mkfs options per filesystem, used when the StorageClass of a volume does not set `formatOptions`. A StorageClass value replaces the default of its filesystem, the two are not merged. Keys are the formatted filesystem types (ext2, ext3, ext4, xfs, btrfs), values the space separated mkfs options of that filesystem as one string, e.g. `{"ext4": "-m 0", "xfs": "-i nrext64=0"}`. |
 | `zfsNode.driverRegistrar.logLevel`                                    | int/null | `null`                    | CSI node driver registrar verbosity; inherits `logLevel`, otherwise `5`. |
 | `zfsNode.logLevel`                                                    | int/null | `null`                    | ZFS node plugin verbosity; inherits `logLevel`, otherwise the binary default (`0`). |
+| `zfsNode.updateStrategy`                                              | map    | `{"type":"RollingUpdate","rollingUpdate":{"maxUnavailable":"100%"}}` | Update strategy of the ZFS node DaemonSet. |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 

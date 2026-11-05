@@ -13,6 +13,10 @@ spec:
     matchLabels:
       {{- include "zfslocalpv.zfsController.matchLabels" . | nindent 6 }}
   replicas: {{ .Values.zfsController.replicas }}
+  {{- with .Values.zfsController.updateStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       {{- with .Values.zfsController.podAnnotations }}

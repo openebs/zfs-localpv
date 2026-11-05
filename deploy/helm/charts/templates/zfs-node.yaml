@@ -13,9 +13,7 @@ spec:
     matchLabels:
       {{- include "zfslocalpv.zfsNode.matchLabels" . | nindent 6 }}
   updateStrategy:
-    rollingUpdate:
-      maxUnavailable: 100%
-    type: RollingUpdate
+    {{- toYaml .Values.zfsNode.updateStrategy | nindent 4 }}
   template:
     metadata:
       {{- with .Values.zfsNode.podAnnotations }}
