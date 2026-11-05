@@ -252,7 +252,7 @@ func encryptionSecretModeTest() {
 			stdout, _, _ := kubectl("get", "events", "-n", OpenEBSNamespace,
 				"--field-selector", "reason=FailedMount", "-o", "jsonpath={.items[*].message}")
 			return string(stdout)
-		}, 120, 5).Should(ContainSubstring("is incorrect"), "while waiting for the mount to fail")
+		}, 120, 5).Should(ContainSubstring("could not load the encryption key"), "while waiting for the mount to fail")
 		Expect(keyStatus(dataset)).To(Equal("unavailable"))
 		stopApp(encAppName)
 		setKeySecretValue(encKeySecret, key)

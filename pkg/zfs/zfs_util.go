@@ -560,7 +560,11 @@ func CreateVolume(vol *apis.ZFSVolume) error {
 		cmd := exec.Command(ZFSVolCmd, args...)
 
 		// the key is fed on stdin, never written to the CR or the node disk
-		if UsesManagedKey(vol) && len(vol.Spec.Encryption) != 0 {
+		if UsesManagedKey(vol) {
+			if kerr := checkManagedKeySpec(vol); kerr != nil {
+				klog.Errorf("zfs: could not create volume %v error: %s", volume, kerr)
+				return kerr
+			}
 			ctx, cancel := apiContext()
 			key, kerr := FetchEncryptionKey(ctx, vol)
 			cancel()

@@ -15,11 +15,13 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	corev1 "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -63,6 +65,7 @@ type controller struct {
 
 	k8sNodeInformer cache.SharedIndexInformer
 	zfsNodeInformer cache.SharedIndexInformer
+	pvcInformer     cache.SharedIndexInformer
 
 	volumeLock *volumeLock
 
@@ -112,6 +115,9 @@ func (cs *controller) init() error {
 
 	cs.k8sNodeInformer = kubeInformerFactory.Core().V1().Nodes().Informer()
 	cs.zfsNodeInformer = openebsInformerfactory.Zfs().V1().ZFSNodes().Informer()
+	pvcs := kubeInformerFactory.Core().V1().PersistentVolumeClaims()
+	cs.pvcInformer = pvcs.Informer()
+	pvcLister = pvcs.Lister()
 
 	if err = cs.zfsNodeInformer.AddIndexers(map[string]cache.IndexFunc{
 		LabelIndexName(cs.indexedLabel): LabelIndexFunc(cs.indexedLabel),
@@ -121,6 +127,7 @@ func (cs *controller) init() error {
 
 	go cs.k8sNodeInformer.Run(stopCh)
 	go cs.zfsNodeInformer.Run(stopCh)
+	go cs.pvcInformer.Run(stopCh)
 
 	if zfs.GoogleAnalyticsEnabled == "true" {
 		analytics.RegisterVersionGetter(version.GetVersionDetails)
@@ -130,11 +137,12 @@ func (cs *controller) init() error {
 	}
 
 	// wait for all the caches to be populated.
-	klog.Info("waiting for k8s & zfs node informer caches to be synced")
+	klog.Info("waiting for k8s node, pvc & zfs node informer caches to be synced")
 	cache.WaitForCacheSync(stopCh,
 		cs.k8sNodeInformer.HasSynced,
-		cs.zfsNodeInformer.HasSynced)
-	klog.Info("synced k8s & zfs node informer caches")
+		cs.zfsNodeInformer.HasSynced,
+		cs.pvcInformer.HasSynced)
+	klog.Info("synced k8s node, pvc & zfs node informer caches")
 
 	if zfs.ZFSBackupGCEnabled {
 		bgc := &BackupGarbageCollector{}
@@ -222,6 +230,28 @@ func waitForReadySnapshot(ctx context.Context, snapname string) error {
 	}
 }
 
+// pvcLister reads PVCs from the controller's informer cache; nil until the
+// controller has started.
+var pvcLister corelisters.PersistentVolumeClaimLister
+
+// getPVCFromAPI reads a PVC from the API server.
+var getPVCFromAPI = zfs.GetPVC
+
+// getPVC returns a PVC from the informer cache, or from the API server when the
+// cache does not have it yet, e.g. right after the PVC was created.
+func getPVC(ctx context.Context, namespace, name string) (*corev1.PersistentVolumeClaim, error) {
+	if pvcLister != nil {
+		pvc, err := pvcLister.PersistentVolumeClaims(namespace).Get(name)
+		if err == nil {
+			return pvc, nil
+		}
+		if !k8serror.IsNotFound(err) {
+			return nil, err
+		}
+	}
+	return getPVCFromAPI(ctx, namespace, name)
+}
+
 // pvcEncryptionSecretName returns the Secret named by the secret-name annotation,
 // or "" if unset. An empty annotation is an error.
 func pvcEncryptionSecretName(annotations map[string]string) (string, error) {
@@ -296,7 +326,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*zfsapi
 	// annotation. It requires `encryption`: fail closed.
 	var pvcSecretName string
 	if pvcName != "" && pvcNamespace != "" {
-		pvc, perr := zfs.GetPVC(ctx, pvcNamespace, pvcName)
+		pvc, perr := getPVC(ctx, pvcNamespace, pvcName)
 		if perr != nil {
 			// the PVC may name its own key: never guess
 			return nil, status.Errorf(codes.Internal,
@@ -308,6 +338,11 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*zfsapi
 				pvcNamespace, pvcName, aerr.Error())
 		}
 		pvcSecretName = name
+	} else if zfs.EncryptionEnabled(encr) {
+		// without the PVC, its key annotation cannot be read
+		klog.Warningf("zfs: volume %s: unknown PVC, its %q annotation is not read; "+
+			"is the external-provisioner running with --extra-create-metadata?",
+			volName, zfs.PVCEncryptionSecretAnnotation)
 	}
 
 	// fail closed: never create a plaintext volume when a key source is requested
@@ -521,7 +556,7 @@ func checkCloneKeySource(ctx context.Context, volName string, src *zfsapi.Encryp
 	if _, err := zfs.GetZFSVolume(volName); err == nil {
 		return nil
 	}
-	pvc, err := zfs.GetPVC(ctx, pvcNamespace, pvcName)
+	pvc, err := getPVC(ctx, pvcNamespace, pvcName)
 	if err != nil {
 		return status.Errorf(codes.Internal, "clone: failed to get pvc %s/%s: %s",
 			pvcNamespace, pvcName, err.Error())
