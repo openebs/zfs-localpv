@@ -12,6 +12,8 @@ type Interface interface {
 	ZFSBackups() ZFSBackupInformer
 	// ZFSNodes returns a ZFSNodeInformer.
 	ZFSNodes() ZFSNodeInformer
+	// ZFSPromotes returns a ZFSPromoteInformer.
+	ZFSPromotes() ZFSPromoteInformer
 	// ZFSRestores returns a ZFSRestoreInformer.
 	ZFSRestores() ZFSRestoreInformer
 	// ZFSSnapshots returns a ZFSSnapshotInformer.
@@ -39,6 +41,11 @@ func (v *version) ZFSBackups() ZFSBackupInformer {
 // ZFSNodes returns a ZFSNodeInformer.
 func (v *version) ZFSNodes() ZFSNodeInformer {
 	return &zFSNodeInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ZFSPromotes returns a ZFSPromoteInformer.
+func (v *version) ZFSPromotes() ZFSPromoteInformer {
+	return &zFSPromoteInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // ZFSRestores returns a ZFSRestoreInformer.

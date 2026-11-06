@@ -122,6 +122,7 @@ Check the [features](./docs/features.md) supported for each k8s version.
     - [x] [Create](docs/snapshot.md)
     - [x] [Restore](docs/clone.md#create-clone-from-snapshot)
 - [x] [Clone](docs/clone.md#create-clone-from-volume)
+    - [x] [Promote](docs/promote.md)
 - [x] [Volume Resize](docs/resize.md)
 - [x] [Raw Block Volume](docs/raw-block-volume.md)
 - [x] [Backup/Restore](docs/backup-restore.md)

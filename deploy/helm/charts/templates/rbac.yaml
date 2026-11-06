@@ -51,7 +51,7 @@ rules:
     resources: ["pods"]
     verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["*"]
-    resources: ["zfsvolumes", "zfssnapshots", "zfsbackups", "zfsrestores", "zfsnodes"]
+    resources: ["zfsvolumes", "zfssnapshots", "zfsbackups", "zfsrestores", "zfspromotes", "zfsnodes"]
     verbs: ["*"]
 ---
 kind: ClusterRoleBinding
@@ -149,7 +149,7 @@ rules:
     resources: ["persistentvolumes", "nodes", "services"]
     verbs: ["get", "list"]
   - apiGroups: ["*"]
-    resources: ["zfsvolumes", "zfssnapshots", "zfsbackups", "zfsrestores", "zfsnodes"]
+    resources: ["zfsvolumes", "zfssnapshots", "zfsbackups", "zfsrestores", "zfspromotes", "zfsnodes"]
     verbs: ["get", "list", "watch", "create", "update", "patch"]
 ---
 kind: ClusterRoleBinding
