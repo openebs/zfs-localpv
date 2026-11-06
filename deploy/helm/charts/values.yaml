@@ -70,6 +70,8 @@ zfsNode:
       tag: v2.13.0
   updateStrategy:
     type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 100%
   annotations: {}
   podAnnotations: {}
   resources: {}
