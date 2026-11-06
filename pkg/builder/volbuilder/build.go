@@ -124,6 +124,20 @@ func (b *Builder) WithKeyFormat(kf string) *Builder {
 	return b
 }
 
+// WithEncryptionKeySecret sets the Secret holding the volume key; an empty name
+// clears it.
+func (b *Builder) WithEncryptionKeySecret(name, namespace string) *Builder {
+	if name == "" {
+		b.volume.Object.Spec.EncryptionKeyRef = nil
+		return b
+	}
+	b.volume.Object.Spec.EncryptionKeyRef = &apis.EncryptionKeyReference{
+		Name:      name,
+		Namespace: namespace,
+	}
+	return b
+}
+
 // WithCompression sets compression of ZFSVolume
 func (b *Builder) WithCompression(compression string) *Builder {
 	b.volume.Object.Spec.Compression = compression
