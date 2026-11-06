@@ -298,19 +298,6 @@ func buildZFSSnapCreateArgs(snap *apis.ZFSSnapshot) []string {
 	return ZFSSnapArg
 }
 
-// buildZFSSnapDestroyArgs returns zfs destroy command for zfs snapshot
-// zfs destroy <poolname>/<volname>@<snapname>
-func buildZFSSnapDestroyArgs(snap *apis.ZFSSnapshot) []string {
-	var ZFSSnapArg []string
-
-	volname := snap.Labels[ZFSVolKey]
-	snapDataset := snap.Spec.PoolName + "/" + volname + "@" + snap.Name
-
-	ZFSSnapArg = append(ZFSSnapArg, ZFSDestroyArg, snapDataset)
-
-	return ZFSSnapArg
-}
-
 // buildDatasetCreateArgs returns zfs create command for dataset along with attributes as a string array
 func buildDatasetCreateArgs(vol *apis.ZFSVolume) []string {
 	var ZFSVolArg []string
@@ -853,13 +840,24 @@ func DestroySnapshot(snap *apis.ZFSSnapshot) error {
 	}
 
 	if err := getVolume(snapDataset); err != nil {
-		klog.Errorf(
-			"destroy: snapshot %v is not present, error: %s", volume, err.Error(),
-		)
-		return nil
+		// a zfs promote moves the snapshot to the promoted clone, so look
+		// for it by name in the pool before calling it gone
+		found, ferr := findSnapshot(parentDataset, snap.Name)
+		if ferr != nil {
+			return ferr
+		}
+		if found == "" {
+			klog.Errorf(
+				"destroy: snapshot %v is not present, error: %s", volume, err.Error(),
+			)
+			return nil
+		}
+		klog.Infof("destroy: snapshot %s is not present, found it at %s", snapDataset, found)
+		snapDataset = found
+		volume = strings.TrimPrefix(strings.SplitN(found, "@", 2)[0], parentDataset+"/")
 	}
 
-	args := buildZFSSnapDestroyArgs(snap)
+	args := []string{ZFSDestroyArg, snapDataset}
 	cmd := exec.Command(ZFSVolCmd, args...)
 	out, err := runCmd(cmd, snapDataset)
 
@@ -870,6 +868,41 @@ func DestroySnapshot(snap *apis.ZFSSnapshot) error {
 	}
 	klog.Infof("deleted snapshot %s@%s", volume, snap.Name)
 	return nil
+}
+
+// findSnapshot returns the snapshot named snapname of any volume in pool, or
+// "" if there is none
+func findSnapshot(pool, snapname string) (string, error) {
+	args := []string{ZFSListArg, "-H", "-o", "name", "-t", "snapshot", "-d", "2", pool}
+	cmd := exec.Command(ZFSVolCmd, args...)
+	out, err := runCmd(cmd, pool)
+	if err != nil {
+		zerr := NewZFSError("zfs list (snapshots)", pool, err, out)
+		klog.Errorf("zfs: could not list snapshots cmd %v: %s", args, zerr)
+		return "", zerr
+	}
+	return matchSnapshot(out, pool, snapname)
+}
+
+// matchSnapshot picks <pool>/<volume>@<snapname> out of `zfs list -H -o name`
+// output. More than one match is an error: which one to destroy is unclear.
+func matchSnapshot(out []byte, pool, snapname string) (string, error) {
+	var found []string
+	for _, name := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		dataset, snap, ok := strings.Cut(name, "@")
+		volume, inPool := strings.CutPrefix(dataset, pool+"/")
+		if ok && inPool && snap == snapname && !strings.Contains(volume, "/") {
+			found = append(found, name)
+		}
+	}
+	switch len(found) {
+	case 0:
+		return "", nil
+	case 1:
+		return found[0], nil
+	default:
+		return "", fmt.Errorf("snapshot %s found on more than one volume: %v", snapname, found)
+	}
 }
 
 // GetVolumeDevPath returns devpath for the given volume
