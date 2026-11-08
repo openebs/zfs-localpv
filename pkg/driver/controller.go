@@ -825,10 +825,14 @@ func (cs *controller) ControllerExpandVolume(
 	 * Controller expand volume must be idempotent. If a volume corresponding
 	 * to the specified volume ID is already larger than or equal to the target
 	 * capacity of the expansion request, the plugin should reply 0 OK.
+	 * The ZFS quota or volsize is only changed by NodeExpandVolume, so a
+	 * retried request must still ask for the node expansion, otherwise the
+	 * resize is reported as done while the dataset or zvol keeps its old size.
 	 */
 	if volsize >= updatedSize {
 		return csipayload.NewControllerExpandVolumeResponseBuilder().
 			WithCapacityBytes(volsize).
+			WithNodeExpansionRequired(true).
 			Build(), nil
 	}
 
