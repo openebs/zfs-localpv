@@ -56,7 +56,12 @@ the `ZFSBackup` or `ZFSRestore` as `Failed` instead of leaving it in `Init` or
 reporting it as `Done`.
  - A thick provisioned dataset restored with the `refquota` quota type now
 reserves its space with `refreservation`, as a newly created or cloned volume
-does, instead of `reservation`.
+does, instead of `reservation`. Volumes restored before this change keep their
+`reservation`, and a later resize adds `refreservation` on top of it, so they
+reserve their space twice. To clean such a volume up, run
+`zfs set reservation=none <dataset>`. If the volume has not been resized since
+the restore, also run `zfs set refreservation=<capacity> <dataset>` so it stays
+thick provisioned.
 
  - PVC and VolumeSnapshot identification properties
 Newly created ZFS datasets receive the ZFS user properties
