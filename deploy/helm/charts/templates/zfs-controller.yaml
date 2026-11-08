@@ -108,6 +108,7 @@ spec:
             - "--feature-gates=Topology=true"
             - "--strict-topology"
             - "--enable-capacity={{ .Values.feature.storageCapacity }}"
+            - "--capacity-ownerref-level=2"
             - "--extra-create-metadata=true"
             - "--default-fstype=ext4"
             {{- include "zfslocalpv.zfsController.leaderElection" . | indent 12 }}
