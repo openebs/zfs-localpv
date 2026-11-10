@@ -37,7 +37,7 @@ Create the name of the service account for controller
 */}}
 {{- define "zfslocalpv.zfsController.serviceAccountName" -}}
 {{- if .Values.serviceAccount.zfsController.create }}
-{{- default (include "zfslocalpv.fullname" .) .Values.serviceAccount.zfsController.name }}
+{{- default (printf "%s-controller" (include "zfslocalpv.fullname" .)) .Values.serviceAccount.zfsController.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.zfsController.name }}
 {{- end -}}
@@ -48,7 +48,7 @@ Create the name of the service account to use
 */}}
 {{- define "zfslocalpv.zfsNode.serviceAccountName" -}}
 {{- if .Values.serviceAccount.zfsNode.create }}
-{{- default (include "zfslocalpv.fullname" .) .Values.serviceAccount.zfsNode.name }}
+{{- default (printf "%s-node" (include "zfslocalpv.fullname" .)) .Values.serviceAccount.zfsNode.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.zfsNode.name }}
 {{- end -}}
