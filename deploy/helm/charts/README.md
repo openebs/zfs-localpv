@@ -89,8 +89,8 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `serviceAccount.zfsNode.create`                                       | bool   | `true`                      | Specifies whether a service account should be created for the ZFS node.                                |
 | `serviceAccount.zfsNode.name`                                         | string | `"openebs-zfs-node-sa"`     | The name of the service account to use for the ZFS node.                                               |
 | `zfs.bin`                                                             | string | `"zfs"`                     | Path to the ZFS binary.                                                                                |
-| `zfsController.additionalVolumes`                                     | list   | `[]`                        | Additional volumes to mount into the ZFS controller pods.                                              |
-| `zfsController.annotations`                                           | map    | `{}`                        | Annotations to add to the ZFS controller pods.                                                         |
+| `zfsController.additionalVolumes`                                     | map    | `{}`                        | Extra volumes for the ZFS controller pod, keyed by volume name; each value is the volume source (e.g. `hostPath`) and is rendered through `tpl`. |
+| `zfsController.annotations`                                           | map    | `{}`                        | Annotations to add to the ZFS controller Deployment.                                                    |
 | `zfsController.componentName`                                         | string | `"openebs-zfs-controller"`  | Name of the ZFS controller component.                                                                  |
 | `zfsController.initContainers`                                        | list   | `[]`                        | List of init containers to run before the ZFS controller pods.                                         |
 | `zfsController.logLevel`                                              | int/null | `null`                    | ZFS controller plugin verbosity; inherits `logLevel`, otherwise the binary default (`0`). |
@@ -122,13 +122,46 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.snapshotController.image.registry`                     | string | `"registry.k8s.io/"`        | Image registry for the snapshot controller.                                                             |
 | `zfsController.snapshotController.image.repository`                   | string | `"sig-storage/snapshot-controller"` | Image repository for the snapshot controller.                                                           |
 | `zfsController.snapshotController.image.tag`                          | string | `"v8.2.0"`                  | Image tag for the snapshot controller. 
+| `zfsController.snapshotController.name`                               | string | `"snapshot-controller"`     | Name of the snapshot controller container. |
 | `zfsController.snapshotController.logLevel`                           | int/null | `null`                    | Snapshot controller verbosity; inherits `logLevel`, otherwise `5`. |
 | `zfsController.snapshotter.logLevel`                                  | int/null | `null`                    | CSI snapshotter verbosity; inherits `logLevel`, otherwise the binary default (`0`). |
+| `zfsController.snapshotter.extraArgs`                                 | list   | `[]`                        | Additional arguments to pass to the CSI snapshotter. |
+| `zfsController.snapshotter.image.pullPolicy`                          | string | `"IfNotPresent"`            | Image pull policy for the CSI snapshotter. |
+| `zfsController.snapshotter.image.registry`                            | string | `"registry.k8s.io/"`        | Image registry for the CSI snapshotter. |
+| `zfsController.snapshotter.image.repository`                          | string | `"sig-storage/csi-snapshotter"`| Image repository for the CSI snapshotter. |
+| `zfsController.snapshotter.image.tag`                                 | string | `"v8.2.0"`                  | Image tag for the CSI snapshotter. |
+| `zfsController.snapshotter.name`                                      | string | `"csi-snapshotter"`         | Name of the CSI snapshotter container. |
+| `zfsController.tolerations`                                           | list   | `[]`                        | Tolerations for scheduling ZFS controller pods. |
 | `zfsController.updateStrategy`                                        | map    | `{"type":"RollingUpdate"}`  | Deployment strategy of the ZFS controller. |
+| `zfsNode.additionalVolumes`                                           | map    | `{}`                        | Extra volumes for the ZFS node pods, keyed by volume name; each value is the volume source and is rendered through `tpl`. |
+| `zfsNode.allowedTopologyKeys`                                         | string | `"All"`                     | Comma separated node label keys the driver reports as topology (e.g. `kubernetes.io/hostname,openebs.io/rack`); `All` reports every node label. |
+| `zfsNode.annotations`                                                 | map    | `{}`                        | Annotations to add to the ZFS node DaemonSet. |
+| `zfsNode.componentName`                                               | string | `"openebs-zfs-node"`        | Name of the ZFS node component, used in its labels. |
 | `zfsNode.defaultFormatOptions`                                        | map    | `{}`                        | Extra mkfs options per filesystem, used when the StorageClass of a volume does not set `formatOptions`. A StorageClass value replaces the default of its filesystem, the two are not merged. Keys are the formatted filesystem types (ext2, ext3, ext4, xfs, btrfs), values the space separated mkfs options of that filesystem as one string, e.g. `{"ext4": "-m 0", "xfs": "-i nrext64=0"}`. |
+| `zfsNode.driverRegistrar.image.pullPolicy`                            | string | `"IfNotPresent"`            | Image pull policy for the CSI node driver registrar. |
+| `zfsNode.driverRegistrar.image.registry`                              | string | `"registry.k8s.io/"`        | Image registry for the CSI node driver registrar. |
+| `zfsNode.driverRegistrar.image.repository`                            | string | `"sig-storage/csi-node-driver-registrar"`| Image repository for the CSI node driver registrar. |
+| `zfsNode.driverRegistrar.image.tag`                                   | string | `"v2.13.0"`                 | Image tag for the CSI node driver registrar. |
 | `zfsNode.driverRegistrar.logLevel`                                    | int/null | `null`                    | CSI node driver registrar verbosity; inherits `logLevel`, otherwise `5`. |
+| `zfsNode.driverRegistrar.name`                                        | string | `"csi-node-driver-registrar"`| Name of the CSI node driver registrar container. |
+| `zfsNode.encrKeysDir`                                                 | string | `"/home/keys"`              | Host directory holding the keys of encrypted volumes, mounted at `/home/keys` in the plugin. |
+| `zfsNode.initContainers`                                              | list   | `[]`                        | List of init containers to run before the ZFS node pods. |
+| `zfsNode.kubeletDir`                                                  | string | `"/var/lib/kubelet/"`       | Kubelet root directory on the nodes; `global.kubeletDir` takes precedence when set. |
 | `zfsNode.logLevel`                                                    | int/null | `null`                    | ZFS node plugin verbosity; inherits `logLevel`, otherwise the binary default (`0`). |
+| `zfsNode.nodeSelector`                                                | map    | `{}`                        | Node selector for scheduling ZFS node pods. |
+| `zfsNode.podAnnotations`                                              | map    | `{}`                        | Annotations to add to the ZFS node pods. |
+| `zfsNode.podLabels`                                                   | map    | `{}`                        | Labels to add to the ZFS node pods. |
+| `zfsNode.priorityClass.create`                                        | bool   | `true`                      | Creates a priority class for the ZFS node pods and sets it on them. |
+| `zfsNode.priorityClass.name`                                          | string | `"zfs-csi-node-critical"`   | Name of the priority class, prefixed with the release name when created. |
+| `zfsNode.resources`                                                   | map    | `{}`                        | Resource requests and limits for the ZFS node containers. |
+| `zfsNode.securityContext`                                             | map    | `{}`                        | Security context for the ZFS node pods. |
+| `zfsNode.tolerations`                                                 | list   | `[]`                        | Tolerations for scheduling ZFS node pods. |
 | `zfsNode.updateStrategy`                                              | map    | `{"type":"RollingUpdate","rollingUpdate":{"maxUnavailable":"100%"}}` | Update strategy of the ZFS node DaemonSet. |
+| `zfsPlugin.image.pullPolicy`                                          | string | `"IfNotPresent"`            | Image pull policy for the ZFS driver. |
+| `zfsPlugin.image.registry`                                            | string | `"docker.io/"`              | Image registry for the ZFS driver. |
+| `zfsPlugin.image.repository`                                          | string | `"openebs/zfs-driver"`      | Image repository for the ZFS driver. |
+| `zfsPlugin.image.tag`                                                 | string | `"2.12.0-develop"`          | Image tag for the ZFS driver. |
+| `zfsPlugin.name`                                                      | string | `"openebs-zfs-plugin"`      | Name of the ZFS driver container in the controller and node pods. |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
