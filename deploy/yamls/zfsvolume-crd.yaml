@@ -131,6 +131,24 @@ spec:
                   Default Value: off.
                 pattern: ^(on|off|aes-128-[c,g]cm|aes-192-[c,g]cm|aes-256-[c,g]cm)$
                 type: string
+              encryptionKeyRef:
+                description: |-
+                  EncryptionKeyRef references the Kubernetes Secret that holds the per-volume
+                  encryption key. The node agent reads it to create and to load-key the
+                  volume. The key material itself is never stored in this CR.
+                properties:
+                  name:
+                    description: Name is the name of the Secret.
+                    minLength: 1
+                    type: string
+                  namespace:
+                    description: |-
+                      Namespace is the namespace of the Secret: the PVC's namespace for a Secret
+                      referenced by the PVC, the driver namespace for a generated key.
+                    type: string
+                required:
+                - name
+                type: object
               fsType:
                 description: |-
                   FsType specifies filesystem type for the zfs volume/dataset.
@@ -382,6 +400,24 @@ spec:
                   Default Value: off.
                 pattern: ^(on|off|aes-128-[c,g]cm|aes-192-[c,g]cm|aes-256-[c,g]cm)$
                 type: string
+              encryptionKeyRef:
+                description: |-
+                  EncryptionKeyRef references the Kubernetes Secret that holds the per-volume
+                  encryption key. The node agent reads it to create and to load-key the
+                  volume. The key material itself is never stored in this CR.
+                properties:
+                  name:
+                    description: Name is the name of the Secret.
+                    minLength: 1
+                    type: string
+                  namespace:
+                    description: |-
+                      Namespace is the namespace of the Secret: the PVC's namespace for a Secret
+                      referenced by the PVC, the driver namespace for a generated key.
+                    type: string
+                required:
+                - name
+                type: object
               fsType:
                 description: |-
                   FsType specifies filesystem type for the zfs volume/dataset.
