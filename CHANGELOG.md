@@ -46,6 +46,10 @@ source and that pool never changes, so the combination cannot become valid.
 return the provisioned `ZFSVolume` rather than the node id. These are exported,
 so the change is source incompatible for anything importing the package; it has
 no effect on the driver as deployed.
+ - A retried `ControllerExpandVolume` for a volume whose `ZFSVolume` already
+has the requested size now still asks for the node expansion. The quota or
+volsize is applied by `NodeExpandVolume`, so the retry used to complete the
+resize while the dataset or zvol kept its old size.
  - Backup and restore pipeline failures now stop the peer
 When either process exits with an error, the driver stops its peer and marks
 the `ZFSBackup` or `ZFSRestore` as `Failed` instead of leaving it in `Init` or
