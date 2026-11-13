@@ -17,6 +17,8 @@ limitations under the License.
 package v1
 
 import (
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,6 +33,20 @@ import (
 var SchemeGroupVersion = schema.GroupVersion{
 	Group:   "zfs.openebs.io",
 	Version: "v1",
+}
+
+const (
+	// AnnotationPrefix is the prefix used for ZFS volume property annotations on PVCs.
+	AnnotationPrefix = "zfs.csi.openebs.io/"
+)
+
+// ApplyVolumePropertyOverrides applies ZFS volume property overrides from PVC annotations to params.
+func ApplyVolumePropertyOverrides(params, annotations map[string]string) {
+	for key, value := range annotations {
+		if strings.HasPrefix(key, AnnotationPrefix) {
+			params[strings.TrimPrefix(key, AnnotationPrefix)] = value
+		}
+	}
 }
 
 // Resource takes an unqualified resource and
