@@ -124,6 +124,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.snapshotController.image.tag`                          | string | `"v8.2.0"`                  | Image tag for the snapshot controller. 
 | `zfsController.snapshotController.name`                               | string | `"snapshot-controller"`     | Name of the snapshot controller container. |
 | `zfsController.snapshotController.logLevel`                           | int/null | `null`                    | Snapshot controller verbosity; inherits `logLevel`, otherwise `5`. |
+| `zfsController.snapshotter.enabled`                                   | bool   | `true`                      | Enables or disables the csi-snapshotter container. Set to false if the VolumeSnapshot CRDs are not installed. |
 | `zfsController.snapshotter.logLevel`                                  | int/null | `null`                    | CSI snapshotter verbosity; inherits `logLevel`, otherwise the binary default (`0`). |
 | `zfsController.snapshotter.extraArgs`                                 | list   | `[]`                        | Additional arguments to pass to the CSI snapshotter. |
 | `zfsController.snapshotter.image.pullPolicy`                          | string | `"IfNotPresent"`            | Image pull policy for the CSI snapshotter. |

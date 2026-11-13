@@ -13,6 +13,10 @@ The ZFS driver now registers its klog flags so `--v` can control verbosity.
 The Helm chart now renders `zfsNode.updateStrategy` on the node DaemonSet and
 `zfsController.updateStrategy` on the controller Deployment. Both values were
 documented but ignored. The defaults render the same strategies as before.
+ - Optional csi-snapshotter
+The Helm chart accepts `zfsController.snapshotter.enabled` to leave out the
+csi-snapshotter sidecar, for clusters without the VolumeSnapshot CRDs. It
+defaults to `true`, so existing installs render unchanged.
 
  - Pool pattern based volume provisioning
 StorageClasses may now select the ZFS pool with a regular expression, using the
