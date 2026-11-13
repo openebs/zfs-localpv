@@ -42,6 +42,9 @@ unaffected.
  - Cloning or restoring outside the pool the StorageClass declares now fails
 with `InvalidArgument` rather than `Internal`. A clone lives in the pool of its
 source and that pool never changes, so the combination cannot become valid.
+ - The controller Deployment now owns the `CSIStorageCapacity` objects
+(`--capacity-ownerref-level=2`) instead of its ReplicaSet, so storage capacity
+keeps being updated after a rollout of the controller.
  - `CreateZFSVolume`, `CreateVolClone` and `CreateSnapClone` in `pkg/driver`
 return the provisioned `ZFSVolume` rather than the node id. These are exported,
 so the change is source incompatible for anything importing the package; it has
