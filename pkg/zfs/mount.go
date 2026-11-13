@@ -291,16 +291,32 @@ func MountFilesystem(vol *apis.ZFSVolume, mount *MountInfo) error {
 
 // MountBlock mounts the block disk to the specified path
 func MountBlock(vol *apis.ZFSVolume, mountinfo *MountInfo) error {
-	target := mountinfo.MountPath
 	devicePath := ZFSDevPath + vol.Spec.PoolName + "/" + vol.Name
-	mountopt := []string{"bind"}
 
-	mounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: utilexec.New()}
+	return mountBlock(mount.New(""), devicePath, mountinfo.MountPath)
+}
+
+// mountBlock bind mounts devicePath at target, unless target is already a
+// mount point.
+func mountBlock(mounter mount.Interface, devicePath, target string) error {
+	mountopt := []string{"bind"}
 
 	// Create the mount point as a file since bind mount device node requires it to be a file
 	err := makeFile(target)
 	if err != nil {
 		return status.Errorf(codes.Internal, "Could not create target file %q: %v", target, err)
+	}
+
+	// NodePublishVolume must be idempotent: a retried request for a target
+	// which is already bind mounted must not stack a second mount on it, which
+	// NodeUnpublishVolume would then leave behind.
+	notMnt, err := mounter.IsLikelyNotMountPoint(target)
+	if err != nil {
+		return status.Errorf(codes.Internal, "Could not check mount point %q: %v", target, err)
+	}
+	if !notMnt {
+		klog.Infof("NodePublishVolume block device %s already mounted at %s", devicePath, target)
+		return nil
 	}
 
 	// do the bind mount of the zvol device at the target path

@@ -39,6 +39,9 @@ and provisioning fails immediately with `ResourceExhausted` when no pool has the
 room, or `FailedPrecondition` when no pool matches the StorageClass at all,
 instead of repeatedly attempting a create that cannot succeed. Thin volumes are
 unaffected.
+ - Publishing a raw block volume again at a target which is already mounted
+now succeeds without a second bind mount. The stacked mount used to stay
+behind after `NodeUnpublishVolume`.
  - Cloning or restoring outside the pool the StorageClass declares now fails
 with `InvalidArgument` rather than `Internal`. A clone lives in the pool of its
 source and that pool never changes, so the combination cannot become valid.
