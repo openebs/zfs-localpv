@@ -2,7 +2,7 @@
 kind: ServiceAccount
 apiVersion: v1
 metadata:
-  name: {{ .Values.serviceAccount.zfsController.name }}
+  name: {{ include "zfslocalpv.zfsController.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "zfslocalpv.zfsController.labels" . | nindent 4 }}
@@ -59,7 +59,7 @@ metadata:
     {{- include "zfslocalpv.zfsController.labels" . | nindent 4 }}
 subjects:
   - kind: ServiceAccount
-    name: {{ .Values.serviceAccount.zfsController.name }}
+    name: {{ include "zfslocalpv.zfsController.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
@@ -115,7 +115,7 @@ metadata:
     {{- include "zfslocalpv.zfsController.labels" . | nindent 4 }}
 subjects:
   - kind: ServiceAccount
-    name: {{ .Values.serviceAccount.zfsController.name }}
+    name: {{ include "zfslocalpv.zfsController.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
@@ -127,7 +127,7 @@ roleRef:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Values.serviceAccount.zfsNode.name }}
+  name: {{ include "zfslocalpv.zfsNode.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "zfslocalpv.zfsNode.labels" . | nindent 4 }}
@@ -157,7 +157,7 @@ metadata:
     {{- include "zfslocalpv.zfsNode.labels" . | nindent 4 }}
 subjects:
   - kind: ServiceAccount
-    name: {{ .Values.serviceAccount.zfsNode.name }}
+    name: {{ include "zfslocalpv.zfsNode.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
@@ -191,7 +191,7 @@ roleRef:
   name: openebs-zfs-node-role
 subjects:
   - kind: ServiceAccount
-    name: {{ .Values.serviceAccount.zfsNode.name }}
+    name: {{ include "zfslocalpv.zfsNode.serviceAccountName" . }}
     namespace: {{ $.Release.Namespace }}
 {{- end }}
 {{- end }}

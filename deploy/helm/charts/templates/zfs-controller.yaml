@@ -34,7 +34,7 @@ spec:
 {{- if .Values.zfsController.priorityClass.create }}
       priorityClassName: {{ template "zfslocalpv.zfsController.priorityClassName" . }}
 {{- end }}
-      serviceAccountName: {{ .Values.serviceAccount.zfsController.name }}
+      serviceAccountName: {{ include "zfslocalpv.zfsController.serviceAccountName" . }}
 {{- if .Values.zfsController.initContainers }}
       initContainers:
 {{- if eq (kindOf .Values.zfsController.initContainers) "slice" }}

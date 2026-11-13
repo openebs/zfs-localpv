@@ -14,6 +14,15 @@ The Helm chart now renders `zfsNode.updateStrategy` on the node DaemonSet and
 `zfsController.updateStrategy` on the controller Deployment. Both values were
 documented but ignored. The defaults render the same strategies as before.
 
+ - Chart service account names
+The chart now names the controller and node ServiceAccounts, and the
+RoleBindings and pods that use them, through the `serviceAccountName` helpers.
+Leaving `serviceAccount.zfsController.name` or `serviceAccount.zfsNode.name`
+empty generates `<fullname>-controller` and `<fullname>-node`, as the values
+comments describe, instead of rendering objects with an empty name. With
+`create: false` and no name, the pods use the `default` ServiceAccount. The
+default values render the same names as before.
+
  - Pool pattern based volume provisioning
 StorageClasses may now select the ZFS pool with a regular expression, using the
 new `poolpattern` parameter in place of `poolname`, so that a single
