@@ -18,6 +18,7 @@ const (
 	ReasonSnapDestroyFailed = "SnapshotDestroyFailed"
 	ReasonBackupFailed      = "BackupFailed"
 	ReasonRestoreFailed     = "RestoreFailed"
+	ReasonPromoteFailed     = "PromoteFailed"
 
 	ReasonProvisioned      = "Provisioned"
 	ReasonCloned           = "Cloned"
@@ -28,6 +29,7 @@ const (
 	ReasonSnapDestroyed    = "SnapshotDestroyed"
 	ReasonBackupCompleted  = "BackupCompleted"
 	ReasonRestoreCompleted = "RestoreCompleted"
+	ReasonPromoted         = "Promoted"
 )
 
 // Error is the typed error returned by every zfs/zpool shell-out.

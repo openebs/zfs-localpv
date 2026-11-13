@@ -78,6 +78,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ZFSBackupList{},
 		&ZFSRestore{},
 		&ZFSRestoreList{},
+		&ZFSPromote{},
+		&ZFSPromoteList{},
 		&ZFSNode{},
 		&ZFSNodeList{},
 	)
