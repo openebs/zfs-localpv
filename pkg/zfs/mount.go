@@ -315,6 +315,13 @@ func mountBlock(mounter mount.Interface, devicePath, target string) error {
 		return status.Errorf(codes.Internal, "Could not check mount point %q: %v", target, err)
 	}
 	if !notMnt {
+		same, err := isSameDevice(devicePath, target)
+		if err != nil {
+			return status.Errorf(codes.Internal, "Could not compare %q with mount target %q: %v", devicePath, target, err)
+		}
+		if !same {
+			return status.Errorf(codes.Internal, "mount target %q is already mounted with a device other than %q", target, devicePath)
+		}
 		klog.Infof("NodePublishVolume block device %s already mounted at %s", devicePath, target)
 		return nil
 	}
@@ -330,6 +337,21 @@ func mountBlock(mounter mount.Interface, devicePath, target string) error {
 	klog.Infof("NodePublishVolume mounted block device %s at %s", devicePath, target)
 
 	return nil
+}
+
+// isSameDevice reports whether target is a bind mount of devicePath. The mount
+// table lists the devtmpfs source for a bind mounted device node, not the zvol
+// path, so the target is compared with the device node it resolves to.
+func isSameDevice(devicePath, target string) (bool, error) {
+	devInfo, err := os.Stat(devicePath)
+	if err != nil {
+		return false, err
+	}
+	targetInfo, err := os.Stat(target)
+	if err != nil {
+		return false, err
+	}
+	return os.SameFile(devInfo, targetInfo), nil
 }
 
 func makeFile(pathname string) error {
