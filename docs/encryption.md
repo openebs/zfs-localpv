@@ -183,13 +183,21 @@ uses the Secret before updating it, or the others cannot be unlocked anymore:
 OLDKEY=$(kubectl -n <ns> get secret <name> -o jsonpath='{.data.key}' | base64 -d)
 NEWKEY=$(openssl rand -hex 32)
 
-# 2. For each encryption root using the Secret: load the current key, unless it
-#    is already loaded, then re-wrap it with the new key.
-printf '%s' "$OLDKEY" | zfs load-key <pool>/<pv-name>
-printf '%s' "$NEWKEY" | zfs change-key -o keyformat=hex -o keylocation=prompt <pool>/<pv-name>
+# 2. Re-wrap each encryption root with the new key, loading the current key
+#    first if needed. Stops at the first failure.
+rewrap() {
+  for root in "$@"; do
+    if [ "$(zfs get -H -o value keystatus "$root")" != available ]; then
+      printf '%s' "$OLDKEY" | zfs load-key "$root" || return 1
+    fi
+    printf '%s' "$NEWKEY" |
+      zfs change-key -o keyformat=hex -o keylocation=prompt "$root" || return 1
+  done
+}
 
-# 3. Only once every root is re-wrapped successfully, update the Secret.
-kubectl -n <ns> patch secret <name> -p '{"stringData":{"key":"'"$NEWKEY"'"}}'
+# 3. Update the Secret only if every root was re-wrapped.
+rewrap <pool>/<pv-a> <pool>/<pv-b> &&
+  kubectl -n <ns> patch secret <name> -p '{"stringData":{"key":"'"$NEWKEY"'"}}'
 ```
 
 `zfs change-key` re-wraps the dataset master key; existing data is not

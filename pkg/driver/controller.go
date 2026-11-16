@@ -237,19 +237,36 @@ var pvcLister corelisters.PersistentVolumeClaimLister
 // getPVCFromAPI reads a PVC from the API server.
 var getPVCFromAPI = zfs.GetPVC
 
-// getPVC returns a PVC from the informer cache, or from the API server when the
-// cache does not have it yet, e.g. right after the PVC was created.
-func getPVC(ctx context.Context, namespace, name string) (*corev1.PersistentVolumeClaim, error) {
+// getPVC returns the PVC that volume volName is provisioned for. It comes from
+// the informer cache when the cached PVC is that claim, and otherwise from the
+// API server: the cache may not have a new PVC yet, or may still hold a deleted
+// PVC that was recreated with the same name.
+func getPVC(ctx context.Context, namespace, name, volName string) (*corev1.PersistentVolumeClaim, error) {
 	if pvcLister != nil {
 		pvc, err := pvcLister.PersistentVolumeClaims(namespace).Get(name)
-		if err == nil {
+		if err == nil && pvcMatchesVolume(pvc, volName) {
 			return pvc, nil
 		}
-		if !k8serror.IsNotFound(err) {
+		if err != nil && !k8serror.IsNotFound(err) {
 			return nil, err
 		}
 	}
 	return getPVCFromAPI(ctx, namespace, name)
+}
+
+// pvcMatchesVolume tells whether volName was named after pvc. The
+// external-provisioner names a volume <prefix>-<PVC UID> or, with
+// --volume-name-uuid-length, <prefix>-<the UID without dashes, truncated>.
+func pvcMatchesVolume(pvc *corev1.PersistentVolumeClaim, volName string) bool {
+	uid := string(pvc.UID)
+	if uid == "" {
+		return false
+	}
+	if strings.HasSuffix(volName, "-"+uid) {
+		return true
+	}
+	tail := volName[strings.LastIndex(volName, "-")+1:]
+	return tail != "" && strings.HasPrefix(strings.ReplaceAll(uid, "-", ""), tail)
 }
 
 // pvcEncryptionSecretName returns the Secret named by the secret-name annotation,
@@ -326,7 +343,7 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*zfsapi
 	// annotation. It requires `encryption`: fail closed.
 	var pvcSecretName string
 	if pvcName != "" && pvcNamespace != "" {
-		pvc, perr := getPVC(ctx, pvcNamespace, pvcName)
+		pvc, perr := getPVC(ctx, pvcNamespace, pvcName, volName)
 		if perr != nil {
 			// the PVC may name its own key: never guess
 			return nil, status.Errorf(codes.Internal,
@@ -556,7 +573,7 @@ func checkCloneKeySource(ctx context.Context, volName string, src *zfsapi.Encryp
 	if _, err := zfs.GetZFSVolume(volName); err == nil {
 		return nil
 	}
-	pvc, err := getPVC(ctx, pvcNamespace, pvcName)
+	pvc, err := getPVC(ctx, pvcNamespace, pvcName, volName)
 	if err != nil {
 		return status.Errorf(codes.Internal, "clone: failed to get pvc %s/%s: %s",
 			pvcNamespace, pvcName, err.Error())
