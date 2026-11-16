@@ -147,8 +147,9 @@ func TestCloneKeyConflict(t *testing.T) {
 }
 
 func TestGetPVC(t *testing.T) {
+	const uid = "0f3a8c2e-6b1d-4e57-9a40-2d6c5b7e8f91"
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
-	cached := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "cached", Namespace: "apps"}}
+	cached := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "cached", Namespace: "apps", UID: uid}}
 	assert.NoError(t, indexer.Add(cached))
 
 	var fromAPI []string
@@ -160,13 +161,44 @@ func TestGetPVC(t *testing.T) {
 		return &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}, nil
 	}
 
-	pvc, err := getPVC(context.Background(), "apps", "cached")
+	pvc, err := getPVC(context.Background(), "apps", "cached", "pvc-"+uid)
 	assert.NoError(t, err)
-	assert.Same(t, cached, pvc, "a cached PVC is read from the cache")
+	assert.Same(t, cached, pvc, "the cached PVC the volume is named after is read from the cache")
 	assert.Empty(t, fromAPI)
 
-	pvc, err = getPVC(context.Background(), "apps", "new")
+	pvc, err = getPVC(context.Background(), "apps", "new", "pvc-"+uid)
 	assert.NoError(t, err)
 	assert.Equal(t, "new", pvc.Name)
 	assert.Equal(t, []string{"apps/new"}, fromAPI, "a PVC missing from the cache is read from the API")
+
+	fromAPI = nil
+	pvc, err = getPVC(context.Background(), "apps", "cached", "pvc-7c1e9b54-3d2a-4f86-b0e7-5a9d8c6f4b23")
+	assert.NoError(t, err)
+	assert.NotSame(t, cached, pvc)
+	assert.Equal(t, []string{"apps/cached"}, fromAPI,
+		"a cached PVC with another UID, deleted and recreated, is read from the API")
+}
+
+func TestPVCMatchesVolume(t *testing.T) {
+	const uid = "0f3a8c2e-6b1d-4e57-9a40-2d6c5b7e8f91"
+	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{UID: uid}}
+	tests := map[string]struct {
+		volName string
+		want    bool
+	}{
+		"default name":          {"pvc-" + uid, true},
+		"custom prefix":         {"my-vol-" + uid, true},
+		"truncated uid":         {"pvc-0f3a8c2e6b1d", true},
+		"full uid without dash": {"pvc-0f3a8c2e6b1d4e579a402d6c5b7e8f91", true},
+		"other uid":             {"pvc-7c1e9b54-3d2a-4f86-b0e7-5a9d8c6f4b23", false},
+		"other truncated uid":   {"pvc-7c1e9b543d2a", false},
+		"not derived":           {"my-volume", false},
+		"trailing dash":         {"pvc-", false},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.want, pvcMatchesVolume(pvc, test.volName))
+		})
+	}
+	assert.False(t, pvcMatchesVolume(&corev1.PersistentVolumeClaim{}, "pvc-"), "a PVC without UID")
 }
