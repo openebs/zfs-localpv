@@ -18,6 +18,7 @@ package driver
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -201,4 +202,52 @@ func TestPVCMatchesVolume(t *testing.T) {
 		})
 	}
 	assert.False(t, pvcMatchesVolume(&corev1.PersistentVolumeClaim{}, "pvc-"), "a PVC without UID")
+}
+
+func TestVolumeKeySource(t *testing.T) {
+	const uid = "0f3a8c2e-6b1d-4e57-9a40-2d6c5b7e8f91"
+	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+	assert.NoError(t, indexer.Add(&corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+		Name: "keyed", Namespace: "apps", UID: uid,
+		Annotations: map[string]string{zfs.PVCEncryptionSecretAnnotation: "k1"}}}))
+	assert.NoError(t, indexer.Add(&corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{
+		Name: "plain", Namespace: "apps", UID: uid}}))
+
+	origLister, origValidate := pvcLister, validateEncryptionSecret
+	defer func() { pvcLister, validateEncryptionSecret = origLister, origValidate }()
+	pvcLister = corelisters.NewPersistentVolumeClaimLister(indexer)
+	validateEncryptionSecret = func(_ context.Context, name, namespace string) error {
+		if name != "k1" || namespace != "apps" {
+			return errors.New("unexpected Secret")
+		}
+		return nil
+	}
+
+	tests := map[string]struct {
+		encryption, pvc string
+		want            volumeKey
+		code            codes.Code
+	}{
+		"key, encryption unset: enabled":  {"", "keyed", volumeKey{"k1", "apps", "on"}, codes.OK},
+		"key, cipher kept":                {"aes-128-gcm", "keyed", volumeKey{"k1", "apps", "aes-128-gcm"}, codes.OK},
+		"key, encryption off: refused":    {"off", "keyed", volumeKey{}, codes.InvalidArgument},
+		"no key":                          {"", "plain", volumeKey{encryption: ""}, codes.OK},
+		"no key, encrypted":               {"on", "plain", volumeKey{encryption: "on"}, codes.OK},
+		"typo":                            {"offf", "plain", volumeKey{}, codes.InvalidArgument},
+		"unknown PVC, encrypted: refused": {"aes-256-gcm", "", volumeKey{}, codes.FailedPrecondition},
+		"unknown PVC, not encrypted":      {"off", "", volumeKey{encryption: "off"}, codes.OK},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			ns := "apps"
+			if test.pvc == "" {
+				ns = ""
+			}
+			key, err := volumeKeySource(context.Background(), "pvc-"+uid, test.encryption, ns, test.pvc)
+			assert.Equal(t, test.code, status.Code(err), "%v", err)
+			if err == nil {
+				assert.Equal(t, test.want, key)
+			}
+		})
+	}
 }

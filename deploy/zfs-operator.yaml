@@ -1459,12 +1459,13 @@ spec:
                     minLength: 1
                     type: string
                   namespace:
-                    description: |-
-                      Namespace is the namespace of the Secret: the PVC's namespace for a Secret
-                      referenced by the PVC, the driver namespace for a generated key.
+                    description: Namespace is the namespace of the Secret, the one
+                      of the PVC.
+                    minLength: 1
                     type: string
                 required:
                 - name
+                - namespace
                 type: object
               fsType:
                 description: |-
@@ -1719,12 +1720,13 @@ spec:
                     minLength: 1
                     type: string
                   namespace:
-                    description: |-
-                      Namespace is the namespace of the Secret: the PVC's namespace for a Secret
-                      referenced by the PVC, the driver namespace for a generated key.
+                    description: Namespace is the namespace of the Secret, the one
+                      of the PVC.
+                    minLength: 1
                     type: string
                 required:
                 - name
+                - namespace
                 type: object
               fsType:
                 description: |-
@@ -1954,12 +1956,13 @@ spec:
                     minLength: 1
                     type: string
                   namespace:
-                    description: |-
-                      Namespace is the namespace of the Secret: the PVC's namespace for a Secret
-                      referenced by the PVC, the driver namespace for a generated key.
+                    description: Namespace is the namespace of the Secret, the one
+                      of the PVC.
+                    minLength: 1
                     type: string
                 required:
                 - name
+                - namespace
                 type: object
               fsType:
                 description: |-
@@ -2209,12 +2212,13 @@ spec:
                     minLength: 1
                     type: string
                   namespace:
-                    description: |-
-                      Namespace is the namespace of the Secret: the PVC's namespace for a Secret
-                      referenced by the PVC, the driver namespace for a generated key.
+                    description: Namespace is the namespace of the Secret, the one
+                      of the PVC.
+                    minLength: 1
                     type: string
                 required:
                 - name
+                - namespace
                 type: object
               fsType:
                 description: |-
@@ -2478,12 +2482,13 @@ spec:
                     minLength: 1
                     type: string
                   namespace:
-                    description: |-
-                      Namespace is the namespace of the Secret: the PVC's namespace for a Secret
-                      referenced by the PVC, the driver namespace for a generated key.
+                    description: Namespace is the namespace of the Secret, the one
+                      of the PVC.
+                    minLength: 1
                     type: string
                 required:
                 - name
+                - namespace
                 type: object
               fsType:
                 description: |-
@@ -3050,6 +3055,7 @@ spec:
       volumes:
         - name: socket-dir
           emptyDir: {}
+
 ---
 # Source: zfs-localpv/templates/csidriver.yaml
 # Create the CSI Driver object

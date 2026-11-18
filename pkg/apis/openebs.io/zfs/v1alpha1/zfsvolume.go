@@ -58,9 +58,9 @@ type EncryptionKeyReference struct {
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 
-	// Namespace is the namespace of the Secret: the PVC's namespace for a Secret
-	// referenced by the PVC, the driver namespace for a generated key.
-	Namespace string `json:"namespace,omitempty"`
+	// Namespace is the namespace of the Secret, the one of the PVC.
+	// +kubebuilder:validation:MinLength=1
+	Namespace string `json:"namespace"`
 }
 
 // VolumeInfo defines ZFS volume parameters for all modes in which

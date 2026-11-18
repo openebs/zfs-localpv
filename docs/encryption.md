@@ -37,6 +37,9 @@ The authoritative source remains the `ZFSVolume` CR (`spec.encryption`,
 - A ZFS pool that supports encryption (OpenZFS >= 0.8).
 - The external-provisioner runs with `--extra-create-metadata=true` (default in
   the shipped manifests) so the controller learns the PVC name/namespace.
+  Without it, an encrypted volume is refused, since its PVC could name a key,
+  and the annotation of a PVC on a StorageClass that leaves `encryption` unset
+  is not seen: its volume is not encrypted.
 - RBAC (already included in the Helm chart / operator YAML): the controller and
   node components can `get` Secrets cluster-wide (the referenced Secret can live
   in any PVC namespace).
@@ -86,6 +89,9 @@ spec:
 
 Notes:
 - The Secret must be in the **same namespace** as the PVC.
+- The annotation also works on a StorageClass that leaves `encryption` unset:
+  the volume is then encrypted with the default cipher (`on`, i.e.
+  `aes-256-gcm`). A StorageClass with `encryption: off` refuses it.
 - The Secret data key is `key`; the value must be 64 hex characters.
 - Deleting the PV does **not** delete your Secret.
 - A CSI clone, or a restore from a `VolumeSnapshot`, always uses its source's
@@ -95,7 +101,8 @@ Notes:
 
 If the annotation is empty, or references a Secret that is missing or does not
 contain a valid 64-char hex key, provisioning fails immediately with a clear
-`InvalidArgument` error rather than deferring the failure to the node.
+`InvalidArgument` error rather than deferring the failure to the node. So does
+an `encryption` value that ZFS does not know (e.g. `offf`).
 A PVC that cannot be read also fails the provisioning (it is retried), since it
 may name its own key.
 Likewise, if a key stops matching its dataset (an altered Secret, or a wrong

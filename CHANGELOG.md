@@ -36,16 +36,19 @@ Added a third scheduling algorithm, `SpaceWeighted`, which orders nodes by the
 free space left in their pool rather than by what has already been written into
 it. `CapacityWeighted` remains the default.
  - Per-volume encryption keys from a Secret
-A PVC can now bring its own ZFS encryption key: on a StorageClass that sets
-`encryption`, the `encryption.openebs.io/secret-name` annotation names a Secret
-in the PVC's namespace holding a 32-byte key as 64 hex characters, under `key`.
-The key is handed to ZFS on stdin, never stored in the `ZFSVolume`, and reloaded
-at mount time, so encrypted volumes survive node reboots. Provisioning fails
-fast on an empty annotation or a missing or invalid key, and never creates an
-unencrypted volume when a key source was requested. A clone or a restore whose
-PVC names another key Secret than its source's is rejected. Volumes encrypted by
-the driver carry `openebs.io/encrypted` on their PV: `volume` for a per-volume
-key, `storageclass` for the StorageClass `keylocation`.
+A PVC can now bring its own ZFS encryption key: the
+`encryption.openebs.io/secret-name` annotation names a Secret in the PVC's
+namespace holding a 32-byte key as 64 hex characters, under `key`. It enables
+encryption, with the default cipher, on a StorageClass that leaves `encryption`
+unset, and is refused with `encryption: off`. The key is handed to ZFS on stdin,
+never stored in the `ZFSVolume`, and reloaded at mount time, so encrypted
+volumes survive node reboots. Provisioning fails fast on an empty annotation, a
+missing or invalid key, or an unknown `encryption` value, and an encrypted
+volume is refused when its PVC is unknown (no `--extra-create-metadata`). A
+clone or a restore whose PVC names another key Secret than its source's is
+rejected. Volumes encrypted by the driver carry `openebs.io/encrypted` on their
+PV: `volume` for a per-volume key, `storageclass` for the StorageClass
+`keylocation`.
 
 Behaviour Changes
 
