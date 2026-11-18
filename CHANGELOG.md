@@ -35,6 +35,20 @@ pool of their source.
 Added a third scheduling algorithm, `SpaceWeighted`, which orders nodes by the
 free space left in their pool rather than by what has already been written into
 it. `CapacityWeighted` remains the default.
+ - Per-volume encryption keys from a Secret
+A PVC can now bring its own ZFS encryption key: the
+`encryption.openebs.io/secret-name` annotation names a Secret in the PVC's
+namespace holding a 32-byte key as 64 hex characters, under `key`. It enables
+encryption, with the default cipher, on a StorageClass that leaves `encryption`
+unset, and is refused with `encryption: off`. The key is handed to ZFS on stdin,
+never stored in the `ZFSVolume`, and reloaded at mount time, so encrypted
+volumes survive node reboots. Provisioning fails fast on an empty annotation, a
+missing or invalid key, or an unknown `encryption` value, and an encrypted
+volume is refused when its PVC is unknown (no `--extra-create-metadata`). A
+clone or a restore whose PVC names another key Secret than its source's is
+rejected. Volumes encrypted by the driver carry `openebs.io/encrypted` on their
+PV: `volume` for a per-volume key, `storageclass` for the StorageClass
+`keylocation`.
 
 Behaviour Changes
 
@@ -62,6 +76,10 @@ no effect on the driver as deployed.
 has the requested size now still asks for the node expansion. The quota or
 volsize is applied by `NodeExpandVolume`, so the retry used to complete the
 resize while the dataset or zvol kept its old size.
+ - `MountFilesystem` and `MountBlock` in `pkg/zfs` take a context, which bounds
+the wait for an encrypted zvol's device after its key is loaded. These are
+exported, so the change is source incompatible for anything importing the
+package; it has no effect on the driver as deployed.
  - Backup and restore pipeline failures now stop the peer
 When either process exits with an error, the driver stops its peer and marks
 the `ZFSBackup` or `ZFSRestore` as `Failed` instead of leaving it in `Init` or
