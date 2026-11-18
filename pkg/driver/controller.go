@@ -237,6 +237,9 @@ var pvcLister corelisters.PersistentVolumeClaimLister
 // getPVCFromAPI reads a PVC from the API server.
 var getPVCFromAPI = zfs.GetPVC
 
+// validateEncryptionSecret checks the key Secret a PVC names.
+var validateEncryptionSecret = zfs.ValidateEncryptionSecret
+
 // getPVC returns the PVC that volume volName is provisioned for. It comes from
 // the informer cache when the cached PVC is that claim, and otherwise from the
 // API server: the cache may not have a new PVC yet, or may still hold a deleted
@@ -280,6 +283,69 @@ func pvcEncryptionSecretName(annotations map[string]string) (string, error) {
 		return "", fmt.Errorf("the %q annotation is set but empty", zfs.PVCEncryptionSecretAnnotation)
 	}
 	return name, nil
+}
+
+// volumeKey is the key source of a new volume.
+type volumeKey struct {
+	// secretName and secretNamespace locate its per-volume key Secret, if any
+	secretName, secretNamespace string
+	// encryption is the encryption property of the volume
+	encryption string
+}
+
+// volumeKeySource returns the key source of the new volume volName, from the
+// encryption parameter of its StorageClass and the annotation of its PVC
+// pvcNamespace/pvcName. A key Secret named by the PVC enables encryption, with
+// the default cipher, when the StorageClass leaves it unset; it is refused when
+// the StorageClass sets `encryption: off`.
+func volumeKeySource(ctx context.Context, volName, encryption, pvcNamespace, pvcName string) (volumeKey, error) {
+	key := volumeKey{encryption: encryption}
+	if err := zfs.ValidateEncryption(encryption); err != nil {
+		return key, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if pvcName == "" || pvcNamespace == "" {
+		if zfs.EncryptionEnabled(encryption) {
+			// the PVC may name its own key: never guess
+			return key, status.Errorf(codes.FailedPrecondition,
+				"volume %s is encrypted but its PVC is unknown, so its %q annotation cannot be read: "+
+					"run the external-provisioner with --extra-create-metadata",
+				volName, zfs.PVCEncryptionSecretAnnotation)
+		}
+		return key, nil
+	}
+
+	pvc, err := getPVC(ctx, pvcNamespace, pvcName, volName)
+	if err != nil {
+		// the PVC may name its own key: never guess
+		return key, status.Errorf(codes.Internal,
+			"failed to get pvc %s/%s: %s", pvcNamespace, pvcName, err.Error())
+	}
+	name, err := pvcEncryptionSecretName(pvc.Annotations)
+	if err != nil {
+		return key, status.Errorf(codes.InvalidArgument, "pvc %s/%s: %s",
+			pvcNamespace, pvcName, err.Error())
+	}
+	if name == "" {
+		return key, nil
+	}
+	switch encryption {
+	case "off":
+		// fail closed: never create a plaintext volume when a key is requested
+		return key, status.Errorf(codes.InvalidArgument,
+			"pvc %s/%s names the encryption key Secret %s but the StorageClass sets "+
+				"'encryption: off'; refusing to create an unencrypted volume",
+			pvcNamespace, pvcName, name)
+	case "":
+		key.encryption = "on"
+	}
+	// fail fast on a missing or malformed key
+	if err := validateEncryptionSecret(ctx, name, pvcNamespace); err != nil {
+		return key, status.Errorf(codes.InvalidArgument,
+			"encryption key secret referenced by pvc %s/%s is invalid: %s",
+			pvcNamespace, pvcName, err.Error())
+	}
+	key.secretName, key.secretNamespace = name, pvcNamespace
+	return key, nil
 }
 
 // CreateZFSVolume create new zfs volume from csi volume request
@@ -339,49 +405,12 @@ func CreateZFSVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*zfsapi
 		}
 	}
 
-	// Per-volume key source of a new volume: the Secret named by the PVC
-	// annotation. It requires `encryption`: fail closed.
-	var pvcSecretName string
-	if pvcName != "" && pvcNamespace != "" {
-		pvc, perr := getPVC(ctx, pvcNamespace, pvcName, volName)
-		if perr != nil {
-			// the PVC may name its own key: never guess
-			return nil, status.Errorf(codes.Internal,
-				"failed to get pvc %s/%s: %s", pvcNamespace, pvcName, perr.Error())
-		}
-		name, aerr := pvcEncryptionSecretName(pvc.Annotations)
-		if aerr != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "pvc %s/%s: %s",
-				pvcNamespace, pvcName, aerr.Error())
-		}
-		pvcSecretName = name
-	} else if zfs.EncryptionEnabled(encr) {
-		// without the PVC, its key annotation cannot be read
-		klog.Warningf("zfs: volume %s: unknown PVC, its %q annotation is not read; "+
-			"is the external-provisioner running with --extra-create-metadata?",
-			volName, zfs.PVCEncryptionSecretAnnotation)
+	key, err := volumeKeySource(ctx, volName, encr, pvcNamespace, pvcName)
+	if err != nil {
+		return nil, err
 	}
-
-	// fail closed: never create a plaintext volume when a key source is requested
-	if pvcSecretName != "" && !zfs.EncryptionEnabled(encr) {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"an encryption key source was requested (secret-name annotation) "+
-				"but the StorageClass does not enable the 'encryption' parameter; "+
-				"refusing to create an unencrypted volume")
-	}
-
-	var encKeySecretName, encKeySecretNamespace string
-	if pvcSecretName != "" {
-		// fail fast on a missing or malformed key
-		if err := zfs.ValidateEncryptionSecret(ctx, pvcSecretName, pvcNamespace); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
-				"encryption key secret referenced by pvc %s/%s is invalid: %s",
-				pvcNamespace, pvcName, err.Error())
-		}
-		encKeySecretName = pvcSecretName
-		encKeySecretNamespace = pvcNamespace
-	}
-
+	encr = key.encryption
+	encKeySecretName, encKeySecretNamespace := key.secretName, key.secretNamespace
 	// managed keys are hex, fed on stdin: no legacy keylocation on the CR
 	if encKeySecretName != "" {
 		kf = "hex"
@@ -563,7 +592,10 @@ func cloneKeyConflict(src *zfsapi.EncryptionKeyReference, annotations map[string
 }
 
 // checkCloneKeySource rejects a new clone or restore whose PVC names another key
-// than its source's.
+// than its source's: volName is the new volume, src the key reference of its
+// source volume or snapshot (a snapshot keeps its own copy, so a restore does
+// not depend on the source PVC or volume), and pvcNamespace/pvcName the PVC of
+// the new volume.
 func checkCloneKeySource(ctx context.Context, volName string, src *zfsapi.EncryptionKeyReference,
 	pvcNamespace, pvcName string) error {
 	if pvcName == "" || pvcNamespace == "" {

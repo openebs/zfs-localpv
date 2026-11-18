@@ -1,19 +1,3 @@
-/*
-Copyright 2026 The OpenEBS Authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package tests
 
 import (
@@ -39,6 +23,7 @@ var _ = Describe("[zfspv] TEST PER-VOLUME ENCRYPTION", func() {
 const (
 	encSCName      = "zfspv-sc-enc"
 	encPlainSCName = "zfspv-sc-enc-plain"
+	encTypoSCName  = "zfspv-sc-enc-typo"
 	encOffSCName   = "zfspv-sc-enc-off"
 	encKeySecret   = "zfspv-enc-key"
 	encPvcName     = "zfspv-pvc-enc"
@@ -265,8 +250,16 @@ func encryptionSecretModeTest() {
 	expectProvisioningRejected("zfspv-pvc-enc-missing", encSCName,
 		map[string]string{zfs.PVCEncryptionSecretAnnotation: "zfspv-enc-no-such-key"}, "", "is invalid")
 	kubectlApply(encStorageClass(encPlainSCName, nil))
-	expectProvisioningRejected("zfspv-pvc-enc-plain", encPlainSCName,
-		map[string]string{zfs.PVCEncryptionSecretAnnotation: encKeySecret}, "", "refusing to create an unencrypted volume")
+	By("provisioning a volume with a key on a StorageClass that leaves encryption unset", func() {
+		createBoundEncPVC("zfspv-pvc-enc-plain", encPlainSCName,
+			map[string]string{zfs.PVCEncryptionSecretAnnotation: encKeySecret}, "")
+		Expect(encMarker("zfspv-pvc-enc-plain")).To(Equal("volume"))
+		Expect(zfsCmd("get", "-H", "-o", "value", "encryption", encDataset("zfspv-pvc-enc-plain"))).
+			To(Equal("aes-256-gcm"))
+		deletePVC("zfspv-pvc-enc-plain")
+	})
+	kubectlApply(encStorageClass(encTypoSCName, map[string]string{"encryption": "offf"}))
+	expectProvisioningRejected("zfspv-pvc-enc-typo", encTypoSCName, nil, "", `invalid encryption "offf"`)
 	kubectlApply(encStorageClass(encOffSCName, map[string]string{"encryption": "off"}))
 	expectProvisioningRejected("zfspv-pvc-enc-off", encOffSCName,
 		map[string]string{zfs.PVCEncryptionSecretAnnotation: encKeySecret}, "", "refusing to create an unencrypted volume")
@@ -288,6 +281,7 @@ func encryptionSecretModeTest() {
 
 	deleteKeySecret(encKeySecret)
 	deleteStorageClassByName(encPlainSCName)
+	deleteStorageClassByName(encTypoSCName)
 	deleteStorageClassByName(encOffSCName)
 	deleteStorageClassByName(encSCName)
 }

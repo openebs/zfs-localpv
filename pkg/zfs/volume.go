@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -518,9 +519,22 @@ func IsVolumeEligibleForDeletion(volumeName string) (bool, error) {
 }
 
 // EncryptionEnabled reports whether an encryption property value enables
-// encryption: unset and "off" do not.
+// encryption: unset and "off" do not. The value is validated where it enters the
+// driver, see ValidateEncryption, and by the ZFSVolume CRD.
 func EncryptionEnabled(encryption string) bool {
 	return encryption != "" && encryption != "off"
+}
+
+// encryptionValues are the encryption property values of ZFS.
+var encryptionValues = regexp.MustCompile(`^(on|off|aes-(128|192|256)-(ccm|gcm))$`)
+
+// ValidateEncryption rejects an encryption value that ZFS does not know, e.g. a
+// typo like "offf"; unset is valid.
+func ValidateEncryption(encryption string) error {
+	if encryption != "" && !encryptionValues.MatchString(encryption) {
+		return fmt.Errorf("invalid encryption %q: use on, off or aes-{128,192,256}-{ccm,gcm}", encryption)
+	}
+	return nil
 }
 
 // EncryptedMarker returns the OpenEBSEncryptedKey value of vol, or "" when the

@@ -1,22 +1,7 @@
-/*
-Copyright 2024 The OpenEBS Authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package zfs
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -150,5 +135,28 @@ func TestEncryptionEnabled(t *testing.T) {
 		if got := EncryptionEnabled(value); got != want {
 			t.Errorf("EncryptionEnabled(%q) = %v, want %v", value, got, want)
 		}
+	}
+}
+
+func TestValidateEncryption(t *testing.T) {
+	for _, v := range []string{"", "on", "off", "aes-128-ccm", "aes-192-gcm", "aes-256-gcm"} {
+		if err := ValidateEncryption(v); err != nil {
+			t.Errorf("%q: %v", v, err)
+		}
+	}
+	for _, v := range []string{"offf", "On", "aes-256", "aes-512-gcm", "aes-256-,cm", "true"} {
+		if ValidateEncryption(v) == nil {
+			t.Errorf("%q accepted", v)
+		}
+	}
+}
+
+func TestFetchEncryptionKeyWithoutNamespace(t *testing.T) {
+	vol := &apis.ZFSVolume{}
+	vol.Name = "pvc-1"
+	vol.Spec.EncryptionKeyRef = &apis.EncryptionKeyReference{Name: "k1"}
+	_, err := FetchEncryptionKey(context.Background(), vol)
+	if err == nil || !strings.Contains(err.Error(), "without a namespace") {
+		t.Errorf("got %v", err)
 	}
 }
