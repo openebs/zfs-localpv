@@ -6,7 +6,9 @@ zfsLocalPv:
 
 csi:
   volumeSnapshots:
-    # Install Volume Snapshot CRDs
+    # Install Volume Snapshot CRDs. Any the cluster already has are left to whoever owns
+    # them; set this to false to skip them entirely. The openebs umbrella chart sets this
+    # to false and installs them from its own openebs-crds subchart instead.
     enabled: true
     # -- Keep CRDs on chart uninstall
     keep: true
