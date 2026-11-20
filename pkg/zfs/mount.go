@@ -291,16 +291,39 @@ func MountFilesystem(vol *apis.ZFSVolume, mount *MountInfo) error {
 
 // MountBlock mounts the block disk to the specified path
 func MountBlock(vol *apis.ZFSVolume, mountinfo *MountInfo) error {
-	target := mountinfo.MountPath
 	devicePath := ZFSDevPath + vol.Spec.PoolName + "/" + vol.Name
-	mountopt := []string{"bind"}
 
-	mounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: utilexec.New()}
+	return mountBlock(mount.New(""), devicePath, mountinfo.MountPath)
+}
+
+// mountBlock bind mounts devicePath at target, unless target is already a
+// mount point.
+func mountBlock(mounter mount.Interface, devicePath, target string) error {
+	mountopt := []string{"bind"}
 
 	// Create the mount point as a file since bind mount device node requires it to be a file
 	err := makeFile(target)
 	if err != nil {
 		return status.Errorf(codes.Internal, "Could not create target file %q: %v", target, err)
+	}
+
+	// NodePublishVolume must be idempotent: a retried request for a target
+	// which is already bind mounted must not stack a second mount on it, which
+	// NodeUnpublishVolume would then leave behind.
+	notMnt, err := mounter.IsLikelyNotMountPoint(target)
+	if err != nil {
+		return status.Errorf(codes.Internal, "Could not check mount point %q: %v", target, err)
+	}
+	if !notMnt {
+		same, err := isSameDevice(devicePath, target)
+		if err != nil {
+			return status.Errorf(codes.Internal, "Could not compare %q with mount target %q: %v", devicePath, target, err)
+		}
+		if !same {
+			return status.Errorf(codes.Internal, "mount target %q is already mounted with a device other than %q", target, devicePath)
+		}
+		klog.Infof("NodePublishVolume block device %s already mounted at %s", devicePath, target)
+		return nil
 	}
 
 	// do the bind mount of the zvol device at the target path
@@ -314,6 +337,21 @@ func MountBlock(vol *apis.ZFSVolume, mountinfo *MountInfo) error {
 	klog.Infof("NodePublishVolume mounted block device %s at %s", devicePath, target)
 
 	return nil
+}
+
+// isSameDevice reports whether target is a bind mount of devicePath. The mount
+// table lists the devtmpfs source for a bind mounted device node, not the zvol
+// path, so the target is compared with the device node it resolves to.
+func isSameDevice(devicePath, target string) (bool, error) {
+	devInfo, err := os.Stat(devicePath)
+	if err != nil {
+		return false, err
+	}
+	targetInfo, err := os.Stat(target)
+	if err != nil {
+		return false, err
+	}
+	return os.SameFile(devInfo, targetInfo), nil
 }
 
 func makeFile(pathname string) error {
