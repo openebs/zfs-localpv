@@ -1,0 +1,74 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.21.0
+  name: zfspromotes.zfs.openebs.io
+spec:
+  group: zfs.openebs.io
+  names:
+    kind: ZFSPromote
+    listKind: ZFSPromoteList
+    plural: zfspromotes
+    singular: zfspromote
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          ZFSPromote asks the node agent to `zfs promote` a cloned volume, so that
+          it takes over its origin's snapshots and the origin becomes its clone.
+          The caller creates it with status Init, waits for Done or Failed and
+          then deletes it.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ZFSPromoteSpec is the spec for a ZFSPromote resource
+            properties:
+              ownerNodeID:
+                description: node id of the ZFSVolume; only the node agent of that
+                  node acts on it
+                minLength: 1
+                type: string
+              volumeName:
+                description: name of the ZFSVolume to promote
+                minLength: 1
+                type: string
+            required:
+            - ownerNodeID
+            - volumeName
+            type: object
+          status:
+            description: ZFSPromoteStatus is to hold result of action.
+            enum:
+            - Init
+            - Done
+            - Failed
+            - Pending
+            - InProgress
+            - Invalid
+            type: string
+        required:
+        - spec
+        - status
+        type: object
+    served: true
+    storage: true

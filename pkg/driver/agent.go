@@ -27,6 +27,7 @@ import (
 	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
 	"github.com/openebs/zfs-localpv/v2/pkg/builder/volbuilder"
 	"github.com/openebs/zfs-localpv/v2/pkg/mgmt/backup"
+	"github.com/openebs/zfs-localpv/v2/pkg/mgmt/promote"
 	"github.com/openebs/zfs-localpv/v2/pkg/mgmt/restore"
 	"github.com/openebs/zfs-localpv/v2/pkg/mgmt/snapshot"
 	"github.com/openebs/zfs-localpv/v2/pkg/mgmt/volume"
@@ -96,6 +97,14 @@ func NewNode(d *CSIDriver) csi.NodeServer {
 		err := restore.Start(&ControllerMutex, stopCh)
 		if err != nil {
 			klog.Fatalf("Failed to start ZFS restore management controller: %s", err.Error())
+		}
+	}()
+
+	// start the promote controller
+	go func() {
+		err := promote.Start(&ControllerMutex, stopCh)
+		if err != nil {
+			klog.Fatalf("Failed to start ZFS promote management controller: %s", err.Error())
 		}
 	}()
 

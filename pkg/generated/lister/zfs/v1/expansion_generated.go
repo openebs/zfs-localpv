@@ -18,6 +18,14 @@ type ZFSNodeListerExpansion interface{}
 // ZFSNodeNamespaceLister.
 type ZFSNodeNamespaceListerExpansion interface{}
 
+// ZFSPromoteListerExpansion allows custom methods to be added to
+// ZFSPromoteLister.
+type ZFSPromoteListerExpansion interface{}
+
+// ZFSPromoteNamespaceListerExpansion allows custom methods to be added to
+// ZFSPromoteNamespaceLister.
+type ZFSPromoteNamespaceListerExpansion interface{}
+
 // ZFSRestoreListerExpansion allows custom methods to be added to
 // ZFSRestoreLister.
 type ZFSRestoreListerExpansion interface{}

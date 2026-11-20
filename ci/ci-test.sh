@@ -9,7 +9,7 @@ TEST_DIR="$SCRIPT_DIR"/../tests
 DEFAULT_TEST_PROFILES="regular"
 ALLOWED_TEST_PROFILES="regular custom-node-id all"
 
-CRDS_TO_DELETE_ON_CLEANUP="zfsrestores.zfs.openebs.io zfssnapshots.zfs.openebs.io zfsvolumes.zfs.openebs.io zfsbackups.zfs.openebs.io zfsnodes.zfs.openebs.io"
+CRDS_TO_DELETE_ON_CLEANUP="zfsrestores.zfs.openebs.io zfspromotes.zfs.openebs.io zfssnapshots.zfs.openebs.io zfsvolumes.zfs.openebs.io zfsbackups.zfs.openebs.io zfsnodes.zfs.openebs.io"
 
 help() {
   cat <<EOF >&2

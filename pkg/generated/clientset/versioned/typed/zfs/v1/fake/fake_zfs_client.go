@@ -20,6 +20,10 @@ func (c *FakeZfsV1) ZFSNodes(namespace string) v1.ZFSNodeInterface {
 	return newFakeZFSNodes(c, namespace)
 }
 
+func (c *FakeZfsV1) ZFSPromotes(namespace string) v1.ZFSPromoteInterface {
+	return newFakeZFSPromotes(c, namespace)
+}
+
 func (c *FakeZfsV1) ZFSRestores(namespace string) v1.ZFSRestoreInterface {
 	return newFakeZFSRestores(c, namespace)
 }
