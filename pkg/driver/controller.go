@@ -143,6 +143,11 @@ func (cs *controller) init() error {
 			return errors.Wrap(err, "failed to initialize backup garbage collector")
 		}
 	}
+
+	reaper := newMarkedVolumeReaper(openebsClient, zfs.OpenEBSNamespace, cs.volumeLock)
+	if err = reaper.Start(stopCh); err != nil {
+		return errors.Wrap(err, "failed to start marked volume reaper")
+	}
 	return nil
 }
 
