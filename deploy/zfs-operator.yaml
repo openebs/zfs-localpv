@@ -2966,3 +2966,4 @@ spec:
   attachRequired: false
   podInfoOnMount: false
   storageCapacity: true
+  seLinuxMount: true
