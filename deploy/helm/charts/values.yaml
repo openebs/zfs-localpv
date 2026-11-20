@@ -128,6 +128,8 @@ zfsController:
       tag: v1.13.2
     extraArgs: []
   snapshotter:
+    # The csi-snapshotter requires the VolumeSnapshot CRDs. Set this to false if they are not installed.
+    enabled: true
     name: "csi-snapshotter"
     # null inherits logLevel, or the binary default (0).
     logLevel: null

@@ -65,6 +65,7 @@ spec:
               mountPath: /var/lib/csi/sockets/pluginproxy/
           resources:
             {{- toYaml .Values.zfsController.resources | nindent 12 }}
+        {{- if .Values.zfsController.snapshotter.enabled }}
         - name: {{ .Values.zfsController.snapshotter.name }}
           image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.snapshotter.image "global" .Values.global) | quote }}
           imagePullPolicy: {{ default .Values.zfsController.snapshotter.image.pullPolicy .Values.global.imagePullPolicy }}
@@ -86,6 +87,7 @@ spec:
               mountPath: /var/lib/csi/sockets/pluginproxy/
           resources:
             {{- toYaml .Values.zfsController.resources | nindent 12 }}
+        {{- end }}
         {{- if .Values.zfsController.snapshotController.enabled }}
         - name: {{ .Values.zfsController.snapshotController.name }}
           image: {{ include "zfslocalpv.common.image" (dict "imageRoot" .Values.zfsController.snapshotController.image "global" .Values.global) | quote }}
