@@ -98,7 +98,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.podAnnotations`                                        | map    | `{}`                        | Annotations to add to the ZFS controller pods.                                                         |
 | `zfsController.podLabels.name`                                        | string | `"openebs-zfs-controller"`  | Labels to add to the ZFS controller pods.                                                              |
 | `zfsController.priorityClass.create`                                  | bool   | `true`                      | Specifies whether to create a priority class for the ZFS controller pods.                              |
-| `zfsController.priorityClass.name`                                    | string | `"zfs-csi-controller-critical"` | The name of the priority class to use for the ZFS controller pods.                                      |
+| `zfsController.priorityClass.name`                                    | string | `"zfs-csi-controller-critical"` | Name of the priority class for the ZFS controller pods, prefixed with the release name when created. With `create: false`, an existing priority class with this name is used. |
 | `zfsController.provisioner.extraArgs`                                 | list   | `[]`                        | Additional arguments to pass to the CSI provisioner.                                                   |
 | `zfsController.provisioner.image.pullPolicy`                          | string | `"IfNotPresent"`            | Image pull policy for the CSI provisioner.                                                             |
 | `zfsController.provisioner.image.registry`                            | string | `"registry.k8s.io/"`        | Image registry for the CSI provisioner.                                                                |
@@ -152,7 +152,7 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsNode.podAnnotations`                                              | map    | `{}`                        | Annotations to add to the ZFS node pods. |
 | `zfsNode.podLabels`                                                   | map    | `{}`                        | Labels to add to the ZFS node pods. |
 | `zfsNode.priorityClass.create`                                        | bool   | `true`                      | Creates a priority class for the ZFS node pods and sets it on them. |
-| `zfsNode.priorityClass.name`                                          | string | `"zfs-csi-node-critical"`   | Name of the priority class, prefixed with the release name when created. |
+| `zfsNode.priorityClass.name`                                          | string | `"zfs-csi-node-critical"`   | Name of the priority class, prefixed with the release name when created. With `create: false`, an existing priority class with this name is used. |
 | `zfsNode.resources`                                                   | map    | `{}`                        | Resource requests and limits for the ZFS node containers. |
 | `zfsNode.securityContext`                                             | map    | `{}`                        | Security context for the ZFS node pods. |
 | `zfsNode.tolerations`                                                 | list   | `[]`                        | Tolerations for scheduling ZFS node pods. |

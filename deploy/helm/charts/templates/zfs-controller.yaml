@@ -31,8 +31,8 @@ spec:
         {{ toYaml . | nindent 8 -}}
         {{- end}}
     spec:
-{{- if .Values.zfsController.priorityClass.create }}
-      priorityClassName: {{ template "zfslocalpv.zfsController.priorityClassName" . }}
+{{- with (include "zfslocalpv.zfsController.priorityClassName" .) }}
+      priorityClassName: {{ . }}
 {{- end }}
       serviceAccountName: {{ include "zfslocalpv.zfsController.serviceAccountName" . }}
 {{- if .Values.zfsController.initContainers }}

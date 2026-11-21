@@ -23,6 +23,13 @@ comments describe, instead of rendering objects with an empty name. With
 `create: false` and no name, the pods use the `default` ServiceAccount. The
 default values render the same names as before.
 
+ - Chart existing priority classes
+With `zfsController.priorityClass.create` or `zfsNode.priorityClass.create` set
+to `false`, the chart now sets `priorityClass.name` as the pods'
+`priorityClassName`, so an existing class such as `system-node-critical` can
+be used. Before, the name was ignored and the pods got no priority class. The
+default values render the same as before.
+
  - Pool pattern based volume provisioning
 StorageClasses may now select the ZFS pool with a regular expression, using the
 new `poolpattern` parameter in place of `poolname`, so that a single
