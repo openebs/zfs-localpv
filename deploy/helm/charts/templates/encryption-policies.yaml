@@ -1,0 +1,53 @@
+{{- if and .Values.encryptionPolicies.enabled (.Capabilities.APIVersions.Has "admissionregistration.k8s.io/v1/ValidatingAdmissionPolicy") }}
+# The encryption.openebs.io/secret-name annotation of a PVC is read once, when
+# its volume is provisioned. Added or changed later, it could be missed by a
+# provisioning already under way, and the volume would not use the key the PVC
+# names, or would not be encrypted at all. Deny adding, changing or removing it
+# on an existing PVC, so it can only be set when the PVC is created.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: openebs-zfs-immutable-encryption-annotation
+  labels:
+    {{- include "zfslocalpv.zfsController.labels" . | nindent 4 }}
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["UPDATE"]
+        resources: ["persistentvolumeclaims"]
+  matchConditions:
+    # Only PVCs that carry the annotation, before or after the update. Key
+    # presence is checked before reading it: reading a missing map key is an
+    # evaluation error, which failurePolicy Fail would turn into a denial.
+    - name: encryption-annotation
+      expression: >-
+        (has(oldObject.metadata.annotations) &&
+        'encryption.openebs.io/secret-name' in oldObject.metadata.annotations) ||
+        (has(object.metadata.annotations) &&
+        'encryption.openebs.io/secret-name' in object.metadata.annotations)
+  validations:
+    - expression: >-
+        has(oldObject.metadata.annotations) &&
+        'encryption.openebs.io/secret-name' in oldObject.metadata.annotations &&
+        has(object.metadata.annotations) &&
+        'encryption.openebs.io/secret-name' in object.metadata.annotations &&
+        oldObject.metadata.annotations['encryption.openebs.io/secret-name'] ==
+        object.metadata.annotations['encryption.openebs.io/secret-name']
+      message: >-
+        the encryption.openebs.io/secret-name annotation can only be set when the PVC
+        is created: it is read when its volume is provisioned, so adding, changing or
+        removing it later is refused
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: openebs-zfs-immutable-encryption-annotation
+  labels:
+    {{- include "zfslocalpv.zfsController.labels" . | nindent 4 }}
+spec:
+  policyName: openebs-zfs-immutable-encryption-annotation
+  validationActions: [Deny]
+{{- end }}

@@ -125,6 +125,7 @@ Check the [features](./docs/features.md) supported for each k8s version.
 - [x] [Volume Resize](docs/resize.md)
 - [x] [Raw Block Volume](docs/raw-block-volume.md)
 - [x] [Backup/Restore](docs/backup-restore.md)
+- [x] [Volume Encryption](docs/encryption.md)
 - [ ] Ephemeral inline volume
 
 ## Dev Activity dashboard

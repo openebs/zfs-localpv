@@ -223,6 +223,12 @@ analytics:
 backupGC:
   enabled: false
 
+# Install the ValidatingAdmissionPolicy that makes the
+# encryption.openebs.io/secret-name annotation of a PVC immutable, so it can
+# only be set when the PVC is created (Kubernetes >= 1.30).
+encryptionPolicies:
+  enabled: true
+
 zfs:
   # If you use a non-standard path to the zfs binary, specify it here
   # bin: /run/current-system/sw/bin/zfs
