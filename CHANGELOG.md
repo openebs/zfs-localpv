@@ -49,6 +49,9 @@ clone or a restore whose PVC names another key Secret than its source's is
 rejected. Volumes encrypted by the driver carry `openebs.io/encrypted` on their
 PV: `volume` for a per-volume key, `storageclass` for the StorageClass
 `keylocation`.
+The annotation can only be set when the PVC is created: on Kubernetes >= 1.30,
+the Helm chart installs a ValidatingAdmissionPolicy that refuses adding,
+changing or removing it on an existing PVC (`encryptionPolicies.enabled`).
 
 Behaviour Changes
 

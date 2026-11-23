@@ -26,9 +26,10 @@ parameters:
 provisioner: zfs.csi.openebs.io
 ---
 # Create the key Secret first, with a fresh random 32-byte key (64 hex chars).
-# Never use a key copied from an example:
-#   kubectl -n default create secret generic csi-encryption-key \
-#     --from-literal=key="$(openssl rand -hex 32)"
+# Never use a key copied from an example. The key is piped, so that it does not
+# appear in the process arguments of kubectl:
+#   openssl rand -hex 32 |
+#     kubectl -n default create secret generic csi-encryption-key --from-file=key=/dev/stdin
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -37,6 +38,7 @@ metadata:
   namespace: default
   annotations:
     # Names the Secret (in this PVC's namespace) holding the hex encryption key.
+    # Set it when the PVC is created: it cannot be added or changed afterwards.
     encryption.openebs.io/secret-name: "csi-encryption-key"
 spec:
   storageClassName: openebs-zfspv-encrypted

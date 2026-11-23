@@ -25,17 +25,25 @@ const (
 	encPlainSCName = "zfspv-sc-enc-plain"
 	encTypoSCName  = "zfspv-sc-enc-typo"
 	encOffSCName   = "zfspv-sc-enc-off"
+	encZvolSCName  = "zfspv-sc-enc-zvol"
 	encKeySecret   = "zfspv-enc-key"
 	encPvcName     = "zfspv-pvc-enc"
 	encAppName     = "busybox-zfspv-enc"
+	encZvolPvcName = "zfspv-pvc-enc-zvol"
+	encZvolAppName = "busybox-zfspv-enc-zvol"
+
+	encAnnotationVAPName = "openebs-zfs-immutable-encryption-annotation"
 )
 
 // encStorageClass returns a StorageClass manifest on the test pool, with the
-// given extra parameters.
+// given extra parameters; fstype defaults to zfs.
 func encStorageClass(name string, params map[string]string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "apiVersion: storage.k8s.io/v1\nkind: StorageClass\nmetadata:\n  name: %s\n", name)
-	fmt.Fprintf(&b, "provisioner: %s\nparameters:\n  poolname: %q\n  fstype: zfs\n", ZFSProvisioner, POOLNAME)
+	fmt.Fprintf(&b, "provisioner: %s\nparameters:\n  poolname: %q\n", ZFSProvisioner, POOLNAME)
+	if _, ok := params["fstype"]; !ok {
+		b.WriteString("  fstype: zfs\n")
+	}
 	for k, v := range params {
 		fmt.Fprintf(&b, "  %s: %q\n", k, v)
 	}
@@ -136,6 +144,58 @@ func stopApp(appName string) {
 	}, 120, 5).Should(BeZero(), "while waiting for the pods of %s to be gone", appName)
 }
 
+// appPodUID returns the UID of the pod of an app deployment, once it exists.
+func appPodUID(appName string) string {
+	var uid string
+	Eventually(func() int {
+		pods, err := PodClient.WithNamespace(OpenEBSNamespace).
+			List(metav1.ListOptions{LabelSelector: "role=test,appName=" + appName})
+		Expect(err).ShouldNot(HaveOccurred())
+		if len(pods.Items) == 1 {
+			uid = string(pods.Items[0].UID)
+		}
+		return len(pods.Items)
+	}, 120, 5).Should(Equal(1), "while waiting for the pod of %s", appName)
+	return uid
+}
+
+// expectKeyReloadedAtMount writes a file on the volume of a PVC, unloads its
+// key as a node reboot would, and checks that the next mount loads the key
+// again and finds the file.
+func expectKeyReloadedAtMount(appName, pvcName string) {
+	dataset := encDataset(pvcName)
+	appExec(appName, "echo enc-data > /mnt/datadir/enc.txt; sync")
+	stopApp(appName)
+	unloadKey(dataset)
+	createDeployVerifyApp(appName, pvcName)
+	Expect(keyStatus(dataset)).To(Equal("available"))
+	Expect(appExec(appName, "cat /mnt/datadir/enc.txt")).To(Equal("enc-data"))
+}
+
+// annotatePVC runs kubectl annotate on a PVC and returns its error and stderr.
+func annotatePVC(pvcName string, args ...string) (string, error) {
+	_, stderr, err := kubectl(append([]string{"annotate", "pvc", pvcName, "-n", OpenEBSNamespace}, args...)...)
+	return string(stderr), err
+}
+
+// expectAnnotationChangeRefused checks that the admission policy refuses a
+// kubectl annotate of the secret-name annotation of a PVC.
+func expectAnnotationChangeRefused(pvcName string, args ...string) {
+	Eventually(func() string {
+		stderr, err := annotatePVC(pvcName, args...)
+		if err == nil {
+			return "accepted"
+		}
+		return stderr
+	}, 60, 5).Should(ContainSubstring("can only be set when the PVC"),
+		"kubectl annotate pvc %s %v must be refused", pvcName, args)
+}
+
+func vapInstalled(name string) bool {
+	_, _, err := kubectl("get", "validatingadmissionpolicy", name)
+	return err == nil
+}
+
 // unloadKey unloads the key of a dataset, as after a node reboot.
 func unloadKey(dataset string) {
 	Eventually(func() error {
@@ -219,12 +279,7 @@ func encryptionSecretModeTest() {
 
 	dataset := encDataset(encPvcName)
 	By("reloading the key at mount after it was unloaded", func() {
-		appExec(encAppName, "echo enc-data > /mnt/datadir/enc.txt; sync")
-		stopApp(encAppName)
-		unloadKey(dataset)
-		createDeployVerifyApp(encAppName, encPvcName)
-		Expect(keyStatus(dataset)).To(Equal("available"))
-		Expect(appExec(encAppName, "cat /mnt/datadir/enc.txt")).To(Equal("enc-data"))
+		expectKeyReloadedAtMount(encAppName, encPvcName)
 	})
 
 	By("refusing to mount with a changed key", func() {
@@ -233,9 +288,12 @@ func encryptionSecretModeTest() {
 		key := keySecretValue(encKeySecret)
 		setKeySecretValue(encKeySecret, newHexKey())
 		createAndDeployAppPod(encAppName, encPvcName)
+		// Only the events of this pod: an older pod may have failed the same way.
+		podUID := appPodUID(encAppName)
 		Eventually(func() string {
 			stdout, _, _ := kubectl("get", "events", "-n", OpenEBSNamespace,
-				"--field-selector", "reason=FailedMount", "-o", "jsonpath={.items[*].message}")
+				"--field-selector", "reason=FailedMount,involvedObject.uid="+podUID,
+				"-o", "jsonpath={.items[*].message}")
 			return string(stdout)
 		}, 120, 5).Should(ContainSubstring("could not load the encryption key"), "while waiting for the mount to fail")
 		Expect(keyStatus(dataset)).To(Equal("unavailable"))
@@ -243,6 +301,19 @@ func encryptionSecretModeTest() {
 		setKeySecretValue(encKeySecret, key)
 		createDeployVerifyApp(encAppName, encPvcName)
 		Expect(appExec(encAppName, "cat /mnt/datadir/enc.txt")).To(Equal("enc-data"))
+	})
+
+	By("reloading the key of an encrypted zvol (ext4) at mount after it was unloaded", func() {
+		kubectlApply(encStorageClass(encZvolSCName, map[string]string{"encryption": "aes-256-gcm", "fstype": "ext4"}))
+		createBoundEncPVC(encZvolPvcName, encZvolSCName,
+			map[string]string{zfs.PVCEncryptionSecretAnnotation: encKeySecret}, "")
+		createDeployVerifyApp(encZvolAppName, encZvolPvcName)
+		expectKeyReloadedAtMount(encZvolAppName, encZvolPvcName)
+		stopApp(encZvolAppName)
+		zvName := getZVName(encZvolPvcName)
+		deletePVC(encZvolPvcName)
+		Expect(IsZVDeletedEventually(zvName)).To(BeTrue(), "while waiting for zfs volume %s to be deleted", zvName)
+		deleteStorageClassByName(encZvolSCName)
 	})
 
 	expectProvisioningRejected("zfspv-pvc-enc-empty", encSCName,
@@ -266,8 +337,21 @@ func encryptionSecretModeTest() {
 	By("provisioning a volume on a StorageClass with encryption off", func() {
 		createBoundEncPVC("zfspv-pvc-enc-off-plain", encOffSCName, nil, "")
 		Expect(encMarker("zfspv-pvc-enc-off-plain")).To(BeEmpty())
-		deletePVC("zfspv-pvc-enc-off-plain")
 	})
+
+	if vapInstalled(encAnnotationVAPName) {
+		By("refusing to add, change or remove the secret-name annotation of an existing PVC", func() {
+			ann := zfs.PVCEncryptionSecretAnnotation
+			expectAnnotationChangeRefused("zfspv-pvc-enc-off-plain", ann+"="+encKeySecret)
+			expectAnnotationChangeRefused(encPvcName, "--overwrite", ann+"=zfspv-enc-other-key")
+			expectAnnotationChangeRefused(encPvcName, ann+"-")
+			stderr, err := annotatePVC(encPvcName, "example.com/other=1")
+			Expect(err).ShouldNot(HaveOccurred(), "other annotations must stay editable: %s", stderr)
+		})
+	} else {
+		By("skipping the immutability of the secret-name annotation: " + encAnnotationVAPName + " is not installed")
+	}
+	deletePVC("zfspv-pvc-enc-off-plain")
 
 	By("Deleting application deployment")
 	deleteAppDeployment(encAppName)

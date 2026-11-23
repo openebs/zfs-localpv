@@ -66,9 +66,12 @@ provisioner: zfs.csi.openebs.io
 Create the key Secret (64 hex chars = 32 bytes) in the PVC namespace:
 
 ```bash
-kubectl create secret generic csi-encryption-key \
-  --from-literal=key="$(openssl rand -hex 32)"
+openssl rand -hex 32 |
+  kubectl create secret generic csi-encryption-key --from-file=key=/dev/stdin
 ```
+
+The key is piped rather than passed with `--from-literal`, which would expose it
+in the process arguments of `kubectl`. The trailing newline is ignored.
 
 Reference it from the PVC:
 
@@ -89,6 +92,8 @@ spec:
 
 Notes:
 - The Secret must be in the **same namespace** as the PVC.
+- Set the annotation **when the PVC is created**: it is read once, when the
+  volume is provisioned. See *The annotation is immutable* below.
 - The annotation also works on a StorageClass that leaves `encryption` unset:
   the volume is then encrypted with the default cipher (`on`, i.e.
   `aes-256-gcm`). A StorageClass with `encryption: off` refuses it.
@@ -111,6 +116,47 @@ Secret and giving the reason from ZFS (`Incorrect key provided`), rather than
 silently mounting nothing.
 
 Full example: [`deploy/sample/encrypted-pvc.yaml`](../deploy/sample/encrypted-pvc.yaml).
+
+### The annotation is immutable
+
+The controller reads the annotation when it provisions the volume, from its
+cache of PVCs. An annotation added or changed on an existing PVC could be missed
+by a provisioning already under way, for example when the volume of a
+`WaitForFirstConsumer` PVC is provisioned while the annotation is being added:
+the volume would then not use the key the PVC names, or, on a StorageClass that
+leaves `encryption` unset, would not be encrypted at all.
+
+To close that window, the Helm chart installs a ValidatingAdmissionPolicy,
+`openebs-zfs-immutable-encryption-annotation`, which refuses adding, changing or
+removing the annotation on an existing PVC:
+
+```text
+$ kubectl annotate pvc my-pvc encryption.openebs.io/secret-name=my-key
+The persistentvolumeclaims "my-pvc" is invalid: : ValidatingAdmissionPolicy
+'openebs-zfs-immutable-encryption-annotation' with binding
+'openebs-zfs-immutable-encryption-annotation' denied request: the
+encryption.openebs.io/secret-name annotation can only be set when the PVC is
+created: ...
+```
+
+To encrypt the volume of a PVC created without the annotation, or to use another
+key, delete the PVC and create it again with the annotation (once the volume
+holds data, move it to a new PVC instead). The key of an existing volume is
+changed by rotating it, see *Key rotation*. Other annotations of the PVC can be
+changed as usual.
+
+- The policy needs Kubernetes >= 1.30. On older clusters, or with
+  `encryptionPolicies.enabled=false`, it is not installed and setting the
+  annotation at creation is up to you.
+- The operator YAML is rendered without a cluster, so it does not include the
+  policy. Apply it from the chart:
+
+  ```bash
+  helm template openebs-zfs deploy/helm/charts \
+    --show-only templates/encryption-policies.yaml \
+    --api-versions admissionregistration.k8s.io/v1/ValidatingAdmissionPolicy |
+    kubectl apply -f -
+  ```
 
 ---
 
@@ -203,8 +249,11 @@ rewrap() {
 }
 
 # 3. Update the Secret only if every root was re-wrapped.
+#    The patch is piped (printf is a shell builtin), so the key never appears
+#    in the process arguments of kubectl.
 rewrap <pool>/<pv-a> <pool>/<pv-b> &&
-  kubectl -n <ns> patch secret <name> -p '{"stringData":{"key":"'"$NEWKEY"'"}}'
+  printf '{"stringData":{"key":"%s"}}' "$NEWKEY" |
+  kubectl -n <ns> patch secret <name> --patch-file=/dev/stdin
 ```
 
 `zfs change-key` re-wraps the dataset master key; existing data is not
@@ -238,7 +287,11 @@ still on the old key, and only then put the new key in the Secret.
   [etcd encryption at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)
   when key custody matters.
 - gRPC request/response logging strips secrets, and the key is passed to `zfs`
-  on stdin, so it never appears in process arguments or logs.
+  on stdin, so it never appears in process arguments or logs. The commands in
+  this document pipe keys to `kubectl` for the same reason.
+- The `encryption.openebs.io/secret-name` annotation of a PVC is immutable
+  (Kubernetes >= 1.30, Helm chart), so a volume cannot be provisioned while the
+  annotation of its PVC changes. See *The annotation is immutable*.
 - The node is granted cluster-wide `get` (not `list`) on Secrets, because a
   referenced Secret can live in any PVC namespace. The controller already has
   `get`/`list` on Secrets (the CSI sidecars need it) and only reads them.

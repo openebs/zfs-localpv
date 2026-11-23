@@ -243,7 +243,9 @@ var validateEncryptionSecret = zfs.ValidateEncryptionSecret
 // getPVC returns the PVC that volume volName is provisioned for. It comes from
 // the informer cache when the cached PVC is that claim, and otherwise from the
 // API server: the cache may not have a new PVC yet, or may still hold a deleted
-// PVC that was recreated with the same name.
+// PVC that was recreated with the same name. The annotations of a cached PVC
+// are current, since the encryption-policies admission policy of the chart
+// lets the secret-name annotation be set only when the PVC is created.
 func getPVC(ctx context.Context, namespace, name, volName string) (*corev1.PersistentVolumeClaim, error) {
 	if pvcLister != nil {
 		pvc, err := pvcLister.PersistentVolumeClaims(namespace).Get(name)
