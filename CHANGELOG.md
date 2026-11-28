@@ -35,6 +35,14 @@ pool of their source.
 Added a third scheduling algorithm, `SpaceWeighted`, which orders nodes by the
 free space left in their pool rather than by what has already been written into
 it. `CapacityWeighted` remains the default.
+ - Volume creation failure reason
+When the node agent fails to create a volume, it records the error, such as the
+output of the zfs command that failed, in the new `status.error.message` field
+of the ZFSVolume, and the controller returns it from `CreateVolume`. The
+`ProvisioningFailed` events of a PVC now give the reason the volume could not be
+created, rather than only the node it failed on. The failure events of the
+ZFSVolume were not enough on their own, as the ZFSVolume is deleted once the
+volume could not be created on any node.
 
 Behaviour Changes
 

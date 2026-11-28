@@ -136,6 +136,19 @@ func GetNodeID(nodename string) (string, error) {
 	return nodeid, nil
 }
 
+// volCreationFailedError returns the error for a volume whose creation failed
+// on its node, with the cause the node recorded in the volume status, so that
+// it reaches the PVC events instead of only the node agent logs.
+func volCreationFailedError(vol *apis.ZFSVolume) error {
+	if vol.Status.Error != nil && vol.Status.Error.Message != "" {
+		return status.Errorf(codes.Internal,
+			"volume %s creation failed on node %s: %s",
+			vol.Name, vol.Spec.OwnerNodeID, vol.Status.Error.Message)
+	}
+	return status.Errorf(codes.Internal,
+		"volume %s creation failed on node %s", vol.Name, vol.Spec.OwnerNodeID)
+}
+
 func checkVolCreation(ctx context.Context, volname string) (bool, error) {
 	timeout := time.NewTimer(10 * time.Second)
 	defer timeout.Stop()
@@ -159,8 +172,7 @@ func checkVolCreation(ctx context.Context, volname string) (bool, error) {
 			case ZFSStatusReady:
 				return false, nil
 			case ZFSStatusFailed:
-				return false, status.Errorf(codes.Internal,
-					"volume %s creation failed on node %s", volname, vol.Spec.OwnerNodeID)
+				return false, volCreationFailedError(vol)
 			}
 
 			klog.Infof("zfs: waiting for volume %s/%s to be created on nodeid %s",
@@ -292,8 +304,10 @@ func GetZFSVolumeState(volID string) (string, string, error) {
 	return vol.Spec.OwnerNodeID, vol.Status.State, nil
 }
 
-// UpdateZvolInfo updates ZFSVolume CR with node id and finalizer
-func UpdateZvolInfo(vol *apis.ZFSVolume, status string) error {
+// UpdateZvolInfo updates ZFSVolume CR with node id and finalizer. createErr
+// is the error that failed the volume creation, recorded in the status so
+// that the controller can report it, and nil once the volume is created.
+func UpdateZvolInfo(vol *apis.ZFSVolume, status string, createErr error) error {
 	finalizers := []string{}
 	labels := map[string]string{ZFSNodeKey: NodeID}
 
@@ -305,6 +319,7 @@ func UpdateZvolInfo(vol *apis.ZFSVolume, status string) error {
 	newVol, err := volbuilder.BuildFrom(vol).
 		WithFinalizer(finalizers).
 		WithVolumeStatus(status).
+		WithVolumeError(createErr).
 		WithLabels(labels).Build()
 
 	if err != nil {

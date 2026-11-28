@@ -217,9 +217,21 @@ type VolStatus struct {
 	// State specifies the current state of the volume provisioning request.
 	// The state "Pending" means that the volume creation request has not
 	// processed yet. The state "Ready" means that the volume has been created
-	// and it is ready for the use.
+	// and it is ready for the use. The state "Failed" means that the node
+	// could not create the volume.
 	// +kubebuilder:validation:Enum=Pending;Ready;Failed
 	State string `json:"state,omitempty"`
+
+	// Error is the error that failed the volume creation on the node.
+	// It is set only when State is "Failed".
+	Error *VolumeError `json:"error,omitempty"`
+}
+
+// VolumeError specifies the error that failed the volume creation.
+type VolumeError struct {
+	// Message is the error reported by the node, such as the output of the
+	// zfs command that failed.
+	Message string `json:"message,omitempty"`
 }
 
 // Validate checks that the VolumeInfo is valid, namely that:

@@ -193,6 +193,17 @@ func (b *Builder) WithVolumeStatus(status string) *Builder {
 	return b
 }
 
+// WithVolumeError sets the error that failed the creation of the ZFSVolume,
+// a nil error clears it
+func (b *Builder) WithVolumeError(err error) *Builder {
+	if err == nil {
+		b.volume.Object.Status.Error = nil
+		return b
+	}
+	b.volume.Object.Status.Error = &apis.VolumeError{Message: err.Error()}
+	return b
+}
+
 // WithFsType sets filesystem for the ZFSVolume
 func (b *Builder) WithFsType(fstype string) *Builder {
 	b.volume.Object.Spec.FsType = fstype

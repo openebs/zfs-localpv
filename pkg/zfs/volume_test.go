@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	apis "github.com/openebs/zfs-localpv/v2/pkg/apis/openebs.io/zfs/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -36,6 +38,48 @@ func TestIsVolumeReady(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := IsVolumeReady(volGen(tt.volFinalizer, tt.volState)); got != tt.want {
 				t.Errorf("IsVolumeReady() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestVolCreationFailedError checks that the error returned for a volume
+// which failed on its node carries the cause the node recorded, and that a
+// volume failed by a node agent which records no cause is still reported.
+func TestVolCreationFailedError(t *testing.T) {
+	tests := []struct {
+		name    string
+		volErr  *apis.VolumeError
+		wantMsg string
+	}{
+		{
+			name:    "cause recorded by the node",
+			volErr:  &apis.VolumeError{Message: `zfs create on "tank/pvc-1": cannot create 'tank/pvc-1': out of space`},
+			wantMsg: `volume pvc-1 creation failed on node node-1: zfs create on "tank/pvc-1": cannot create 'tank/pvc-1': out of space`,
+		},
+		{
+			name:    "no cause recorded",
+			wantMsg: "volume pvc-1 creation failed on node node-1",
+		},
+		{
+			name:    "empty cause",
+			volErr:  &apis.VolumeError{},
+			wantMsg: "volume pvc-1 creation failed on node node-1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vol := &apis.ZFSVolume{
+				ObjectMeta: metav1.ObjectMeta{Name: "pvc-1"},
+				Spec:       apis.VolumeInfo{OwnerNodeID: "node-1"},
+				Status:     apis.VolStatus{State: ZFSStatusFailed, Error: tt.volErr},
+			}
+			st := status.Convert(volCreationFailedError(vol))
+			if st.Code() != codes.Internal {
+				t.Errorf("code = %v, want %v", st.Code(), codes.Internal)
+			}
+			if st.Message() != tt.wantMsg {
+				t.Errorf("message = %q, want %q", st.Message(), tt.wantMsg)
 			}
 		})
 	}
