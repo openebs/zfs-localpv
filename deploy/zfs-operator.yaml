@@ -2275,12 +2275,24 @@ spec:
             description: VolStatus string that specifies the current state of the
               volume provisioning request.
             properties:
+              error:
+                description: |-
+                  Error is the error that failed the volume creation on the node.
+                  It is set only when State is "Failed".
+                properties:
+                  message:
+                    description: |-
+                      Message is the error reported by the node, such as the output of the
+                      zfs command that failed.
+                    type: string
+                type: object
               state:
                 description: |-
                   State specifies the current state of the volume provisioning request.
                   The state "Pending" means that the volume creation request has not
                   processed yet. The state "Ready" means that the volume has been created
-                  and it is ready for the use.
+                  and it is ready for the use. The state "Failed" means that the node
+                  could not create the volume.
                 enum:
                 - Pending
                 - Ready

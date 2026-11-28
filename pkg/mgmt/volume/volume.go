@@ -115,10 +115,10 @@ func (c *ZVController) syncZV(zv *apis.ZFSVolume) error {
 			}
 			if err == nil {
 				zfs.EmitSuccessEvent(c.recorder, zv, successReason, successMsg)
-				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusReady)
+				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusReady, nil)
 			} else {
 				zfs.EmitFailureEvent(c.recorder, zv, opReason, err)
-				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusFailed)
+				err = zfs.UpdateZvolInfo(zv, zfs.ZFSStatusFailed, err)
 			}
 		}
 	}
